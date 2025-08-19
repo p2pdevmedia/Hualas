@@ -1,1 +1,2 @@
 # Hualas
+Admnistrador de clubs
