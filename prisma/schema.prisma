@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  role      Role     @default(MEMBER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  messages  Message[]
-  conversations ConversationParticipant[]
+  id                  String                    @id @default(cuid())
+  email               String                    @unique
+  name                String?
+  password            String
+  role                Role                      @default(MEMBER)
+  isActive            Boolean                   @default(true)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  messages            Message[]
+  conversations       ConversationParticipant[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model PasswordResetToken {
@@ -30,10 +31,10 @@ model PasswordResetToken {
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  messages  Message[]
+  id           String                    @id @default(cuid())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  messages     Message[]
   participants ConversationParticipant[]
 }
 
@@ -43,6 +44,7 @@ model ConversationParticipant {
   user           User         @relation(fields: [userId], references: [id])
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
+
   @@unique([userId, conversationId])
 }
 
