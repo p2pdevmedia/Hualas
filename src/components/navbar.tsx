@@ -1,17 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 
 export default function Navbar() {
   const { data: session } = useSession();
-  const pathname = usePathname();
-
-  const hideRoutes = ['/login', '/register'];
-  if (hideRoutes.includes(pathname)) {
-    return null;
-  }
 
   return (
     <nav className="flex items-center justify-between px-4 py-2 bg-slate-800 text-white">
