@@ -18,7 +18,7 @@ export default function Navbar() {
       <Link href="/" className="font-semibold">
         Hualas Club
       </Link>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-[5ch]">
         <Link href="/">Home</Link>
         {session && <Link href="/chat">Chat</Link>}
         {session ? (
