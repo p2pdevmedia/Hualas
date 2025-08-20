@@ -19,6 +19,7 @@ model User {
   messages            Message[]
   conversations       ConversationParticipant[]
   passwordResetTokens PasswordResetToken[]
+  formResponses       FormResponse[]
 }
 
 model PasswordResetToken {
@@ -57,6 +58,34 @@ model Message {
   body           String
   readAt         DateTime?
   createdAt      DateTime     @default(now())
+}
+
+model Form {
+  id        String       @id @default(cuid())
+  title     String
+  fields    FormField[]
+  responses FormResponse[]
+  createdAt DateTime     @default(now())
+}
+
+model FormField {
+  id      String @id @default(cuid())
+  formId  String
+  form    Form   @relation(fields: [formId], references: [id])
+  label   String
+  type    String
+  options Json?
+  order   Int
+}
+
+model FormResponse {
+  id        String @id @default(cuid())
+  formId    String
+  form      Form   @relation(fields: [formId], references: [id])
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+  data      Json
+  createdAt DateTime @default(now())
 }
 
 enum Role {
