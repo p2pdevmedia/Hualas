@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -27,7 +28,12 @@ export default async function ActivitiesPage() {
 
   return (
     <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Activities</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Activities</h1>
+        <Link href="/activities/new">
+          <Button>Crear actividad</Button>
+        </Link>
+      </div>
       <ul className="space-y-4">
         {activities.map((activity) => (
           <li key={activity.id} className="border p-4">
