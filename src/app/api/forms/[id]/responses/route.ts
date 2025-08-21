@@ -22,3 +22,21 @@ export async function POST(
   });
   return NextResponse.json(response);
 }
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const responses = await prisma.formResponse.findMany({
+    where: { formId: params.id },
+    include: {
+      user: { select: { name: true, email: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  return NextResponse.json(responses);
+}
