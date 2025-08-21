@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
+import PaymentHandler from './payment-handler';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
@@ -38,6 +39,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <main className="p-4">
+      <PaymentHandler activityId={activity.id} />
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
       {session?.user.role === 'ADMIN' && (
         <Link
@@ -58,9 +60,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
       <p className="mb-2">
-        Frecuencia: {
-          frequencyLabels[activity.frequency as keyof typeof frequencyLabels]
-        }
+        Frecuencia:{' '}
+        {frequencyLabels[activity.frequency as keyof typeof frequencyLabels]}
       </p>
       <p className="mb-4">{activity.description}</p>
       <p className="mb-4 font-semibold">Precio: ${activity.price}</p>
