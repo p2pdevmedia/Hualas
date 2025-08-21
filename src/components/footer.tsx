@@ -7,7 +7,13 @@ export default function Footer() {
       <p className="mt-2">
         ¡Seguinos en Instagram!
         <br />
-        @hualas_patagonico
+        <a
+          href="https://www.instagram.com/hualas_patagonico/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          @hualas_patagonico
+        </a>
       </p>
       <p className="mt-2">
         Club Social y Deportivo Hualas Patagónico.
