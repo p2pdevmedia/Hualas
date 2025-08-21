@@ -24,6 +24,7 @@ export default function Navbar() {
         <Link href="/activities">Activities</Link>
         <Link href="/contact">Contacto</Link>
         {session && <Link href="/chat">Chat</Link>}
+        {session && <Link href="/profile">Profile</Link>}
         {session?.user.role === 'ADMIN' && (
           <>
             <Link href="/admin/users">Users</Link>
