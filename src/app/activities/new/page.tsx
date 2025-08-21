@@ -1,10 +1,17 @@
-'use client';
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+import CreateActivityForm from './form';
+
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export default function CreateActivityPage() {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'ADMIN') {
+    redirect('/');
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
@@ -27,6 +34,7 @@ export default function CreateActivityPage() {
     router.push('/activities');
     router.refresh();
   };
+
 
   return (
     <main className="p-4">
@@ -70,6 +78,7 @@ export default function CreateActivityPage() {
         </select>
         <Button type="submit">Guardar</Button>
       </form>
+
     </main>
   );
 }
