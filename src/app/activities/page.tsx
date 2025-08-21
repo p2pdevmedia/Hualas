@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
 export default async function ActivitiesPage() {
-  const activities = await prisma.event.findMany({
+  const activities = await prisma.activity.findMany({
     include: { participants: true },
     orderBy: { date: 'asc' },
   });

@@ -6,7 +6,7 @@ interface ActivityPageProps {
 }
 
 export default async function ActivityPage({ params }: ActivityPageProps) {
-  const activity = await prisma.event.findUnique({
+  const activity = await prisma.activity.findUnique({
     where: { id: params.id },
     include: { participants: true },
   });
