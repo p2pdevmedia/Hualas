@@ -19,7 +19,10 @@ export default async function ActivitiesPage() {
     activities = [];
   }
 
-  const frequencyLabels: Record<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME', string> = {
+  const frequencyLabels: Record<
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME',
+    string
+  > = {
     DAILY: 'Diaria',
     WEEKLY: 'Semanal',
     MONTHLY: 'Mensual',
@@ -28,7 +31,7 @@ export default async function ActivitiesPage() {
 
   return (
     <main className="p-4">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <ActivitiesHeading />
         {session?.user.role === 'ADMIN' && (
           <Link href="/activities/new">

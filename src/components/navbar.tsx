@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import type { SiteSettings } from '@/types/site';
 import {
@@ -22,6 +24,7 @@ export default function Navbar({
   const { data: session } = useSession();
   const t = useTranslation().nav;
   const { lang, setLang } = useLang();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const logoUrl = settings?.logo
     ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
@@ -29,20 +32,31 @@ export default function Navbar({
 
   return (
     <nav
-      className="flex items-center justify-between px-4 py-2 text-white"
+      className="flex flex-col px-4 py-2 text-white"
       style={{ backgroundColor: settings?.navbarColor || '#1e293b' }}
     >
-      <Link href="/" className="flex items-center gap-2">
-        <Image
-          src={logoUrl}
-          alt="Hualas Club logo"
-          width={40}
-          height={40}
-          unoptimized
-        />
-        <span className="font-semibold">Hualas Patagónico</span>
-      </Link>
-      <div className="flex items-center gap-[5ch]">
+      <div className="flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src={logoUrl}
+            alt="Hualas Club logo"
+            width={40}
+            height={40}
+            unoptimized
+          />
+          <span className="font-semibold">Hualas Patagónico</span>
+        </Link>
+        <button
+          className="md:hidden"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Toggle menu"
+        >
+          <Menu />
+        </button>
+      </div>
+      <div
+        className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-2 mt-2 md:mt-0 md:flex md:flex-row md:items-center md:gap-[5ch]`}
+      >
         <Link href="/">{t.home}</Link>
         <Link href="/activities">{t.activities}</Link>
         <Link href="/contact">{t.contact}</Link>

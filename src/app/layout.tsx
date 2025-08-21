@@ -1,10 +1,16 @@
 import './globals.css';
 import type { ReactNode } from 'react';
+import type { Viewport } from 'next';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
 import { prisma } from '@/lib/prisma';
 import type { SiteSettings } from '@/types/site';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export async function generateMetadata() {
   const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });
