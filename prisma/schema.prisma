@@ -82,8 +82,8 @@ model FormResponse {
   id        String @id @default(cuid())
   formId    String
   form      Form   @relation(fields: [formId], references: [id])
-  userId    String
-  user      User   @relation(fields: [userId], references: [id])
+  userId    String?
+  user      User?  @relation(fields: [userId], references: [id])
   data      Json
   createdAt DateTime @default(now())
 }

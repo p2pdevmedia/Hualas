@@ -9,15 +9,12 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
   const { data } = formResponseSchema.parse(await req.json());
   const response = await prisma.formResponse.create({
     data: {
       formId: params.id,
-      userId: session.user.id,
       data,
+      ...(session ? { userId: session.user.id } : {}),
     },
   });
   return NextResponse.json(response);

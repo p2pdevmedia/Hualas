@@ -33,7 +33,7 @@ export default async function FormResponsesPage({
       <ul className="space-y-2">
         {form.responses.map((r) => (
           <li key={r.id} className="border p-2">
-            {r.user.name || r.user.email}
+            {r.user?.name || r.user?.email || 'Anonymous'}
           </li>
         ))}
       </ul>
