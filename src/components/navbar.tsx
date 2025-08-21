@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+import LanguageSwitcher from './language-switcher';
+import { useLanguage } from '@/lib/language-context';
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const { t } = useLanguage();
 
   return (
     <nav className="flex items-center justify-between px-4 py-2 bg-slate-800 text-white">
@@ -20,14 +23,14 @@ export default function Navbar() {
         <span className="font-semibold">Hualas Patagónico</span>
       </Link>
       <div className="flex items-center gap-[5ch]">
-        <Link href="/">Home</Link>
-        <Link href="/activities">Activities</Link>
-        <Link href="/contact">Contacto</Link>
-        {session && <Link href="/chat">Chat</Link>}
+        <Link href="/">{t('home')}</Link>
+        <Link href="/activities">{t('activities')}</Link>
+        <Link href="/contact">{t('contact')}</Link>
+        {session && <Link href="/chat">{t('chat')}</Link>}
         {session?.user.role === 'ADMIN' && (
           <>
-            <Link href="/admin/users">Users</Link>
-            <Link href="/admin/forms">Forms</Link>
+            <Link href="/admin/users">{t('users')}</Link>
+            <Link href="/admin/forms">{t('forms')}</Link>
           </>
         )}
         {session ? (
@@ -35,19 +38,21 @@ export default function Navbar() {
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="hover:underline"
           >
-            Logout
+            {t('logout')}
           </button>
         ) : (
           <>
             <Link href="/login" className="hover:underline">
-              Login
+              {t('login')}
             </Link>
             <Link href="/register" className="hover:underline">
-              Register
+              {t('register')}
             </Link>
           </>
         )}
+        <LanguageSwitcher />
       </div>
     </nav>
   );
 }
+
