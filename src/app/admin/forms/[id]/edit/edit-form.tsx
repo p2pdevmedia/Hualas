@@ -7,6 +7,7 @@ type Field = {
   label: string;
   type: string;
   options: string[];
+  required: boolean;
 };
 
 export default function EditForm({ form }: { form: any }) {
@@ -16,12 +17,16 @@ export default function EditForm({ form }: { form: any }) {
       label: f.label,
       type: f.type,
       options: Array.isArray(f.options) ? f.options : [],
+      required: f.required ?? false,
     }))
   );
   const router = useRouter();
 
   const addField = () => {
-    setFields([...fields, { label: '', type: 'text', options: [] }]);
+    setFields([
+      ...fields,
+      { label: '', type: 'text', options: [], required: false },
+    ]);
   };
 
   const updateField = (index: number, key: keyof Field, value: any) => {
@@ -84,6 +89,15 @@ export default function EditForm({ form }: { form: any }) {
               <option value="number">Number</option>
               <option value="select">Select</option>
             </select>
+            <label className="inline-flex items-center mb-1">
+              <input
+                type="checkbox"
+                className="mr-1"
+                checked={f.required}
+                onChange={(e) => updateField(i, 'required', e.target.checked)}
+              />
+              Required
+            </label>
             {f.type === 'select' && (
               <div className="space-y-1">
                 {f.options.map((opt, j) => (

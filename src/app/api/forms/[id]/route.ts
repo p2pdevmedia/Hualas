@@ -37,6 +37,7 @@ export async function PUT(
           label: f.label,
           type: f.type,
           options: f.options ? f.options : undefined,
+          required: f.required,
           order: index,
         })),
       },
