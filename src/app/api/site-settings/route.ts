@@ -2,8 +2,27 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+const PINATA_JWT = process.env.PINATA_JWT;
+
+async function uploadToPinata(file: File) {
+  if (!PINATA_JWT) {
+    throw new Error('PINATA_JWT is not set');
+  }
+  const formData = new FormData();
+  formData.append('file', file, file.name);
+  const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${PINATA_JWT}`,
+    },
+    body: formData,
+  });
+  if (!res.ok) {
+    throw new Error('Failed to upload file to Pinata');
+  }
+  const json = await res.json();
+  return json.IpfsHash as string;
+}
 
 export async function GET() {
   const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });
@@ -22,26 +41,17 @@ export async function POST(req: Request) {
   const footerColor = data.get('footerColor') as string;
   const backgroundColor = data.get('backgroundColor') as string;
 
-  let logoPath: string | undefined;
-  let faviconPath: string | undefined;
-
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  await mkdir(uploadDir, { recursive: true });
+  let logoHash: string | undefined;
+  let faviconHash: string | undefined;
 
   const logoFile = data.get('logo') as File | null;
   if (logoFile && logoFile.size > 0) {
-    const buffer = Buffer.from(await logoFile.arrayBuffer());
-    const filename = `logo-${Date.now()}${path.extname(logoFile.name)}`;
-    await writeFile(path.join(uploadDir, filename), buffer);
-    logoPath = `/uploads/${filename}`;
+    logoHash = await uploadToPinata(logoFile);
   }
 
   const faviconFile = data.get('favicon') as File | null;
   if (faviconFile && faviconFile.size > 0) {
-    const buffer = Buffer.from(await faviconFile.arrayBuffer());
-    const filename = `favicon-${Date.now()}${path.extname(faviconFile.name)}`;
-    await writeFile(path.join(uploadDir, filename), buffer);
-    faviconPath = `/uploads/${filename}`;
+    faviconHash = await uploadToPinata(faviconFile);
   }
 
   const settings = await prisma.siteSetting.upsert({
@@ -50,16 +60,16 @@ export async function POST(req: Request) {
       navbarColor,
       footerColor,
       backgroundColor,
-      ...(logoPath && { logo: logoPath }),
-      ...(faviconPath && { favicon: faviconPath }),
+      ...(logoHash && { logo: logoHash }),
+      ...(faviconHash && { favicon: faviconHash }),
     },
     create: {
       id: 1,
       navbarColor,
       footerColor,
       backgroundColor,
-      logo: logoPath ?? null,
-      favicon: faviconPath ?? null,
+      logo: logoHash ?? null,
+      favicon: faviconHash ?? null,
     },
   });
 

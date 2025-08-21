@@ -23,6 +23,10 @@ export default function Navbar({
   const t = useTranslation().nav;
   const { lang, setLang } = useLang();
 
+  const logoUrl = settings?.logo
+    ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
+    : defaultLogo;
+
   return (
     <nav
       className="flex items-center justify-between px-4 py-2 text-white"
@@ -30,7 +34,7 @@ export default function Navbar({
     >
       <Link href="/" className="flex items-center gap-2">
         <Image
-          src={settings?.logo || defaultLogo}
+          src={logoUrl}
           alt="Hualas Club logo"
           width={40}
           height={40}
