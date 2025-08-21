@@ -106,6 +106,8 @@ model ActivityParticipant {
   id      String @id @default(cuid())
   activityId String
   userId  String
+  receipt String?
+  receiptDate DateTime?
   activity   Activity @relation(fields: [activityId], references: [id])
   user    User  @relation(fields: [userId], references: [id])
 
