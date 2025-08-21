@@ -114,6 +114,13 @@ model ActivityParticipant {
   @@unique([activityId, userId])
 }
 
+model MercadoPagoNotification {
+  id        String   @id @default(cuid())
+  topic     String
+  data      Json
+  createdAt DateTime @default(now())
+}
+
 model SiteSetting {
   id              Int    @id
   logo            String?
