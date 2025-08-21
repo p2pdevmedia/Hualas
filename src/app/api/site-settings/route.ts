@@ -18,7 +18,14 @@ async function uploadToPinata(file: File) {
     body: formData,
   });
   if (!res.ok) {
-    throw new Error('Failed to upload file to Pinata');
+    let message = `Failed to upload file to Pinata: ${res.status} ${res.statusText}`;
+    try {
+      const errorBody = await res.text();
+      if (errorBody) message += ` - ${errorBody}`;
+    } catch {
+      // ignore body parsing errors
+    }
+    throw new Error(message);
   }
   const json = await res.json();
   return json.IpfsHash as string;
@@ -35,43 +42,51 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const data = await req.formData();
+  try {
+    const data = await req.formData();
 
-  const navbarColor = data.get('navbarColor') as string;
-  const footerColor = data.get('footerColor') as string;
-  const backgroundColor = data.get('backgroundColor') as string;
+    const navbarColor = data.get('navbarColor') as string;
+    const footerColor = data.get('footerColor') as string;
+    const backgroundColor = data.get('backgroundColor') as string;
 
-  let logoHash: string | undefined;
-  let faviconHash: string | undefined;
+    let logoHash: string | undefined;
+    let faviconHash: string | undefined;
 
-  const logoFile = data.get('logo') as File | null;
-  if (logoFile && logoFile.size > 0) {
-    logoHash = await uploadToPinata(logoFile);
+    const logoFile = data.get('logo') as File | null;
+    if (logoFile && logoFile.size > 0) {
+      logoHash = await uploadToPinata(logoFile);
+    }
+
+    const faviconFile = data.get('favicon') as File | null;
+    if (faviconFile && faviconFile.size > 0) {
+      faviconHash = await uploadToPinata(faviconFile);
+    }
+
+    const settings = await prisma.siteSetting.upsert({
+      where: { id: 1 },
+      update: {
+        navbarColor,
+        footerColor,
+        backgroundColor,
+        ...(logoHash && { logo: logoHash }),
+        ...(faviconHash && { favicon: faviconHash }),
+      },
+      create: {
+        id: 1,
+        navbarColor,
+        footerColor,
+        backgroundColor,
+        logo: logoHash ?? null,
+        favicon: faviconHash ?? null,
+      },
+    });
+
+    return NextResponse.json(settings);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
-
-  const faviconFile = data.get('favicon') as File | null;
-  if (faviconFile && faviconFile.size > 0) {
-    faviconHash = await uploadToPinata(faviconFile);
-  }
-
-  const settings = await prisma.siteSetting.upsert({
-    where: { id: 1 },
-    update: {
-      navbarColor,
-      footerColor,
-      backgroundColor,
-      ...(logoHash && { logo: logoHash }),
-      ...(faviconHash && { favicon: faviconHash }),
-    },
-    create: {
-      id: 1,
-      navbarColor,
-      footerColor,
-      backgroundColor,
-      logo: logoHash ?? null,
-      favicon: faviconHash ?? null,
-    },
-  });
-
-  return NextResponse.json(settings);
 }
