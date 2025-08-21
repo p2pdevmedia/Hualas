@@ -20,6 +20,7 @@ export default function Navbar() {
       </Link>
       <div className="flex items-center gap-[5ch]">
         <Link href="/">Home</Link>
+        <Link href="/activities">Actividades</Link>
         {session && <Link href="/chat">Chat</Link>}
         {session?.user.role === 'ADMIN' && (
           <>
