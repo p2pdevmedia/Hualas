@@ -9,18 +9,30 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   async function submit() {
+    setError('');
+    setSuccess('');
     const parsed = registerSchema.safeParse({ email, password, name });
     if (!parsed.success) {
       setError('Invalid data');
       return;
     }
-    await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
-    });
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed.data),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSuccess('Registration successful');
+      setEmail('');
+      setPassword('');
+      setName('');
+    } catch (e) {
+      setError('Registration failed');
+    }
   }
 
   return (
@@ -45,6 +57,7 @@ export default function RegisterPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button className="w-full" onClick={submit}>
         Register
       </Button>

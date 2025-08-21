@@ -21,6 +21,8 @@ export default function EditForm({ form }: { form: any }) {
     }))
   );
   const router = useRouter();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const addField = () => {
     setFields([
@@ -53,12 +55,22 @@ export default function EditForm({ form }: { form: any }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch(`/api/forms/${form.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, fields }),
-    });
-    router.push('/admin/forms');
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/forms/${form.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, fields }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSuccess('Form updated');
+      setTimeout(() => {
+        router.push('/admin/forms');
+      }, 1000);
+    } catch (e) {
+      setError('Failed to update form');
+    }
   };
 
   return (
@@ -128,6 +140,8 @@ export default function EditForm({ form }: { form: any }) {
       >
         Add field
       </button>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-600 text-sm">{success}</p>}
       <button type="submit" className="px-4 py-2 bg-blue-600 text-white">
         Save Form
       </button>
