@@ -8,18 +8,18 @@ datasource db {
 }
 
 model User {
-  id                   String                    @id @default(cuid())
-  email                String                    @unique
-  name                 String?
-  password             String
-  role                 Role                      @default(MEMBER)
-  isActive             Boolean                   @default(true)
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  messages             Message[]
-  conversations        ConversationParticipant[]
-  passwordResetTokens  PasswordResetToken[]
-  formResponses        FormResponse[]
+  id                  String                    @id @default(cuid())
+  email               String                    @unique
+  name                String?
+  password            String
+  role                Role                      @default(MEMBER)
+  isActive            Boolean                   @default(true)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  messages            Message[]
+  conversations       ConversationParticipant[]
+  passwordResetTokens PasswordResetToken[]
+  formResponses       FormResponse[]
   activityParticipants ActivityParticipant[]
 }
 
@@ -62,58 +62,58 @@ model Message {
 }
 
 model Form {
-  id        String         @id @default(cuid())
+  id        String       @id @default(cuid())
   title     String
   fields    FormField[]
   responses FormResponse[]
-  createdAt DateTime       @default(now())
+  createdAt DateTime     @default(now())
 }
 
 model FormField {
-  id       String  @id @default(cuid())
-  formId   String
-  form     Form    @relation(fields: [formId], references: [id])
-  label    String
-  type     String
-  options  Json?
+  id      String @id @default(cuid())
+  formId  String
+  form    Form   @relation(fields: [formId], references: [id])
+  label   String
+  type    String
+  options Json?
   required Boolean @default(false)
-  order    Int
+  order   Int
 }
 
 model FormResponse {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   formId    String
-  form      Form     @relation(fields: [formId], references: [id])
+  form      Form   @relation(fields: [formId], references: [id])
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?  @relation(fields: [userId], references: [id])
   data      Json
   createdAt DateTime @default(now())
 }
 
 model Activity {
-  id           String                @id @default(cuid())
-  name         String
-  date         DateTime
-  frequency    ActivityFrequency     @default(ONE_TIME)
-  image        String?
-  description  String?
-  price        Int                   @default(0)
+  id          String             @id @default(cuid())
+  name        String
+  date        DateTime
+  frequency   ActivityFrequency @default(ONE_TIME)
+  image       String?
+  description String?
+  price       Int                @default(0)
   participants ActivityParticipant[]
-  createdAt    DateTime              @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model ActivityParticipant {
-  id         String   @id @default(cuid())
+  id      String @id @default(cuid())
   activityId String
-  userId     String
+  userId  String
   activity   Activity @relation(fields: [activityId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  user    User  @relation(fields: [userId], references: [id])
 
   @@unique([activityId, userId])
 }
 
 model SiteSetting {
-  id              Int     @id
+  id              Int    @id
   logo            String? @db.Text
   favicon         String? @db.Text
   navbarColor     String?
