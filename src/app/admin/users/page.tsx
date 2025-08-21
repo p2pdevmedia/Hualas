@@ -25,6 +25,12 @@ export default async function UsersPage() {
               {u.name ?? 'Unnamed'} ({u.email}) - {u.role}
             </span>
             <Link
+              href={`/admin/users/${u.id}/view`}
+              className="text-blue-600 hover:underline"
+            >
+              View
+            </Link>
+            <Link
               href={`/admin/users/${u.id}`}
               className="text-blue-600 hover:underline"
             >
