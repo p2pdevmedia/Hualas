@@ -15,6 +15,16 @@ export default function CreateActivityForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -65,10 +75,9 @@ export default function CreateActivityForm() {
         className="w-full border px-2 py-1"
       />
       <input
-        type="url"
-        placeholder="URL de la imagen"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
+        type="file"
+        accept="image/*"
+        onChange={handleImageChange}
         className="w-full border px-2 py-1"
       />
       <select

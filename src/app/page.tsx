@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -34,11 +34,9 @@ export default async function Home() {
         {activities.map((activity) => (
           <li key={activity.id} className="flex flex-col border p-4">
             {activity.image && (
-              <Image
+              <img
                 src={activity.image}
                 alt={activity.name}
-                width={800}
-                height={600}
                 className="mb-2 max-w-full"
               />
             )}
