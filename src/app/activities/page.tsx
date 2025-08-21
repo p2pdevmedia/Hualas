@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
 import { Button } from '@/components/ui/button';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -9,6 +11,8 @@ export default async function ActivitiesPage() {
   }>;
 
   let activities: ActivityWithParticipants[] = [];
+
+  const session = await getServerSession(authOptions);
 
   try {
     activities = await prisma.activity.findMany({
@@ -30,9 +34,11 @@ export default async function ActivitiesPage() {
     <main className="p-4">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Activities</h1>
-        <Link href="/activities/new">
-          <Button>Crear actividad</Button>
-        </Link>
+        {session?.user.role === 'ADMIN' && (
+          <Link href="/activities/new">
+            <Button>Crear actividad</Button>
+          </Link>
+        )}
       </div>
       <ul className="space-y-4">
         {activities.map((activity) => (
