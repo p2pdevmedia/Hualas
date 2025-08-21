@@ -3,15 +3,26 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+import type { SiteSettings } from '@/types/site';
 
-export default function Navbar() {
+const defaultLogo =
+  'https://lh6.googleusercontent.com/hX1qgSPLZYte1_e1xQwiDdMTxlxH3h1isoxUqgXoFnylzCCyiLC8q9dvMSSM-cbtHBdkrl_wlkqyknspAH12YnDAIEIdo5fmegdteoOHIUNEK_nu_0fHbE6J6S5WtghSXZiqIPcd1A=w16383';
+
+export default function Navbar({
+  settings,
+}: {
+  settings: SiteSettings | null;
+}) {
   const { data: session } = useSession();
 
   return (
-    <nav className="flex items-center justify-between px-4 py-2 bg-slate-800 text-white">
+    <nav
+      className="flex items-center justify-between px-4 py-2 text-white"
+      style={{ backgroundColor: settings?.navbarColor || '#1e293b' }}
+    >
       <Link href="/" className="flex items-center gap-2">
         <Image
-          src="https://lh6.googleusercontent.com/hX1qgSPLZYte1_e1xQwiDdMTxlxH3h1isoxUqgXoFnylzCCyiLC8q9dvMSSM-cbtHBdkrl_wlkqyknspAH12YnDAIEIdo5fmegdteoOHIUNEK_nu_0fHbE6J6S5WtghSXZiqIPcd1A=w16383"
+          src={settings?.logo || defaultLogo}
           alt="Hualas Club logo"
           width={40}
           height={40}
@@ -28,6 +39,7 @@ export default function Navbar() {
           <>
             <Link href="/admin/users">Users</Link>
             <Link href="/admin/forms">Forms</Link>
+            <Link href="/admin/site">Site Administrator</Link>
           </>
         )}
         {session ? (
