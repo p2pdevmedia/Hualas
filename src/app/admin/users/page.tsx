@@ -7,12 +7,15 @@ import DeleteUserButton from './delete-button';
 
 export default async function UsersPage() {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
 
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, lastName: true, email: true, role: true },
   });
 
   return (
@@ -22,7 +25,7 @@ export default async function UsersPage() {
         {users.map((u) => (
           <li key={u.id} className="flex items-center gap-2">
             <span className="flex-1">
-              {u.name ?? 'Unnamed'} ({u.email}) - {u.role}
+              {u.name} {u.lastName} ({u.email}) - {u.role}
             </span>
             <Link
               href={`/admin/users/${u.id}/view`}

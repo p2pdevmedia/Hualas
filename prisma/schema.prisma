@@ -11,6 +11,13 @@ model User {
   id                  String                    @id @default(cuid())
   email               String                    @unique
   name                String?
+  lastName            String?
+  dni                 String?                   @unique
+  birthDate           DateTime?
+  gender              Gender?
+  address             String?
+  nationality         String?
+  maritalStatus       String?
   password            String
   role                Role                      @default(MEMBER)
   isActive            Boolean                   @default(true)
@@ -21,6 +28,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   formResponses       FormResponse[]
   activityParticipants ActivityParticipant[]
+  children            Child[]
 }
 
 model PasswordResetToken {
@@ -106,12 +114,24 @@ model ActivityParticipant {
   id      String @id @default(cuid())
   activityId String
   userId  String
+  childId String?
   receipt String?
   receiptDate DateTime?
   activity   Activity @relation(fields: [activityId], references: [id])
   user    User  @relation(fields: [userId], references: [id])
+  child   Child? @relation(fields: [childId], references: [id])
 
-  @@unique([activityId, userId])
+  @@unique([activityId, userId, childId])
+}
+
+model Child {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  birthDate DateTime?
+  createdAt DateTime @default(now())
+  activityParticipants ActivityParticipant[]
 }
 
 model SiteSetting {
@@ -134,4 +154,12 @@ enum ActivityFrequency {
   WEEKLY
   MONTHLY
   ONE_TIME
+}
+
+enum Gender {
+  FEMALE
+  MALE
+  NON_BINARY
+  UNDISCLOSED
+  OTHER
 }

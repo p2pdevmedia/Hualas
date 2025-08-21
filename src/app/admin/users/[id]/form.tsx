@@ -5,10 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
-type User = { id: string; name: string | null; email: string; role: string };
+type User = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+  role: string;
+};
 
 export default function EditUserForm({ user }: { user: User }) {
   const [name, setName] = useState(user.name ?? '');
+  const [lastName, setLastName] = useState(user.lastName ?? '');
   const [role, setRole] = useState(user.role);
   const router = useRouter();
   const [error, setError] = useState('');
@@ -21,7 +28,7 @@ export default function EditUserForm({ user }: { user: User }) {
     setError('');
     setSuccess('');
     try {
-      const body: any = { name };
+      const body: any = { name, lastName };
       if (canEditRole) body.role = role;
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
@@ -45,7 +52,13 @@ export default function EditUserForm({ user }: { user: User }) {
         className="w-full border px-2 py-1"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
+        placeholder="Nombre"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        placeholder="Apellido"
       />
       {canEditRole && (
         <select

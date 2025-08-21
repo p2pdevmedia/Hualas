@@ -10,12 +10,15 @@ export default async function EditUserPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
   const user = await prisma.user.findUnique({
     where: { id: params.id },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, lastName: true, email: true, role: true },
   });
   if (!user) {
     redirect('/admin/users');

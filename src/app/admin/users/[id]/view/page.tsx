@@ -10,14 +10,17 @@ export default async function ViewUserPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
 
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
-      activityParticipants: { include: { activity: true } },
+      activityParticipants: { include: { activity: true, child: true } },
       conversations: {
         include: {
           conversation: {
@@ -42,7 +45,9 @@ export default async function ViewUserPage({
   return (
     <div className="p-4 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">{user.name ?? 'Unnamed'}</h1>
+        <h1 className="text-2xl font-bold">
+          {user.name} {user.lastName}
+        </h1>
         <p>Email: {user.email}</p>
         <p>Role: {user.role}</p>
       </div>
@@ -57,6 +62,7 @@ export default async function ViewUserPage({
               <li key={ap.id}>
                 {ap.activity.name} - {ap.activity.date.toLocaleDateString()} - $
                 {ap.activity.price}
+                {ap.child && ` - ${ap.child.name}`}
                 {ap.receipt && (
                   <a
                     href={ap.receipt}
@@ -81,7 +87,12 @@ export default async function ViewUserPage({
               const conv = cp.conversation;
               const others = conv.participants
                 .filter((p) => p.userId !== user.id)
-                .map((p) => p.user.name ?? 'Unnamed')
+                .map(
+                  (p) =>
+                    `${p.user.name ?? 'Unnamed'}${
+                      p.user.lastName ? ' ' + p.user.lastName : ''
+                    }`
+                )
                 .join(', ');
               const last = conv.messages[0];
               return (
@@ -91,7 +102,11 @@ export default async function ViewUserPage({
                     <span className="block text-sm text-gray-600">
                       {last.senderId === user.id
                         ? 'You'
-                        : (last.sender?.name ?? 'Unknown')}
+                        : `${last.sender?.name ?? 'Unknown'}${
+                            last.sender?.lastName
+                              ? ' ' + last.sender.lastName
+                              : ''
+                          }`}
                       : {last.body}
                     </span>
                   )}

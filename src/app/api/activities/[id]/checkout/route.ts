@@ -12,6 +12,8 @@ export async function GET(
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const searchParams = new URL(req.url).searchParams;
+  const childId = searchParams.get('childId');
   const activity: any = await prisma.activity.findUnique({
     where: { id: params.id },
   });
@@ -33,11 +35,11 @@ export async function GET(
           unit_price: Number(activity.price),
         },
       ],
-      back_urls: {
-        success: `${process.env.NEXTAUTH_URL}/activities/${activity.id}`,
-        failure: `${process.env.NEXTAUTH_URL}/activities/${activity.id}`,
-        pending: `${process.env.NEXTAUTH_URL}/activities/${activity.id}`,
-      },
+      back_urls: (() => {
+        const base = `${process.env.NEXTAUTH_URL}/activities/${activity.id}`;
+        const url = childId ? `${base}?childId=${childId}` : base;
+        return { success: url, failure: url, pending: url };
+      })(),
       auto_return: 'approved',
     },
   });
