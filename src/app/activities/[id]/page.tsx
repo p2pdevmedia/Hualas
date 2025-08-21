@@ -8,7 +8,11 @@ interface ActivityPageProps {
 }
 
 export default async function ActivityPage({ params }: ActivityPageProps) {
-  let activity = null as Awaited<ReturnType<typeof prisma.activity.findUnique>>;
+  type ActivityWithParticipants = Prisma.ActivityGetPayload<{
+    include: { participants: true };
+  }>;
+
+  let activity: ActivityWithParticipants | null = null;
   try {
     activity = await prisma.activity.findUnique({
       where: { id: params.id },

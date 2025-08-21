@@ -3,7 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
 export default async function ActivitiesPage() {
-  let activities = [] as Awaited<ReturnType<typeof prisma.activity.findMany>>;
+  type ActivityWithParticipants = Prisma.ActivityGetPayload<{
+    include: { participants: true };
+  }>;
+
+  let activities: ActivityWithParticipants[] = [];
 
   try {
     activities = await prisma.activity.findMany({
