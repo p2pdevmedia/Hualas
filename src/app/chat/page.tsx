@@ -35,14 +35,29 @@ export default function ChatPage() {
     if (!session) return;
     socket.auth = { userId: session.user.id, role: session.user.role };
     socket.connect();
-    socket.on('message', (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
-    });
     return () => {
-      socket.off('message');
       socket.disconnect();
     };
   }, [session]);
+
+  useEffect(() => {
+    const handler = (msg: Message) => {
+      if (msg.from === recipient) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    };
+    socket.on('message', handler);
+    return () => {
+      socket.off('message', handler);
+    };
+  }, [recipient]);
+
+  useEffect(() => {
+    if (!recipient) return;
+    fetch(`/api/messages/${recipient}`)
+      .then((res) => res.json())
+      .then((data: Message[]) => setMessages(data));
+  }, [recipient]);
 
   const selectableUsers = session
     ? session.user.role === 'ADMIN'
