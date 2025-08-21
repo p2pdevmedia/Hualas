@@ -10,16 +10,28 @@ export default function EditUserForm({ user }: { user: User }) {
   const [name, setName] = useState(user.name ?? '');
   const [role, setRole] = useState(user.role);
   const router = useRouter();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    await fetch(`/api/users/${user.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, role }),
-    });
-    router.push('/admin/users');
-    router.refresh();
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, role }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSuccess('User updated');
+      setTimeout(() => {
+        router.push('/admin/users');
+        router.refresh();
+      }, 1000);
+    } catch (e) {
+      setError('Failed to update user');
+    }
   }
 
   return (
@@ -38,6 +50,8 @@ export default function EditUserForm({ user }: { user: User }) {
         <option value="ADMIN">ADMIN</option>
         <option value="MEMBER">MEMBER</option>
       </select>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button type="submit" className="w-full">
         Save
       </Button>

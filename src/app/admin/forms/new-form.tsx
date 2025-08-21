@@ -12,6 +12,8 @@ type Field = {
 export default function NewForm() {
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const addField = () => {
     setFields([
@@ -44,13 +46,21 @@ export default function NewForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch('/api/forms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, fields }),
-    });
-    setTitle('');
-    setFields([]);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, fields }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSuccess('Form saved');
+      setTitle('');
+      setFields([]);
+    } catch (e) {
+      setError('Failed to save form');
+    }
   };
 
   return (
@@ -120,6 +130,8 @@ export default function NewForm() {
       >
         Add field
       </button>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-600 text-sm">{success}</p>}
       <button type="submit" className="px-4 py-2 bg-blue-600 text-white">
         Save Form
       </button>

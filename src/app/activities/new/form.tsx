@@ -12,29 +12,41 @@ export default function CreateActivityForm() {
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
   const router = useRouter();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch('/api/activities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        date,
-        image,
-        description,
-        frequency,
-        price: Number(price),
-      }),
-    });
-    setName('');
-    setDate('');
-    setImage('');
-    setDescription('');
-    setPrice('');
-    setFrequency('ONE_TIME');
-    router.push('/activities');
-    router.refresh();
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          date,
+          image,
+          description,
+          frequency,
+          price: Number(price),
+        }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSuccess('Activity created');
+      setName('');
+      setDate('');
+      setImage('');
+      setDescription('');
+      setPrice('');
+      setFrequency('ONE_TIME');
+      setTimeout(() => {
+        router.push('/activities');
+        router.refresh();
+      }, 1000);
+    } catch (e) {
+      setError('Failed to create activity');
+    }
   };
 
   return (
@@ -86,6 +98,8 @@ export default function CreateActivityForm() {
         onChange={(e) => setPrice(e.target.value)}
         className="w-full border px-2 py-1"
       />
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button type="submit">Guardar</Button>
     </form>
   );
