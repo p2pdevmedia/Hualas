@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 export default function CreateActivityForm() {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
-  const [image, setImage] = useState('');
+  const [image, setImage] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
@@ -15,21 +15,22 @@ export default function CreateActivityForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('date', date);
+    formData.append('description', description);
+    formData.append('frequency', frequency);
+    formData.append('price', price);
+    if (image) {
+      formData.append('image', image);
+    }
     await fetch('/api/activities', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        date,
-        image,
-        description,
-        frequency,
-        price: Number(price),
-      }),
+      body: formData,
     });
     setName('');
     setDate('');
-    setImage('');
+    setImage(null);
     setDescription('');
     setPrice('');
     setFrequency('ONE_TIME');
@@ -53,10 +54,9 @@ export default function CreateActivityForm() {
         className="w-full border px-2 py-1"
       />
       <input
-        type="url"
-        placeholder="URL de la imagen"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImage(e.target.files?.[0] || null)}
         className="w-full border px-2 py-1"
       />
       <select
