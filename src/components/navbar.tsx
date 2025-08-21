@@ -15,6 +15,7 @@ export default function Navbar() {
           alt="Hualas Club logo"
           width={40}
           height={40}
+          unoptimized
         />
       </Link>
       <div className="flex items-center gap-[5ch]">
