@@ -5,7 +5,16 @@ const nextConfig = {
     appDir: true
   },
   images: {
-    domains: ['lh6.googleusercontent.com']
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**'
+      },
+      {
+        protocol: 'http',
+        hostname: '**'
+      }
+    ]
   }
 };
 
