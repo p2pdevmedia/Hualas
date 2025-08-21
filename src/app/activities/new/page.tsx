@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export default function CreateActivityPage() {
@@ -8,14 +9,21 @@ export default function CreateActivityPage() {
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ name, date, image, description });
+    await fetch('/api/activities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, date, image, description }),
+    });
     setName('');
     setDate('');
     setImage('');
     setDescription('');
+    router.push('/activities');
+    router.refresh();
   };
 
   return (
