@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import type { SiteSettings } from '@/types/site';
 import {
@@ -16,15 +16,18 @@ import type { Lang } from '@/lib/i18n';
 const defaultLogo =
   'https://lh6.googleusercontent.com/hX1qgSPLZYte1_e1xQwiDdMTxlxH3h1isoxUqgXoFnylzCCyiLC8q9dvMSSM-cbtHBdkrl_wlkqyknspAH12YnDAIEIdo5fmegdteoOHIUNEK_nu_0fHbE6J6S5WtghSXZiqIPcd1A=w16383';
 
-export default function Navbar({
-  settings,
-}: {
-  settings: SiteSettings | null;
-}) {
+export default function Navbar() {
   const { data: session } = useSession();
   const t = useTranslation().nav;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setSettings(data));
+  }, []);
 
   const logoUrl = settings?.logo
     ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
