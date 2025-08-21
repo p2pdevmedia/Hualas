@@ -11,7 +11,11 @@ export default async function FormsPage() {
     redirect('/');
   }
   const forms = await prisma.form.findMany({
-    select: { id: true, title: true },
+    select: {
+      id: true,
+      title: true,
+      _count: { select: { responses: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
   return (
@@ -25,7 +29,13 @@ export default async function FormsPage() {
           New Form
         </Link>
       </div>
-      <FormList forms={forms} />
+      <FormList
+        forms={forms.map((f) => ({
+          id: f.id,
+          title: f.title,
+          responseCount: f._count.responses,
+        }))}
+      />
     </div>
   );
 }

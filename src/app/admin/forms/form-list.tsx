@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 interface Form {
   id: string;
   title: string;
+  responseCount: number;
 }
 
 export default function FormList({ forms }: { forms: Form[] }) {
@@ -21,6 +22,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
       <thead>
         <tr>
           <th className="text-left p-2 border-b">Title</th>
+          <th className="text-left p-2 border-b">Responses</th>
           <th className="text-left p-2 border-b">Actions</th>
         </tr>
       </thead>
@@ -28,6 +30,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
         {forms.map((f) => (
           <tr key={f.id}>
             <td className="p-2 border-b">{f.title}</td>
+            <td className="p-2 border-b">{f.responseCount}</td>
             <td className="p-2 border-b space-x-2">
               <Link href={`/admin/forms/${f.id}`} className="text-blue-600">
                 View
@@ -37,6 +40,13 @@ export default function FormList({ forms }: { forms: Form[] }) {
                 className="text-blue-600"
               >
                 Edit
+              </Link>
+              <Link
+                href={`/forms/${f.id}`}
+                className="text-blue-600"
+                target="_blank"
+              >
+                Public
               </Link>
               <button
                 onClick={() => handleDelete(f.id)}
