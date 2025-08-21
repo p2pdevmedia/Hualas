@@ -15,7 +15,7 @@ export default async function EditActivityPage({
   if (!session || session.user.role !== 'ADMIN') {
     redirect('/');
   }
-  const activity = await prisma.activity.findUnique({
+  const activity: any = await prisma.activity.findUnique({
     where: { id: params.id },
   });
   if (!activity) {
@@ -32,6 +32,7 @@ export default async function EditActivityPage({
           frequency: activity.frequency,
           image: activity.image ?? '',
           description: activity.description ?? '',
+          price: activity.price,
         }}
       />
     </main>

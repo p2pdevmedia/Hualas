@@ -9,6 +9,7 @@ export default function CreateActivityForm() {
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
   const router = useRouter();
 
@@ -17,12 +18,20 @@ export default function CreateActivityForm() {
     await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, date, image, description, frequency }),
+      body: JSON.stringify({
+        name,
+        date,
+        image,
+        description,
+        frequency,
+        price: Number(price),
+      }),
     });
     setName('');
     setDate('');
     setImage('');
     setDescription('');
+    setPrice('');
     setFrequency('ONE_TIME');
     router.push('/activities');
     router.refresh();
@@ -68,6 +77,13 @@ export default function CreateActivityForm() {
         placeholder="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        className="w-full border px-2 py-1"
+      />
+      <input
+        type="number"
+        placeholder="Precio"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
         className="w-full border px-2 py-1"
       />
       <Button type="submit">Guardar</Button>

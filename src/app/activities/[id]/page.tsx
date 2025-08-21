@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { Button } from '@/components/ui/button';
+import RegisterButton from './register-button';
 import Image from 'next/image';
-import { Prisma } from '@prisma/client';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -11,25 +10,14 @@ interface ActivityPageProps {
 }
 
 export default async function ActivityPage({ params }: ActivityPageProps) {
-  type ActivityWithParticipants = Prisma.ActivityGetPayload<{
-    include: { participants: true };
-  }>;
-
-  let activity: ActivityWithParticipants | null = null;
+  let activity: any = null;
   try {
     activity = await prisma.activity.findUnique({
       where: { id: params.id },
       include: { participants: true },
     });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === 'P2021'
-    ) {
-      activity = null;
-    } else {
-      throw e;
-    }
+  } catch (e: any) {
+    activity = null;
   }
 
   if (!activity) {
@@ -39,7 +27,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const session = await getServerSession(authOptions);
 
   const frequencyLabels: Record<
-    ActivityWithParticipants['frequency'],
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME',
     string
   > = {
     DAILY: 'Diaria',
@@ -69,12 +57,17 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
-      <p className="mb-2">Frecuencia: {frequencyLabels[activity.frequency]}</p>
+      <p className="mb-2">
+        Frecuencia: {
+          frequencyLabels[activity.frequency as keyof typeof frequencyLabels]
+        }
+      </p>
       <p className="mb-4">{activity.description}</p>
+      <p className="mb-4 font-semibold">Precio: ${activity.price}</p>
       <p className="mb-4 font-semibold">
         {activity.participants.length} suscriptos
       </p>
-      <Button>Register</Button>
+      <RegisterButton activityId={activity.id} />
     </main>
   );
 }
