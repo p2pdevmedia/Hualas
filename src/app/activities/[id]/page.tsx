@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Prisma } from '@prisma/client';
+import { paymentTypeLabels } from '@/lib/payment-type';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -46,6 +47,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
+      <p className="mb-2">
+        Tipo de pago: {paymentTypeLabels[activity.paymentType]}
+      </p>
       <p className="mb-4">{activity.description}</p>
       <p className="mb-4 font-semibold">
         {activity.participants.length} participants

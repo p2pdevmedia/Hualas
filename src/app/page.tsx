@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { paymentTypeLabels } from '@/lib/payment-type';
 
 export default async function Home() {
   type ActivityWithParticipants = Prisma.ActivityGetPayload<{
@@ -35,7 +36,12 @@ export default async function Home() {
             key={activity.id}
             className="flex items-center justify-between border p-4"
           >
-            <span className="font-semibold">{activity.name}</span>
+            <div>
+              <span className="font-semibold">{activity.name}</span>
+              <p className="text-sm text-slate-600">
+                {paymentTypeLabels[activity.paymentType]}
+              </p>
+            </div>
             <Link href={`/activities/${activity.id}`}>
               <Button>Inscribirse</Button>
             </Link>

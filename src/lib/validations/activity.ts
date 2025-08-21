@@ -5,4 +5,5 @@ export const activityCreateSchema = z.object({
   date: z.string().transform((d) => new Date(d)),
   image: z.string().url().optional(),
   description: z.string().optional(),
+  paymentType: z.enum(['MONTHLY', 'WEEKLY', 'DAILY', 'ONE_TIME']),
 });

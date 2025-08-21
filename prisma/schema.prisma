@@ -95,6 +95,7 @@ model Activity {
   date        DateTime
   image       String?
   description String?
+  paymentType PaymentType       @default(ONE_TIME)
   participants ActivityParticipant[]
   createdAt   DateTime @default(now())
 }
@@ -107,6 +108,13 @@ model ActivityParticipant {
   user    User  @relation(fields: [userId], references: [id])
 
   @@unique([activityId, userId])
+}
+
+enum PaymentType {
+  MONTHLY
+  WEEKLY
+  DAILY
+  ONE_TIME
 }
 
 enum Role {

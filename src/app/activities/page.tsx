@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { paymentTypeLabels } from '@/lib/payment-type';
 
 export default async function ActivitiesPage() {
   type ActivityWithParticipants = Prisma.ActivityGetPayload<{
@@ -44,7 +45,8 @@ export default async function ActivitiesPage() {
               {activity.name}
             </Link>
             <p className="text-sm text-slate-600">
-              {activity.participants.length} participants
+              {activity.participants.length} participants ·{' '}
+              {paymentTypeLabels[activity.paymentType]}
             </p>
           </li>
         ))}

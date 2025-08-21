@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { paymentTypeOptions } from '@/lib/payment-type';
 
 export default function CreateActivityPage() {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [paymentType, setPaymentType] = useState('ONE_TIME');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,12 +18,13 @@ export default function CreateActivityPage() {
     await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, date, image, description }),
+      body: JSON.stringify({ name, date, image, description, paymentType }),
     });
     setName('');
     setDate('');
     setImage('');
     setDescription('');
+    setPaymentType('ONE_TIME');
     router.push('/activities');
     router.refresh();
   };
@@ -56,6 +59,17 @@ export default function CreateActivityPage() {
           onChange={(e) => setDescription(e.target.value)}
           className="w-full border px-2 py-1"
         />
+        <select
+          value={paymentType}
+          onChange={(e) => setPaymentType(e.target.value)}
+          className="w-full border px-2 py-1"
+        >
+          {paymentTypeOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
         <Button type="submit">Guardar</Button>
       </form>
     </main>
