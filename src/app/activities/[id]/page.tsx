@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
-import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Prisma } from '@prisma/client';
+import RegisterButton from '@/components/register-button';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -46,11 +46,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
+      <p className="mb-2">Price: ${activity.price.toNumber().toFixed(2)}</p>
       <p className="mb-4">{activity.description}</p>
       <p className="mb-4 font-semibold">
         {activity.participants.length} participants
       </p>
-      <Button>Register</Button>
+      <RegisterButton activityId={activity.id} />
     </main>
   );
 }

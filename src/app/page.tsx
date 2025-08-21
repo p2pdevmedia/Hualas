@@ -35,7 +35,9 @@ export default async function Home() {
             key={activity.id}
             className="flex items-center justify-between border p-4"
           >
-            <span className="font-semibold">{activity.name}</span>
+            <span className="font-semibold">
+              {activity.name} - ${activity.price.toNumber().toFixed(2)}
+            </span>
             <Link href={`/activities/${activity.id}`}>
               <Button>Inscribirse</Button>
             </Link>

@@ -41,7 +41,7 @@ export default async function ActivitiesPage() {
               href={`/activities/${activity.id}`}
               className="text-xl font-semibold"
             >
-              {activity.name}
+              {activity.name} - ${activity.price.toNumber().toFixed(2)}
             </Link>
             <p className="text-sm text-slate-600">
               {activity.participants.length} participants
