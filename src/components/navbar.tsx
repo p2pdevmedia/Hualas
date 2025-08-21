@@ -60,11 +60,8 @@ export default function Navbar() {
       <div
         className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-2 mt-2 md:mt-0 md:flex md:flex-row md:items-center md:gap-[5ch]`}
       >
-        <Link href="/">{t.home}</Link>
         <Link href="/activities">{t.activities}</Link>
-        <Link href="/contact">{t.contact}</Link>
         {session && <Link href="/chat">{t.chat}</Link>}
-        {session && <Link href="/profile">{t.profile}</Link>}
         {session?.user.role === 'ADMIN' && (
           <>
             <Link href="/admin/users">{t.users}</Link>
@@ -72,13 +69,17 @@ export default function Navbar() {
             <Link href="/admin/site">{t.admin}</Link>
           </>
         )}
+        <Link href="/contact">{t.contact}</Link>
         {session ? (
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="hover:underline"
-          >
-            {t.logout}
-          </button>
+          <>
+            <Link href="/profile">{t.profile}</Link>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="hover:underline"
+            >
+              {t.logout}
+            </button>
+          </>
         ) : (
           <>
             <Link href="/login" className="hover:underline">
