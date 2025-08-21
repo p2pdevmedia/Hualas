@@ -26,6 +26,13 @@ export default async function Home() {
     }
   }
 
+  const frequencyLabels: Record<ActivityWithParticipants['frequency'], string> = {
+    DAILY: 'Diaria',
+    WEEKLY: 'Semanal',
+    MONTHLY: 'Mensual',
+    ONE_TIME: 'Un solo pago',
+  };
+
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Welcome to Club Hualas</h1>
@@ -35,7 +42,12 @@ export default async function Home() {
             key={activity.id}
             className="flex items-center justify-between border p-4"
           >
-            <span className="font-semibold">{activity.name}</span>
+            <div className="flex flex-col">
+              <span className="font-semibold">{activity.name}</span>
+              <span className="text-sm text-slate-600">
+                {frequencyLabels[activity.frequency]}
+              </span>
+            </div>
             <Link href={`/activities/${activity.id}`}>
               <Button>Inscribirse</Button>
             </Link>

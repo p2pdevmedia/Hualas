@@ -9,6 +9,7 @@ interface EditActivityFormProps {
     id: string;
     name: string;
     date: string;
+    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
     image?: string | null;
     description?: string | null;
   };
@@ -17,6 +18,9 @@ interface EditActivityFormProps {
 export default function EditActivityForm({ activity }: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
+  const [frequency, setFrequency] = useState<
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+  >(activity.frequency);
   const [image, setImage] = useState(activity.image || '');
   const [description, setDescription] = useState(activity.description || '');
   const router = useRouter();
@@ -26,7 +30,7 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
     await fetch(`/api/activities/${activity.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, date, image, description }),
+      body: JSON.stringify({ name, date, image, description, frequency }),
     });
     router.push('/activities');
     router.refresh();
@@ -54,6 +58,20 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         onChange={(e) => setImage(e.target.value)}
         className="w-full border px-2 py-1"
       />
+      <select
+        value={frequency}
+        onChange={(e) =>
+          setFrequency(
+            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+          )
+        }
+        className="w-full border px-2 py-1"
+      >
+        <option value="ONE_TIME">Un solo pago</option>
+        <option value="DAILY">Diaria</option>
+        <option value="WEEKLY">Semanal</option>
+        <option value="MONTHLY">Mensual</option>
+      </select>
       <textarea
         placeholder="Descripción"
         value={description}

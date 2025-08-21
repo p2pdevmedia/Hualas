@@ -30,6 +30,13 @@ export default async function ActivitiesPage() {
     }
   }
 
+  const frequencyLabels: Record<ActivityWithParticipants['frequency'], string> = {
+    DAILY: 'Diaria',
+    WEEKLY: 'Semanal',
+    MONTHLY: 'Mensual',
+    ONE_TIME: 'Un solo pago',
+  };
+
   return (
     <main className="p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -51,6 +58,9 @@ export default async function ActivitiesPage() {
             </Link>
             <p className="text-sm text-slate-600">
               {activity.participants.length} suscriptos
+            </p>
+            <p className="text-sm text-slate-600">
+              {frequencyLabels[activity.frequency]}
             </p>
             {session?.user.role === 'ADMIN' && (
               <Link
