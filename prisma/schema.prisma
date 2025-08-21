@@ -112,6 +112,15 @@ model ActivityParticipant {
   @@unique([activityId, userId])
 }
 
+model SiteSetting {
+  id              Int    @id
+  logo            String?
+  favicon         String?
+  navbarColor     String?
+  footerColor     String?
+  backgroundColor String?
+}
+
 enum Role {
   ADMIN
   MEMBER

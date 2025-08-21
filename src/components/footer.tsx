@@ -1,8 +1,17 @@
 'use client';
 
-export default function Footer() {
+import type { SiteSettings } from '@/types/site';
+
+export default function Footer({
+  settings,
+}: {
+  settings: SiteSettings | null;
+}) {
   return (
-    <footer className="flex flex-col items-center justify-center px-4 py-6 bg-slate-800 text-white text-center">
+    <footer
+      className="flex flex-col items-center justify-center px-4 py-6 text-white text-center"
+      style={{ backgroundColor: settings?.footerColor || '#1e293b' }}
+    >
       <p className="text-2xl">💚</p>
       <p className="mt-2">
         ¡Seguinos en Instagram!
