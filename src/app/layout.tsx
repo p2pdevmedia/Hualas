@@ -33,7 +33,7 @@ export default async function RootLayout({
         style={{ backgroundColor: settings?.backgroundColor || undefined }}
       >
         <Providers>
-          <Navbar settings={settings} />
+          <Navbar />
           <main className="flex-1">{children}</main>
           <Footer settings={settings} />
         </Providers>
