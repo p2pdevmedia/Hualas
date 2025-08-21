@@ -97,6 +97,7 @@ model Activity {
   frequency   ActivityFrequency @default(ONE_TIME)
   image       String?
   description String?
+  price       Int                @default(0)
   participants ActivityParticipant[]
   createdAt   DateTime @default(now())
 }

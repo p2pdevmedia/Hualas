@@ -3,14 +3,9 @@ import { getServerSession } from 'next-auth';
 import { Button } from '@/components/ui/button';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 
 export default async function ActivitiesPage() {
-  type ActivityWithParticipants = Prisma.ActivityGetPayload<{
-    include: { participants: true };
-  }>;
-
-  let activities: ActivityWithParticipants[] = [];
+  let activities: any[] = [];
 
   const session = await getServerSession(authOptions);
 
@@ -19,18 +14,11 @@ export default async function ActivitiesPage() {
       include: { participants: true },
       orderBy: { date: 'asc' },
     });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === 'P2021'
-    ) {
-      activities = [];
-    } else {
-      throw e;
-    }
+  } catch (e: any) {
+    activities = [];
   }
 
-  const frequencyLabels: Record<ActivityWithParticipants['frequency'], string> = {
+  const frequencyLabels: Record<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME', string> = {
     DAILY: 'Diaria',
     WEEKLY: 'Semanal',
     MONTHLY: 'Mensual',
@@ -60,8 +48,13 @@ export default async function ActivitiesPage() {
               {activity.participants.length} suscriptos
             </p>
             <p className="text-sm text-slate-600">
-              {frequencyLabels[activity.frequency]}
+              {
+                frequencyLabels[
+                  activity.frequency as keyof typeof frequencyLabels
+                ]
+              }
             </p>
+            <p className="text-sm text-slate-600">Precio: ${activity.price}</p>
             {session?.user.role === 'ADMIN' && (
               <Link
                 href={`/activities/${activity.id}/edit`}

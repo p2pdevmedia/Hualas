@@ -5,15 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 interface EditActivityFormProps {
-  activity: {
-    id: string;
-    name: string;
-    date: string;
-    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
-    image?: string | null;
-    description?: string | null;
-  };
-}
+    activity: {
+      id: string;
+      name: string;
+      date: string;
+      frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
+      image?: string | null;
+      description?: string | null;
+      price: number;
+    };
+  }
 
 export default function EditActivityForm({ activity }: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
@@ -23,6 +24,7 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
   >(activity.frequency);
   const [image, setImage] = useState(activity.image || '');
   const [description, setDescription] = useState(activity.description || '');
+  const [price, setPrice] = useState(String(activity.price));
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +32,14 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
     await fetch(`/api/activities/${activity.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, date, image, description, frequency }),
+      body: JSON.stringify({
+        name,
+        date,
+        image,
+        description,
+        frequency,
+        price: Number(price),
+      }),
     });
     router.push('/activities');
     router.refresh();
@@ -76,6 +85,13 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         placeholder="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        className="w-full border px-2 py-1"
+      />
+      <input
+        type="number"
+        placeholder="Precio"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
         className="w-full border px-2 py-1"
       />
       <Button type="submit">Guardar</Button>

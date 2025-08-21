@@ -6,4 +6,5 @@ export const activityCreateSchema = z.object({
   frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME']),
   image: z.string().url().optional(),
   description: z.string().optional(),
+  price: z.number().int().nonnegative(),
 });
