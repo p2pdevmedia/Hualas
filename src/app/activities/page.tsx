@@ -33,7 +33,8 @@ export default async function ActivitiesPage() {
     <main className="p-4">
       <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <ActivitiesHeading />
-        {session?.user.role === 'ADMIN' && (
+        {(session?.user.role === 'ADMIN' ||
+          session?.user.role === 'SUPER_ADMIN') && (
           <Link href="/activities/new">
             <Button>Crear actividad</Button>
           </Link>
@@ -59,7 +60,8 @@ export default async function ActivitiesPage() {
               }
             </p>
             <p className="text-sm text-slate-600">Precio: ${activity.price}</p>
-            {session?.user.role === 'ADMIN' && (
+            {(session?.user.role === 'ADMIN' ||
+              session?.user.role === 'SUPER_ADMIN') && (
               <Link
                 href={`/activities/${activity.id}/edit`}
                 className="text-sm text-blue-600"

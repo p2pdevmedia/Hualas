@@ -6,7 +6,7 @@ import SiteSettingsForm from './site-settings-form';
 
 export default async function SiteAdminPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
     redirect('/');
   }
   const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });

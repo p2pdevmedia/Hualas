@@ -10,7 +10,7 @@ export default async function EditFormPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
     redirect('/');
   }
   const form = await prisma.form.findUnique({

@@ -28,7 +28,10 @@ export async function GET(req: NextRequest) {
         async ({ to, content }: { to: string; content: string }) => {
           const target = users.get(to);
           if (!target) return;
-          if (role !== 'ADMIN' && target.role !== 'ADMIN') return;
+          const isSenderAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+          const isTargetAdmin =
+            target.role === 'ADMIN' || target.role === 'SUPER_ADMIN';
+          if (!isSenderAdmin && !isTargetAdmin) return;
 
           let conversation = await prisma.conversation.findFirst({
             where: {

@@ -41,7 +41,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     <main className="p-4">
       <PaymentHandler activityId={activity.id} />
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
-      {session?.user.role === 'ADMIN' && (
+      {(session?.user.role === 'ADMIN' ||
+        session?.user.role === 'SUPER_ADMIN') && (
         <Link
           href={`/activities/${activity.id}/edit`}
           className="mb-4 inline-block text-blue-600"

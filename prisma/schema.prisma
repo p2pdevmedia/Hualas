@@ -126,6 +126,7 @@ model SiteSetting {
 enum Role {
   ADMIN
   MEMBER
+  SUPER_ADMIN
 }
 
 enum ActivityFrequency {
