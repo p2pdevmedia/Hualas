@@ -8,10 +8,8 @@ export default function SiteSettingsForm({
 }: {
   settings: SiteSettings | null;
 }) {
-  const [logo, setLogo] = useState<string | null>(settings?.logo ?? null);
-  const [favicon, setFavicon] = useState<string | null>(
-    settings?.favicon ?? null
-  );
+  const [logo, setLogo] = useState<File | null>(null);
+  const [favicon, setFavicon] = useState<File | null>(null);
   const [navbarColor, setNavbarColor] = useState(
     settings?.navbarColor ?? '#1e293b'
   );
@@ -25,27 +23,23 @@ export default function SiteSettingsForm({
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: (value: string | null) => void
+    setter: (value: File | null) => void
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setter(reader.result as string);
-    reader.readAsDataURL(file);
+    const file = e.target.files?.[0] ?? null;
+    setter(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formData = new FormData();
+    if (logo) formData.append('logo', logo);
+    if (favicon) formData.append('favicon', favicon);
+    formData.append('navbarColor', navbarColor);
+    formData.append('footerColor', footerColor);
+    formData.append('backgroundColor', backgroundColor);
     const res = await fetch('/api/site-settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        logo,
-        favicon,
-        navbarColor,
-        footerColor,
-        backgroundColor,
-      }),
+      body: formData,
     });
     if (res.ok) {
       setMessage('Settings saved.');
