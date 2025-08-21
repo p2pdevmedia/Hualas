@@ -13,7 +13,10 @@ export default async function ActivitiesPage() {
       <ul className="space-y-4">
         {activities.map((activity) => (
           <li key={activity.id} className="border p-4">
-            <Link href={`/activities/${activity.id}`} className="text-xl font-semibold">
+            <Link
+              href={`/activities/${activity.id}`}
+              className="text-xl font-semibold"
+            >
               {activity.name}
             </Link>
             <p className="text-sm text-slate-600">

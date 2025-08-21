@@ -15,7 +15,9 @@ export default function Navbar() {
         <Link href="/">Home</Link>
         <Link href="/activities">Actividades</Link>
         {session && <Link href="/chat">Chat</Link>}
-        {session?.user.role === 'ADMIN' && <Link href="/admin/users">Users</Link>}
+        {session?.user.role === 'ADMIN' && (
+          <Link href="/admin/users">Users</Link>
+        )}
         {session ? (
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
