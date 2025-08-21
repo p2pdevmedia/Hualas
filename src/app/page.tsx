@@ -39,7 +39,7 @@ export default async function Home() {
                 alt={activity.name}
                 width={800}
                 height={600}
-                className="mb-2 max-w-full"
+                className="mb-2 h-auto w-full"
               />
             )}
             <span className="mb-1 font-semibold">{activity.name}</span>
