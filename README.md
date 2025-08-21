@@ -8,3 +8,13 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 2. Install dependencies with `pnpm install`.
 3. Generate the Prisma client: `pnpm prisma:generate`.
 4. Start the dev server: `pnpm dev`.
+
+## Environment variables
+
+The application requires a MercadoPago access token for payments:
+
+```
+MERCADOPAGO_ACCESS_TOKEN="your-token"
+```
+
+Set this value in your `.env` file alongside the existing variables.

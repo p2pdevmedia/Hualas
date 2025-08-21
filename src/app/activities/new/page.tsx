@@ -8,14 +8,16 @@ export default function CreateActivityPage() {
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ name, date, image, description });
+    console.log({ name, date, image, description, price });
     setName('');
     setDate('');
     setImage('');
     setDescription('');
+    setPrice('');
   };
 
   return (
@@ -46,6 +48,14 @@ export default function CreateActivityPage() {
           placeholder="Descripción"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          className="w-full border px-2 py-1"
+        />
+        <input
+          type="number"
+          step="0.01"
+          placeholder="Precio"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
           className="w-full border px-2 py-1"
         />
         <Button type="submit">Guardar</Button>

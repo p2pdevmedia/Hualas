@@ -95,6 +95,7 @@ model Activity {
   date        DateTime
   image       String?
   description String?
+  price       Decimal @db.Decimal(10, 2)
   participants ActivityParticipant[]
   createdAt   DateTime @default(now())
 }
