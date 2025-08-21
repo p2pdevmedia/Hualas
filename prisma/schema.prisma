@@ -20,6 +20,7 @@ model User {
   conversations       ConversationParticipant[]
   passwordResetTokens PasswordResetToken[]
   formResponses       FormResponse[]
+  activityParticipants ActivityParticipant[]
 }
 
 model PasswordResetToken {
@@ -86,6 +87,26 @@ model FormResponse {
   user      User   @relation(fields: [userId], references: [id])
   data      Json
   createdAt DateTime @default(now())
+}
+
+model Activity {
+  id          String             @id @default(cuid())
+  name        String
+  date        DateTime
+  image       String?
+  description String?
+  participants ActivityParticipant[]
+  createdAt   DateTime @default(now())
+}
+
+model ActivityParticipant {
+  id      String @id @default(cuid())
+  activityId String
+  userId  String
+  activity   Activity @relation(fields: [activityId], references: [id])
+  user    User  @relation(fields: [userId], references: [id])
+
+  @@unique([activityId, userId])
 }
 
 enum Role {

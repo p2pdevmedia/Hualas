@@ -13,8 +13,11 @@ export default function Navbar() {
       </Link>
       <div className="flex items-center gap-[5ch]">
         <Link href="/">Home</Link>
+        <Link href="/activities">Activities</Link>
         {session && <Link href="/chat">Chat</Link>}
-        {session?.user.role === 'ADMIN' && <Link href="/admin/users">Users</Link>}
+        {session?.user.role === 'ADMIN' && (
+          <Link href="/admin/users">Users</Link>
+        )}
         {session ? (
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
