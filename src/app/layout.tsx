@@ -8,10 +8,13 @@ import type { SiteSettings } from '@/types/site';
 
 export async function generateMetadata() {
   const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });
+  const iconUrl = settings?.favicon
+    ? `https://gateway.pinata.cloud/ipfs/${settings.favicon}`
+    : undefined;
   return {
     title: 'Hualas Club',
     description: 'Club Hualas management app',
-    icons: settings?.favicon ? [{ url: settings.favicon }] : undefined,
+    icons: iconUrl ? [{ url: iconUrl }] : undefined,
   };
 }
 
