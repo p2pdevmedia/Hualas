@@ -50,8 +50,16 @@ export default async function ActivitiesPage() {
               {activity.name}
             </Link>
             <p className="text-sm text-slate-600">
-              {activity.participants.length} participants
+              {activity.participants.length} suscriptos
             </p>
+            {session?.user.role === 'ADMIN' && (
+              <Link
+                href={`/activities/${activity.id}/edit`}
+                className="text-sm text-blue-600"
+              >
+                Editar
+              </Link>
+            )}
           </li>
         ))}
       </ul>
