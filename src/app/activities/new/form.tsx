@@ -9,6 +9,7 @@ export default function CreateActivityForm() {
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,12 +17,13 @@ export default function CreateActivityForm() {
     await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, date, image, description }),
+      body: JSON.stringify({ name, date, image, description, frequency }),
     });
     setName('');
     setDate('');
     setImage('');
     setDescription('');
+    setFrequency('ONE_TIME');
     router.push('/activities');
     router.refresh();
   };
@@ -48,6 +50,20 @@ export default function CreateActivityForm() {
         onChange={(e) => setImage(e.target.value)}
         className="w-full border px-2 py-1"
       />
+      <select
+        value={frequency}
+        onChange={(e) =>
+          setFrequency(
+            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+          )
+        }
+        className="w-full border px-2 py-1"
+      >
+        <option value="ONE_TIME">Un solo pago</option>
+        <option value="DAILY">Diaria</option>
+        <option value="WEEKLY">Semanal</option>
+        <option value="MONTHLY">Mensual</option>
+      </select>
       <textarea
         placeholder="Descripción"
         value={description}

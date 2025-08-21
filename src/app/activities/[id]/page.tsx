@@ -38,6 +38,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   const session = await getServerSession(authOptions);
 
+  const frequencyLabels: Record<
+    ActivityWithParticipants['frequency'],
+    string
+  > = {
+    DAILY: 'Diaria',
+    WEEKLY: 'Semanal',
+    MONTHLY: 'Mensual',
+    ONE_TIME: 'Un solo pago',
+  };
+
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
@@ -59,6 +69,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
+      <p className="mb-2">Frecuencia: {frequencyLabels[activity.frequency]}</p>
       <p className="mb-4">{activity.description}</p>
       <p className="mb-4 font-semibold">
         {activity.participants.length} suscriptos

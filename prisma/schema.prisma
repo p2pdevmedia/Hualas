@@ -94,6 +94,7 @@ model Activity {
   id          String             @id @default(cuid())
   name        String
   date        DateTime
+  frequency   ActivityFrequency @default(ONE_TIME)
   image       String?
   description String?
   participants ActivityParticipant[]
@@ -113,4 +114,11 @@ model ActivityParticipant {
 enum Role {
   ADMIN
   MEMBER
+}
+
+enum ActivityFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ONE_TIME
 }
