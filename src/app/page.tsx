@@ -26,6 +26,13 @@ export default async function Home() {
     }
   }
 
+  const paymentTypeLabels = {
+    ONE_TIME: 'Pago único',
+    MONTHLY: 'Mensual',
+    WEEKLY: 'Semanal',
+    DAILY: 'Diario',
+  } as const;
+
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Welcome to Club Hualas</h1>
@@ -35,7 +42,12 @@ export default async function Home() {
             key={activity.id}
             className="flex items-center justify-between border p-4"
           >
-            <span className="font-semibold">{activity.name}</span>
+            <div>
+              <span className="font-semibold">{activity.name}</span>
+              <p className="text-sm text-slate-600">
+                {paymentTypeLabels[activity.paymentType]}
+              </p>
+            </div>
             <Link href={`/activities/${activity.id}`}>
               <Button>Inscribirse</Button>
             </Link>

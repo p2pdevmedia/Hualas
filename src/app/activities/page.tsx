@@ -26,6 +26,13 @@ export default async function ActivitiesPage() {
     }
   }
 
+  const paymentTypeLabels = {
+    ONE_TIME: 'Pago único',
+    MONTHLY: 'Mensual',
+    WEEKLY: 'Semanal',
+    DAILY: 'Diario',
+  } as const;
+
   return (
     <main className="p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -44,7 +51,8 @@ export default async function ActivitiesPage() {
               {activity.name}
             </Link>
             <p className="text-sm text-slate-600">
-              {activity.participants.length} participants
+              {activity.participants.length} participants ·{' '}
+              {paymentTypeLabels[activity.paymentType]}
             </p>
           </li>
         ))}
