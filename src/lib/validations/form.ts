@@ -4,6 +4,7 @@ export const formFieldSchema = z.object({
   label: z.string(),
   type: z.enum(['text', 'number', 'select']),
   options: z.array(z.string()).optional(),
+  required: z.boolean().optional().default(false),
 });
 
 export const formCreateSchema = z.object({

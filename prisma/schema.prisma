@@ -76,6 +76,7 @@ model FormField {
   label   String
   type    String
   options Json?
+  required Boolean @default(false)
   order   Int
 }
 

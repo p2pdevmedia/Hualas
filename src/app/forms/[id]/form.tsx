@@ -23,12 +23,16 @@ export default function FormDisplay({ form }: { form: any }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {form.fields.map((f: any) => (
         <div key={f.id}>
-          <label className="block mb-1">{f.label}</label>
+          <label className="block mb-1">
+            {f.label}
+            {f.required && <span className="text-red-600 ml-1">*</span>}
+          </label>
           {f.type === 'text' && (
             <input
               className="border p-2 w-full"
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
+              required={f.required}
             />
           )}
           {f.type === 'number' && (
@@ -37,6 +41,7 @@ export default function FormDisplay({ form }: { form: any }) {
               className="border p-2 w-full"
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
+              required={f.required}
             />
           )}
           {f.type === 'select' && (
@@ -44,6 +49,7 @@ export default function FormDisplay({ form }: { form: any }) {
               className="border p-2 w-full"
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
+              required={f.required}
             >
               <option value=""></option>
               {Array.isArray(f.options) &&

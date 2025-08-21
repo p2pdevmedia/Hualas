@@ -30,6 +30,7 @@ export async function POST(req: Request) {
           label: f.label,
           type: f.type,
           options: f.options ? f.options : undefined,
+          required: f.required,
           order: index,
         })),
       },
