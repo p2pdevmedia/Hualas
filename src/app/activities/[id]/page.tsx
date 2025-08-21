@@ -33,6 +33,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     return <main className="p-4">Activity not found</main>;
   }
 
+  const paymentTypeLabels: Record<typeof activity.paymentType, string> = {
+    ONE_TIME: 'Pago único',
+    MONTHLY: 'Mensual',
+    WEEKLY: 'Semanal',
+    DAILY: 'Diario',
+  } as const;
+
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
@@ -46,6 +53,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />
       )}
       <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
+      <p className="mb-2">
+        Tipo de pago: {paymentTypeLabels[activity.paymentType]}
+      </p>
       <p className="mb-4">{activity.description}</p>
       <p className="mb-4 font-semibold">
         {activity.participants.length} participants
