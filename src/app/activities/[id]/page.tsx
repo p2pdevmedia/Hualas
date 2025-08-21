@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
-import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -48,11 +48,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         </Link>
       )}
       {activity.image && (
-        <Image
+        <img
           src={activity.image}
           alt={activity.name}
-          width={800}
-          height={600}
           className="mb-4 max-w-full"
         />
       )}
