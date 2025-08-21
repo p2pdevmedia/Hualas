@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith('/admin')) {
-    if (!token || token.role !== 'ADMIN') {
+    if (!token || (token.role !== 'ADMIN' && token.role !== 'SUPER_ADMIN')) {
       return NextResponse.redirect(new URL('/', req.url));
     }
   }

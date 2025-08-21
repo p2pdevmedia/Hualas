@@ -5,7 +5,11 @@ import { useSession } from 'next-auth/react';
 import { socket } from '@/lib/socket';
 import { Button } from '@/components/ui/button';
 
-type User = { id: string; name: string | null; role: 'ADMIN' | 'MEMBER' };
+type User = {
+  id: string;
+  name: string | null;
+  role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
+};
 type Message = { from: string; content: string };
 
 export default function ChatPage() {
@@ -21,10 +25,13 @@ export default function ChatPage() {
       .then((res) => res.json())
       .then((data: User[]) => {
         setUsers(data);
-        const selectable =
-          session.user.role === 'ADMIN'
-            ? data.filter((u) => u.id !== session.user.id)
-            : data.filter((u) => u.role === 'ADMIN');
+        const isAdmin =
+          session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+        const selectable = isAdmin
+          ? data.filter((u) => u.id !== session.user.id)
+          : data.filter((u) =>
+              u.role === 'ADMIN' || u.role === 'SUPER_ADMIN'
+            );
         if (selectable.length > 0) {
           setRecipient(selectable[0].id);
         }
@@ -60,9 +67,11 @@ export default function ChatPage() {
   }, [recipient]);
 
   const selectableUsers = session
-    ? session.user.role === 'ADMIN'
+    ? session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN'
       ? users.filter((u) => u.id !== session.user.id)
-      : users.filter((u) => u.role === 'ADMIN')
+      : users.filter(
+          (u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN'
+        )
     : [];
 
   const userName = (id: string) =>

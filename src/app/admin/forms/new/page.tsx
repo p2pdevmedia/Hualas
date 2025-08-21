@@ -5,7 +5,7 @@ import NewForm from '../new-form';
 
 export default async function NewFormPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
     redirect('/');
   }
   return (

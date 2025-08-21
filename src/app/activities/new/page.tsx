@@ -5,7 +5,7 @@ import CreateActivityForm from './form';
 
 export default async function CreateActivityPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
     redirect('/');
   }
 
