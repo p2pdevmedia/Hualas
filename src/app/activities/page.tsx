@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { Button } from '@/components/ui/button';
+import ActivitiesHeading from '@/components/activities-heading';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -28,7 +29,7 @@ export default async function ActivitiesPage() {
   return (
     <main className="p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Activities</h1>
+        <ActivitiesHeading />
         {session?.user.role === 'ADMIN' && (
           <Link href="/activities/new">
             <Button>Crear actividad</Button>

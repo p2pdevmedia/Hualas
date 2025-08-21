@@ -10,8 +10,11 @@ export const translations = {
       forms: 'Formularios',
       admin: 'Administrador del sitio',
       login: 'Ingresar',
-      register: 'Registrarse',
+      register: 'Inscribirse',
       logout: 'Salir',
+    },
+    home: {
+      welcome: 'Bienvenido a Club Hualas',
     },
   },
   pt: {
@@ -25,8 +28,11 @@ export const translations = {
       forms: 'Formulários',
       admin: 'Administrador do Site',
       login: 'Entrar',
-      register: 'Registrar',
+      register: 'Inscrever-se',
       logout: 'Sair',
+    },
+    home: {
+      welcome: 'Bem-vindo ao Club Hualas',
     },
   },
   en: {
@@ -43,6 +49,9 @@ export const translations = {
       register: 'Register',
       logout: 'Logout',
     },
+    home: {
+      welcome: 'Welcome to Club Hualas',
+    },
   },
   fr: {
     nav: {
@@ -55,8 +64,11 @@ export const translations = {
       forms: 'Formulaires',
       admin: 'Administrateur du Site',
       login: 'Connexion',
-      register: 'Inscription',
+      register: "S'inscrire",
       logout: 'Déconnexion',
+    },
+    home: {
+      welcome: 'Bienvenue au Club Hualas',
     },
   },
 };

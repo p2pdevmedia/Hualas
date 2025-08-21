@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import HomeHeading from '@/components/home-heading';
+import RegisterButton from '@/components/register-button';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -29,7 +29,7 @@ export default async function Home() {
 
   return (
     <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Welcome to Club Hualas</h1>
+      <HomeHeading />
       <ul className="space-y-4">
         {activities.map((activity) => (
           <li key={activity.id} className="flex flex-col border p-4">
@@ -48,9 +48,7 @@ export default async function Home() {
                 {activity.description}
               </p>
             )}
-            <Link href={`/activities/${activity.id}`}>
-              <Button>Inscribirse</Button>
-            </Link>
+            <RegisterButton href={`/activities/${activity.id}`} />
           </li>
         ))}
       </ul>
