@@ -5,8 +5,8 @@
   "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
+    "build": "prisma migrate deploy && prisma generate && next build",
+    "start": "prisma migrate deploy && next start",
     "lint": "next lint",
     "format": "prettier --write .",
     "prisma:generate": "prisma generate"
