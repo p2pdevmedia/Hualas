@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
     if (!token || token.role !== 'SUPER_ADMIN') {
       return NextResponse.redirect(new URL('/', req.url));
     }
-  } else if (pathname.startsWith('/admin')) {
+  } else if (pathname.startsWith('/admin') || pathname.startsWith('/forms')) {
     if (!token || (token.role !== 'ADMIN' && token.role !== 'SUPER_ADMIN')) {
       return NextResponse.redirect(new URL('/', req.url));
     }
@@ -26,5 +26,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/members/:path*'],
+  matcher: ['/admin/:path*', '/members/:path*', '/forms/:path*'],
 };
