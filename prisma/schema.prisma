@@ -134,6 +134,13 @@ model Child {
   activityParticipants ActivityParticipant[]
 }
 
+model MercadoPagoNotification {
+  id        String   @id @default(cuid())
+  topic     String
+  data      Json
+  createdAt DateTime @default(now())
+}
+
 model SiteSetting {
   id              Int    @id
   logo            String?
