@@ -6,7 +6,11 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin/site')) {
+    if (!token || token.role !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+  } else if (pathname.startsWith('/admin')) {
     if (!token || (token.role !== 'ADMIN' && token.role !== 'SUPER_ADMIN')) {
       return NextResponse.redirect(new URL('/', req.url));
     }
