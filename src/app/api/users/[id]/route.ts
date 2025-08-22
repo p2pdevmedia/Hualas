@@ -9,7 +9,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -19,11 +22,12 @@ export async function PATCH(
   }
   const updateData: any = {};
   if (data.name !== undefined) updateData.name = data.name;
+  if (data.lastName !== undefined) updateData.lastName = data.lastName;
   if (data.role !== undefined) updateData.role = data.role;
   const user = await prisma.user.update({
     where: { id: params.id },
     data: updateData,
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, lastName: true, role: true },
   });
 
   return NextResponse.json(user);
@@ -34,7 +38,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

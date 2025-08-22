@@ -13,7 +13,7 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { paymentId } = await req.json();
+  const { paymentId, childId } = await req.json();
   if (!paymentId) {
     return NextResponse.json({ error: 'Missing paymentId' }, { status: 400 });
   }
@@ -28,14 +28,16 @@ export async function POST(
 
   await prisma.activityParticipant.upsert({
     where: {
-      activityId_userId: {
+      activityId_userId_childId: {
         activityId: params.id,
         userId: (session.user as any).id,
+        childId: childId ?? null,
       },
     },
     create: {
       activityId: params.id,
       userId: (session.user as any).id,
+      childId: childId ?? null,
       receipt,
       receiptDate: new Date(date),
     },

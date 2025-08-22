@@ -4,10 +4,27 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-type User = { name: string | null; email: string };
+type User = {
+  name: string | null;
+  lastName: string | null;
+  dni: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  address: string | null;
+  nationality: string | null;
+  maritalStatus: string | null;
+  email: string;
+};
 
 export default function ProfileForm({ user }: { user: User }) {
   const [name, setName] = useState(user.name ?? '');
+  const [lastName, setLastName] = useState(user.lastName ?? '');
+  const [dni, setDni] = useState(user.dni ?? '');
+  const [birthDate, setBirthDate] = useState(user.birthDate ?? '');
+  const [gender, setGender] = useState(user.gender ?? '');
+  const [address, setAddress] = useState(user.address ?? '');
+  const [nationality, setNationality] = useState(user.nationality ?? '');
+  const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [email, setEmail] = useState(user.email);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,6 +41,13 @@ export default function ProfileForm({ user }: { user: User }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
+          lastName,
+          dni,
+          birthDate,
+          gender: gender || undefined,
+          address,
+          nationality,
+          maritalStatus,
           email,
           ...(password ? { password } : {}),
         }),
@@ -43,7 +67,56 @@ export default function ProfileForm({ user }: { user: User }) {
         className="w-full border px-2 py-1"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
+        placeholder="Nombre"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        placeholder="Apellido"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={dni}
+        onChange={(e) => setDni(e.target.value)}
+        placeholder="DNI"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        type="date"
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+        placeholder="Fecha de nacimiento"
+      />
+      <select
+        className="w-full border px-2 py-1"
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+      >
+        <option value="">Género</option>
+        <option value="FEMALE">Femenino</option>
+        <option value="MALE">Masculino</option>
+        <option value="NON_BINARY">No Binario</option>
+        <option value="UNDISCLOSED">Prefiero no decirlo</option>
+        <option value="OTHER">Otro</option>
+      </select>
+      <input
+        className="w-full border px-2 py-1"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Domicilio"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={nationality}
+        onChange={(e) => setNationality(e.target.value)}
+        placeholder="Nacionalidad"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={maritalStatus}
+        onChange={(e) => setMaritalStatus(e.target.value)}
+        placeholder="Estado Civil"
       />
       <input
         className="w-full border px-2 py-1"
