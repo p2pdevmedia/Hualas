@@ -11,11 +11,28 @@ type User = {
   lastName: string | null;
   email: string;
   role: string;
+  dni: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  address: string | null;
+  nationality: string | null;
+  maritalStatus: string | null;
+  isActive: boolean;
 };
 
 export default function EditUserForm({ user }: { user: User }) {
   const [name, setName] = useState(user.name ?? '');
   const [lastName, setLastName] = useState(user.lastName ?? '');
+  const [dni, setDni] = useState(user.dni ?? '');
+  const [birthDate, setBirthDate] = useState(user.birthDate ?? '');
+  const [gender, setGender] = useState(user.gender ?? '');
+  const [address, setAddress] = useState(user.address ?? '');
+  const [nationality, setNationality] = useState(user.nationality ?? '');
+  const [maritalStatus, setMaritalStatus] = useState(
+    user.maritalStatus ?? ''
+  );
+  const [email, setEmail] = useState(user.email);
+  const [isActive, setIsActive] = useState(user.isActive);
   const [role, setRole] = useState(user.role);
   const router = useRouter();
   const [error, setError] = useState('');
@@ -28,7 +45,18 @@ export default function EditUserForm({ user }: { user: User }) {
     setError('');
     setSuccess('');
     try {
-      const body: any = { name, lastName };
+      const body: any = {
+        name,
+        lastName,
+        dni,
+        birthDate,
+        gender: gender || undefined,
+        address,
+        nationality,
+        maritalStatus,
+        email,
+        isActive,
+      };
       if (canEditRole) body.role = role;
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
@@ -60,6 +88,63 @@ export default function EditUserForm({ user }: { user: User }) {
         onChange={(e) => setLastName(e.target.value)}
         placeholder="Apellido"
       />
+      <input
+        className="w-full border px-2 py-1"
+        value={dni}
+        onChange={(e) => setDni(e.target.value)}
+        placeholder="DNI"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        type="date"
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+        placeholder="Fecha de nacimiento"
+      />
+      <select
+        className="w-full border px-2 py-1"
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+      >
+        <option value="">Género</option>
+        <option value="FEMALE">Femenino</option>
+        <option value="MALE">Masculino</option>
+        <option value="NON_BINARY">No Binario</option>
+        <option value="UNDISCLOSED">Prefiero no decirlo</option>
+        <option value="OTHER">Otro</option>
+      </select>
+      <input
+        className="w-full border px-2 py-1"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Domicilio"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={nationality}
+        onChange={(e) => setNationality(e.target.value)}
+        placeholder="Nacionalidad"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={maritalStatus}
+        onChange={(e) => setMaritalStatus(e.target.value)}
+        placeholder="Estado Civil"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+      <label className="text-sm flex items-center space-x-1">
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setIsActive(e.target.checked)}
+        />
+        <span>Active</span>
+      </label>
       {canEditRole && (
         <select
           className="w-full border px-2 py-1"

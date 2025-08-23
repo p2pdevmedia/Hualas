@@ -39,6 +39,12 @@ export default async function UsersPage() {
             >
               Edit
             </Link>
+            <Link
+              href={`/admin/users/${u.id}/child-enrollment`}
+              className="text-blue-600 hover:underline"
+            >
+              Child enrollment
+            </Link>
             <DeleteUserButton id={u.id} />
           </li>
         ))}
