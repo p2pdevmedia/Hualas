@@ -6,5 +6,5 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Mercadopago token and Pinata JWT for IPFS uploads).
 2. Install dependencies with `pnpm install`.
-3. Generate the Prisma client: `pnpm prisma:generate`.
+3. Apply database migrations and generate the Prisma client: `pnpm prisma migrate dev`.
 4. Start the dev server: `pnpm dev`.
