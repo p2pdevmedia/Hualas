@@ -69,6 +69,7 @@ export default function Navbar() {
           <>
             <Link href="/admin/users">{t.users}</Link>
             <Link href="/admin/forms">{t.forms}</Link>
+            <Link href="/admin/notifications">{t.notifications}</Link>
             {isSuperAdmin && <Link href="/admin/site">{t.admin}</Link>}
           </>
         )}
