@@ -10,9 +10,11 @@ export async function POST(req: NextRequest) {
     body = null;
   }
   const topic =
+    body?.type ||
     req.nextUrl.searchParams.get('type') ||
     req.nextUrl.searchParams.get('topic');
   const id =
+    body?.data?.id ||
     req.nextUrl.searchParams.get('data.id') ||
     req.nextUrl.searchParams.get('id');
 
@@ -57,6 +59,10 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({});
 }
 
 export async function GET() {
