@@ -14,6 +14,8 @@ export async function GET(
   }
   const searchParams = new URL(req.url).searchParams;
   const childId = searchParams.get('childId');
+  const issuerId = searchParams.get('issuer_id') || undefined;
+  const deviceId = searchParams.get('device_id') || undefined;
   const activity: any = await prisma.activity.findUnique({
     where: { id: params.id },
   });
@@ -26,13 +28,31 @@ export async function GET(
   });
   const preference = new Preference(client);
 
+  const [firstName = '', ...restName] = (session.user?.name || '').split(' ');
+  const lastName = restName.join(' ');
+  const externalReference = [
+    params.id,
+    (session.user as any).id,
+    childId || undefined,
+  ]
+    .filter(Boolean)
+    .join(':');
+
   const result = await preference.create({
     body: {
+      payer: {
+        first_name: firstName,
+        last_name: lastName,
+        email: session.user?.email,
+      },
       items: [
         {
+          id: activity.id,
           title: activity.name,
+          description: activity.description || '',
           quantity: 1,
           unit_price: Number(activity.price),
+          category_id: 'services',
         },
       ],
       back_urls: (() => {
@@ -41,6 +61,14 @@ export async function GET(
         return { success: url, failure: url, pending: url };
       })(),
       auto_return: 'approved',
+      notification_url: `${process.env.NEXTAUTH_URL}/api/mercadopago/notifications`,
+      statement_descriptor:
+        process.env.MP_STATEMENT_DESCRIPTOR || 'HUALAS',
+      external_reference: externalReference,
+      metadata: {
+        issuer_id: issuerId,
+        device_id: deviceId,
+      },
     },
   });
 
