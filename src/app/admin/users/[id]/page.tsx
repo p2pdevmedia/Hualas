@@ -18,7 +18,20 @@ export default async function EditUserPage({
   }
   const user = await prisma.user.findUnique({
     where: { id: params.id },
-    select: { id: true, name: true, lastName: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      email: true,
+      role: true,
+      dni: true,
+      birthDate: true,
+      gender: true,
+      address: true,
+      nationality: true,
+      maritalStatus: true,
+      isActive: true,
+    },
   });
   if (!user) {
     redirect('/admin/users');
@@ -27,7 +40,14 @@ export default async function EditUserPage({
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Edit User</h1>
-      <EditUserForm user={user} />
+      <EditUserForm
+        user={{
+          ...user,
+          birthDate: user.birthDate
+            ? user.birthDate.toISOString().split('T')[0]
+            : null,
+        }}
+      />
     </div>
   );
 }
