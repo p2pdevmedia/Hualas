@@ -19,6 +19,7 @@ export default async function ProfilePage() {
       birthDate: true,
       gender: true,
       address: true,
+      phone: true,
       nationality: true,
       maritalStatus: true,
       email: true,
@@ -38,7 +39,7 @@ export default async function ProfilePage() {
             : null,
         }}
       />
-      <ChildrenManager />
+      <ChildrenManager userAddress={user.address ?? ''} />
     </div>
   );
 }

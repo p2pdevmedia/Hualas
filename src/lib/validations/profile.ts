@@ -9,6 +9,7 @@ export const profileUpdateSchema = z.object({
     .enum(['FEMALE', 'MALE', 'NON_BINARY', 'UNDISCLOSED', 'OTHER'])
     .optional(),
   address: z.string().optional(),
+  phone: z.string().optional(),
   nationality: z.string().optional(),
   maritalStatus: z.string().optional(),
   email: z.string().email().optional(),

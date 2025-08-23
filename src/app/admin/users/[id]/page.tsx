@@ -28,9 +28,11 @@ export default async function EditUserPage({
       birthDate: true,
       gender: true,
       address: true,
+      phone: true,
       nationality: true,
       maritalStatus: true,
       isActive: true,
+      observations: true,
     },
   });
   if (!user) {

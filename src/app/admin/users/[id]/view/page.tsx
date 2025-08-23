@@ -49,6 +49,8 @@ export default async function ViewUserPage({
           {user.name} {user.lastName}
         </h1>
         <p>Email: {user.email}</p>
+        {user.phone && <p>Phone: {user.phone}</p>}
+        {user.observations && <p>Observaciones: {user.observations}</p>}
         <p>Role: {user.role}</p>
       </div>
 

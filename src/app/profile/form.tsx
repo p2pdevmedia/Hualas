@@ -14,6 +14,7 @@ type User = {
   nationality: string | null;
   maritalStatus: string | null;
   email: string;
+  phone: string | null;
 };
 
 export default function ProfileForm({ user }: { user: User }) {
@@ -26,6 +27,7 @@ export default function ProfileForm({ user }: { user: User }) {
   const [nationality, setNationality] = useState(user.nationality ?? '');
   const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [email, setEmail] = useState(user.email);
+  const [phone, setPhone] = useState(user.phone ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,6 +51,7 @@ export default function ProfileForm({ user }: { user: User }) {
           nationality,
           maritalStatus,
           email,
+          phone,
           ...(password ? { password } : {}),
         }),
       });
@@ -105,6 +108,12 @@ export default function ProfileForm({ user }: { user: User }) {
         value={address}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="Domicilio"
+      />
+      <input
+        className="w-full border px-2 py-1"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="Teléfono"
       />
       <input
         className="w-full border px-2 py-1"

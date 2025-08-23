@@ -16,6 +16,8 @@ model User {
   birthDate           DateTime?
   gender              Gender?
   address             String?
+  phone               String?
+  observations        String?
   nationality         String?
   maritalStatus       String?
   password            String
@@ -129,7 +131,15 @@ model Child {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   name      String
+  lastName  String?
+  documentType   String?
+  documentNumber String?
   birthDate DateTime?
+  address   String?
+  gender    Gender?
+  nationality String?
+  maritalStatus String?
+  observations String?
   createdAt DateTime @default(now())
   activityParticipants ActivityParticipant[]
 }
