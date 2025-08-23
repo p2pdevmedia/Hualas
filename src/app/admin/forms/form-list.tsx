@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/components/language-provider';
 
 interface Form {
   id: string;
@@ -11,6 +12,7 @@ interface Form {
 
 export default function FormList({ forms }: { forms: Form[] }) {
   const router = useRouter();
+  const t = useTranslation().actions;
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/forms/${id}`, { method: 'DELETE' });
@@ -33,13 +35,13 @@ export default function FormList({ forms }: { forms: Form[] }) {
             <td className="p-2 border-b">{f.responseCount}</td>
             <td className="p-2 border-b space-x-2">
               <Link href={`/admin/forms/${f.id}`} className="text-blue-600">
-                View
+                {t.view}
               </Link>
               <Link
                 href={`/admin/forms/${f.id}/edit`}
                 className="text-blue-600"
               >
-                Edit
+                {t.edit}
               </Link>
               <Link
                 href={`/forms/${f.id}`}
@@ -52,7 +54,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
                 onClick={() => handleDelete(f.id)}
                 className="text-red-600"
               >
-                Delete
+                {t.delete}
               </button>
             </td>
           </tr>
