@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError('');
     setSuccess('');
     const res = await signIn('credentials', {
-      email,
+      email: email.toLowerCase(),
       password,
       redirect: false,
     });
