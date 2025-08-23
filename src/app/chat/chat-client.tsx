@@ -11,11 +11,17 @@ type User = {
   role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
 };
 type Message = { from: string; content: string };
+type Conversation = {
+  id: string;
+  participants: { id: string; name: string | null }[];
+  messages: Message[];
+};
 
 export default function ChatClient() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<Conversation[]>([]);
   const [input, setInput] = useState('');
   const [recipient, setRecipient] = useState('');
 
@@ -50,6 +56,13 @@ export default function ChatClient() {
       if (msg.from === recipient) {
         setMessages((prev) => [...prev, msg]);
       }
+      setHistory((prev) =>
+        prev.map((c) =>
+          c.participants.some((p) => p.id === msg.from)
+            ? { ...c, messages: [...c.messages, msg] }
+            : c
+        )
+      );
     };
     socket.on('message', handler);
     return () => {
@@ -64,6 +77,13 @@ export default function ChatClient() {
       .then((data: Message[]) => setMessages(data));
   }, [recipient]);
 
+  useEffect(() => {
+    if (!session) return;
+    fetch('/api/messages')
+      .then((res) => res.json())
+      .then((data: Conversation[]) => setHistory(data));
+  }, [session]);
+
   const selectableUsers = session
     ? session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN'
       ? users.filter((u) => u.id !== session.user.id)
@@ -75,6 +95,29 @@ export default function ChatClient() {
 
   return (
     <div className="p-4">
+      <div className="mb-8 space-y-4">
+        {history.map((c) => (
+          <div key={c.id} className="rounded border p-2">
+            <div className="mb-2 font-semibold">
+              {c.participants
+                .filter((p) => p.id !== session?.user.id)
+                .map((p) => p.name ?? 'Unnamed')
+                .join(', ')}
+            </div>
+            <div className="space-y-1">
+              {c.messages.map((m, i) => (
+                <div key={i}>
+                  {m.from === session?.user.id
+                    ? 'You'
+                    : c.participants.find((p) => p.id === m.from)?.name ??
+                      'Unknown'}
+                  : {m.content}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="mb-4">
         <select
           value={recipient}
