@@ -19,7 +19,12 @@ export const authOptions: NextAuthOptions = {
         if (!user || !user.password || !user.isActive) return null;
         const valid = await compare(credentials.password, user.password);
         if (!valid) return null;
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
@@ -28,7 +33,10 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
