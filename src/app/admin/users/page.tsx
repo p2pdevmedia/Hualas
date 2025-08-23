@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import DeleteUserButton from './delete-button';
+import ResetPasswordButton from './reset-password-button';
 
 export default async function UsersPage() {
   const session = await getServerSession(authOptions);
@@ -45,6 +46,7 @@ export default async function UsersPage() {
             >
               Child enrollment
             </Link>
+            <ResetPasswordButton id={u.id} />
             <DeleteUserButton id={u.id} />
           </li>
         ))}
