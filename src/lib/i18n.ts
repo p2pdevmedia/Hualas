@@ -17,6 +17,13 @@ export const translations = {
     home: {
       welcome: 'Bienvenido a Club Hualas',
     },
+    actions: {
+      view: 'Ver',
+      edit: 'Editar',
+      childEnrollment: 'Inscripción de menores',
+      resetPassword: 'Restablecer contraseña',
+      delete: 'Eliminar',
+    },
   },
   pt: {
     nav: {
@@ -35,6 +42,13 @@ export const translations = {
     },
     home: {
       welcome: 'Bem-vindo ao Club Hualas',
+    },
+    actions: {
+      view: 'Ver',
+      edit: 'Editar',
+      childEnrollment: 'Inscrição de crianças',
+      resetPassword: 'Redefinir senha',
+      delete: 'Excluir',
     },
   },
   en: {
@@ -55,6 +69,13 @@ export const translations = {
     home: {
       welcome: 'Welcome to Club Hualas',
     },
+    actions: {
+      view: 'View',
+      edit: 'Edit',
+      childEnrollment: 'Child enrollment',
+      resetPassword: 'Reset password',
+      delete: 'Delete',
+    },
   },
   fr: {
     nav: {
@@ -73,6 +94,13 @@ export const translations = {
     },
     home: {
       welcome: 'Bienvenue au Club Hualas',
+    },
+    actions: {
+      view: 'Voir',
+      edit: 'Modifier',
+      childEnrollment: 'Inscription des enfants',
+      resetPassword: 'Réinitialiser le mot de passe',
+      delete: 'Supprimer',
     },
   },
 };
