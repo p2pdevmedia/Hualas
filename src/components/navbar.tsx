@@ -18,6 +18,9 @@ const defaultLogo =
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const role = session?.user.role;
+  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const isSuperAdmin = role === 'SUPER_ADMIN';
   const t = useTranslation().nav;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -62,14 +65,11 @@ export default function Navbar() {
       >
         <Link href="/activities">{t.activities}</Link>
         {session && <Link href="/chat">{t.chat}</Link>}
-        {(session?.user.role === 'ADMIN' ||
-          session?.user.role === 'SUPER_ADMIN') && (
+        {isAdmin && (
           <>
             <Link href="/admin/users">{t.users}</Link>
             <Link href="/admin/forms">{t.forms}</Link>
-            {session.user.role === 'SUPER_ADMIN' && (
-              <Link href="/admin/site">{t.admin}</Link>
-            )}
+            {isSuperAdmin && <Link href="/admin/site">{t.admin}</Link>}
           </>
         )}
         <Link href="/contact">{t.contact}</Link>

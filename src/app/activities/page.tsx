@@ -1,14 +1,21 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivitiesHeading from '@/components/activities-heading';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export default async function ActivitiesPage() {
-  let activities: any[] = [];
-
   const session = await getServerSession(authOptions);
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
+    redirect('/');
+  }
+
+  let activities: any[] = [];
 
   try {
     activities = await prisma.activity.findMany({
