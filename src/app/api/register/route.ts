@@ -5,7 +5,8 @@ import { registerSchema } from '@/lib/validations/auth';
 
 export async function POST(req: Request) {
   const data = await req.json();
-  const { email, password, name } = registerSchema.parse(data);
+  const { email: rawEmail, password, name } = registerSchema.parse(data);
+  const email = rawEmail.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json({ error: 'User already exists' }, { status: 400 });
