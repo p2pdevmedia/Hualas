@@ -136,8 +136,8 @@ model Child {
 
 model SiteSetting {
   id              Int    @id
-  logo            String?
-  favicon         String?
+  logo            String? @db.Text
+  favicon         String? @db.Text
   navbarColor     String?
   footerColor     String?
   backgroundColor String?
