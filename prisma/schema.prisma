@@ -143,6 +143,13 @@ model SiteSetting {
   backgroundColor String?
 }
 
+model MercadoPagoNotification {
+  id        String   @id @default(cuid())
+  topic     String?
+  data      Json?
+  createdAt DateTime @default(now())
+}
+
 enum Role {
   ADMIN
   MEMBER
