@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import HomeHeading from '@/components/home-heading';
-import RegisterButton from '@/components/register-button';
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -32,23 +32,27 @@ export default async function Home() {
       <HomeHeading />
       <ul className="space-y-4">
         {activities.map((activity) => (
-          <li key={activity.id} className="flex flex-col border p-4">
-            {activity.image && (
-              <Image
-                src={activity.image}
-                alt={activity.name}
-                width={800}
-                height={600}
-                className="mb-2 h-auto w-full"
-              />
-            )}
-            <span className="mb-1 font-semibold">{activity.name}</span>
-            {activity.description && (
-              <p className="mb-2 text-sm text-slate-600">
-                {activity.description}
-              </p>
-            )}
-            <RegisterButton href={`/activities/${activity.id}`} />
+          <li key={activity.id}>
+            <Link
+              href={`/activities/${activity.id}`}
+              className="flex flex-col border p-4"
+            >
+              {activity.image && (
+                <Image
+                  src={activity.image}
+                  alt={activity.name}
+                  width={800}
+                  height={600}
+                  className="mb-2 h-auto w-full"
+                />
+              )}
+              <span className="mb-1 font-semibold">{activity.name}</span>
+              {activity.description && (
+                <p className="mb-2 text-sm text-slate-600">
+                  {activity.description}
+                </p>
+              )}
+            </Link>
           </li>
         ))}
       </ul>
