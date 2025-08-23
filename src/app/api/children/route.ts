@@ -11,7 +11,18 @@ export async function GET() {
   }
   const children = await prisma.child.findMany({
     where: { userId: (session.user as any).id },
-    select: { id: true, name: true, birthDate: true },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      documentType: true,
+      documentNumber: true,
+      birthDate: true,
+      address: true,
+      gender: true,
+      nationality: true,
+      maritalStatus: true,
+    },
   });
   return NextResponse.json(children);
 }
@@ -26,9 +37,27 @@ export async function POST(req: Request) {
     data: {
       userId: (session.user as any).id,
       name: data.name,
+      lastName: data.lastName,
+      documentType: data.documentType,
+      documentNumber: data.documentNumber,
       birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      address: data.address,
+      gender: data.gender,
+      nationality: data.nationality,
+      maritalStatus: data.maritalStatus,
     },
-    select: { id: true, name: true, birthDate: true },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      documentType: true,
+      documentNumber: true,
+      birthDate: true,
+      address: true,
+      gender: true,
+      nationality: true,
+      maritalStatus: true,
+    },
   });
   return NextResponse.json(child);
 }

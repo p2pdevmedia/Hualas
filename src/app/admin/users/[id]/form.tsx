@@ -15,9 +15,11 @@ type User = {
   birthDate: string | null;
   gender: string | null;
   address: string | null;
+  phone: string | null;
   nationality: string | null;
   maritalStatus: string | null;
   isActive: boolean;
+  observations: string | null;
 };
 
 export default function EditUserForm({ user }: { user: User }) {
@@ -27,13 +29,13 @@ export default function EditUserForm({ user }: { user: User }) {
   const [birthDate, setBirthDate] = useState(user.birthDate ?? '');
   const [gender, setGender] = useState(user.gender ?? '');
   const [address, setAddress] = useState(user.address ?? '');
+  const [phone, setPhone] = useState(user.phone ?? '');
   const [nationality, setNationality] = useState(user.nationality ?? '');
-  const [maritalStatus, setMaritalStatus] = useState(
-    user.maritalStatus ?? ''
-  );
+  const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
   const [role, setRole] = useState(user.role);
+  const [observations, setObservations] = useState(user.observations ?? '');
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -52,10 +54,12 @@ export default function EditUserForm({ user }: { user: User }) {
         birthDate,
         gender: gender || undefined,
         address,
+        phone,
         nationality,
         maritalStatus,
         email,
         isActive,
+        observations,
       };
       if (canEditRole) body.role = role;
       const res = await fetch(`/api/users/${user.id}`, {
@@ -121,6 +125,12 @@ export default function EditUserForm({ user }: { user: User }) {
       />
       <input
         className="w-full border px-2 py-1"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="Teléfono"
+      />
+      <input
+        className="w-full border px-2 py-1"
         value={nationality}
         onChange={(e) => setNationality(e.target.value)}
         placeholder="Nacionalidad"
@@ -130,6 +140,12 @@ export default function EditUserForm({ user }: { user: User }) {
         value={maritalStatus}
         onChange={(e) => setMaritalStatus(e.target.value)}
         placeholder="Estado Civil"
+      />
+      <textarea
+        className="w-full border px-2 py-1"
+        value={observations}
+        onChange={(e) => setObservations(e.target.value)}
+        placeholder="Observaciones"
       />
       <input
         className="w-full border px-2 py-1"

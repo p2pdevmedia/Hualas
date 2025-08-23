@@ -45,6 +45,7 @@ export async function PATCH(req: Request) {
     updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
   if (data.gender !== undefined) updateData.gender = data.gender;
   if (data.address !== undefined) updateData.address = data.address;
+  if (data.phone !== undefined) updateData.phone = data.phone;
   if (data.nationality !== undefined) updateData.nationality = data.nationality;
   if (data.maritalStatus !== undefined)
     updateData.maritalStatus = data.maritalStatus;
@@ -65,6 +66,7 @@ export async function PATCH(req: Request) {
       birthDate: true,
       gender: true,
       address: true,
+      phone: true,
       nationality: true,
       maritalStatus: true,
     },

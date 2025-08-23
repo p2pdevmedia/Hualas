@@ -26,7 +26,10 @@ export async function PATCH(
       where: { email: data.email },
     });
     if (existing && existing.id !== params.id) {
-      return NextResponse.json({ error: 'Email already in use' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Email already in use' },
+        { status: 400 }
+      );
     }
   }
 
@@ -35,7 +38,10 @@ export async function PATCH(
       where: { dni: data.dni },
     });
     if (existingDni && existingDni.id !== params.id) {
-      return NextResponse.json({ error: 'DNI already in use' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'DNI already in use' },
+        { status: 400 }
+      );
     }
   }
 
@@ -47,9 +53,12 @@ export async function PATCH(
     updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
   if (data.gender !== undefined) updateData.gender = data.gender;
   if (data.address !== undefined) updateData.address = data.address;
+  if (data.phone !== undefined) updateData.phone = data.phone;
   if (data.nationality !== undefined) updateData.nationality = data.nationality;
   if (data.maritalStatus !== undefined)
     updateData.maritalStatus = data.maritalStatus;
+  if (data.observations !== undefined)
+    updateData.observations = data.observations;
   if (data.email !== undefined) updateData.email = data.email;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
   if (data.role !== undefined) updateData.role = data.role;
@@ -67,8 +76,10 @@ export async function PATCH(
       birthDate: true,
       gender: true,
       address: true,
+      phone: true,
       nationality: true,
       maritalStatus: true,
+      observations: true,
       isActive: true,
     },
   });
