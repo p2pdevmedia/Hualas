@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const profileUpdateSchema = z.object({
   name: z.string().optional(),
   lastName: z.string().optional(),
-  dni: z.string().optional(),
+  dni: z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().optional().nullable()
+  ),
   birthDate: z.string().optional(),
   gender: z
     .enum(['FEMALE', 'MALE', 'NON_BINARY', 'UNDISCLOSED', 'OTHER'])
