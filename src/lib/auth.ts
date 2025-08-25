@@ -1,4 +1,5 @@
-import { compare } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
+import { randomUUID } from 'crypto';
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
@@ -49,14 +50,24 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account && account.provider !== 'credentials') {
         const email = user.email?.toLowerCase();
         if (!email) return false;
-        const existingUser = await prisma.user.findUnique({
+        let existingUser = await prisma.user.findUnique({
           where: { email },
         });
-        if (!existingUser || !existingUser.isActive) return false;
+        if (!existingUser) {
+          const randomPassword = await hash(randomUUID(), 12);
+          existingUser = await prisma.user.create({
+            data: {
+              email,
+              name: user.name || (typeof profile?.name === 'string' ? profile.name : ''),
+              password: randomPassword,
+            },
+          });
+        }
+        if (!existingUser.isActive) return false;
         user.id = existingUser.id;
         (user as any).role = existingUser.role;
       }
