@@ -8,6 +8,8 @@ export default function CreateActivityForm() {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
+  const [imageType, setImageType] = useState<'url' | 'file'>('url');
+  const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
@@ -65,12 +67,58 @@ export default function CreateActivityForm() {
         className="w-full border px-2 py-1"
       />
       <input
-        type="url"
-        placeholder="URL de la imagen"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
-        className="w-full border px-2 py-1"
+        type="radio"
+        id="image-url"
+        value="url"
+        checked={imageType === 'url'}
+        onChange={() => setImageType('url')}
       />
+      <label htmlFor="image-url" className="ml-2 mr-4">URL</label>
+      <input
+        type="radio"
+        id="image-file"
+        value="file"
+        checked={imageType === 'file'}
+        onChange={() => setImageType('file')}
+      />
+      <label htmlFor="image-file" className="ml-2">Archivo</label>
+      {imageType === 'url' ? (
+        <input
+          type="url"
+          placeholder="URL de la imagen"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+          className="w-full border px-2 py-1 mt-2"
+        />
+      ) : (
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            setUploading(true);
+            try {
+              const res = await fetch('/api/ipfs', {
+                method: 'POST',
+                body: formData,
+              });
+              const data = await res.json();
+              setImage(data.url);
+            } catch (err) {
+              setError('Failed to upload image');
+            } finally {
+              setUploading(false);
+            }
+          }}
+          className="w-full border px-2 py-1 mt-2"
+        />
+      )}
+      {uploading && (
+        <p className="text-sm text-gray-500">Subiendo imagen...</p>
+      )}
       <select
         value={frequency}
         onChange={(e) =>
