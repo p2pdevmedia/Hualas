@@ -60,7 +60,10 @@ export default function LoginPage() {
       <Button className="w-full" onClick={submit}>
         Sign in
       </Button>
-      <Button className="w-full" onClick={() => signIn('google')}>
+      <Button
+        className="w-full"
+        onClick={() => signIn('google', { callbackUrl: '/' })}
+      >
         Sign in with Google
       </Button>
     </div>
