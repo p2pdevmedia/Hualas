@@ -49,6 +49,19 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account && account.provider !== 'credentials') {
+        const email = user.email?.toLowerCase();
+        if (!email) return false;
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
+        if (!existingUser || !existingUser.isActive) return false;
+        user.id = existingUser.id;
+        (user as any).role = existingUser.role;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
