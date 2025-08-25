@@ -14,7 +14,14 @@ export default async function UsersPage() {
   }
 
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, lastName: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      email: true,
+      dni: true,
+      role: true,
+    },
   });
 
   return (
