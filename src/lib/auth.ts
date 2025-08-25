@@ -1,4 +1,5 @@
-import { compare } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
+import { randomBytes } from 'crypto';
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import InstagramProvider from 'next-auth/providers/instagram';
@@ -36,7 +37,12 @@ export const authOptions: NextAuthOptions = {
         if (!user || !user.password || !user.isActive) return null;
         const valid = await compare(credentials.password, user.password);
         if (!valid) return null;
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
@@ -55,6 +61,28 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' && user.email) {
+        const email = user.email.toLowerCase();
+        let dbUser = await prisma.user.findUnique({ where: { email } });
+        if (!dbUser) {
+          const hashedPassword = await hash(
+            randomBytes(32).toString('hex'),
+            10
+          );
+          dbUser = await prisma.user.create({
+            data: {
+              email,
+              name: user.name || '',
+              password: hashedPassword,
+            },
+          });
+        }
+        (user as any).role = dbUser.role;
+        (user as any).id = dbUser.id;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
