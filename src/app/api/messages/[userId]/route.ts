@@ -14,7 +14,7 @@ export async function GET(
 
   const otherUserId = params.userId;
 
-  const conversation = await prisma.conversation.findFirst({
+  const conversations = await prisma.conversation.findMany({
     where: {
       participants: {
         some: { userId: session.user.id },
@@ -26,18 +26,14 @@ export async function GET(
       },
     },
     include: {
-      messages: {
-        orderBy: { createdAt: 'asc' },
-      },
+      messages: true,
     },
   });
 
-  const messages = conversation
-    ? conversation.messages.map((m) => ({
-        from: m.senderId,
-        content: m.body,
-      }))
-    : [];
+  const messages = conversations
+    .flatMap((c) => c.messages)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .map((m) => ({ from: m.senderId, content: m.body }));
 
   return NextResponse.json(messages);
 }
