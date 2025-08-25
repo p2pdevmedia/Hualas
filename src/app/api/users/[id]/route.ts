@@ -48,7 +48,7 @@ export async function PATCH(
   const updateData: any = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.lastName !== undefined) updateData.lastName = data.lastName;
-  if (data.dni !== undefined) updateData.dni = data.dni;
+  if (data.dni !== undefined) updateData.dni = data.dni ?? null;
   if (data.birthDate !== undefined)
     updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
   if (data.gender !== undefined) updateData.gender = data.gender;

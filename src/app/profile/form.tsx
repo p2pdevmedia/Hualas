@@ -44,7 +44,7 @@ export default function ProfileForm({ user }: { user: User }) {
         body: JSON.stringify({
           name,
           lastName,
-          dni,
+          dni: dni || null,
           birthDate,
           gender: gender || undefined,
           address,

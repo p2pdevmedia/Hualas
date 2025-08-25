@@ -50,7 +50,7 @@ export default function EditUserForm({ user }: { user: User }) {
       const body: any = {
         name,
         lastName,
-        dni,
+        dni: dni || null,
         birthDate,
         gender: gender || undefined,
         address,
