@@ -63,12 +63,6 @@ export default function LoginPage() {
       <Button className="w-full" onClick={() => signIn('google')}>
         Sign in with Google
       </Button>
-      <Button className="w-full" onClick={() => signIn('instagram')}>
-        Sign in with Instagram
-      </Button>
-      <Button className="w-full" onClick={() => signIn('twitter')}>
-        Sign in with Twitter
-      </Button>
     </div>
   );
 }
