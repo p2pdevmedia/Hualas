@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { registerSchema } from '@/lib/validations/auth';
 
@@ -71,6 +72,9 @@ export default function RegisterPage() {
       {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button className="w-full" onClick={submit}>
         Register
+      </Button>
+      <Button className="w-full" onClick={() => signIn('google')}>
+        Register with Google
       </Button>
     </div>
   );
