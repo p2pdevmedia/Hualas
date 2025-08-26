@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import HomeHeading from '@/components/home-heading';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -35,23 +34,41 @@ export default async function Home() {
           <li key={activity.id}>
             <Link
               href={`/activities/${activity.id}`}
-              className="flex flex-col border p-4"
+              className="block max-w-sm w-full lg:max-w-full lg:flex"
             >
-              {activity.image && (
-                <Image
-                  src={activity.image}
-                  alt={activity.name}
-                  width={800}
-                  height={600}
-                  className="mb-2 h-auto w-full"
-                />
-              )}
-              <span className="mb-1 font-semibold">{activity.name}</span>
-              {activity.description && (
-                <p className="mb-2 text-sm text-slate-600">
-                  {activity.description}
-                </p>
-              )}
+              <div
+                className="h-48 lg:h-auto lg:w-48 flex-none bg-cover rounded-t lg:rounded-t-none lg:rounded-l text-center overflow-hidden bg-gray-200"
+                style={
+                  activity.image
+                    ? { backgroundImage: `url(${activity.image})` }
+                    : undefined
+                }
+                title={activity.name}
+              />
+              <div className="border-r border-b border-l border-gray-400 lg:border-l-0 lg:border-t lg:border-gray-400 bg-white rounded-b lg:rounded-b-none lg:rounded-r p-4 flex flex-col justify-between leading-normal">
+                <div className="mb-8">
+                  {activity.date && (
+                    <p className="text-sm text-gray-600">
+                      {activity.date.toLocaleDateString()}
+                    </p>
+                  )}
+                  <div className="text-gray-900 font-bold text-xl mb-2">
+                    {activity.name}
+                  </div>
+                  {activity.description && (
+                    <p className="text-gray-700 text-base">
+                      {activity.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <div className="text-sm">
+                    <p className="text-gray-600">
+                      {activity.participants.length} participantes
+                    </p>
+                  </div>
+                </div>
+              </div>
             </Link>
           </li>
         ))}
