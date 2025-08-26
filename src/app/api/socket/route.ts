@@ -27,10 +27,17 @@ export async function GET(req: NextRequest) {
         'message',
         async ({ to, content }: { to: string; content: string }) => {
           const target = users.get(to);
-          if (!target) return;
           const isSenderAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+          let targetRole = target?.role;
+          if (!targetRole) {
+            const targetUser = await prisma.user.findUnique({
+              where: { id: to },
+              select: { role: true },
+            });
+            targetRole = targetUser?.role;
+          }
           const isTargetAdmin =
-            target.role === 'ADMIN' || target.role === 'SUPER_ADMIN';
+            targetRole === 'ADMIN' || targetRole === 'SUPER_ADMIN';
           if (!isSenderAdmin && !isTargetAdmin) return;
 
           let conversation = await prisma.conversation.findFirst({
@@ -58,7 +65,9 @@ export async function GET(req: NextRequest) {
             },
           });
 
-          io?.to(target.socketId).emit('message', { from: userId, content });
+          if (target) {
+            io?.to(target.socketId).emit('message', { from: userId, content });
+          }
         }
       );
 
