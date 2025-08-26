@@ -24,6 +24,12 @@ export const translations = {
       resetPassword: 'Restablecer contraseña',
       delete: 'Eliminar',
     },
+    auth: {
+      showPassword: 'Mostrar contraseña',
+      invalidCredentials: 'Credenciales inválidas',
+      signIn: 'Iniciar sesión',
+      signInWithGoogle: 'Iniciar sesión con Google',
+    },
   },
   pt: {
     nav: {
@@ -49,6 +55,12 @@ export const translations = {
       childEnrollment: 'Inscrição de crianças',
       resetPassword: 'Redefinir senha',
       delete: 'Excluir',
+    },
+    auth: {
+      showPassword: 'Mostrar senha',
+      invalidCredentials: 'Credenciais inválidas',
+      signIn: 'Entrar',
+      signInWithGoogle: 'Entrar com Google',
     },
   },
   en: {
@@ -76,6 +88,12 @@ export const translations = {
       resetPassword: 'Reset password',
       delete: 'Delete',
     },
+    auth: {
+      showPassword: 'Show password',
+      invalidCredentials: 'Invalid credentials',
+      signIn: 'Sign in',
+      signInWithGoogle: 'Sign in with Google',
+    },
   },
   fr: {
     nav: {
@@ -101,6 +119,12 @@ export const translations = {
       childEnrollment: 'Inscription des enfants',
       resetPassword: 'Réinitialiser le mot de passe',
       delete: 'Supprimer',
+    },
+    auth: {
+      showPassword: 'Afficher le mot de passe',
+      invalidCredentials: 'Identifiants invalides',
+      signIn: 'Se connecter',
+      signInWithGoogle: 'Se connecter avec Google',
     },
   },
 };

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/components/language-provider';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
+  const t = useTranslation().auth;
 
   const submit = async () => {
     setError('');
@@ -23,7 +25,7 @@ export default function LoginPage() {
       redirect: false,
     });
     if (res?.error) {
-      setError('Invalid credentials');
+      setError('invalidCredentials');
     } else {
       setSuccess('Login successful');
       setTimeout(() => router.push('/'), 1000);
@@ -53,16 +55,18 @@ export default function LoginPage() {
             checked={showPassword}
             onChange={() => setShowPassword(!showPassword)}
           />
-          <span>Show password</span>
+          <span>{t.showPassword}</span>
         </label>
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && (
+        <p className="text-red-500 text-sm">{t[error as keyof typeof t]}</p>
+      )}
       {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button
         className="w-full bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
         onClick={submit}
       >
-        Sign in
+        {t.signIn}
       </Button>
       <Button
         className="w-full flex items-center justify-center bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
@@ -75,7 +79,7 @@ export default function LoginPage() {
           height={20}
           className="mr-2"
         />
-        Sign in with Google
+        {t.signInWithGoogle}
       </Button>
     </div>
   );
