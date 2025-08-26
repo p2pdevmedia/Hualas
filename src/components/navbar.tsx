@@ -38,10 +38,17 @@ export default function Navbar() {
 
   return (
     <nav
-      className="flex flex-col px-4 py-2 text-white"
+      className="flex flex-col px-4 py-2 text-white md:flex-row md:items-center md:justify-between"
       style={{ backgroundColor: settings?.navbarColor || '#1e293b' }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 md:order-2">
+        <button
+          className="md:hidden"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Toggle menu"
+        >
+          <Menu />
+        </button>
         <Link href="/" className="flex items-center gap-2">
           <Image
             src={logoUrl}
@@ -52,16 +59,9 @@ export default function Navbar() {
           />
           <span className="font-semibold">Hualas Patagónico</span>
         </Link>
-        <button
-          className="md:hidden"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle menu"
-        >
-          <Menu />
-        </button>
       </div>
       <div
-        className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-2 mt-2 md:mt-0 md:flex md:flex-row md:items-center md:gap-[5ch]`}
+        className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-2 mt-2 md:mt-0 md:flex md:flex-row md:items-center md:gap-[5ch] md:order-1`}
       >
         <Link href="/activities">{t.activities}</Link>
         {session && <Link href="/chat">{t.chat}</Link>}
