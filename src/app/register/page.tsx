@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { registerSchema } from '@/lib/validations/auth';
+import { useTranslation } from '@/components/language-provider';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const t = useTranslation().auth;
 
   async function submit() {
     setError('');
@@ -66,7 +68,7 @@ export default function RegisterPage() {
             checked={showPassword}
             onChange={() => setShowPassword(!showPassword)}
           />
-          <span>Show password</span>
+          <span>{t.showPassword}</span>
         </label>
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
