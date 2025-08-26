@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/components/language-provider';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -41,22 +42,26 @@ export default function LoginPage() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <div className="space-y-1">
+      <div className="relative">
         <input
-          className="w-full border px-2 py-1"
+          className="w-full border px-2 py-1 pr-8"
           type={showPassword ? 'text' : 'password'}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <label className="text-sm flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={showPassword}
-            onChange={() => setShowPassword(!showPassword)}
-          />
-          <span>{t.showPassword}</span>
-        </label>
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          aria-label={t.showPassword}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+        >
+          {showPassword ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </button>
       </div>
       {error && (
         <p className="text-red-500 text-sm">{t[error as keyof typeof t]}</p>
