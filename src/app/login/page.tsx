@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
@@ -57,13 +58,23 @@ export default function LoginPage() {
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button className="w-full" onClick={submit}>
+      <Button
+        className="w-full bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+        onClick={submit}
+      >
         Sign in
       </Button>
       <Button
-        className="w-full"
+        className="w-full flex items-center justify-center bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
         onClick={() => signIn('google', { callbackUrl: '/' })}
       >
+        <Image
+          src="/google.svg"
+          alt="Google logo"
+          width={20}
+          height={20}
+          className="mr-2"
+        />
         Sign in with Google
       </Button>
     </div>
