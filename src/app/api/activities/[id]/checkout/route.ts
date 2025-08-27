@@ -72,6 +72,8 @@ export async function GET(
     },
   });
 
-  const url = result.init_point ?? result.sandbox_init_point;
-  return NextResponse.redirect(url!);
+  return NextResponse.json({
+    preferenceId: result.id,
+    amount: Number(activity.price),
+  });
 }

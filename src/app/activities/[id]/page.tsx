@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
-import PaymentHandler from './payment-handler';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
@@ -39,7 +38,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <main className="p-4">
-      <PaymentHandler activityId={activity.id} />
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
       {(session?.user.role === 'ADMIN' ||
         session?.user.role === 'SUPER_ADMIN') && (

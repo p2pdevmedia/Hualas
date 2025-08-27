@@ -9,5 +9,6 @@ declare module 'mercadopago' {
   export class Payment {
     constructor(config: any);
     get(options: any): Promise<any>;
+    create(options: any): Promise<any>;
   }
 }

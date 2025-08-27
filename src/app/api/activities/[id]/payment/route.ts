@@ -13,15 +13,28 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { paymentId, childId } = await req.json();
-  if (!paymentId) {
-    return NextResponse.json({ error: 'Missing paymentId' }, { status: 400 });
+  const { formData, childId } = await req.json();
+  if (!formData) {
+    return NextResponse.json({ error: 'Missing formData' }, { status: 400 });
+  }
+
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+  });
+  if (!activity) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const client = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN!,
   });
-  const payment = await new Payment(client).get({ id: paymentId });
+  const payment = await new Payment(client).create({
+    body: {
+      ...formData,
+      transaction_amount: Number(activity.price),
+      description: activity.name,
+    },
+  });
 
   const receipt = payment.id?.toString();
   const date = payment.date_approved || payment.date_created || new Date();

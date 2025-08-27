@@ -4,6 +4,7 @@ import RegisterButton from '@/components/register-button';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 
 export default function ActivityRegisterButton({
   activityId,
@@ -16,6 +17,8 @@ export default function ActivityRegisterButton({
     []
   );
   const [target, setTarget] = useState('self');
+  const [preferenceId, setPreferenceId] = useState<string | null>(null);
+  const [amount, setAmount] = useState<number>(0);
 
   useEffect(() => {
     if (session) {
@@ -25,13 +28,36 @@ export default function ActivityRegisterButton({
     }
   }, [session]);
 
-  const handleClick = () => {
+  useEffect(() => {
+    initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!);
+  }, []);
+
+  const handleClick = async () => {
     if (!session) {
       router.push('/login');
       return;
     }
     const qs = target !== 'self' ? `?childId=${target}` : '';
-    window.location.href = `/api/activities/${activityId}/checkout${qs}`;
+    const res = await fetch(`/api/activities/${activityId}/checkout${qs}`);
+    const data = await res.json();
+    setPreferenceId(data.preferenceId);
+    setAmount(data.amount);
+  };
+
+  const onSubmit = ({ formData }: any) => {
+    return new Promise((resolve, reject) => {
+      fetch(`/api/activities/${activityId}/payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formData,
+          childId: target !== 'self' ? target : undefined,
+        }),
+      })
+        .then((res) => res.json())
+        .then(() => resolve({}))
+        .catch(reject);
+    });
   };
 
   return (
@@ -50,7 +76,24 @@ export default function ActivityRegisterButton({
           ))}
         </select>
       )}
-      <RegisterButton onClick={handleClick} />
+      {!preferenceId && <RegisterButton onClick={handleClick} />}
+      {preferenceId && (
+        <Payment
+          initialization={{ amount, preferenceId }}
+          customization={{
+            paymentMethods: {
+              ticket: 'all',
+              creditCard: 'all',
+              prepaidCard: 'all',
+              debitCard: 'all',
+              mercadoPago: 'all',
+            },
+          }}
+          onReady={() => {}}
+          onSubmit={onSubmit}
+          onError={(error) => console.error(error)}
+        />
+      )}
     </div>
   );
 }
