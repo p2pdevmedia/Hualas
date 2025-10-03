@@ -90,12 +90,16 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
           onChange={(e) => setLastName(e.target.value)}
           placeholder="Apellido"
         />
-        <input
+        <select
           className="w-full border px-2 py-1"
           value={documentType}
           onChange={(e) => setDocumentType(e.target.value)}
-          placeholder="Tipo de documento"
-        />
+        >
+          <option value="">Tipo de documento</option>
+          <option value="DNI">DNI</option>
+          <option value="PASAPORTE">Pasaporte</option>
+          <option value="OTRO">Otro</option>
+        </select>
         <input
           className="w-full border px-2 py-1"
           value={documentNumber}
