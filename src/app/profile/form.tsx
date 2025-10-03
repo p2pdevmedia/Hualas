@@ -65,7 +65,7 @@ export default function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-2 max-w-sm">
+    <form onSubmit={submit} className="space-y-2 max-w-sm" autoComplete="on">
       <input
         className="w-full border px-2 py-1"
         value={name}
@@ -129,17 +129,25 @@ export default function ProfileForm({ user }: { user: User }) {
       />
       <input
         className="w-full border px-2 py-1"
+        id="profile-email"
+        name="email"
+        type="email"
+        autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email"
       />
       <input
         className="w-full border px-2 py-1"
+        id="profile-new-password"
+        name="new-password"
         type="password"
+        autoComplete="new-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="New password"
       />
+      <input type="hidden" name="username" value={user.email} />
       {error && <p className="text-red-500 text-sm">{error}</p>}
       {success && <p className="text-green-600 text-sm">{success}</p>}
       <Button type="submit" className="w-full">
