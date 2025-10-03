@@ -22,7 +22,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }
 
   if (!activity) {
-    return <main className="p-4">Activity not found</main>;
+    return (
+      <div className="rounded-3xl border border-dashed border-slate-300/70 bg-white/60 p-10 text-center text-slate-500 backdrop-blur">
+        Actividad no encontrada
+      </div>
+    );
   }
 
   const session = await getServerSession(authOptions);
@@ -38,38 +42,61 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   };
 
   return (
-    <main className="p-4">
+    <div className="space-y-8">
       <PaymentHandler activityId={activity.id} />
-      <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
-      {(session?.user.role === 'ADMIN' ||
-        session?.user.role === 'SUPER_ADMIN') && (
-        <Link
-          href={`/activities/${activity.id}/edit`}
-          className="mb-4 inline-block text-blue-600"
-        >
-          Editar
-        </Link>
-      )}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-slate-900">
+          {activity.name}
+        </h1>
+        {(session?.user.role === 'ADMIN' ||
+          session?.user.role === 'SUPER_ADMIN') && (
+          <Link
+            href={`/activities/${activity.id}/edit`}
+            className="text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+          >
+            Editar actividad
+          </Link>
+        )}
+      </div>
       {activity.image && (
-        <Image
-          src={activity.image}
-          alt={activity.name}
-          width={800}
-          height={600}
-          className="mb-4 max-w-full"
-        />
+        <div className="overflow-hidden rounded-3xl border border-white/60 bg-white/60 shadow-lg shadow-slate-900/5">
+          <Image
+            src={activity.image}
+            alt={activity.name}
+            width={1200}
+            height={700}
+            className="h-auto w-full object-cover"
+          />
+        </div>
       )}
-      <p className="mb-2">Date: {activity.date.toISOString().split('T')[0]}</p>
-      <p className="mb-2">
-        Frecuencia:{' '}
-        {frequencyLabels[activity.frequency as keyof typeof frequencyLabels]}
-      </p>
-      <p className="mb-4">{activity.description}</p>
-      <p className="mb-4 font-semibold">Precio: ${activity.price}</p>
-      <p className="mb-4 font-semibold">
-        {activity.participants.length} suscriptos
-      </p>
-      <RegisterButton activityId={activity.id} />
-    </main>
+      <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
+        <div className="space-y-4 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur">
+          <dl className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+            <div>
+              <dt className="font-semibold text-slate-800">Fecha</dt>
+              <dd>{activity.date.toISOString().split('T')[0]}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-slate-800">Frecuencia</dt>
+              <dd>{frequencyLabels[activity.frequency as keyof typeof frequencyLabels]}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-slate-800">Precio</dt>
+              <dd>${activity.price}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-slate-800">Suscriptos</dt>
+              <dd>{activity.participants.length}</dd>
+            </div>
+          </dl>
+          {activity.description && (
+            <p className="rounded-2xl bg-white/80 p-4 text-sm text-slate-600 shadow-inner shadow-white/40">
+              {activity.description}
+            </p>
+          )}
+        </div>
+        <RegisterButton activityId={activity.id} />
+      </div>
+    </div>
   );
 }

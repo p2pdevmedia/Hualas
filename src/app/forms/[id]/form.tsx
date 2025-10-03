@@ -29,17 +29,23 @@ export default function FormDisplay({ form }: { form: any }) {
     }
   };
 
+  const fieldClass =
+    'w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur"
+    >
       {form.fields.map((f: any) => (
-        <div key={f.id}>
-          <label className="block mb-1">
+        <div key={f.id} className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-800">
             {f.label}
-            {f.required && <span className="text-red-600 ml-1">*</span>}
+            {f.required && <span className="ml-1 text-red-500">*</span>}
           </label>
           {f.type === 'text' && (
             <input
-              className="border p-2 w-full"
+              className={fieldClass}
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
               required={f.required}
@@ -48,7 +54,7 @@ export default function FormDisplay({ form }: { form: any }) {
           {f.type === 'number' && (
             <input
               type="number"
-              className="border p-2 w-full"
+              className={fieldClass}
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
               required={f.required}
@@ -56,7 +62,7 @@ export default function FormDisplay({ form }: { form: any }) {
           )}
           {f.type === 'select' && (
             <select
-              className="border p-2 w-full"
+              className={fieldClass}
               value={data[f.id] || ''}
               onChange={(e) => handleChange(f.id, e.target.value)}
               required={f.required}
@@ -72,10 +78,21 @@ export default function FormDisplay({ form }: { form: any }) {
           )}
         </div>
       ))}
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <button type="submit" className="px-4 py-2 bg-blue-600 text-white">
-        Submit
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-600">
+          {success}
+        </p>
+      )}
+      <button
+        type="submit"
+        className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/30 transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+      >
+        Enviar
       </button>
     </form>
   );

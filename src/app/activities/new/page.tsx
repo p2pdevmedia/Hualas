@@ -10,9 +10,14 @@ export default async function CreateActivityPage() {
   }
 
   return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Crear actividad</h1>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-slate-900">Crear actividad</h1>
+        <p className="text-sm text-slate-500">
+          Diseñá una nueva propuesta y compartila con la comunidad.
+        </p>
+      </div>
       <CreateActivityForm />
-    </main>
+    </div>
   );
 }

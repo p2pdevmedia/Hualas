@@ -41,62 +41,83 @@ export default function RegisterPage() {
     }
   }
 
+  const fieldClass =
+    'w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200';
+
   return (
-    <div className="p-4 max-w-sm mx-auto space-y-2">
-      <input
-        className="w-full border px-2 py-1"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        className="w-full border px-2 py-1"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <div className="relative">
-        <input
-          className="w-full border px-2 py-1 pr-8"
-          placeholder="Password"
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          aria-label={t.showPassword}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-        >
-          {showPassword ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </button>
+    <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-white/60 bg-white/70 p-8 shadow-lg shadow-slate-900/5 backdrop-blur">
+      <div className="space-y-1 text-center">
+        <h1 className="text-2xl font-semibold text-slate-900">Crear cuenta</h1>
+        <p className="text-sm text-slate-500">
+          Unite a la comunidad Hualas para descubrir actividades y gestionar tu
+          participación.
+        </p>
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button
-        className="w-full bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-        onClick={submit}
-      >
-        Register
-      </Button>
-      <Button
-        className="w-full flex items-center justify-center bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-        onClick={() => signIn('google', { callbackUrl: '/' })}
-      >
-        <Image
-          src="/google.svg"
-          alt="Google logo"
-          width={20}
-          height={20}
-          className="mr-2"
+      <div className="space-y-3">
+        <input
+          className={fieldClass}
+          placeholder="Nombre completo"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
-        Register with Google
-      </Button>
+        <input
+          className={fieldClass}
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <div className="relative">
+          <input
+            className={`${fieldClass} pr-10`}
+            placeholder="Contraseña"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={t.showPassword}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-600">
+          {success}
+        </p>
+      )}
+      <div className="space-y-3">
+        <Button onClick={submit} className="w-full shadow-lg shadow-emerald-500/30">
+          Registrarme
+        </Button>
+        <Button
+          onClick={() => signIn('google', { callbackUrl: '/' })}
+          variant="secondary"
+          className="w-full justify-center gap-3"
+        >
+          <Image
+            src="/google.svg"
+            alt="Google logo"
+            width={20}
+            height={20}
+            className="h-5 w-5"
+          />
+          Registrarme con Google
+        </Button>
+      </div>
     </div>
   );
 }

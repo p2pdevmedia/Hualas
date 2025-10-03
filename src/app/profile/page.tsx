@@ -29,8 +29,14 @@ export default async function ProfilePage() {
     redirect('/');
   }
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-slate-900">Mi perfil</h1>
+        <p className="text-sm text-slate-500">
+          Actualizá tus datos personales y gestioná la información de tu grupo
+          familiar.
+        </p>
+      </div>
       <ProfileForm
         user={{
           ...user,

@@ -57,27 +57,33 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
     }
   };
 
+  const fieldClass =
+    'w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur"
+    >
       <input
         type="text"
         placeholder="Nombre de la actividad"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={fieldClass}
       />
       <input
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={fieldClass}
       />
       <input
         type="url"
         placeholder="URL de la imagen"
         value={image}
         onChange={(e) => setImage(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={fieldClass}
       />
       <select
         value={frequency}
@@ -86,7 +92,7 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
             e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
           )
         }
-        className="w-full border px-2 py-1"
+        className={fieldClass}
       >
         <option value="ONE_TIME">Un solo pago</option>
         <option value="DAILY">Diaria</option>
@@ -97,18 +103,28 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         placeholder="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={`${fieldClass} min-h-[120px]`}
       />
       <input
         type="number"
         placeholder="Precio"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={fieldClass}
       />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button type="submit">Guardar</Button>
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-600">
+          {success}
+        </p>
+      )}
+      <Button type="submit" className="w-full shadow-lg shadow-emerald-500/30">
+        Guardar
+      </Button>
     </form>
   );
 }

@@ -37,48 +37,57 @@ export default async function ActivitiesPage() {
   };
 
   return (
-    <main className="p-4">
-      <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <ActivitiesHeading />
         {(session?.user.role === 'ADMIN' ||
           session?.user.role === 'SUPER_ADMIN') && (
           <Link href="/activities/new">
-            <Button>Crear actividad</Button>
+            <Button variant="secondary">Crear actividad</Button>
           </Link>
         )}
       </div>
-      <ul className="space-y-4">
+      <ul className="grid gap-6 md:grid-cols-2">
         {activities.map((activity) => (
-          <li key={activity.id} className="border p-4">
-            <Link
-              href={`/activities/${activity.id}`}
-              className="text-xl font-semibold"
-            >
-              {activity.name}
-            </Link>
-            <p className="text-sm text-slate-600">
-              {activity.participants.length} suscriptos
-            </p>
-            <p className="text-sm text-slate-600">
-              {
-                frequencyLabels[
-                  activity.frequency as keyof typeof frequencyLabels
-                ]
-              }
-            </p>
-            <p className="text-sm text-slate-600">Precio: ${activity.price}</p>
+          <li
+            key={activity.id}
+            className="flex flex-col justify-between gap-4 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur"
+          >
+            <div className="space-y-3">
+              <Link
+                href={`/activities/${activity.id}`}
+                className="text-lg font-semibold text-slate-900 transition hover:text-emerald-600"
+              >
+                {activity.name}
+              </Link>
+              <p className="text-sm text-slate-500">
+                {frequencyLabels[activity.frequency as keyof typeof frequencyLabels]}
+              </p>
+              <p className="text-sm font-semibold text-slate-700">
+                {activity.participants.length} suscriptos
+              </p>
+              <p className="text-sm text-slate-500">Precio: ${activity.price}</p>
+            </div>
             {(session?.user.role === 'ADMIN' ||
               session?.user.role === 'SUPER_ADMIN') && (
-              <Link
-                href={`/activities/${activity.id}/edit`}
-                className="text-sm text-blue-600"
-              >
-                Editar
-              </Link>
+              <div className="flex items-center justify-between">
+                <Link
+                  href={`/activities/${activity.id}/edit`}
+                  className="text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                >
+                  Editar
+                </Link>
+                <Link
+                  href={`/activities/${activity.id}`}
+                  className="text-sm text-slate-500 transition hover:text-slate-700"
+                >
+                  Ver detalles →
+                </Link>
+              </div>
             )}
           </li>
         ))}
       </ul>
-    </main>
+    </div>
   );
 }

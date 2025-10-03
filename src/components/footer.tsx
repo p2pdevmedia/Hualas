@@ -8,40 +8,46 @@ export default function Footer({
 }: {
   settings: SiteSettings | null;
 }) {
+  const footerStyle = settings?.footerColor
+    ? { backgroundColor: `${settings.footerColor}e6` }
+    : undefined;
   return (
     <footer
-      className="flex flex-col items-center justify-center px-4 py-6 text-white text-center"
-      style={{ backgroundColor: settings?.footerColor || '#1e293b' }}
+      className="border-t border-white/60 bg-white/80 text-slate-600 backdrop-blur"
+      style={footerStyle}
     >
-      <p className="text-2xl">💚</p>
-      <p className="mt-2">¡Seguinos en nuestras redes!</p>
-      <div className="mt-2 flex flex-col items-center gap-2">
-        <a
-          href="https://www.instagram.com/hualas_patagonico/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2"
-          aria-label="Instagram"
-        >
-          <Instagram />
-          <span>@hualas_patagonico</span>
-        </a>
-        <a
-          href="https://youtube.com/@escuelademontanahualas?si=j8VEKHbe9IRhXsw4"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2"
-          aria-label="YouTube"
-        >
-          <Youtube />
-          <span>@escuelademontanahualas</span>
-        </a>
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-10 text-center sm:px-6">
+        <div className="inline-flex items-center gap-3 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-emerald-600 shadow-sm">
+          <span className="text-lg">💚</span>
+          <span>Seguinos en nuestras redes</span>
+        </div>
+        <div className="flex flex-col items-center gap-3 text-slate-500 sm:flex-row sm:gap-6">
+          <a
+            href="https://www.instagram.com/hualas_patagonico/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-4 py-2 text-sm font-medium transition hover:border-emerald-400 hover:text-emerald-600"
+            aria-label="Instagram"
+          >
+            <Instagram className="h-4 w-4" />
+            <span>@hualas_patagonico</span>
+          </a>
+          <a
+            href="https://youtube.com/@escuelademontanahualas?si=j8VEKHbe9IRhXsw4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-4 py-2 text-sm font-medium transition hover:border-emerald-400 hover:text-emerald-600"
+            aria-label="YouTube"
+          >
+            <Youtube className="h-4 w-4" />
+            <span>@escuelademontanahualas</span>
+          </a>
+        </div>
+        <p className="max-w-xl text-sm text-slate-500">
+          Club Social y Deportivo Hualas Patagónico.<br />
+          ⛰️ San Martín de los Andes, Neuquén, Patagonia Argentina. 🇦🇷
+        </p>
       </div>
-      <p className="mt-2">
-        Club Social y Deportivo Hualas Patagónico.
-        <br />
-        ⛰️San Martín de los Andes, Neuquén, Patagonia Argentina. 🇦🇷
-      </p>
     </footer>
   );
 }

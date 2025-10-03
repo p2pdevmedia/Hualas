@@ -22,8 +22,15 @@ export default async function EditActivityPage({
     redirect('/activities');
   }
   return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Editar actividad</h1>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-slate-900">
+          Editar actividad
+        </h1>
+        <p className="text-sm text-slate-500">
+          Actualizá la información para mantener a la comunidad al tanto.
+        </p>
+      </div>
       <EditActivityForm
         activity={{
           id: activity.id,
@@ -35,6 +42,6 @@ export default async function EditActivityPage({
           price: activity.price,
         }}
       />
-    </main>
+    </div>
   );
 }

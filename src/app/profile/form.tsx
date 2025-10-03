@@ -64,86 +64,103 @@ export default function ProfileForm({ user }: { user: User }) {
     }
   }
 
+  const fieldClass =
+    'w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200';
+
   return (
-    <form onSubmit={submit} className="space-y-2 max-w-sm">
-      <input
-        className="w-full border px-2 py-1"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nombre"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={lastName}
-        onChange={(e) => setLastName(e.target.value)}
-        placeholder="Apellido"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={dni}
-        onChange={(e) => setDni(e.target.value)}
-        placeholder="DNI"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        type="date"
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
-        placeholder="Fecha de nacimiento"
-      />
-      <select
-        className="w-full border px-2 py-1"
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Género</option>
-        <option value="FEMALE">Femenino</option>
-        <option value="MALE">Masculino</option>
-        <option value="NON_BINARY">No Binario</option>
-        <option value="UNDISCLOSED">Prefiero no decirlo</option>
-        <option value="OTHER">Otro</option>
-      </select>
-      <input
-        className="w-full border px-2 py-1"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Domicilio"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Teléfono"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={nationality}
-        onChange={(e) => setNationality(e.target.value)}
-        placeholder="Nacionalidad"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={maritalStatus}
-        onChange={(e) => setMaritalStatus(e.target.value)}
-        placeholder="Estado Civil"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="New password"
-      />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button type="submit" className="w-full">
-        Save
+    <form
+      onSubmit={submit}
+      className="space-y-6 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-lg shadow-slate-900/5 backdrop-blur"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <input
+          className={fieldClass}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre"
+        />
+        <input
+          className={fieldClass}
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Apellido"
+        />
+        <input
+          className={fieldClass}
+          value={dni}
+          onChange={(e) => setDni(e.target.value)}
+          placeholder="DNI"
+        />
+        <input
+          className={fieldClass}
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          placeholder="Fecha de nacimiento"
+        />
+        <select
+          className={fieldClass}
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="">Género</option>
+          <option value="FEMALE">Femenino</option>
+          <option value="MALE">Masculino</option>
+          <option value="NON_BINARY">No binario</option>
+          <option value="UNDISCLOSED">Prefiero no decirlo</option>
+          <option value="OTHER">Otro</option>
+        </select>
+        <input
+          className={fieldClass}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Domicilio"
+        />
+        <input
+          className={fieldClass}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Teléfono"
+        />
+        <input
+          className={fieldClass}
+          value={nationality}
+          onChange={(e) => setNationality(e.target.value)}
+          placeholder="Nacionalidad"
+        />
+        <input
+          className={fieldClass}
+          value={maritalStatus}
+          onChange={(e) => setMaritalStatus(e.target.value)}
+          placeholder="Estado civil"
+        />
+        <input
+          className={`${fieldClass} sm:col-span-2`}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          type="email"
+        />
+        <input
+          className={`${fieldClass} sm:col-span-2`}
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Nueva contraseña"
+        />
+      </div>
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-600">
+          {success}
+        </p>
+      )}
+      <Button type="submit" className="w-full shadow-lg shadow-emerald-500/30">
+        Guardar cambios
       </Button>
     </form>
   );

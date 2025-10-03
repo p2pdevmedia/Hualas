@@ -33,59 +33,76 @@ export default function LoginPage() {
     }
   };
 
+  const fieldClass =
+    'w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200';
+
   return (
-    <div className="p-4 max-w-sm mx-auto space-y-2">
-      <input
-        className="w-full border px-2 py-1"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <div className="relative">
+    <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-white/60 bg-white/70 p-8 shadow-lg shadow-slate-900/5 backdrop-blur">
+      <div className="space-y-1 text-center">
+        <h1 className="text-2xl font-semibold text-slate-900">{t.signIn}</h1>
+        <p className="text-sm text-slate-500">
+          Accedé a tu cuenta para gestionar tus actividades y notificaciones.
+        </p>
+      </div>
+      <div className="space-y-3">
         <input
-          className="w-full border px-2 py-1 pr-8"
-          type={showPassword ? 'text' : 'password'}
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          className={fieldClass}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          aria-label={t.showPassword}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-        >
-          {showPassword ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </button>
+        <div className="relative">
+          <input
+            className={`${fieldClass} pr-10`}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={t.showPassword}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
       {error && (
-        <p className="text-red-500 text-sm">{t[error as keyof typeof t]}</p>
+        <p className="rounded-xl border border-red-200 bg-red-50/80 p-3 text-sm text-red-600">
+          {t[error as keyof typeof t]}
+        </p>
       )}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button
-        className="w-full bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-        onClick={submit}
-      >
-        {t.signIn}
-      </Button>
-      <Button
-        className="w-full flex items-center justify-center bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-        onClick={() => signIn('google', { callbackUrl: '/' })}
-      >
-        <Image
-          src="/google.svg"
-          alt="Google logo"
-          width={20}
-          height={20}
-          className="mr-2"
-        />
-        {t.signInWithGoogle}
-      </Button>
+      {success && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-600">
+          {success}
+        </p>
+      )}
+      <div className="space-y-3">
+        <Button onClick={submit} className="w-full shadow-lg shadow-emerald-500/30">
+          {t.signIn}
+        </Button>
+        <Button
+          onClick={() => signIn('google', { callbackUrl: '/' })}
+          variant="secondary"
+          className="w-full justify-center gap-3"
+        >
+          <Image
+            src="/google.svg"
+            alt="Google logo"
+            width={20}
+            height={20}
+            className="h-5 w-5"
+          />
+          {t.signInWithGoogle}
+        </Button>
+      </div>
     </div>
   );
 }

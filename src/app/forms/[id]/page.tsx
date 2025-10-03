@@ -18,11 +18,22 @@ export default async function FormPage({ params }: { params: { id: string } }) {
     include: { fields: { orderBy: { order: 'asc' } } },
   });
   if (!form) {
-    return <div className="p-4">Form not found</div>;
+    return (
+      <div className="rounded-3xl border border-dashed border-slate-300/70 bg-white/60 p-10 text-center text-slate-500 backdrop-blur">
+        Formulario no disponible
+      </div>
+    );
   }
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">{form.title}</h1>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-slate-900">
+          {form.title}
+        </h1>
+        {form.description && (
+          <p className="text-sm text-slate-500">{form.description}</p>
+        )}
+      </div>
       <FormDisplay form={form} />
     </div>
   );
