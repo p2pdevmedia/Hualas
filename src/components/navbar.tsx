@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import type { SiteSettings } from '@/types/site';
@@ -36,76 +36,113 @@ export default function Navbar() {
     ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
     : defaultLogo;
 
+  const linkClass = 'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+
   return (
     <nav
-      className="flex flex-col px-4 py-2 text-white md:flex-row md:items-center md:justify-between"
+      className="px-4 py-3 text-white shadow-md"
       style={{ backgroundColor: settings?.navbarColor || '#1e293b' }}
     >
-      <div className="flex items-center justify-between w-full md:w-auto">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5">
           <Image
             src={logoUrl}
             alt="Hualas Club logo"
-            width={40}
-            height={40}
+            width={36}
+            height={36}
             unoptimized
+            className="rounded-full"
           />
-          <span className="font-semibold">Hualas Patagónico</span>
+          <span className="font-semibold tracking-tight">Hualas Patagónico</span>
         </Link>
+
         <button
-          className="md:hidden"
+          className="rounded-md p-1.5 opacity-80 hover:opacity-100 md:hidden"
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label="Toggle menu"
         >
-          <Menu />
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
+
+        <div className="hidden md:flex md:items-center md:gap-6">
+          <Link href="/activities" className={linkClass}>{t.activities}</Link>
+          {session && <Link href="/chat" className={linkClass}>{t.chat}</Link>}
+          {isAdmin && (
+            <>
+              <Link href="/admin/users" className={linkClass}>{t.users}</Link>
+              <Link href="/admin/forms" className={linkClass}>{t.forms}</Link>
+              <Link href="/admin/notifications" className={linkClass}>{t.notifications}</Link>
+              {isSuperAdmin && <Link href="/admin/site" className={linkClass}>{t.admin}</Link>}
+            </>
+          )}
+          <Link href="/contact" className={linkClass}>{t.contact}</Link>
+          {session ? (
+            <>
+              <Link href="/profile" className={linkClass}>{t.profile}</Link>
+              <button onClick={() => signOut({ callbackUrl: '/login' })} className={linkClass}>
+                {t.logout}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className={linkClass}>{t.login}</Link>
+              <Link
+                href="/register"
+                className="rounded-md bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25 transition-colors"
+              >
+                {t.register}
+              </Link>
+            </>
+          )}
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as Lang)}
+            className="bg-transparent text-white opacity-80 hover:opacity-100 cursor-pointer text-sm [&>option]:bg-slate-800 [&>option]:text-white"
+          >
+            {availableLanguages.map(({ code, flag }) => (
+              <option key={code} value={code}>{flag}</option>
+            ))}
+          </select>
+        </div>
       </div>
-      <div
-        className={`${menuOpen ? 'flex' : 'hidden'} flex-col gap-2 mt-2 md:mt-0 md:flex md:flex-row md:items-center md:gap-[5ch]`}
-      >
-        <Link href="/activities">{t.activities}</Link>
-        {session && <Link href="/chat">{t.chat}</Link>}
-        {isAdmin && (
-          <>
-            <Link href="/admin/users">{t.users}</Link>
-            <Link href="/admin/forms">{t.forms}</Link>
-            <Link href="/admin/notifications">{t.notifications}</Link>
-            {isSuperAdmin && <Link href="/admin/site">{t.admin}</Link>}
-          </>
-        )}
-        <Link href="/contact">{t.contact}</Link>
-        {session ? (
-          <>
-            <Link href="/profile">{t.profile}</Link>
-            <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="hover:underline"
-            >
-              {t.logout}
-            </button>
-          </>
-        ) : (
-          <>
-            <Link href="/login" className="hover:underline">
-              {t.login}
-            </Link>
-            <Link href="/register" className="hover:underline">
-              {t.register}
-            </Link>
-          </>
-        )}
-        <select
-          value={lang}
-          onChange={(e) => setLang(e.target.value as Lang)}
-          className="bg-transparent text-black dark:text-white"
-        >
-          {availableLanguages.map(({ code, flag }) => (
-            <option key={code} value={code}>
-              {flag}
-            </option>
-          ))}
-        </select>
-      </div>
+
+      {menuOpen && (
+        <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
+          <Link href="/activities" className={linkClass} onClick={() => setMenuOpen(false)}>{t.activities}</Link>
+          {session && <Link href="/chat" className={linkClass} onClick={() => setMenuOpen(false)}>{t.chat}</Link>}
+          {isAdmin && (
+            <>
+              <Link href="/admin/users" className={linkClass} onClick={() => setMenuOpen(false)}>{t.users}</Link>
+              <Link href="/admin/forms" className={linkClass} onClick={() => setMenuOpen(false)}>{t.forms}</Link>
+              <Link href="/admin/notifications" className={linkClass} onClick={() => setMenuOpen(false)}>{t.notifications}</Link>
+              {isSuperAdmin && <Link href="/admin/site" className={linkClass} onClick={() => setMenuOpen(false)}>{t.admin}</Link>}
+            </>
+          )}
+          <Link href="/contact" className={linkClass} onClick={() => setMenuOpen(false)}>{t.contact}</Link>
+          {session ? (
+            <>
+              <Link href="/profile" className={linkClass} onClick={() => setMenuOpen(false)}>{t.profile}</Link>
+              <button onClick={() => signOut({ callbackUrl: '/login' })} className={`${linkClass} text-left`}>
+                {t.logout}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className={linkClass} onClick={() => setMenuOpen(false)}>{t.login}</Link>
+              <Link href="/register" className={linkClass} onClick={() => setMenuOpen(false)}>{t.register}</Link>
+            </>
+          )}
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as Lang)}
+            className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+          >
+            {availableLanguages.map(({ code, flag }) => (
+              <option key={code} value={code}>{flag}</option>
+            ))}
+          </select>
+        </div>
+      )}
     </nav>
   );
 }
