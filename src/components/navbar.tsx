@@ -41,8 +41,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="px-4 py-3 text-white shadow-md"
-      style={{ backgroundColor: settings?.navbarColor || '#1e293b' }}
+      className="px-4 py-3 text-white shadow-md bg-slate-800"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">

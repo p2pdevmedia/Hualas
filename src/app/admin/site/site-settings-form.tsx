@@ -1,25 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import type { SiteSettings } from '@/types/site';
 import { Button } from '@/components/ui/button';
 
-export default function SiteSettingsForm({
-  settings,
-}: {
-  settings: SiteSettings | null;
-}) {
+export default function SiteSettingsForm() {
   const [logo, setLogo] = useState<File | null>(null);
   const [favicon, setFavicon] = useState<File | null>(null);
-  const [navbarColor, setNavbarColor] = useState(
-    settings?.navbarColor ?? '#1e293b'
-  );
-  const [footerColor, setFooterColor] = useState(
-    settings?.footerColor ?? '#1e293b'
-  );
-  const [backgroundColor, setBackgroundColor] = useState(
-    settings?.backgroundColor ?? '#ffffff'
-  );
   const [message, setMessage] = useState('');
 
   const handleFileChange = (
@@ -35,9 +21,6 @@ export default function SiteSettingsForm({
     const formData = new FormData();
     if (logo) formData.append('logo', logo);
     if (favicon) formData.append('favicon', favicon);
-    formData.append('navbarColor', navbarColor);
-    formData.append('footerColor', footerColor);
-    formData.append('backgroundColor', backgroundColor);
     const res = await fetch('/api/site-settings', {
       method: 'POST',
       body: formData,
@@ -63,32 +46,8 @@ export default function SiteSettingsForm({
         <label className="block mb-1">Favicon (.ico)</label>
         <input
           type="file"
-          accept="image/x-icon"
+          accept="image/x-icon,image/png"
           onChange={(e) => handleFileChange(e, setFavicon)}
-        />
-      </div>
-      <div>
-        <label className="block mb-1">Navbar Color</label>
-        <input
-          type="color"
-          value={navbarColor}
-          onChange={(e) => setNavbarColor(e.target.value)}
-        />
-      </div>
-      <div>
-        <label className="block mb-1">Footer Color</label>
-        <input
-          type="color"
-          value={footerColor}
-          onChange={(e) => setFooterColor(e.target.value)}
-        />
-      </div>
-      <div>
-        <label className="block mb-1">Background Color</label>
-        <input
-          type="color"
-          value={backgroundColor}
-          onChange={(e) => setBackgroundColor(e.target.value)}
         />
       </div>
       <Button type="submit">Guardar configuración</Button>
