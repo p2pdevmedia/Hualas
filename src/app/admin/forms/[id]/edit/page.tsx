@@ -18,12 +18,14 @@ export default async function EditFormPage({
     include: { fields: { orderBy: { order: 'asc' } } },
   });
   if (!form) {
-    return <div className="p-4">Form not found</div>;
+    return <div className="max-w-2xl mx-auto px-4 py-8"><p className="text-muted-foreground">Formulario no encontrado.</p></div>;
   }
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit Form</h1>
-      <EditForm form={form} />
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Editar formulario</h1>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <EditForm form={form} />
+      </div>
     </div>
   );
 }

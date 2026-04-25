@@ -9,9 +9,11 @@ export default async function NewFormPage() {
     redirect('/');
   }
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">New Form</h1>
-      <NewForm />
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Nuevo formulario</h1>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <NewForm />
+      </div>
     </div>
   );
 }
