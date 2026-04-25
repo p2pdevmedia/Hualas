@@ -20,6 +20,9 @@ export default async function ViewUserPage({
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
+      children: {
+        orderBy: { createdAt: 'asc' },
+      },
       activityParticipants: { include: { activity: true, child: true } },
       conversations: {
         include: {
@@ -67,6 +70,65 @@ export default async function ViewUserPage({
             </p>
           )}
         </div>
+      </div>
+
+      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Hijos</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {user.children.length > 0
+                ? `${user.children.length} hijo${user.children.length === 1 ? '' : 's'} registrado${user.children.length === 1 ? '' : 's'}`
+                : 'Sin hijos registrados.'}
+            </p>
+          </div>
+          <Link
+            href={`/admin/users/${user.id}/child-enrollment`}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+          >
+            Agregar hijo
+          </Link>
+        </div>
+
+        {user.children.length > 0 && (
+          <ul className="divide-y divide-border">
+            {user.children.map((child) => (
+              <li
+                key={child.id}
+                className="py-3 flex items-start justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="font-medium">
+                    {child.name} {child.lastName}
+                  </div>
+                  <div className="text-sm text-muted-foreground space-x-2">
+                    {child.documentType && child.documentNumber && (
+                      <span>
+                        {child.documentType} {child.documentNumber}
+                      </span>
+                    )}
+                    {child.birthDate && (
+                      <span>
+                        · {child.birthDate.toLocaleDateString('es-AR')}
+                      </span>
+                    )}
+                  </div>
+                  {child.address && (
+                    <p className="text-sm text-muted-foreground">
+                      {child.address}
+                    </p>
+                  )}
+                </div>
+                <Link
+                  href={`/admin/users/${user.id}/children/${child.id}/edit`}
+                  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+                >
+                  Editar
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
@@ -140,7 +202,7 @@ export default async function ViewUserPage({
         href="/admin/users"
         className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
       >
-        ← Volver a usuarios
+        ← Volver a padres
       </Link>
     </div>
   );
