@@ -20,12 +20,20 @@ const config: Config = {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
         border: 'hsl(var(--border))',
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
         success: 'hsl(var(--success))',
+      },
+      fontFamily: {
+        heading: ['var(--font-heading)', 'Cormorant Garamond', 'serif'],
+        body: ['var(--font-body)', 'DM Sans', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
