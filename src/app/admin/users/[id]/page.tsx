@@ -40,16 +40,18 @@ export default async function EditUserPage({
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit User</h1>
-      <EditUserForm
-        user={{
-          ...user,
-          birthDate: user.birthDate
-            ? user.birthDate.toISOString().split('T')[0]
-            : null,
-        }}
-      />
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Editar usuario</h1>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <EditUserForm
+          user={{
+            ...user,
+            birthDate: user.birthDate
+              ? user.birthDate.toISOString().split('T')[0]
+              : null,
+          }}
+        />
+      </div>
     </div>
   );
 }

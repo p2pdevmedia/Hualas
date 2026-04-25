@@ -16,11 +16,7 @@ type Child = {
   maritalStatus: string | null;
 };
 
-export default function ChildrenManager({
-  userAddress,
-}: {
-  userAddress: string;
-}) {
+export default function ChildrenManager({ userAddress }: { userAddress: string }) {
   const [children, setChildren] = useState<Child[]>([]);
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -33,6 +29,9 @@ export default function ChildrenManager({
   const [nationality, setNationality] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
 
+  const inputClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
   useEffect(() => {
     fetch('/api/children')
       .then((res) => res.json())
@@ -40,9 +39,7 @@ export default function ChildrenManager({
   }, []);
 
   useEffect(() => {
-    if (sameAddress) {
-      setAddress(userAddress);
-    }
+    if (sameAddress) setAddress(userAddress);
   }, [sameAddress, userAddress]);
 
   async function addChild(e: React.FormEvent) {
@@ -50,97 +47,48 @@ export default function ChildrenManager({
     const res = await fetch('/api/children', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        lastName,
-        documentType,
-        documentNumber,
-        birthDate,
-        address,
-        gender: gender || undefined,
-        nationality,
-        maritalStatus,
-      }),
+      body: JSON.stringify({ name, lastName, documentType, documentNumber, birthDate, address, gender: gender || undefined, nationality, maritalStatus }),
     });
     if (res.ok) {
       const child = await res.json();
       setChildren([...children, child]);
-      setName('');
-      setLastName('');
-      setDocumentType('');
-      setDocumentNumber('');
-      setBirthDate('');
-      setAddress('');
-      setSameAddress(false);
-      setGender('');
-      setNationality('');
-      setMaritalStatus('');
+      setName(''); setLastName(''); setDocumentType(''); setDocumentNumber('');
+      setBirthDate(''); setAddress(''); setSameAddress(false);
+      setGender(''); setNationality(''); setMaritalStatus('');
     }
   }
 
   return (
-    <div className="mt-6 space-y-2 max-w-sm">
-      <h2 className="text-xl font-semibold">Hijos</h2>
-      <ul className="list-disc pl-4">
-        {children.map((c) => (
-          <li key={c.id}>{c.name}</li>
-        ))}
-      </ul>
-      <form onSubmit={addChild} className="space-y-2">
-        <input
-          className="w-full border px-2 py-1"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-        />
-        <input
-          className="w-full border px-2 py-1"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Apellido"
-        />
-        <select
-          className="w-full border px-2 py-1"
-          value={documentType}
-          onChange={(e) => setDocumentType(e.target.value)}
-        >
+    <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+      <h2 className="text-lg font-semibold tracking-tight">Hijos</h2>
+      {children.length > 0 && (
+        <ul className="space-y-1">
+          {children.map((c) => (
+            <li key={c.id} className="text-sm text-muted-foreground">
+              {c.name} {c.lastName}
+            </li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={addChild} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" required />
+          <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Apellido" />
+        </div>
+        <select className={inputClass} value={documentType} onChange={(e) => setDocumentType(e.target.value)}>
           <option value="">Tipo de documento</option>
           <option value="DNI">DNI</option>
           <option value="PASAPORTE">Pasaporte</option>
           <option value="OTRO">Otro</option>
         </select>
-        <input
-          className="w-full border px-2 py-1"
-          value={documentNumber}
-          onChange={(e) => setDocumentNumber(e.target.value)}
-          placeholder="Número / Código"
-        />
-        <input
-          className="w-full border px-2 py-1"
-          type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          placeholder="Fecha de nacimiento"
-        />
-        <input
-          className="w-full border px-2 py-1"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Domicilio"
-        />
-        <label className="text-sm flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={sameAddress}
-            onChange={(e) => setSameAddress(e.target.checked)}
-          />
-          <span>Mismo domicilio que el usuario</span>
+        <input className={inputClass} value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Número / Código" />
+        <input className={inputClass} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Domicilio" />
+        <label className="text-sm flex items-center gap-2 text-muted-foreground">
+          <input type="checkbox" checked={sameAddress} onChange={(e) => setSameAddress(e.target.checked)} className="accent-primary" />
+          Mismo domicilio que el usuario
         </label>
-        <select
-          className="w-full border px-2 py-1"
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-        >
+        <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
           <option value="">Género</option>
           <option value="FEMALE">Femenino</option>
           <option value="MALE">Masculino</option>
@@ -148,18 +96,8 @@ export default function ChildrenManager({
           <option value="UNDISCLOSED">Prefiero no decirlo</option>
           <option value="OTHER">Otro</option>
         </select>
-        <input
-          className="w-full border px-2 py-1"
-          value={nationality}
-          onChange={(e) => setNationality(e.target.value)}
-          placeholder="Nacionalidad"
-        />
-        <input
-          className="w-full border px-2 py-1"
-          value={maritalStatus}
-          onChange={(e) => setMaritalStatus(e.target.value)}
-          placeholder="Estado Civil"
-        />
+        <input className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Nacionalidad" />
+        <input className={inputClass} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} placeholder="Estado Civil" />
         <Button type="submit" className="w-full">
           Agregar hijo
         </Button>

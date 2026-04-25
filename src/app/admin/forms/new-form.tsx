@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 type Field = {
   label: string;
@@ -15,12 +16,10 @@ export default function NewForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const addField = () => {
-    setFields([
-      ...fields,
-      { label: '', type: 'text', options: [], required: false },
-    ]);
-  };
+  const inputClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
+  const addField = () => setFields([...fields, { label: '', type: 'text', options: [], required: false }]);
 
   const updateField = (index: number, key: keyof Field, value: any) => {
     const newFields = [...fields];
@@ -34,14 +33,14 @@ export default function NewForm() {
     setFields(newFields);
   };
 
-  const updateOption = (
-    fieldIndex: number,
-    optIndex: number,
-    value: string
-  ) => {
+  const updateOption = (fieldIndex: number, optIndex: number, value: string) => {
     const newFields = [...fields];
     newFields[fieldIndex].options[optIndex] = value;
     setFields(newFields);
+  };
+
+  const removeField = (index: number) => {
+    setFields(fields.filter((_, i) => i !== index));
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -55,86 +54,76 @@ export default function NewForm() {
         body: JSON.stringify({ title, fields }),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Form saved');
+      setSuccess('Formulario guardado');
       setTitle('');
       setFields([]);
     } catch (e) {
-      setError('Failed to save form');
+      setError('No se pudo guardar el formulario');
     }
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <div>
-        <label className="block mb-1">Title</label>
-        <input
-          className="border p-2 w-full"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+    <form onSubmit={submit} className="space-y-5">
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Título del formulario</label>
+        <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Ficha de inscripción" required />
       </div>
-      <div className="space-y-2">
+
+      <div className="space-y-3">
         {fields.map((f, i) => (
-          <div key={i} className="border p-2">
+          <div key={i} className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">Campo {i + 1}</span>
+              <button type="button" onClick={() => removeField(i)} className="text-xs text-destructive hover:text-destructive/80">
+                Eliminar
+              </button>
+            </div>
             <input
-              className="border p-1 w-full mb-1"
-              placeholder="Label"
+              className={inputClass}
+              placeholder="Etiqueta del campo"
               value={f.label}
               onChange={(e) => updateField(i, 'label', e.target.value)}
             />
-            <select
-              className="border p-1 w-full mb-1"
-              value={f.type}
-              onChange={(e) => updateField(i, 'type', e.target.value)}
-            >
-              <option value="text">Text</option>
-              <option value="number">Number</option>
-              <option value="select">Select</option>
+            <select className={inputClass} value={f.type} onChange={(e) => updateField(i, 'type', e.target.value)}>
+              <option value="text">Texto</option>
+              <option value="number">Número</option>
+              <option value="select">Selección</option>
             </select>
-            <label className="inline-flex items-center mb-1">
-              <input
-                type="checkbox"
-                className="mr-1"
-                checked={f.required}
-                onChange={(e) => updateField(i, 'required', e.target.checked)}
-              />
-              Required
+            <label className="text-sm flex items-center gap-2 text-muted-foreground">
+              <input type="checkbox" className="accent-primary" checked={f.required} onChange={(e) => updateField(i, 'required', e.target.checked)} />
+              Requerido
             </label>
             {f.type === 'select' && (
-              <div className="space-y-1">
+              <div className="space-y-2 pl-1">
                 {f.options.map((opt, j) => (
                   <input
                     key={j}
-                    className="border p-1 w-full"
-                    placeholder={`Option ${j + 1}`}
+                    className={inputClass}
+                    placeholder={`Opción ${j + 1}`}
                     value={opt}
                     onChange={(e) => updateOption(i, j, e.target.value)}
                   />
                 ))}
-                <button
-                  type="button"
-                  className="text-sm text-blue-600"
-                  onClick={() => addOption(i)}
-                >
-                  Add option
+                <button type="button" className="text-sm text-primary hover:text-primary/80" onClick={() => addOption(i)}>
+                  + Agregar opción
                 </button>
               </div>
             )}
           </div>
         ))}
       </div>
+
       <button
         type="button"
         onClick={addField}
-        className="px-2 py-1 bg-gray-200"
+        className="w-full rounded-md border border-dashed border-border py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
       >
-        Add field
+        + Agregar campo
       </button>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <button type="submit" className="px-4 py-2 bg-blue-600 text-white">
-        Save Form
-      </button>
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
+      {success && <p className="text-success text-sm">{success}</p>}
+      <Button type="submit" className="w-full">Guardar formulario</Button>
     </form>
   );
 }

@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Design tokens — Club Hualas Patagónico */
+    --background: 37 40% 93%;        /* #F5F0E8 cream */
+    --foreground: 89 18% 11%;        /* #1C2117 ink */
+    --card: 45 67% 99%;              /* #FDFCF9 white */
+    --card-foreground: 89 18% 11%;
+    --primary: 122 20% 30%;          /* #3D5A3E verde */
+    --primary-foreground: 0 0% 98%;
+    --muted: 100 15% 91%;            /* #E8EDE6 mist */
+    --muted-foreground: 60 5% 52%;   /* #8A8A7F stone */
+    --border: 100 12% 86%;
+    --accent: 187 20% 57%;           /* #7BA3A8 glacier */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 160 55% 34%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body, 'DM Sans'), system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, 'Cormorant Garamond'), serif;
+  }
+}

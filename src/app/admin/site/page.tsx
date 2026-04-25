@@ -11,9 +11,11 @@ export default async function SiteAdminPage() {
   }
   const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Site Administrator</h1>
-      <SiteSettingsForm settings={settings} />
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Configuración del sitio</h1>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <SiteSettingsForm settings={settings} />
+      </div>
     </div>
   );
 }

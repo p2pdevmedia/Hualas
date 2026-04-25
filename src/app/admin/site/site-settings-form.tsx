@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { SiteSettings } from '@/types/site';
+import { Button } from '@/components/ui/button';
 
 export default function SiteSettingsForm({
   settings,
@@ -90,13 +91,8 @@ export default function SiteSettingsForm({
           onChange={(e) => setBackgroundColor(e.target.value)}
         />
       </div>
-      <button
-        type="submit"
-        className="px-4 py-2 bg-blue-600 text-white rounded"
-      >
-        Save
-      </button>
-      {message && <p>{message}</p>}
+      <Button type="submit">Guardar configuración</Button>
+      {message && <p className="text-sm text-muted-foreground">{message}</p>}
     </form>
   );
 }
