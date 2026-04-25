@@ -45,10 +45,6 @@ export async function POST(req: Request) {
   try {
     const data = await req.formData();
 
-    const navbarColor = data.get('navbarColor') as string;
-    const footerColor = data.get('footerColor') as string;
-    const backgroundColor = data.get('backgroundColor') as string;
-
     let logoHash: string | undefined;
     let faviconHash: string | undefined;
 
@@ -65,17 +61,11 @@ export async function POST(req: Request) {
     const settings = await prisma.siteSetting.upsert({
       where: { id: 1 },
       update: {
-        navbarColor,
-        footerColor,
-        backgroundColor,
         ...(logoHash && { logo: logoHash }),
         ...(faviconHash && { favicon: faviconHash }),
       },
       create: {
         id: 1,
-        navbarColor,
-        footerColor,
-        backgroundColor,
         logo: logoHash ?? null,
         favicon: faviconHash ?? null,
       },

@@ -1,18 +1,10 @@
 'use client';
 
-import type { SiteSettings } from '@/types/site';
 import { Instagram, Youtube } from 'lucide-react';
 
-export default function Footer({
-  settings,
-}: {
-  settings: SiteSettings | null;
-}) {
+export default function Footer() {
   return (
-    <footer
-      className="px-4 py-8 text-white"
-      style={{ backgroundColor: settings?.footerColor || '#1e293b' }}
-    >
+    <footer className="px-4 py-8 text-white bg-slate-800">
       <div className="mx-auto max-w-4xl">
         <div className="flex flex-col items-center gap-4 text-center">
           <p className="text-lg font-semibold">Club Hualas Patagónico</p>

@@ -5,7 +5,6 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
 import { prisma } from '@/lib/prisma';
-import type { SiteSettings } from '@/types/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,18 +38,13 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const settings: SiteSettings | null = await getSiteSettings();
-
   return (
     <html lang="es">
-      <body
-        className="min-h-screen text-foreground flex flex-col font-body"
-        style={{ backgroundColor: settings?.backgroundColor || undefined }}
-      >
+      <body className="min-h-screen text-foreground flex flex-col font-body">
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>
-          <Footer settings={settings} />
+          <Footer />
         </Providers>
       </body>
     </html>
