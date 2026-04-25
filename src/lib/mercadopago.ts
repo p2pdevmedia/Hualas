@@ -56,12 +56,17 @@ export function getMercadoPagoCredentials() {
 }
 
 export function getMercadoPagoCheckoutSettings(): MercadoPagoCheckoutSettings {
-  const autoReturnValue = (process.env.MP_AUTO_RETURN || 'approved').toLowerCase();
+  const autoReturnValue = (
+    process.env.MP_AUTO_RETURN || 'approved'
+  ).toLowerCase();
 
   return {
     autoReturn: autoReturnValue === 'all' ? 'all' : 'approved',
     binaryMode: toBoolean(process.env.MP_BINARY_MODE, false),
-    expiresInMinutes: toPositiveInt(process.env.MP_PREFERENCE_EXPIRES_MINUTES, 60),
+    expiresInMinutes: toPositiveInt(
+      process.env.MP_PREFERENCE_EXPIRES_MINUTES,
+      60
+    ),
     maxInstallments: toPositiveInt(process.env.MP_MAX_INSTALLMENTS, 1),
     excludedPaymentMethodIds: toArray(process.env.MP_EXCLUDED_PAYMENT_METHODS),
     excludedPaymentTypeIds: toArray(process.env.MP_EXCLUDED_PAYMENT_TYPES),

@@ -7,4 +7,5 @@ export const activityCreateSchema = z.object({
   image: z.string().url().optional(),
   description: z.string().optional(),
   price: z.number().int().nonnegative(),
+  capacity: z.number().int().positive().optional(),
 });

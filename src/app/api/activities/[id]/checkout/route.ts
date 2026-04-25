@@ -49,7 +49,10 @@ export async function GET(
 
   let activity: any = null;
   try {
-    activity = await prisma.activity.findUnique({ where: { id: params.id } });
+    activity = await prisma.activity.findUnique({
+      where: { id: params.id },
+      include: { participants: true },
+    });
   } catch (e: any) {
     console.error('[checkout] DB error:', e?.message);
     return NextResponse.json(
@@ -62,6 +65,16 @@ export async function GET(
     return NextResponse.json(
       { error: 'Actividad no encontrada' },
       { status: 404 }
+    );
+  }
+
+  if (
+    activity.capacity != null &&
+    activity.participants.length >= activity.capacity
+  ) {
+    return NextResponse.json(
+      { error: 'La actividad ya alcanzó su cupo de inscripciones.' },
+      { status: 409 }
     );
   }
 

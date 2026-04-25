@@ -36,6 +36,7 @@ export default async function EditActivityPage({
           image: activity.image ?? '',
           description: activity.description ?? '',
           price: activity.price,
+          capacity: activity.capacity ?? null,
         }}
       />
     </main>
