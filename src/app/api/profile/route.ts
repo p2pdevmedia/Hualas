@@ -62,6 +62,7 @@ export async function PATCH(req: Request) {
       email: true,
       name: true,
       lastName: true,
+      profilePhoto: true,
       dni: true,
       birthDate: true,
       gender: true,

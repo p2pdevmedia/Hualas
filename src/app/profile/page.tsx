@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ProfileForm from './form';
+import ProfilePhotoUpload from './profile-photo-upload';
 import ChildrenManager from './children';
 
 export default async function ProfilePage() {
@@ -15,6 +16,7 @@ export default async function ProfilePage() {
     select: {
       name: true,
       lastName: true,
+      profilePhoto: true,
       dni: true,
       birthDate: true,
       gender: true,
@@ -29,8 +31,23 @@ export default async function ProfilePage() {
     redirect('/');
   }
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Mi perfil</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="grid gap-6 md:grid-cols-[220px,1fr] md:items-center">
+          <ProfilePhotoUpload
+            initialPhoto={user.profilePhoto}
+            name={user.name}
+            lastName={user.lastName}
+          />
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight">Mi perfil</h1>
+            <p className="text-sm text-muted-foreground">
+              Actualizá tus datos y guardá una foto de perfil tomada con la
+              cámara o subida desde tu dispositivo.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <ProfileForm
           user={{
