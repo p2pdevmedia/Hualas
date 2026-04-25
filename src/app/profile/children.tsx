@@ -32,6 +32,8 @@ export default function ChildrenManager({
   const [gender, setGender] = useState('');
   const [nationality, setNationality] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
+  const [relationshipDeclarationAccepted, setRelationshipDeclarationAccepted] =
+    useState(false);
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
@@ -76,6 +78,7 @@ export default function ChildrenManager({
       setGender('');
       setNationality('');
       setMaritalStatus('');
+      setRelationshipDeclarationAccepted(false);
     }
   }
 
@@ -168,6 +171,21 @@ export default function ChildrenManager({
           onChange={(e) => setMaritalStatus(e.target.value)}
           placeholder="Estado Civil"
         />
+        <label className="text-sm flex items-start gap-2 text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={relationshipDeclarationAccepted}
+            onChange={(e) =>
+              setRelationshipDeclarationAccepted(e.target.checked)
+            }
+            className="accent-primary mt-0.5"
+            required
+          />
+          <span>
+            Declaro, bajo carácter de declaración jurada, que soy padre, madre
+            o tutor legal del menor que estoy registrando.
+          </span>
+        </label>
         <Button type="submit" className="w-full">
           Agregar hijo
         </Button>
