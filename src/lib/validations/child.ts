@@ -12,5 +12,13 @@ export const childCreateSchema = z.object({
     .optional(),
   nationality: z.string().optional(),
   maritalStatus: z.string().optional(),
+  allergies: z.string().optional(),
+  regularMedication: z.string().optional(),
+  relevantDiseases: z.string().optional(),
+  previousInjuries: z.string().optional(),
+  physicalRestrictions: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  primaryDoctor: z.string().optional(),
+  doctorPhone: z.string().optional(),
   observations: z.string().optional(),
 });

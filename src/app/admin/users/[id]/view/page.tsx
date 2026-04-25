@@ -118,6 +118,42 @@ export default async function ViewUserPage({
                       {child.address}
                     </p>
                   )}
+                  {[
+                    child.allergies,
+                    child.regularMedication,
+                    child.relevantDiseases,
+                    child.previousInjuries,
+                    child.physicalRestrictions,
+                    child.bloodGroup,
+                    child.primaryDoctor,
+                    child.doctorPhone,
+                    child.observations,
+                  ].some(Boolean) && (
+                    <div className="grid gap-2 rounded-lg border bg-muted/20 p-3 text-xs sm:grid-cols-2">
+                      {[
+                        ['Alergias', child.allergies],
+                        ['Medicación habitual', child.regularMedication],
+                        ['Enfermedades relevantes', child.relevantDiseases],
+                        ['Lesiones previas', child.previousInjuries],
+                        ['Restricciones físicas', child.physicalRestrictions],
+                        ['Grupo sanguíneo', child.bloodGroup],
+                        ['Médico de cabecera', child.primaryDoctor],
+                        ['Teléfono médico', child.doctorPhone],
+                        ['Observaciones', child.observations],
+                      ]
+                        .filter(([, value]) => Boolean(value))
+                        .map(([label, value]) => (
+                          <div key={label}>
+                            <span className="font-medium text-foreground">
+                              {label}:
+                            </span>{' '}
+                            <span className="text-muted-foreground">
+                              {value as string}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
                 <Link
                   href={`/admin/users/${user.id}/children/${child.id}/edit`}
