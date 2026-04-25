@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
+import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 
 export async function POST(req: NextRequest) {
   let body: any = null;
@@ -26,8 +27,13 @@ export async function POST(req: NextRequest) {
   });
 
   if (topic === 'payment' && id) {
+    const { accessToken } = getMercadoPagoCredentials();
+    if (!accessToken) {
+      return NextResponse.json({ received: true });
+    }
+
     const client = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN!,
+      accessToken,
     });
 
     try {
