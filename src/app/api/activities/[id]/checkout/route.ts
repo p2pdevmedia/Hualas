@@ -3,7 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-import { getMercadoPagoCredentials } from '@/lib/mercadopago';
+import {
+  getMercadoPagoCheckoutSettings,
+  getMercadoPagoCredentials,
+} from '@/lib/mercadopago';
 
 function getAppUrl(req: Request) {
   const configuredUrl = process.env.NEXTAUTH_URL?.trim();
@@ -29,6 +32,7 @@ export async function GET(
   }
 
   const { accessToken, environment } = getMercadoPagoCredentials();
+  const checkoutSettings = getMercadoPagoCheckoutSettings();
 
   if (!accessToken) {
     console.error(`[checkout] Access token de Mercado Pago no configurado para ${environment}`);
@@ -85,6 +89,10 @@ export async function GET(
     const successUrl = childId ? `${base}?childId=${childId}` : base;
 
     const preference = new Preference(client);
+    const preferenceExpiresAt = new Date(
+      Date.now() + checkoutSettings.expiresInMinutes * 60 * 1000
+    );
+
     const result = await preference.create({
       body: {
         payer: {
@@ -108,10 +116,24 @@ export async function GET(
           failure: base,
           pending: base,
         },
-        auto_return: 'approved',
+        auto_return: checkoutSettings.autoReturn,
+        binary_mode: checkoutSettings.binaryMode,
+        payment_methods: {
+          installments: checkoutSettings.maxInstallments,
+          excluded_payment_methods: checkoutSettings.excludedPaymentMethodIds.map((id) => ({ id })),
+          excluded_payment_types: checkoutSettings.excludedPaymentTypeIds.map((id) => ({ id })),
+        },
+        expires: true,
+        expiration_date_to: preferenceExpiresAt.toISOString(),
         notification_url: `${appUrl}/api/mercadopago/notifications`,
         statement_descriptor: process.env.MP_STATEMENT_DESCRIPTOR || 'HUALAS',
         external_reference: externalReference,
+        metadata: {
+          activityId: activity.id,
+          userId: (session.user as any).id,
+          childId: childId || null,
+          environment,
+        },
       },
     });
 
