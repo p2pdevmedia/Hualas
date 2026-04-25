@@ -78,8 +78,12 @@ export async function GET(
       .join(':');
 
     const appUrl = getAppUrl(req);
-    const base = `${appUrl}/activities/${activity.id}`;
+    const returnBase = process.env.MP_RETURN_URL_BASE?.trim() || appUrl;
+    const base = `${returnBase}/activities/${activity.id}`;
     const successUrl = childId ? `${base}?childId=${childId}` : base;
+    const notificationUrl =
+      process.env.MP_NOTIFICATION_URL?.trim() ||
+      `${appUrl}/api/mercadopago/notifications`;
 
     const preference = new Preference(client);
     const result = await preference.create({
@@ -106,13 +110,16 @@ export async function GET(
           pending: base,
         },
         auto_return: 'approved',
-        notification_url: `${appUrl}/api/mercadopago/notifications`,
+        notification_url: notificationUrl,
         statement_descriptor: process.env.MP_STATEMENT_DESCRIPTOR || 'HUALAS',
         external_reference: externalReference,
       },
     });
 
-    const redirectUrl = result.init_point ?? result.sandbox_init_point;
+    const isTesting = process.env.MP_ENVIRONMENT === 'testing';
+    const redirectUrl = isTesting
+      ? (result.sandbox_init_point ?? result.init_point)
+      : (result.init_point ?? result.sandbox_init_point);
     if (!redirectUrl) {
       console.error('[checkout] No init_point en respuesta MP:', result);
       return NextResponse.json(

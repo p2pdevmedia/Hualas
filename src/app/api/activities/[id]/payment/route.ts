@@ -51,6 +51,18 @@ export async function POST(
     const date = payment.date_approved || payment.date_created || new Date();
     const receiptDate = new Date(date);
 
+    await prisma.mercadoPagoNotification.create({
+      data: {
+        topic: 'payment',
+        data: {
+          source: 'return',
+          paymentId,
+          activityId: params.id,
+          childId: participantChildId,
+        },
+      },
+    });
+
     const participant = await prisma.activityParticipant.findFirst({
       where: {
         activityId: params.id,
