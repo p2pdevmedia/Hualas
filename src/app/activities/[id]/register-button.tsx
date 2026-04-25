@@ -36,17 +36,15 @@ export default function ActivityRegisterButton({
 
   return (
     <div className="space-y-2">
-      {session && (
+      {session && children.length > 0 && (
         <select
-          className="border px-2 py-1"
+          className="w-full border rounded px-2 py-1.5 text-sm"
           value={target}
           onChange={(e) => setTarget(e.target.value)}
         >
           <option value="self">Para mí</option>
           {children.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       )}

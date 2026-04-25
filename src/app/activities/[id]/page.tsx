@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
@@ -39,7 +40,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <main className="p-4">
-      <PaymentHandler activityId={activity.id} />
+      <Suspense fallback={null}>
+        <PaymentHandler activityId={activity.id} />
+      </Suspense>
       <h1 className="mb-4 text-2xl font-bold">{activity.name}</h1>
       {(session?.user.role === 'ADMIN' ||
         session?.user.role === 'SUPER_ADMIN') && (
