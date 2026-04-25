@@ -33,7 +33,11 @@ export async function GET(
   const messages = conversations
     .flatMap((c) => c.messages)
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-    .map((m) => ({ from: m.senderId, content: m.body }));
+    .map((m) => ({
+      from: m.senderId,
+      content: m.body,
+      createdAt: m.createdAt.toISOString(),
+    }));
 
   return NextResponse.json(messages);
 }
