@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
@@ -41,7 +42,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <main>
-      <PaymentHandler activityId={activity.id} />
+      <Suspense fallback={null}>
+        <PaymentHandler activityId={activity.id} />
+      </Suspense>
 
       {/* Hero foto */}
       {activity.image ? (
