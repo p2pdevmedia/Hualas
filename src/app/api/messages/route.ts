@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
     messages: c.messages.map((m) => ({
       from: m.senderId,
       content: m.body,
+      createdAt: m.createdAt.toISOString(),
     })),
   }));
 
