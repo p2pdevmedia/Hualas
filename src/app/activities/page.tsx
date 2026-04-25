@@ -74,7 +74,11 @@ export default async function ActivitiesPage() {
                   <span>·</span>
                   <span>${activity.price}</span>
                   <span>·</span>
-                  <span>{activity.participants.length} suscriptos</span>
+                  <span>
+                    {activity.capacity
+                      ? `${activity.participants.length}/${activity.capacity} cupo`
+                      : `${activity.participants.length} suscriptos`}
+                  </span>
                 </div>
               </div>
               <Link

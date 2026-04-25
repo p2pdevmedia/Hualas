@@ -13,6 +13,7 @@ interface EditActivityFormProps {
     image?: string | null;
     description?: string | null;
     price: number;
+    capacity?: number | null;
   };
 }
 
@@ -25,6 +26,7 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
   const [image, setImage] = useState(activity.image || '');
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
+  const [capacity, setCapacity] = useState(activity.capacity?.toString() ?? '');
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -43,10 +45,11 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         body: JSON.stringify({
           name,
           date,
-          image,
-          description,
+          image: image || undefined,
+          description: description || undefined,
           frequency,
           price: Number(price),
+          capacity: capacity ? Number(capacity) : undefined,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
@@ -108,6 +111,14 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         placeholder="Precio"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
+        className={inputClass}
+      />
+      <input
+        type="number"
+        min={1}
+        placeholder="Cupo de inscripciones (opcional)"
+        value={capacity}
+        onChange={(e) => setCapacity(e.target.value)}
         className={inputClass}
       />
       {error && <p className="text-destructive text-sm">{error}</p>}

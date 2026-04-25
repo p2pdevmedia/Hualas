@@ -10,6 +10,7 @@ export default function CreateActivityForm() {
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [capacity, setCapacity] = useState('');
   const [frequency, setFrequency] = useState<
     'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
   >('ONE_TIME');
@@ -31,10 +32,11 @@ export default function CreateActivityForm() {
         body: JSON.stringify({
           name,
           date,
-          image,
-          description,
+          image: image || undefined,
+          description: description || undefined,
           frequency,
           price: Number(price),
+          capacity: capacity ? Number(capacity) : undefined,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
@@ -44,6 +46,7 @@ export default function CreateActivityForm() {
       setImage('');
       setDescription('');
       setPrice('');
+      setCapacity('');
       setFrequency('ONE_TIME');
       setTimeout(() => {
         router.push('/activities');
@@ -102,6 +105,14 @@ export default function CreateActivityForm() {
         placeholder="Precio"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
+        className={inputClass}
+      />
+      <input
+        type="number"
+        min={1}
+        placeholder="Cupo de inscripciones (opcional)"
+        value={capacity}
+        onChange={(e) => setCapacity(e.target.value)}
         className={inputClass}
       />
       {error && <p className="text-destructive text-sm">{error}</p>}

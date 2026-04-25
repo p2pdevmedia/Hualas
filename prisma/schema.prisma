@@ -8,29 +8,29 @@ datasource db {
 }
 
 model User {
-  id                  String                    @id @default(cuid())
-  email               String                    @unique
-  name                String?
-  lastName            String?
-  dni                 String?                   @unique
-  birthDate           DateTime?
-  gender              Gender?
-  address             String?
-  phone               String?
-  observations        String?
-  nationality         String?
-  maritalStatus       String?
-  password            String
-  role                Role                      @default(MEMBER)
-  isActive            Boolean                   @default(true)
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-  messages            Message[]
-  conversations       ConversationParticipant[]
-  passwordResetTokens PasswordResetToken[]
-  formResponses       FormResponse[]
+  id                   String                    @id @default(cuid())
+  email                String                    @unique
+  name                 String?
+  lastName             String?
+  dni                  String?                   @unique
+  birthDate            DateTime?
+  gender               Gender?
+  address              String?
+  phone                String?
+  observations         String?
+  nationality          String?
+  maritalStatus        String?
+  password             String
+  role                 Role                      @default(MEMBER)
+  isActive             Boolean                   @default(true)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  messages             Message[]
+  conversations        ConversationParticipant[]
+  passwordResetTokens  PasswordResetToken[]
+  formResponses        FormResponse[]
   activityParticipants ActivityParticipant[]
-  children            Child[]
+  children             Child[]
 }
 
 model PasswordResetToken {
@@ -72,80 +72,81 @@ model Message {
 }
 
 model Form {
-  id        String       @id @default(cuid())
+  id        String         @id @default(cuid())
   title     String
   fields    FormField[]
   responses FormResponse[]
-  createdAt DateTime     @default(now())
+  createdAt DateTime       @default(now())
 }
 
 model FormField {
-  id      String @id @default(cuid())
-  formId  String
-  form    Form   @relation(fields: [formId], references: [id])
-  label   String
-  type    String
-  options Json?
+  id       String  @id @default(cuid())
+  formId   String
+  form     Form    @relation(fields: [formId], references: [id])
+  label    String
+  type     String
+  options  Json?
   required Boolean @default(false)
-  order   Int
+  order    Int
 }
 
 model FormResponse {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   formId    String
-  form      Form   @relation(fields: [formId], references: [id])
+  form      Form     @relation(fields: [formId], references: [id])
   userId    String?
-  user      User?  @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
   data      Json
   createdAt DateTime @default(now())
 }
 
 model Activity {
-  id          String             @id @default(cuid())
-  name        String
-  date        DateTime
-  frequency   ActivityFrequency @default(ONE_TIME)
-  image       String?
-  description String?
-  price       Int                @default(0)
+  id           String                @id @default(cuid())
+  name         String
+  date         DateTime
+  frequency    ActivityFrequency     @default(ONE_TIME)
+  image        String?
+  description  String?
+  price        Int                   @default(0)
+  capacity     Int?
   participants ActivityParticipant[]
-  createdAt   DateTime @default(now())
+  createdAt    DateTime              @default(now())
 }
 
 model ActivityParticipant {
-  id      String @id @default(cuid())
-  activityId String
-  userId  String
-  childId String?
-  receipt String?
+  id          String    @id @default(cuid())
+  activityId  String
+  userId      String
+  childId     String?
+  receipt     String?
   receiptDate DateTime?
-  activity   Activity @relation(fields: [activityId], references: [id])
-  user    User  @relation(fields: [userId], references: [id])
-  child   Child? @relation(fields: [childId], references: [id])
+  activity    Activity  @relation(fields: [activityId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  child       Child?    @relation(fields: [childId], references: [id])
 
   @@unique([activityId, userId, childId])
 }
 
 model Child {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  name      String
-  lastName  String?
-  documentType   String?
-  documentNumber String?
-  birthDate DateTime?
-  address   String?
-  gender    Gender?
-  nationality String?
-  maritalStatus String?
-  observations String?
-  createdAt DateTime @default(now())
+  id                   String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  name                 String
+  lastName             String?
+  documentType         String?
+  documentNumber       String?
+  birthDate            DateTime?
+  address              String?
+  gender               Gender?
+  nationality          String?
+  maritalStatus        String?
+  observations         String?
+  createdAt            DateTime              @default(now())
   activityParticipants ActivityParticipant[]
 }
 
 model SiteSetting {
-  id              Int    @id
+  id              Int     @id
   logo            String?
   favicon         String?
   navbarColor     String?

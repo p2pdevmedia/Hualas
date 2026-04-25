@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -40,6 +41,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     MONTHLY: 'Mensual',
     ONE_TIME: 'Un solo pago',
   };
+  const enrolledCount = activity.participants.length;
+  const hasCapacity = activity.capacity != null;
+  const remainingSpots = hasCapacity
+    ? Math.max(activity.capacity - enrolledCount, 0)
+    : null;
+  const isFull = hasCapacity && remainingSpots === 0;
 
   return (
     <main>
@@ -105,7 +112,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 { label: 'Precio', value: `$${activity.price}` },
                 {
                   label: 'Inscriptos',
-                  value: `${activity.participants.length} personas`,
+                  value: `${enrolledCount} personas`,
+                },
+                {
+                  label: 'Cupo',
+                  value: hasCapacity
+                    ? `${activity.capacity} lugares`
+                    : 'Ilimitado',
                 },
                 activity.date && {
                   label: 'Fecha',
@@ -162,10 +175,27 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   / {frequencyLabels[activity.frequency]?.toLowerCase()}
                 </p>
               )}
+              {hasCapacity && (
+                <p
+                  className={`text-xs font-body mt-1 ${
+                    isFull ? 'text-destructive' : 'text-muted-foreground'
+                  }`}
+                >
+                  {isFull
+                    ? 'Cupo completo'
+                    : `${remainingSpots} lugares disponibles`}
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 pt-2">
-              <RegisterButton activityId={activity.id} />
+              {isFull ? (
+                <Button disabled className="w-full">
+                  Cupo completo
+                </Button>
+              ) : (
+                <RegisterButton activityId={activity.id} />
+              )}
               <Link
                 href="/contact"
                 className="block text-center text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 font-body"
@@ -176,7 +206,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground font-body text-center">
-                {activity.participants.length} personas ya inscriptas
+                {hasCapacity
+                  ? `${enrolledCount} de ${activity.capacity} lugares ocupados`
+                  : `${enrolledCount} personas ya inscriptas`}
               </p>
             </div>
           </div>

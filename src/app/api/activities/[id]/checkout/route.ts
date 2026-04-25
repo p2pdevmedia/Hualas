@@ -35,7 +35,9 @@ export async function GET(
   const checkoutSettings = getMercadoPagoCheckoutSettings();
 
   if (!accessToken) {
-    console.error(`[checkout] Access token de Mercado Pago no configurado para ${environment}`);
+    console.error(
+      `[checkout] Access token de Mercado Pago no configurado para ${environment}`
+    );
     return NextResponse.json(
       { error: 'Configuración de pago incompleta. Contactá al administrador.' },
       { status: 500 }
@@ -47,7 +49,10 @@ export async function GET(
 
   let activity: any = null;
   try {
-    activity = await prisma.activity.findUnique({ where: { id: params.id } });
+    activity = await prisma.activity.findUnique({
+      where: { id: params.id },
+      include: { participants: true },
+    });
   } catch (e: any) {
     console.error('[checkout] DB error:', e?.message);
     return NextResponse.json(
@@ -60,6 +65,16 @@ export async function GET(
     return NextResponse.json(
       { error: 'Actividad no encontrada' },
       { status: 404 }
+    );
+  }
+
+  if (
+    activity.capacity != null &&
+    activity.participants.length >= activity.capacity
+  ) {
+    return NextResponse.json(
+      { error: 'La actividad ya alcanzó su cupo de inscripciones.' },
+      { status: 409 }
     );
   }
 
@@ -125,8 +140,11 @@ export async function GET(
         binary_mode: checkoutSettings.binaryMode,
         payment_methods: {
           installments: checkoutSettings.maxInstallments,
-          excluded_payment_methods: checkoutSettings.excludedPaymentMethodIds.map((id) => ({ id })),
-          excluded_payment_types: checkoutSettings.excludedPaymentTypeIds.map((id) => ({ id })),
+          excluded_payment_methods:
+            checkoutSettings.excludedPaymentMethodIds.map((id) => ({ id })),
+          excluded_payment_types: checkoutSettings.excludedPaymentTypeIds.map(
+            (id) => ({ id })
+          ),
         },
         expires: true,
         expiration_date_to: preferenceExpiresAt.toISOString(),

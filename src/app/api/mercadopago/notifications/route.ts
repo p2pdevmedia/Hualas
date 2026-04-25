@@ -42,6 +42,40 @@ export async function POST(req: NextRequest) {
       if (payment.status === 'approved' && payment.external_reference) {
         const [activityId, userId, childId] =
           payment.external_reference.split(':');
+        const activity = await prisma.activity.findUnique({
+          where: { id: activityId },
+          select: {
+            capacity: true,
+            participants: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        });
+        if (!activity) {
+          return NextResponse.json({ received: true });
+        }
+        const existingParticipant = await prisma.activityParticipant.findFirst({
+          where: {
+            activityId,
+            userId,
+            childId: childId || null,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (
+          activity.capacity != null &&
+          !existingParticipant &&
+          activity.participants.length >= activity.capacity
+        ) {
+          console.warn(
+            `[mercadopago] Activity ${activityId} reached capacity, skipping participant upsert`
+          );
+          return NextResponse.json({ received: true });
+        }
         const receipt = payment.id?.toString();
         const date =
           payment.date_approved || payment.date_created || new Date();

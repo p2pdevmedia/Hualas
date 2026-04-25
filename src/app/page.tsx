@@ -177,7 +177,10 @@ export default async function Home() {
                         {activity.name}
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground font-body">
-                        {activity.participants.length} inscriptos · $
+                        {activity.capacity
+                          ? `${activity.participants.length}/${activity.capacity} cupo`
+                          : `${activity.participants.length} inscriptos`}
+                        {' · $'}
                         {activity.price}
                       </div>
                     </div>
