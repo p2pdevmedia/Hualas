@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { ArrowLeft, Send } from 'lucide-react';
-import { socket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
+
+const POLL_THREAD_MS = 3000;
+const POLL_HISTORY_MS = 8000;
 
 type User = {
   id: string;
@@ -97,58 +99,36 @@ export default function ChatClient() {
       .then((data: User[]) => setUsers(data));
   }, [session]);
 
-  useEffect(() => {
-    if (!session) return;
-    socket.auth = { userId: session.user.id, role: session.user.role };
-    socket.connect();
-    return () => {
-      socket.disconnect();
-    };
-  }, [session]);
+  const fetchHistory = useCallback(async () => {
+    const res = await fetch('/api/messages');
+    if (!res.ok) return;
+    const data: Conversation[] = await res.json();
+    setHistory(data);
+  }, []);
+
+  const fetchThread = useCallback(async (userId: string) => {
+    const res = await fetch(`/api/messages/${userId}`);
+    if (!res.ok) return;
+    const data: Message[] = await res.json();
+    setMessages(data);
+  }, []);
 
   useEffect(() => {
-    const handler = (msg: Message) => {
-      const stamped = {
-        ...msg,
-        createdAt: msg.createdAt ?? new Date().toISOString(),
-      };
-      if (stamped.from === recipient) {
-        setMessages((prev) => [...prev, stamped]);
-      }
-      setHistory((prev) => {
-        const conv = prev.find((c) =>
-          c.participants.some((p) => p.id === stamped.from)
-        );
-        if (conv) {
-          return prev.map((c) =>
-            c.id === conv.id ? { ...c, messages: [...c.messages, stamped] } : c
-          );
-        }
-        return prev;
-      });
-    };
-    socket.on('message', handler);
-    return () => {
-      socket.off('message', handler);
-    };
-  }, [recipient]);
+    if (!session) return;
+    fetchHistory();
+    const id = window.setInterval(fetchHistory, POLL_HISTORY_MS);
+    return () => window.clearInterval(id);
+  }, [session, fetchHistory]);
 
   useEffect(() => {
     if (!recipient) {
       setMessages([]);
       return;
     }
-    fetch(`/api/messages/${recipient}`)
-      .then((res) => res.json())
-      .then((data: Message[]) => setMessages(data));
-  }, [recipient]);
-
-  useEffect(() => {
-    if (!session) return;
-    fetch('/api/messages')
-      .then((res) => res.json())
-      .then((data: Conversation[]) => setHistory(data));
-  }, [session]);
+    fetchThread(recipient);
+    const id = window.setInterval(() => fetchThread(recipient), POLL_THREAD_MS);
+    return () => window.clearInterval(id);
+  }, [recipient, fetchThread]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -189,38 +169,26 @@ export default function ChatClient() {
 
   const selectedUser = users.find((u) => u.id === recipient) ?? null;
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!recipient || !session || !input.trim()) return;
     const content = input.trim();
-    socket.emit('message', { to: recipient, content });
-    const own: Message = {
-      from: session.user.id,
-      content,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, own]);
-    setHistory((prev) => {
-      const conv = prev.find((c) =>
-        c.participants.some((p) => p.id === recipient)
-      );
-      if (conv) {
-        return prev.map((c) =>
-          c.id === conv.id ? { ...c, messages: [...c.messages, own] } : c
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: `pending-${recipient}`,
-          participants: [
-            { id: session.user.id, name: session.user.name ?? null },
-            { id: recipient, name: selectedUser?.name ?? null },
-          ],
-          messages: [own],
-        },
-      ];
-    });
     setInput('');
+    try {
+      const res = await fetch(`/api/messages/${recipient}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        setInput(content);
+        return;
+      }
+      const saved: Message = await res.json();
+      setMessages((prev) => [...prev, saved]);
+      fetchHistory();
+    } catch {
+      setInput(content);
+    }
   };
 
   return (
