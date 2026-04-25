@@ -19,14 +19,14 @@ export default async function FormsPage() {
     orderBy: { createdAt: 'desc' },
   });
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Forms</h1>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Formularios</h1>
         <Link
           href="/admin/forms/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          New Form
+          Nuevo formulario
         </Link>
       </div>
       <FormList

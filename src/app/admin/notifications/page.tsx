@@ -17,16 +17,19 @@ export default async function NotificationsPage() {
   });
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Notificaciones</h1>
-      <ul className="space-y-2">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight">Notificaciones</h1>
+      {notifications.length === 0 && (
+        <p className="text-sm text-muted-foreground">No hay notificaciones.</p>
+      )}
+      <ul className="space-y-3">
         {notifications.map((n) => (
-          <li key={n.id} className="border p-2 rounded">
-            <p className="text-sm text-gray-600">{n.topic}</p>
-            <pre className="overflow-x-auto text-xs bg-gray-100 p-2 rounded">
+          <li key={n.id} className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{n.topic}</p>
+            <pre className="overflow-x-auto text-xs bg-muted p-3 rounded-md">
               {JSON.stringify(n.data, null, 2)}
             </pre>
-            <p className="text-xs text-gray-500">{n.createdAt.toISOString()}</p>
+            <p className="text-xs text-muted-foreground">{n.createdAt.toISOString()}</p>
           </li>
         ))}
       </ul>
