@@ -24,12 +24,19 @@ export default async function NotificationsPage() {
       )}
       <ul className="space-y-3">
         {notifications.map((n) => (
-          <li key={n.id} className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{n.topic}</p>
+          <li
+            key={n.id}
+            className="rounded-xl border bg-card p-4 shadow-sm space-y-2"
+          >
+            <p className="text-sm font-medium text-muted-foreground">
+              {n.topic}
+            </p>
             <pre className="overflow-x-auto text-xs bg-muted p-3 rounded-md">
               {JSON.stringify(n.data, null, 2)}
             </pre>
-            <p className="text-xs text-muted-foreground">{n.createdAt.toISOString()}</p>
+            <p className="text-xs text-muted-foreground">
+              {n.createdAt.toISOString()}
+            </p>
           </li>
         ))}
       </ul>

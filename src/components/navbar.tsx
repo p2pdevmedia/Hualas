@@ -36,7 +36,8 @@ export default function Navbar() {
     ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
     : defaultLogo;
 
-  const linkClass = 'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+  const linkClass =
+    'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
 
   return (
     <nav
@@ -53,7 +54,9 @@ export default function Navbar() {
             unoptimized
             className="rounded-full"
           />
-          <span className="font-semibold tracking-tight">Hualas Patagónico</span>
+          <span className="font-semibold tracking-tight">
+            Hualas Patagónico
+          </span>
         </Link>
 
         <button
@@ -65,27 +68,52 @@ export default function Navbar() {
         </button>
 
         <div className="hidden md:flex md:items-center md:gap-6">
-          <Link href="/activities" className={linkClass}>{t.activities}</Link>
-          {session && <Link href="/chat" className={linkClass}>{t.chat}</Link>}
+          <Link href="/activities" className={linkClass}>
+            {t.activities}
+          </Link>
+          {session && (
+            <Link href="/chat" className={linkClass}>
+              {t.chat}
+            </Link>
+          )}
           {isAdmin && (
             <>
-              <Link href="/admin/users" className={linkClass}>{t.users}</Link>
-              <Link href="/admin/forms" className={linkClass}>{t.forms}</Link>
-              <Link href="/admin/notifications" className={linkClass}>{t.notifications}</Link>
-              {isSuperAdmin && <Link href="/admin/site" className={linkClass}>{t.admin}</Link>}
+              <Link href="/admin/users" className={linkClass}>
+                {t.users}
+              </Link>
+              <Link href="/admin/forms" className={linkClass}>
+                {t.forms}
+              </Link>
+              <Link href="/admin/notifications" className={linkClass}>
+                {t.notifications}
+              </Link>
+              {isSuperAdmin && (
+                <Link href="/admin/site" className={linkClass}>
+                  {t.admin}
+                </Link>
+              )}
             </>
           )}
-          <Link href="/contact" className={linkClass}>{t.contact}</Link>
+          <Link href="/contact" className={linkClass}>
+            {t.contact}
+          </Link>
           {session ? (
             <>
-              <Link href="/profile" className={linkClass}>{t.profile}</Link>
-              <button onClick={() => signOut({ callbackUrl: '/login' })} className={linkClass}>
+              <Link href="/profile" className={linkClass}>
+                {t.profile}
+              </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className={linkClass}
+              >
                 {t.logout}
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className={linkClass}>{t.login}</Link>
+              <Link href="/login" className={linkClass}>
+                {t.login}
+              </Link>
               <Link
                 href="/register"
                 className="rounded-md bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25 transition-colors"
@@ -100,7 +128,9 @@ export default function Navbar() {
             className="bg-transparent text-white opacity-80 hover:opacity-100 cursor-pointer text-sm [&>option]:bg-slate-800 [&>option]:text-white"
           >
             {availableLanguages.map(({ code, flag }) => (
-              <option key={code} value={code}>{flag}</option>
+              <option key={code} value={code}>
+                {flag}
+              </option>
             ))}
           </select>
         </div>
@@ -108,28 +138,95 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
-          <Link href="/activities" className={linkClass} onClick={() => setMenuOpen(false)}>{t.activities}</Link>
-          {session && <Link href="/chat" className={linkClass} onClick={() => setMenuOpen(false)}>{t.chat}</Link>}
+          <Link
+            href="/activities"
+            className={linkClass}
+            onClick={() => setMenuOpen(false)}
+          >
+            {t.activities}
+          </Link>
+          {session && (
+            <Link
+              href="/chat"
+              className={linkClass}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t.chat}
+            </Link>
+          )}
           {isAdmin && (
             <>
-              <Link href="/admin/users" className={linkClass} onClick={() => setMenuOpen(false)}>{t.users}</Link>
-              <Link href="/admin/forms" className={linkClass} onClick={() => setMenuOpen(false)}>{t.forms}</Link>
-              <Link href="/admin/notifications" className={linkClass} onClick={() => setMenuOpen(false)}>{t.notifications}</Link>
-              {isSuperAdmin && <Link href="/admin/site" className={linkClass} onClick={() => setMenuOpen(false)}>{t.admin}</Link>}
+              <Link
+                href="/admin/users"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.users}
+              </Link>
+              <Link
+                href="/admin/forms"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.forms}
+              </Link>
+              <Link
+                href="/admin/notifications"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.notifications}
+              </Link>
+              {isSuperAdmin && (
+                <Link
+                  href="/admin/site"
+                  className={linkClass}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.admin}
+                </Link>
+              )}
             </>
           )}
-          <Link href="/contact" className={linkClass} onClick={() => setMenuOpen(false)}>{t.contact}</Link>
+          <Link
+            href="/contact"
+            className={linkClass}
+            onClick={() => setMenuOpen(false)}
+          >
+            {t.contact}
+          </Link>
           {session ? (
             <>
-              <Link href="/profile" className={linkClass} onClick={() => setMenuOpen(false)}>{t.profile}</Link>
-              <button onClick={() => signOut({ callbackUrl: '/login' })} className={`${linkClass} text-left`}>
+              <Link
+                href="/profile"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.profile}
+              </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className={`${linkClass} text-left`}
+              >
                 {t.logout}
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className={linkClass} onClick={() => setMenuOpen(false)}>{t.login}</Link>
-              <Link href="/register" className={linkClass} onClick={() => setMenuOpen(false)}>{t.register}</Link>
+              <Link
+                href="/login"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.login}
+              </Link>
+              <Link
+                href="/register"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.register}
+              </Link>
             </>
           )}
           <select
@@ -138,7 +235,9 @@ export default function Navbar() {
             className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
           >
             {availableLanguages.map(({ code, flag }) => (
-              <option key={code} value={code}>{flag}</option>
+              <option key={code} value={code}>
+                {flag}
+              </option>
             ))}
           </select>
         </div>

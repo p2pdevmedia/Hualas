@@ -34,7 +34,8 @@ export default function ChatClient() {
       .then((res) => res.json())
       .then((data: User[]) => {
         setUsers(data);
-        const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+        const isAdmin =
+          session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
         const selectable = isAdmin
           ? data.filter((u) => u.id !== session.user.id)
           : data.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
@@ -46,7 +47,9 @@ export default function ChatClient() {
     if (!session) return;
     socket.auth = { userId: session.user.id, role: session.user.role };
     socket.connect();
-    return () => { socket.disconnect(); };
+    return () => {
+      socket.disconnect();
+    };
   }, [session]);
 
   useEffect(() => {
@@ -61,7 +64,9 @@ export default function ChatClient() {
       );
     };
     socket.on('message', handler);
-    return () => { socket.off('message', handler); };
+    return () => {
+      socket.off('message', handler);
+    };
   }, [recipient]);
 
   useEffect(() => {
@@ -84,7 +89,8 @@ export default function ChatClient() {
       : users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN')
     : [];
 
-  const userName = (id: string) => users.find((u) => u.id === id)?.name ?? 'Unknown';
+  const userName = (id: string) =>
+    users.find((u) => u.id === id)?.name ?? 'Unknown';
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -93,15 +99,24 @@ export default function ChatClient() {
       {history.length > 0 && (
         <div className="space-y-3">
           {history.map((c) => (
-            <div key={c.id} className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+            <div
+              key={c.id}
+              className="rounded-xl border bg-card p-4 shadow-sm space-y-2"
+            >
               <p className="font-semibold text-sm">
-                {c.participants.filter((p) => p.id !== session?.user.id).map((p) => p.name ?? 'Sin nombre').join(', ')}
+                {c.participants
+                  .filter((p) => p.id !== session?.user.id)
+                  .map((p) => p.name ?? 'Sin nombre')
+                  .join(', ')}
               </p>
               <div className="space-y-1">
                 {c.messages.map((m, i) => (
                   <p key={i} className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      {m.from === session?.user.id ? 'Vos' : c.participants.find((p) => p.id === m.from)?.name ?? 'Unknown'}
+                      {m.from === session?.user.id
+                        ? 'Vos'
+                        : (c.participants.find((p) => p.id === m.from)?.name ??
+                          'Unknown')}
                     </span>
                     : {m.content}
                   </p>
@@ -119,14 +134,19 @@ export default function ChatClient() {
           className={`w-full ${inputClass}`}
         >
           {selectableUsers.map((u) => (
-            <option key={u.id} value={u.id}>{u.name ?? 'Sin nombre'}</option>
+            <option key={u.id} value={u.id}>
+              {u.name ?? 'Sin nombre'}
+            </option>
           ))}
         </select>
 
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {messages.map((m, i) => (
             <p key={i} className="text-sm">
-              <span className="font-medium">{m.from === session?.user.id ? 'Vos' : userName(m.from)}</span>: {m.content}
+              <span className="font-medium">
+                {m.from === session?.user.id ? 'Vos' : userName(m.from)}
+              </span>
+              : {m.content}
             </p>
           ))}
         </div>
@@ -142,7 +162,10 @@ export default function ChatClient() {
                 e.preventDefault();
                 if (!recipient || !session || !input.trim()) return;
                 socket.emit('message', { to: recipient, content: input });
-                setMessages((prev) => [...prev, { from: session.user.id, content: input }]);
+                setMessages((prev) => [
+                  ...prev,
+                  { from: session.user.id, content: input },
+                ]);
                 setInput('');
               }
             }}
@@ -151,7 +174,10 @@ export default function ChatClient() {
             onClick={() => {
               if (!recipient || !session || !input.trim()) return;
               socket.emit('message', { to: recipient, content: input });
-              setMessages((prev) => [...prev, { from: session.user.id, content: input }]);
+              setMessages((prev) => [
+                ...prev,
+                { from: session.user.id, content: input },
+              ]);
               setInput('');
             }}
           >

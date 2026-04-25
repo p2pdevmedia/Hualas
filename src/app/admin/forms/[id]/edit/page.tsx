@@ -10,7 +10,10 @@ export default async function EditFormPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
   const form = await prisma.form.findUnique({
@@ -18,7 +21,11 @@ export default async function EditFormPage({
     include: { fields: { orderBy: { order: 'asc' } } },
   });
   if (!form) {
-    return <div className="max-w-2xl mx-auto px-4 py-8"><p className="text-muted-foreground">Formulario no encontrado.</p></div>;
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <p className="text-muted-foreground">Formulario no encontrado.</p>
+      </div>
+    );
   }
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">

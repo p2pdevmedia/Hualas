@@ -3,7 +3,11 @@
 import type { SiteSettings } from '@/types/site';
 import { Instagram, Youtube } from 'lucide-react';
 
-export default function Footer({ settings }: { settings: SiteSettings | null }) {
+export default function Footer({
+  settings,
+}: {
+  settings: SiteSettings | null;
+}) {
   return (
     <footer
       className="px-4 py-8 text-white"

@@ -16,7 +16,11 @@ type Child = {
   maritalStatus: string | null;
 };
 
-export default function ChildrenManager({ userAddress }: { userAddress: string }) {
+export default function ChildrenManager({
+  userAddress,
+}: {
+  userAddress: string;
+}) {
   const [children, setChildren] = useState<Child[]>([]);
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -47,14 +51,31 @@ export default function ChildrenManager({ userAddress }: { userAddress: string }
     const res = await fetch('/api/children', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, lastName, documentType, documentNumber, birthDate, address, gender: gender || undefined, nationality, maritalStatus }),
+      body: JSON.stringify({
+        name,
+        lastName,
+        documentType,
+        documentNumber,
+        birthDate,
+        address,
+        gender: gender || undefined,
+        nationality,
+        maritalStatus,
+      }),
     });
     if (res.ok) {
       const child = await res.json();
       setChildren([...children, child]);
-      setName(''); setLastName(''); setDocumentType(''); setDocumentNumber('');
-      setBirthDate(''); setAddress(''); setSameAddress(false);
-      setGender(''); setNationality(''); setMaritalStatus('');
+      setName('');
+      setLastName('');
+      setDocumentType('');
+      setDocumentNumber('');
+      setBirthDate('');
+      setAddress('');
+      setSameAddress(false);
+      setGender('');
+      setNationality('');
+      setMaritalStatus('');
     }
   }
 
@@ -72,23 +93,62 @@ export default function ChildrenManager({ userAddress }: { userAddress: string }
       )}
       <form onSubmit={addChild} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" required />
-          <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Apellido" />
+          <input
+            className={inputClass}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre"
+            required
+          />
+          <input
+            className={inputClass}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Apellido"
+          />
         </div>
-        <select className={inputClass} value={documentType} onChange={(e) => setDocumentType(e.target.value)}>
+        <select
+          className={inputClass}
+          value={documentType}
+          onChange={(e) => setDocumentType(e.target.value)}
+        >
           <option value="">Tipo de documento</option>
           <option value="DNI">DNI</option>
           <option value="PASAPORTE">Pasaporte</option>
           <option value="OTRO">Otro</option>
         </select>
-        <input className={inputClass} value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Número / Código" />
-        <input className={inputClass} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-        <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Domicilio" />
+        <input
+          className={inputClass}
+          value={documentNumber}
+          onChange={(e) => setDocumentNumber(e.target.value)}
+          placeholder="Número / Código"
+        />
+        <input
+          className={inputClass}
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+        />
+        <input
+          className={inputClass}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Domicilio"
+        />
         <label className="text-sm flex items-center gap-2 text-muted-foreground">
-          <input type="checkbox" checked={sameAddress} onChange={(e) => setSameAddress(e.target.checked)} className="accent-primary" />
+          <input
+            type="checkbox"
+            checked={sameAddress}
+            onChange={(e) => setSameAddress(e.target.checked)}
+            className="accent-primary"
+          />
           Mismo domicilio que el usuario
         </label>
-        <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
+        <select
+          className={inputClass}
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
           <option value="">Género</option>
           <option value="FEMALE">Femenino</option>
           <option value="MALE">Masculino</option>
@@ -96,8 +156,18 @@ export default function ChildrenManager({ userAddress }: { userAddress: string }
           <option value="UNDISCLOSED">Prefiero no decirlo</option>
           <option value="OTHER">Otro</option>
         </select>
-        <input className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Nacionalidad" />
-        <input className={inputClass} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} placeholder="Estado Civil" />
+        <input
+          className={inputClass}
+          value={nationality}
+          onChange={(e) => setNationality(e.target.value)}
+          placeholder="Nacionalidad"
+        />
+        <input
+          className={inputClass}
+          value={maritalStatus}
+          onChange={(e) => setMaritalStatus(e.target.value)}
+          placeholder="Estado Civil"
+        />
         <Button type="submit" className="w-full">
           Agregar hijo
         </Button>

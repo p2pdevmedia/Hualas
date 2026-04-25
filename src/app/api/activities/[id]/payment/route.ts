@@ -45,35 +45,48 @@ export async function POST(
       );
     }
 
-    const receipt = payment.id?.toString();
+    const userId = (session.user as any).id;
+    const participantChildId = childId ?? null;
+    const receipt = payment.id?.toString() ?? null;
     const date = payment.date_approved || payment.date_created || new Date();
+    const receiptDate = new Date(date);
 
-    await prisma.activityParticipant.upsert({
+    const participant = await prisma.activityParticipant.findFirst({
       where: {
-        activityId_userId_childId: {
-          activityId: params.id,
-          userId: (session.user as any).id,
-          childId: childId ?? null,
-        },
-      },
-      create: {
         activityId: params.id,
-        userId: (session.user as any).id,
-        childId: childId ?? null,
-        receipt,
-        receiptDate: new Date(date),
-      },
-      update: {
-        receipt,
-        receiptDate: new Date(date),
+        userId,
+        childId: participantChildId,
       },
     });
+
+    if (participant) {
+      await prisma.activityParticipant.update({
+        where: { id: participant.id },
+        data: {
+          receipt,
+          receiptDate,
+        },
+      });
+    } else {
+      await prisma.activityParticipant.create({
+        data: {
+          activityId: params.id,
+          userId,
+          childId: participantChildId,
+          receipt,
+          receiptDate,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('[payment] Error:', error?.message || error);
     return NextResponse.json(
-      { error: 'Error al registrar el pago', detail: String(error?.message || error) },
+      {
+        error: 'Error al registrar el pago',
+        detail: String(error?.message || error),
+      },
       { status: 500 }
     );
   }

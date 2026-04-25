@@ -25,7 +25,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const responses = await prisma.formResponse.findMany({

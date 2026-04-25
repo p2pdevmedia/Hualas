@@ -9,7 +9,10 @@ export default async function FormResponsesPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
   const form = await prisma.form.findUnique({
@@ -26,29 +29,44 @@ export default async function FormResponsesPage({
     },
   });
   if (!form) {
-    return <div className="max-w-4xl mx-auto px-4 py-8"><p className="text-muted-foreground">Formulario no encontrado.</p></div>;
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <p className="text-muted-foreground">Formulario no encontrado.</p>
+      </div>
+    );
   }
   const fieldMap = Object.fromEntries(form.fields.map((f) => [f.id, f.label]));
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Respuestas: {form.title}</h1>
+      <h1 className="text-2xl font-bold tracking-tight">
+        Respuestas: {form.title}
+      </h1>
       {form.responses.length === 0 && (
         <p className="text-sm text-muted-foreground">Sin respuestas todavía.</p>
       )}
       <ul className="space-y-3">
         {form.responses.map((r) => (
-          <li key={r.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+          <li
+            key={r.id}
+            className="rounded-xl border bg-card shadow-sm overflow-hidden"
+          >
             <details>
               <summary className="px-4 py-3 cursor-pointer font-medium hover:bg-muted/40 transition-colors">
                 {r.user?.name || r.user?.email || 'Anónimo'}
               </summary>
               <ul className="px-4 pb-4 pt-2 space-y-1 border-t border-border">
-                {Object.entries(r.data as Record<string, unknown>).map(([fieldId, value]) => (
-                  <li key={fieldId} className="text-sm">
-                    <span className="font-medium">{fieldMap[fieldId] || fieldId}:</span>{' '}
-                    <span className="text-muted-foreground">{String(value)}</span>
-                  </li>
-                ))}
+                {Object.entries(r.data as Record<string, unknown>).map(
+                  ([fieldId, value]) => (
+                    <li key={fieldId} className="text-sm">
+                      <span className="font-medium">
+                        {fieldMap[fieldId] || fieldId}:
+                      </span>{' '}
+                      <span className="text-muted-foreground">
+                        {String(value)}
+                      </span>
+                    </li>
+                  )
+                )}
               </ul>
             </details>
           </li>

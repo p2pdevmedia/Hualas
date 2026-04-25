@@ -86,7 +86,9 @@ export default function LoginPage() {
               </button>
             </div>
             {error && (
-              <p className="text-red-500 text-sm">{t[error as keyof typeof t]}</p>
+              <p className="text-red-500 text-sm">
+                {t[error as keyof typeof t]}
+              </p>
             )}
             {success && <p className="text-green-600 text-sm">{success}</p>}
             <Button type="submit" className="w-full">
@@ -110,12 +112,7 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-muted"
             onClick={() => signIn('google', { callbackUrl: '/' })}
           >
-            <Image
-              src="/google.svg"
-              alt="Google logo"
-              width={18}
-              height={18}
-            />
+            <Image src="/google.svg" alt="Google logo" width={18} height={18} />
             {t.signInWithGoogle}
           </Button>
         </div>
