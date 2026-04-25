@@ -4,14 +4,18 @@ export default function ContactPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-
         {/* Columna izquierda — info */}
         <div className="space-y-6">
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-widest font-body">Contacto</span>
-            <h1 className="font-heading text-4xl font-semibold mt-1">Hablemos</h1>
+            <span className="text-xs text-muted-foreground uppercase tracking-widest font-body">
+              Contacto
+            </span>
+            <h1 className="font-heading text-4xl font-semibold mt-1">
+              Hablemos
+            </h1>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed font-body">
-              ¿Tenés alguna consulta sobre nuestras actividades o querés sumarte al club? Escribinos.
+              ¿Tenés alguna consulta sobre nuestras actividades o querés sumarte
+              al club? Escribinos.
             </p>
           </div>
 
@@ -20,7 +24,9 @@ export default function ContactPage() {
               <span className="text-base mt-0.5">📍</span>
               <div>
                 <p className="font-medium">Ubicación</p>
-                <p className="text-muted-foreground">San Martín de los Andes, Neuquén, Argentina</p>
+                <p className="text-muted-foreground">
+                  San Martín de los Andes, Neuquén, Argentina
+                </p>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -41,7 +47,10 @@ export default function ContactPage() {
               <span className="text-base mt-0.5">✉️</span>
               <div>
                 <p className="font-medium">Email general</p>
-                <a href="mailto:Info@clubhualas.com.ar" className="text-primary hover:text-primary/80 underline underline-offset-4">
+                <a
+                  href="mailto:Info@clubhualas.com.ar"
+                  className="text-primary hover:text-primary/80 underline underline-offset-4"
+                >
                   Info@clubhualas.com.ar
                 </a>
               </div>
@@ -50,7 +59,10 @@ export default function ContactPage() {
               <span className="text-base mt-0.5">💰</span>
               <div>
                 <p className="font-medium">Tesorería</p>
-                <a href="mailto:tesoreria@clubhualas.com.ar" className="text-primary hover:text-primary/80 underline underline-offset-4">
+                <a
+                  href="mailto:tesoreria@clubhualas.com.ar"
+                  className="text-primary hover:text-primary/80 underline underline-offset-4"
+                >
                   tesoreria@clubhualas.com.ar
                 </a>
               </div>
@@ -77,7 +89,9 @@ export default function ContactPage() {
           className="rounded-2xl p-6 sm:p-8"
           style={{ background: '#F5F0E8' }}
         >
-          <h2 className="font-heading text-2xl font-semibold mb-6">Envianos un mensaje</h2>
+          <h2 className="font-heading text-2xl font-semibold mb-6">
+            Envianos un mensaje
+          </h2>
           <ContactForm />
         </div>
       </div>

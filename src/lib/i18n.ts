@@ -23,6 +23,7 @@ export const translations = {
       childEnrollment: 'Inscripción de menores',
       resetPassword: 'Restablecer contraseña',
       delete: 'Eliminar',
+      moreActions: 'Más acciones',
     },
     auth: {
       showPassword: 'Mostrar contraseña',
@@ -55,6 +56,7 @@ export const translations = {
       childEnrollment: 'Inscrição de crianças',
       resetPassword: 'Redefinir senha',
       delete: 'Excluir',
+      moreActions: 'Mais ações',
     },
     auth: {
       showPassword: 'Mostrar senha',
@@ -87,6 +89,7 @@ export const translations = {
       childEnrollment: 'Child enrollment',
       resetPassword: 'Reset password',
       delete: 'Delete',
+      moreActions: 'More actions',
     },
     auth: {
       showPassword: 'Show password',
@@ -119,6 +122,7 @@ export const translations = {
       childEnrollment: 'Inscription des enfants',
       resetPassword: 'Réinitialiser le mot de passe',
       delete: 'Supprimer',
+      moreActions: 'Plus d’actions',
     },
     auth: {
       showPassword: 'Afficher le mot de passe',

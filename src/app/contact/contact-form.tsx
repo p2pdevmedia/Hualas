@@ -15,18 +15,31 @@ export default function ContactForm() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.includes('@')) { setStatus('error'); return; }
+    if (!email.includes('@')) {
+      setStatus('error');
+      return;
+    }
     setStatus('success');
-    setName(''); setEmail(''); setPhone(''); setMessage('');
+    setName('');
+    setEmail('');
+    setPhone('');
+    setMessage('');
   }
 
   if (status === 'success') {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center py-12 space-y-3">
         <div className="text-4xl">✅</div>
-        <h3 className="font-heading text-xl font-semibold">¡Mensaje enviado!</h3>
-        <p className="text-sm text-muted-foreground font-body">Nos pondremos en contacto pronto.</p>
-        <button onClick={() => setStatus('idle')} className="text-sm text-primary underline underline-offset-4 font-body mt-2">
+        <h3 className="font-heading text-xl font-semibold">
+          ¡Mensaje enviado!
+        </h3>
+        <p className="text-sm text-muted-foreground font-body">
+          Nos pondremos en contacto pronto.
+        </p>
+        <button
+          onClick={() => setStatus('idle')}
+          className="text-sm text-primary underline underline-offset-4 font-body mt-2"
+        >
           Enviar otro mensaje
         </button>
       </div>
@@ -65,9 +78,13 @@ export default function ContactForm() {
         required
       />
       {status === 'error' && (
-        <p className="text-destructive text-sm font-body">Por favor ingresá un email válido.</p>
+        <p className="text-destructive text-sm font-body">
+          Por favor ingresá un email válido.
+        </p>
       )}
-      <Button type="submit" className="w-full">Enviar mensaje</Button>
+      <Button type="submit" className="w-full">
+        Enviar mensaje
+      </Button>
     </form>
   );
 }

@@ -17,7 +17,9 @@ export default async function ChildEnrollmentPage({
   }
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Inscripción de menores</h1>
+      <h1 className="text-2xl font-bold tracking-tight">
+        Inscripción de menores
+      </h1>
       <AdminChildrenManager userId={params.id} />
     </div>
   );

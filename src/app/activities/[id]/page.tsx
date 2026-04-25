@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
@@ -30,7 +31,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }
 
   const session = await getServerSession(authOptions);
-  const isAdmin = session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
+  const isAdmin =
+    session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
 
   const frequencyLabels: Record<string, string> = {
     DAILY: 'Diaria',
@@ -41,7 +43,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <main>
-      <PaymentHandler activityId={activity.id} />
+      <Suspense fallback={null}>
+        <PaymentHandler activityId={activity.id} />
+      </Suspense>
 
       {/* Hero foto */}
       {activity.image ? (
@@ -57,20 +61,26 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       ) : (
         <div
           className="w-full h-52"
-          style={{ background: 'linear-gradient(135deg, #1C2117 0%, #3D5A3E 100%)' }}
+          style={{
+            background: 'linear-gradient(135deg, #1C2117 0%, #3D5A3E 100%)',
+          }}
         />
       )}
 
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="text-xs text-muted-foreground mb-5 font-body flex items-center gap-1">
-          <Link href="/activities" className="hover:text-primary transition-colors">Actividades</Link>
+          <Link
+            href="/activities"
+            className="hover:text-primary transition-colors"
+          >
+            Actividades
+          </Link>
           <span>→</span>
           <span className="text-foreground">{activity.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
-
           {/* Columna izquierda */}
           <div className="space-y-6">
             <div>
@@ -87,19 +97,39 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             {/* Grid de detalles 2×2 */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Frecuencia', value: frequencyLabels[activity.frequency] ?? activity.frequency },
+                {
+                  label: 'Frecuencia',
+                  value:
+                    frequencyLabels[activity.frequency] ?? activity.frequency,
+                },
                 { label: 'Precio', value: `$${activity.price}` },
-                { label: 'Inscriptos', value: `${activity.participants.length} personas` },
-                activity.date && { label: 'Fecha', value: activity.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) },
-              ].filter(Boolean).map((item: any) => (
-                <div
-                  key={item.label}
-                  className="rounded-lg border bg-card p-4"
-                >
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">{item.label}</p>
-                  <p className="font-heading text-lg font-semibold">{item.value}</p>
-                </div>
-              ))}
+                {
+                  label: 'Inscriptos',
+                  value: `${activity.participants.length} personas`,
+                },
+                activity.date && {
+                  label: 'Fecha',
+                  value: activity.date.toLocaleDateString('es-AR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  }),
+                },
+              ]
+                .filter(Boolean)
+                .map((item: any) => (
+                  <div
+                    key={item.label}
+                    className="rounded-lg border bg-card p-4"
+                  >
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
+                      {item.label}
+                    </p>
+                    <p className="font-heading text-lg font-semibold">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
             </div>
 
             {isAdmin && (
@@ -115,11 +145,18 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           {/* Panel derecho (sticky) */}
           <div
             className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
-            style={{ border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+            style={{
+              border: '1.5px solid hsl(var(--border))',
+              background: 'hsl(var(--card))',
+            }}
           >
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">Precio</p>
-              <p className="font-heading text-3xl font-semibold">${activity.price}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
+                Precio
+              </p>
+              <p className="font-heading text-3xl font-semibold">
+                ${activity.price}
+              </p>
               {activity.frequency !== 'ONE_TIME' && (
                 <p className="text-xs text-muted-foreground font-body mt-0.5">
                   / {frequencyLabels[activity.frequency]?.toLowerCase()}

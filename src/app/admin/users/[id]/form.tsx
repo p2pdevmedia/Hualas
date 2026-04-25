@@ -50,7 +50,20 @@ export default function EditUserForm({ user }: { user: User }) {
     setError('');
     setSuccess('');
     try {
-      const body: any = { name, lastName, dni: dni || null, birthDate, gender: gender || undefined, address, phone, nationality, maritalStatus, email, isActive, observations };
+      const body: any = {
+        name,
+        lastName,
+        dni: dni || null,
+        birthDate,
+        gender: gender || undefined,
+        address,
+        phone,
+        nationality,
+        maritalStatus,
+        email,
+        isActive,
+        observations,
+      };
       if (canEditRole) body.role = role;
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
@@ -59,7 +72,10 @@ export default function EditUserForm({ user }: { user: User }) {
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Usuario actualizado');
-      setTimeout(() => { router.push('/admin/users'); router.refresh(); }, 1000);
+      setTimeout(() => {
+        router.push('/admin/users');
+        router.refresh();
+      }, 1000);
     } catch (e) {
       setError('No se pudo actualizar el usuario');
     }
@@ -68,12 +84,36 @@ export default function EditUserForm({ user }: { user: User }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />
-        <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Apellido" />
+        <input
+          className={inputClass}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre"
+        />
+        <input
+          className={inputClass}
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Apellido"
+        />
       </div>
-      <input className={inputClass} value={dni} onChange={(e) => setDni(e.target.value)} placeholder="DNI" />
-      <input className={inputClass} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-      <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
+      <input
+        className={inputClass}
+        value={dni}
+        onChange={(e) => setDni(e.target.value)}
+        placeholder="DNI"
+      />
+      <input
+        className={inputClass}
+        type="date"
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+      />
+      <select
+        className={inputClass}
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+      >
         <option value="">Género</option>
         <option value="FEMALE">Femenino</option>
         <option value="MALE">Masculino</option>
@@ -81,23 +121,58 @@ export default function EditUserForm({ user }: { user: User }) {
         <option value="UNDISCLOSED">Prefiero no decirlo</option>
         <option value="OTHER">Otro</option>
       </select>
-      <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Domicilio" />
-      <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" />
-      <input className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Nacionalidad" />
-      <input className={inputClass} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} placeholder="Estado Civil" />
+      <input
+        className={inputClass}
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Domicilio"
+      />
+      <input
+        className={inputClass}
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="Teléfono"
+      />
+      <input
+        className={inputClass}
+        value={nationality}
+        onChange={(e) => setNationality(e.target.value)}
+        placeholder="Nacionalidad"
+      />
+      <input
+        className={inputClass}
+        value={maritalStatus}
+        onChange={(e) => setMaritalStatus(e.target.value)}
+        placeholder="Estado Civil"
+      />
       <textarea
         className={`${inputClass} min-h-[80px] resize-y`}
         value={observations}
         onChange={(e) => setObservations(e.target.value)}
         placeholder="Observaciones"
       />
-      <input className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" />
+      <input
+        className={inputClass}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        type="email"
+      />
       <label className="text-sm flex items-center gap-2 text-muted-foreground">
-        <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="accent-primary" />
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setIsActive(e.target.checked)}
+          className="accent-primary"
+        />
         Usuario activo
       </label>
       {canEditRole && (
-        <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value)}>
+        <select
+          className={inputClass}
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
           <option value="ADMIN">ADMIN</option>
           <option value="MEMBER">MEMBER</option>
           <option value="SUPER_ADMIN">SUPER_ADMIN</option>
@@ -105,7 +180,9 @@ export default function EditUserForm({ user }: { user: User }) {
       )}
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">Guardar cambios</Button>
+      <Button type="submit" className="w-full">
+        Guardar cambios
+      </Button>
     </form>
   );
 }

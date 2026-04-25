@@ -65,7 +65,11 @@ export default async function ActivitiesPage() {
                 </Link>
                 <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
                   <span>
-                    {frequencyLabels[activity.frequency as keyof typeof frequencyLabels]}
+                    {
+                      frequencyLabels[
+                        activity.frequency as keyof typeof frequencyLabels
+                      ]
+                    }
                   </span>
                   <span>·</span>
                   <span>${activity.price}</span>

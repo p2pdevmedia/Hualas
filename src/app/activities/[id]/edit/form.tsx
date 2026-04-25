@@ -19,7 +19,9 @@ interface EditActivityFormProps {
 export default function EditActivityForm({ activity }: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
-  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>(activity.frequency);
+  const [frequency, setFrequency] = useState<
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+  >(activity.frequency);
   const [image, setImage] = useState(activity.image || '');
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
@@ -38,11 +40,21 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
       const res = await fetch(`/api/activities/${activity.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, date, image, description, frequency, price: Number(price) }),
+        body: JSON.stringify({
+          name,
+          date,
+          image,
+          description,
+          frequency,
+          price: Number(price),
+        }),
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Actividad actualizada');
-      setTimeout(() => { router.push('/activities'); router.refresh(); }, 1000);
+      setTimeout(() => {
+        router.push('/activities');
+        router.refresh();
+      }, 1000);
     } catch (e) {
       setError('No se pudo actualizar la actividad');
     }
@@ -73,7 +85,11 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
       />
       <select
         value={frequency}
-        onChange={(e) => setFrequency(e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME')}
+        onChange={(e) =>
+          setFrequency(
+            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+          )
+        }
         className={inputClass}
       >
         <option value="ONE_TIME">Un solo pago</option>
@@ -96,7 +112,9 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
       />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">Guardar</Button>
+      <Button type="submit" className="w-full">
+        Guardar
+      </Button>
     </form>
   );
 }

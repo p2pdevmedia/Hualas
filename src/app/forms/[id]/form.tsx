@@ -68,7 +68,9 @@ export default function FormDisplay({ form }: { form: any }) {
               <option value=""></option>
               {Array.isArray(f.options) &&
                 f.options.map((opt: string) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
             </select>
           )}
@@ -76,7 +78,9 @@ export default function FormDisplay({ form }: { form: any }) {
       ))}
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">Enviar</Button>
+      <Button type="submit" className="w-full">
+        Enviar
+      </Button>
     </form>
   );
 }

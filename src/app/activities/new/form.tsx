@@ -10,7 +10,9 @@ export default function CreateActivityForm() {
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'>('ONE_TIME');
+  const [frequency, setFrequency] = useState<
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+  >('ONE_TIME');
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -26,13 +28,27 @@ export default function CreateActivityForm() {
       const res = await fetch('/api/activities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, date, image, description, frequency, price: Number(price) }),
+        body: JSON.stringify({
+          name,
+          date,
+          image,
+          description,
+          frequency,
+          price: Number(price),
+        }),
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Actividad creada');
-      setName(''); setDate(''); setImage(''); setDescription(''); setPrice('');
+      setName('');
+      setDate('');
+      setImage('');
+      setDescription('');
+      setPrice('');
       setFrequency('ONE_TIME');
-      setTimeout(() => { router.push('/activities'); router.refresh(); }, 1000);
+      setTimeout(() => {
+        router.push('/activities');
+        router.refresh();
+      }, 1000);
     } catch (e) {
       setError('No se pudo crear la actividad');
     }
@@ -63,7 +79,11 @@ export default function CreateActivityForm() {
       />
       <select
         value={frequency}
-        onChange={(e) => setFrequency(e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME')}
+        onChange={(e) =>
+          setFrequency(
+            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
+          )
+        }
         className={inputClass}
       >
         <option value="ONE_TIME">Un solo pago</option>
@@ -86,7 +106,9 @@ export default function CreateActivityForm() {
       />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">Guardar</Button>
+      <Button type="submit" className="w-full">
+        Guardar
+      </Button>
     </form>
   );
 }

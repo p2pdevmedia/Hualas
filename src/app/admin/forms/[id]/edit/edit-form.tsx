@@ -28,7 +28,11 @@ export default function EditForm({ form }: { form: any }) {
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
-  const addField = () => setFields([...fields, { label: '', type: 'text', options: [], required: false }]);
+  const addField = () =>
+    setFields([
+      ...fields,
+      { label: '', type: 'text', options: [], required: false },
+    ]);
 
   const updateField = (index: number, key: keyof Field, value: any) => {
     const newFields = [...fields];
@@ -42,13 +46,18 @@ export default function EditForm({ form }: { form: any }) {
     setFields(newFields);
   };
 
-  const updateOption = (fieldIndex: number, optIndex: number, value: string) => {
+  const updateOption = (
+    fieldIndex: number,
+    optIndex: number,
+    value: string
+  ) => {
     const newFields = [...fields];
     newFields[fieldIndex].options[optIndex] = value;
     setFields(newFields);
   };
 
-  const removeField = (index: number) => setFields(fields.filter((_, i) => i !== index));
+  const removeField = (index: number) =>
+    setFields(fields.filter((_, i) => i !== index));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,15 +81,26 @@ export default function EditForm({ form }: { form: any }) {
     <form onSubmit={submit} className="space-y-5">
       <div className="space-y-1">
         <label className="text-sm font-medium">Título del formulario</label>
-        <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input
+          className={inputClass}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
       </div>
 
       <div className="space-y-3">
         {fields.map((f, i) => (
           <div key={i} className="rounded-lg border bg-muted/30 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Campo {i + 1}</span>
-              <button type="button" onClick={() => removeField(i)} className="text-xs text-destructive hover:text-destructive/80">
+              <span className="text-sm font-medium text-muted-foreground">
+                Campo {i + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeField(i)}
+                className="text-xs text-destructive hover:text-destructive/80"
+              >
                 Eliminar
               </button>
             </div>
@@ -90,13 +110,22 @@ export default function EditForm({ form }: { form: any }) {
               value={f.label}
               onChange={(e) => updateField(i, 'label', e.target.value)}
             />
-            <select className={inputClass} value={f.type} onChange={(e) => updateField(i, 'type', e.target.value)}>
+            <select
+              className={inputClass}
+              value={f.type}
+              onChange={(e) => updateField(i, 'type', e.target.value)}
+            >
               <option value="text">Texto</option>
               <option value="number">Número</option>
               <option value="select">Selección</option>
             </select>
             <label className="text-sm flex items-center gap-2 text-muted-foreground">
-              <input type="checkbox" className="accent-primary" checked={f.required} onChange={(e) => updateField(i, 'required', e.target.checked)} />
+              <input
+                type="checkbox"
+                className="accent-primary"
+                checked={f.required}
+                onChange={(e) => updateField(i, 'required', e.target.checked)}
+              />
               Requerido
             </label>
             {f.type === 'select' && (
@@ -110,7 +139,11 @@ export default function EditForm({ form }: { form: any }) {
                     onChange={(e) => updateOption(i, j, e.target.value)}
                   />
                 ))}
-                <button type="button" className="text-sm text-primary hover:text-primary/80" onClick={() => addOption(i)}>
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:text-primary/80"
+                  onClick={() => addOption(i)}
+                >
                   + Agregar opción
                 </button>
               </div>
@@ -129,7 +162,9 @@ export default function EditForm({ form }: { form: any }) {
 
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">Guardar cambios</Button>
+      <Button type="submit" className="w-full">
+        Guardar cambios
+      </Button>
     </form>
   );
 }

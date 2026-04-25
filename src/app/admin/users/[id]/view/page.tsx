@@ -4,9 +4,16 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export default async function ViewUserPage({ params }: { params: { id: string } }) {
+export default async function ViewUserPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     redirect('/');
   }
 
@@ -19,7 +26,11 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
           conversation: {
             include: {
               participants: { include: { user: true } },
-              messages: { orderBy: { createdAt: 'desc' }, take: 1, include: { sender: true } },
+              messages: {
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+                include: { sender: true },
+              },
             },
           },
         },
@@ -34,14 +45,27 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{user.name} {user.lastName}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {user.name} {user.lastName}
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
           </div>
-          <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">{user.role}</span>
+          <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
+            {user.role}
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm border-t border-border pt-3">
-          {user.phone && <p><span className="font-medium">Teléfono:</span> {user.phone}</p>}
-          {user.observations && <p className="col-span-2"><span className="font-medium">Observaciones:</span> {user.observations}</p>}
+          {user.phone && (
+            <p>
+              <span className="font-medium">Teléfono:</span> {user.phone}
+            </p>
+          )}
+          {user.observations && (
+            <p className="col-span-2">
+              <span className="font-medium">Observaciones:</span>{' '}
+              {user.observations}
+            </p>
+          )}
         </div>
       </div>
 
@@ -52,16 +76,23 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
         ) : (
           <ul className="divide-y divide-border">
             {user.activityParticipants.map((ap) => (
-              <li key={ap.id} className="py-2 text-sm flex items-center justify-between">
+              <li
+                key={ap.id}
+                className="py-2 text-sm flex items-center justify-between"
+              >
                 <span>
                   <span className="font-medium">{ap.activity.name}</span>
                   <span className="text-muted-foreground ml-2">
-                    {ap.activity.date.toLocaleDateString()} · ${ap.activity.price}
+                    {ap.activity.date.toLocaleDateString()} · $
+                    {ap.activity.price}
                     {ap.child && ` · ${ap.child.name}`}
                   </span>
                 </span>
                 {ap.receipt && (
-                  <a href={ap.receipt} className="text-primary hover:text-primary/80 text-xs underline underline-offset-4">
+                  <a
+                    href={ap.receipt}
+                    className="text-primary hover:text-primary/80 text-xs underline underline-offset-4"
+                  >
                     Comprobante
                   </a>
                 )}
@@ -81,7 +112,10 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
               const conv = cp.conversation;
               const others = conv.participants
                 .filter((p) => p.userId !== user.id)
-                .map((p) => `${p.user.name ?? 'Sin nombre'}${p.user.lastName ? ' ' + p.user.lastName : ''}`)
+                .map(
+                  (p) =>
+                    `${p.user.name ?? 'Sin nombre'}${p.user.lastName ? ' ' + p.user.lastName : ''}`
+                )
                 .join(', ');
               const last = conv.messages[0];
               return (
@@ -89,7 +123,10 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
                   <span className="font-medium">{others || 'Desconocido'}</span>
                   {last && (
                     <span className="block text-muted-foreground text-xs mt-0.5">
-                      {last.senderId === user.id ? 'Vos' : `${last.sender?.name ?? 'Unknown'}${last.sender?.lastName ? ' ' + last.sender.lastName : ''}`}: {last.body}
+                      {last.senderId === user.id
+                        ? 'Vos'
+                        : `${last.sender?.name ?? 'Unknown'}${last.sender?.lastName ? ' ' + last.sender.lastName : ''}`}
+                      : {last.body}
                     </span>
                   )}
                 </li>
@@ -99,7 +136,10 @@ export default async function ViewUserPage({ params }: { params: { id: string } 
         )}
       </div>
 
-      <Link href="/admin/users" className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4">
+      <Link
+        href="/admin/users"
+        className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+      >
         ← Volver a usuarios
       </Link>
     </div>

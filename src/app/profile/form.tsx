@@ -70,12 +70,36 @@ export default function ProfileForm({ user }: { user: User }) {
   return (
     <form onSubmit={submit} className="space-y-3" autoComplete="on">
       <div className="grid grid-cols-2 gap-3">
-        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />
-        <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Apellido" />
+        <input
+          className={inputClass}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre"
+        />
+        <input
+          className={inputClass}
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Apellido"
+        />
       </div>
-      <input className={inputClass} value={dni} onChange={(e) => setDni(e.target.value)} placeholder="DNI" />
-      <input className={inputClass} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-      <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
+      <input
+        className={inputClass}
+        value={dni}
+        onChange={(e) => setDni(e.target.value)}
+        placeholder="DNI"
+      />
+      <input
+        className={inputClass}
+        type="date"
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+      />
+      <select
+        className={inputClass}
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+      >
         <option value="">Género</option>
         <option value="FEMALE">Femenino</option>
         <option value="MALE">Masculino</option>
@@ -83,10 +107,30 @@ export default function ProfileForm({ user }: { user: User }) {
         <option value="UNDISCLOSED">Prefiero no decirlo</option>
         <option value="OTHER">Otro</option>
       </select>
-      <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Domicilio" />
-      <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" />
-      <input className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Nacionalidad" />
-      <input className={inputClass} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} placeholder="Estado Civil" />
+      <input
+        className={inputClass}
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Domicilio"
+      />
+      <input
+        className={inputClass}
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="Teléfono"
+      />
+      <input
+        className={inputClass}
+        value={nationality}
+        onChange={(e) => setNationality(e.target.value)}
+        placeholder="Nacionalidad"
+      />
+      <input
+        className={inputClass}
+        value={maritalStatus}
+        onChange={(e) => setMaritalStatus(e.target.value)}
+        placeholder="Estado Civil"
+      />
       <input
         className={inputClass}
         id="profile-email"
