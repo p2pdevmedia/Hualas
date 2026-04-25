@@ -5,6 +5,7 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
 import { prisma } from '@/lib/prisma';
+import { isMercadoPagoTestingEnvironment } from '@/lib/mercadopago';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,11 @@ export default async function RootLayout({
     <html lang="es">
       <body className="min-h-screen text-foreground flex flex-col font-body">
         <Providers>
+          {isMercadoPagoTestingEnvironment() ? (
+            <div className="w-full bg-yellow-300 text-yellow-950 text-sm font-semibold text-center py-2 px-4">
+              Mercado Pago en modo TESTING
+            </div>
+          ) : null}
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
+import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 
 export async function POST(
   req: Request,
@@ -28,13 +29,15 @@ export async function POST(
     return NextResponse.json({ error: 'Missing paymentId' }, { status: 400 });
   }
 
-  if (!process.env.MP_ACCESS_TOKEN) {
+  const { accessToken } = getMercadoPagoCredentials();
+
+  if (!accessToken) {
     return NextResponse.json({ error: 'MP not configured' }, { status: 500 });
   }
 
   try {
     const client = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN,
+      accessToken,
     });
     const payment = await new Payment(client).get({ id: paymentId });
 
