@@ -15,6 +15,9 @@ export default function CreateActivityForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const inputClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -23,29 +26,15 @@ export default function CreateActivityForm() {
       const res = await fetch('/api/activities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          date,
-          image,
-          description,
-          frequency,
-          price: Number(price),
-        }),
+        body: JSON.stringify({ name, date, image, description, frequency, price: Number(price) }),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Activity created');
-      setName('');
-      setDate('');
-      setImage('');
-      setDescription('');
-      setPrice('');
+      setSuccess('Actividad creada');
+      setName(''); setDate(''); setImage(''); setDescription(''); setPrice('');
       setFrequency('ONE_TIME');
-      setTimeout(() => {
-        router.push('/activities');
-        router.refresh();
-      }, 1000);
+      setTimeout(() => { router.push('/activities'); router.refresh(); }, 1000);
     } catch (e) {
-      setError('Failed to create activity');
+      setError('No se pudo crear la actividad');
     }
   };
 
@@ -56,29 +45,26 @@ export default function CreateActivityForm() {
         placeholder="Nombre de la actividad"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={inputClass}
+        required
       />
       <input
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={inputClass}
       />
       <input
         type="url"
         placeholder="URL de la imagen"
         value={image}
         onChange={(e) => setImage(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={inputClass}
       />
       <select
         value={frequency}
-        onChange={(e) =>
-          setFrequency(
-            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
-          )
-        }
-        className="w-full border px-2 py-1"
+        onChange={(e) => setFrequency(e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME')}
+        className={inputClass}
       >
         <option value="ONE_TIME">Un solo pago</option>
         <option value="DAILY">Diaria</option>
@@ -89,18 +75,18 @@ export default function CreateActivityForm() {
         placeholder="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={`${inputClass} min-h-[80px] resize-y`}
       />
       <input
         type="number"
         placeholder="Precio"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
-        className="w-full border px-2 py-1"
+        className={inputClass}
       />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-      <Button type="submit">Guardar</Button>
+      {error && <p className="text-destructive text-sm">{error}</p>}
+      {success && <p className="text-success text-sm">{success}</p>}
+      <Button type="submit" className="w-full">Guardar</Button>
     </form>
   );
 }

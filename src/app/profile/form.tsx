@@ -33,6 +33,9 @@ export default function ProfileForm({ user }: { user: User }) {
   const [success, setSuccess] = useState('');
   const router = useRouter();
 
+  const inputClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -56,46 +59,23 @@ export default function ProfileForm({ user }: { user: User }) {
         }),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Profile updated');
+      setSuccess('Perfil actualizado');
       setPassword('');
       setTimeout(() => router.refresh(), 1000);
     } catch (e) {
-      setError('Failed to update profile');
+      setError('No se pudo actualizar el perfil');
     }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-2 max-w-sm" autoComplete="on">
-      <input
-        className="w-full border px-2 py-1"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nombre"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={lastName}
-        onChange={(e) => setLastName(e.target.value)}
-        placeholder="Apellido"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={dni}
-        onChange={(e) => setDni(e.target.value)}
-        placeholder="DNI"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        type="date"
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
-        placeholder="Fecha de nacimiento"
-      />
-      <select
-        className="w-full border px-2 py-1"
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
+    <form onSubmit={submit} className="space-y-3" autoComplete="on">
+      <div className="grid grid-cols-2 gap-3">
+        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />
+        <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Apellido" />
+      </div>
+      <input className={inputClass} value={dni} onChange={(e) => setDni(e.target.value)} placeholder="DNI" />
+      <input className={inputClass} type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+      <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
         <option value="">Género</option>
         <option value="FEMALE">Femenino</option>
         <option value="MALE">Masculino</option>
@@ -103,32 +83,12 @@ export default function ProfileForm({ user }: { user: User }) {
         <option value="UNDISCLOSED">Prefiero no decirlo</option>
         <option value="OTHER">Otro</option>
       </select>
+      <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Domicilio" />
+      <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" />
+      <input className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Nacionalidad" />
+      <input className={inputClass} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} placeholder="Estado Civil" />
       <input
-        className="w-full border px-2 py-1"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Domicilio"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Teléfono"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={nationality}
-        onChange={(e) => setNationality(e.target.value)}
-        placeholder="Nacionalidad"
-      />
-      <input
-        className="w-full border px-2 py-1"
-        value={maritalStatus}
-        onChange={(e) => setMaritalStatus(e.target.value)}
-        placeholder="Estado Civil"
-      />
-      <input
-        className="w-full border px-2 py-1"
+        className={inputClass}
         id="profile-email"
         name="email"
         type="email"
@@ -138,20 +98,20 @@ export default function ProfileForm({ user }: { user: User }) {
         placeholder="Email"
       />
       <input
-        className="w-full border px-2 py-1"
+        className={inputClass}
         id="profile-new-password"
         name="new-password"
         type="password"
         autoComplete="new-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="New password"
+        placeholder="Nueva contraseña"
       />
       <input type="hidden" name="username" value={user.email} />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
+      {success && <p className="text-success text-sm">{success}</p>}
       <Button type="submit" className="w-full">
-        Save
+        Guardar cambios
       </Button>
     </form>
   );
