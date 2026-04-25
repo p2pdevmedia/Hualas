@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 type User = {
   name: string | null;
   lastName: string | null;
+  profilePhoto?: string | null;
   dni: string | null;
   birthDate: string | null;
   gender: string | null;
