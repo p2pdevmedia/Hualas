@@ -85,8 +85,12 @@ export async function GET(
       .join(':');
 
     const appUrl = getAppUrl(req);
-    const base = `${appUrl}/activities/${activity.id}`;
+    const returnBase = process.env.MP_RETURN_URL_BASE?.trim() || appUrl;
+    const base = `${returnBase}/activities/${activity.id}`;
     const successUrl = childId ? `${base}?childId=${childId}` : base;
+    const notificationUrl =
+      process.env.MP_NOTIFICATION_URL?.trim() ||
+      `${appUrl}/api/mercadopago/notifications`;
 
     const preference = new Preference(client);
     const preferenceExpiresAt = new Date(
@@ -116,6 +120,7 @@ export async function GET(
           failure: base,
           pending: base,
         },
+
         auto_return: checkoutSettings.autoReturn,
         binary_mode: checkoutSettings.binaryMode,
         payment_methods: {
@@ -137,7 +142,10 @@ export async function GET(
       },
     });
 
-    const redirectUrl = result.init_point ?? result.sandbox_init_point;
+    const isTesting = process.env.MP_ENVIRONMENT === 'testing';
+    const redirectUrl = isTesting
+      ? (result.sandbox_init_point ?? result.init_point)
+      : (result.init_point ?? result.sandbox_init_point);
     if (!redirectUrl) {
       console.error('[checkout] No init_point en respuesta MP:', result);
       return NextResponse.json(
