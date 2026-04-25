@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 
 function getAppUrl(req: Request) {
   const configuredUrl = process.env.NEXTAUTH_URL?.trim();
@@ -27,8 +28,10 @@ export async function GET(
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  if (!process.env.MP_ACCESS_TOKEN) {
-    console.error('[checkout] MP_ACCESS_TOKEN no configurado');
+  const { accessToken, environment } = getMercadoPagoCredentials();
+
+  if (!accessToken) {
+    console.error(`[checkout] Access token de Mercado Pago no configurado para ${environment}`);
     return NextResponse.json(
       { error: 'Configuración de pago incompleta. Contactá al administrador.' },
       { status: 500 }
@@ -66,7 +69,7 @@ export async function GET(
 
   try {
     const client = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN,
+      accessToken,
     });
 
     const nameParts = (session.user?.name || '').trim().split(' ');
