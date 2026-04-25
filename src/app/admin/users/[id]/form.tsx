@@ -71,13 +71,13 @@ export default function EditUserForm({ user }: { user: User }) {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Usuario actualizado');
+      setSuccess('Padre actualizado');
       setTimeout(() => {
         router.push('/admin/users');
         router.refresh();
       }, 1000);
     } catch (e) {
-      setError('No se pudo actualizar el usuario');
+      setError('No se pudo actualizar el padre');
     }
   }
 
@@ -165,7 +165,7 @@ export default function EditUserForm({ user }: { user: User }) {
           onChange={(e) => setIsActive(e.target.checked)}
           className="accent-primary"
         />
-        Usuario activo
+        Padre activo
       </label>
       {canEditRole && (
         <select

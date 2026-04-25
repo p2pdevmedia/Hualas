@@ -26,7 +26,7 @@ export default async function UsersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Padres</h1>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <UsersList users={users} />
       </div>

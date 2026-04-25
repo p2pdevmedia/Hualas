@@ -78,7 +78,7 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
       {children.length > 0 && (
         <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Menores registrados
+            Hijos registrados
           </h2>
           <ul className="divide-y divide-border">
             {children.map((c) => (
@@ -98,7 +98,7 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
       )}
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
-        <h2 className="text-base font-semibold">Agregar menor</h2>
+        <h2 className="text-base font-semibold">Agregar hijo</h2>
         <form onSubmit={addChild} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
@@ -174,7 +174,7 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
             placeholder="Observaciones"
           />
           <Button type="submit" className="w-full">
-            Agregar menor
+            Agregar hijo
           </Button>
         </form>
       </div>

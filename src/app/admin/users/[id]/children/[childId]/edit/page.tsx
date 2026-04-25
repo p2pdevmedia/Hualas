@@ -2,12 +2,12 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import EditUserForm from './form';
+import EditChildForm from './form';
 
-export default async function EditUserPage({
+export default async function EditChildPage({
   params,
 }: {
-  params: { id: string };
+  params: { id: string; childId: string };
 }) {
   const session = await getServerSession(authOptions);
   if (
@@ -16,38 +16,41 @@ export default async function EditUserPage({
   ) {
     redirect('/');
   }
-  const user = await prisma.user.findUnique({
-    where: { id: params.id },
+
+  const child = await prisma.child.findFirst({
+    where: {
+      id: params.childId,
+      userId: params.id,
+    },
     select: {
       id: true,
       name: true,
       lastName: true,
-      email: true,
-      role: true,
-      dni: true,
+      documentType: true,
+      documentNumber: true,
       birthDate: true,
-      gender: true,
       address: true,
-      phone: true,
+      gender: true,
       nationality: true,
       maritalStatus: true,
-      isActive: true,
       observations: true,
     },
   });
-  if (!user) {
-    redirect('/admin/users');
+
+  if (!child) {
+    redirect(`/admin/users/${params.id}/view`);
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Editar padre</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Editar hijo</h1>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <EditUserForm
-          user={{
-            ...user,
-            birthDate: user.birthDate
-              ? user.birthDate.toISOString().split('T')[0]
+        <EditChildForm
+          userId={params.id}
+          child={{
+            ...child,
+            birthDate: child.birthDate
+              ? child.birthDate.toISOString().split('T')[0]
               : null,
           }}
         />
