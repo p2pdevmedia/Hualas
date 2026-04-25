@@ -9,15 +9,15 @@ import {
 } from '@/lib/mercadopago';
 
 function getAppUrl(req: Request) {
-  const configuredUrl = process.env.NEXTAUTH_URL?.trim();
-  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-
   const forwardedProto = req.headers.get('x-forwarded-proto');
   const forwardedHost =
     req.headers.get('x-forwarded-host') || req.headers.get('host');
   if (forwardedHost) {
     return `${forwardedProto || 'https'}://${forwardedHost}`.replace(/\/$/, '');
   }
+
+  const configuredUrl = process.env.NEXTAUTH_URL?.trim();
+  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
 
   return new URL(req.url).origin.replace(/\/$/, '');
 }
@@ -35,7 +35,9 @@ export async function GET(
   const checkoutSettings = getMercadoPagoCheckoutSettings();
 
   if (!accessToken) {
-    console.error(`[checkout] Access token de Mercado Pago no configurado para ${environment}`);
+    console.error(
+      `[checkout] Access token de Mercado Pago no configurado para ${environment}`
+    );
     return NextResponse.json(
       { error: 'Configuración de pago incompleta. Contactá al administrador.' },
       { status: 500 }
@@ -125,12 +127,15 @@ export async function GET(
         binary_mode: checkoutSettings.binaryMode,
         payment_methods: {
           installments: checkoutSettings.maxInstallments,
-          excluded_payment_methods: checkoutSettings.excludedPaymentMethodIds.map((id) => ({ id })),
-          excluded_payment_types: checkoutSettings.excludedPaymentTypeIds.map((id) => ({ id })),
+          excluded_payment_methods:
+            checkoutSettings.excludedPaymentMethodIds.map((id) => ({ id })),
+          excluded_payment_types: checkoutSettings.excludedPaymentTypeIds.map(
+            (id) => ({ id })
+          ),
         },
         expires: true,
         expiration_date_to: preferenceExpiresAt.toISOString(),
-        notification_url: `${appUrl}/api/mercadopago/notifications`,
+        notification_url: notificationUrl,
         statement_descriptor: process.env.MP_STATEMENT_DESCRIPTOR || 'HUALAS',
         external_reference: externalReference,
         metadata: {
