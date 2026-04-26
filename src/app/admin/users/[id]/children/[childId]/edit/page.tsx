@@ -28,6 +28,8 @@ export default async function EditChildPage({
       lastName: true,
       documentType: true,
       documentNumber: true,
+      documentFrontPhoto: true,
+      documentBackPhoto: true,
       birthDate: true,
       address: true,
       gender: true,

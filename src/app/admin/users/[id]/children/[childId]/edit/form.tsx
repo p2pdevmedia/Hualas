@@ -11,6 +11,8 @@ type Child = {
   lastName: string | null;
   documentType: string | null;
   documentNumber: string | null;
+  documentFrontPhoto: string | null;
+  documentBackPhoto: string | null;
   birthDate: string | null;
   address: string | null;
   gender: string | null;
@@ -42,6 +44,12 @@ export default function EditChildForm({
     child.documentNumber ?? ''
   );
   const [birthDate, setBirthDate] = useState(child.birthDate ?? '');
+  const [documentFrontPhoto, setDocumentFrontPhoto] = useState(
+    child.documentFrontPhoto ?? ''
+  );
+  const [documentBackPhoto, setDocumentBackPhoto] = useState(
+    child.documentBackPhoto ?? ''
+  );
   const [address, setAddress] = useState(child.address ?? '');
   const [gender, setGender] = useState(child.gender ?? '');
   const [nationality, setNationality] = useState(child.nationality ?? '');
@@ -69,6 +77,36 @@ export default function EditChildForm({
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 1280;
+        const scale = Math.min(
+          maxSize / image.width,
+          maxSize / image.height,
+          1
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(image.src);
+          reject(new Error('No se pudo procesar la imagen'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(image.src);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(image.src);
+        reject(new Error('No se pudo leer la imagen'));
+      };
+      image.src = URL.createObjectURL(file);
+    });
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -83,6 +121,8 @@ export default function EditChildForm({
           lastName,
           documentType,
           documentNumber,
+          documentFrontPhoto,
+          documentBackPhoto,
           birthDate,
           address,
           gender: gender || undefined,
@@ -145,6 +185,38 @@ export default function EditChildForm({
         onChange={(e) => setDocumentNumber(e.target.value)}
         placeholder="Número / Código"
       />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="text-sm text-muted-foreground space-y-1">
+          <span>Foto delantera DNI</span>
+          <input
+            className={inputClass}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            required={documentType === 'DNI' && !documentFrontPhoto}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setDocumentFrontPhoto(await toDataUrl(file));
+            }}
+          />
+        </label>
+        <label className="text-sm text-muted-foreground space-y-1">
+          <span>Foto trasera DNI</span>
+          <input
+            className={inputClass}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            required={documentType === 'DNI' && !documentBackPhoto}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setDocumentBackPhoto(await toDataUrl(file));
+            }}
+          />
+        </label>
+      </div>
       <input
         className={inputClass}
         type="date"

@@ -136,6 +136,8 @@ model Child {
   lastName             String?
   documentType         String?
   documentNumber       String?
+  documentFrontPhoto   String?
+  documentBackPhoto    String?
   birthDate            DateTime?
   address              String?
   gender               Gender?
