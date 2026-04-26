@@ -3,6 +3,7 @@ export const translations = {
     nav: {
       home: 'Inicio',
       activities: 'Actividades',
+      myActivities: 'Mis actividades',
       contact: 'Contacto',
       chat: 'Chat',
       profile: 'Perfil',
@@ -38,6 +39,7 @@ export const translations = {
     nav: {
       home: 'Início',
       activities: 'Atividades',
+      myActivities: 'Minhas atividades',
       contact: 'Contato',
       chat: 'Bate-papo',
       profile: 'Perfil',
@@ -73,6 +75,7 @@ export const translations = {
     nav: {
       home: 'Home',
       activities: 'Activities',
+      myActivities: 'My activities',
       contact: 'Contact',
       chat: 'Chat',
       profile: 'Profile',
@@ -108,6 +111,7 @@ export const translations = {
     nav: {
       home: "Accueil",
       activities: "Activités",
+      myActivities: "Mes activités",
       contact: "Contact",
       chat: "Discussion",
       profile: "Profil",
