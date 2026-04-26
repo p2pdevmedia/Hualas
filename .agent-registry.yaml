@@ -1,0 +1,52 @@
+defaults:
+  maxRounds: 3
+  reviewRequired: true
+
+models:
+  cheap: openai/gpt-5-mini
+  coder: openai/gpt-5.1-codex-mini
+  strong: claude-sonnet-4.5
+  reviewer: claude-opus-4.5
+  local: ollama/qwen2.5-coder:7b
+
+agents:
+  planner:
+    model: cheap
+    wakeWhen: [large task, unclear task, architecture, multiple files]
+
+  backend:
+    model: coder
+    wakeWhen: [api, backend, express, prisma, postgres, auth]
+
+  frontend:
+    model: coder
+    wakeWhen: [ui, react, nextjs, tailwind, component]
+
+  database:
+    model: strong
+    wakeWhen: [schema, migration, sql, index]
+
+  test:
+    model: coder
+    wakeWhen: [bug fix, behavior change, refactor]
+
+  reviewer:
+    model: reviewer
+    alwaysFor: [non-trivial task]
+    canVeto: true
+
+  devops:
+    model: strong
+    wakeWhen: [deploy, docker, systemd, env]
+
+  security:
+    model: strong
+    wakeWhen: [auth, jwt, permissions, secrets]
+
+  integration:
+    model: coder
+    wakeWhen: [api client, webhooks, external api]
+
+  performance:
+    model: strong
+    wakeWhen: [slow, optimize, latency]
