@@ -160,13 +160,15 @@ export default function Navbar() {
               <Link href="/admin/forms" className={linkClass}>
                 {t.forms}
               </Link>
-              <Link href="/admin/notifications" className={linkClass}>
-                {t.notifications}
-              </Link>
               {isSuperAdmin && (
-                <Link href="/admin/site" className={linkClass}>
-                  {t.admin}
-                </Link>
+                <>
+                  <Link href="/admin/notifications" className={linkClass}>
+                    {t.notifications}
+                  </Link>
+                  <Link href="/admin/site" className={linkClass}>
+                    {t.admin}
+                  </Link>
+                </>
               )}
             </>
           )}
@@ -175,11 +177,13 @@ export default function Navbar() {
           </Link>
           {session ? (
             <div className="flex items-center gap-3">
-              <div className={cn(
-                'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
-                'h-9 w-9 text-xs',
-                !photoFailed && 'bg-transparent'
-              )}>
+              <div
+                className={cn(
+                  'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                  'h-9 w-9 text-xs',
+                  !photoFailed && 'bg-transparent'
+                )}
+              >
                 {!photoFailed ? (
                   <div className="relative h-full w-full">
                     <Image
@@ -193,18 +197,18 @@ export default function Navbar() {
                     />
                   </div>
                 ) : (
-                  <span className={cn(
-                    'grid h-full w-full place-items-center text-white',
-                    avatarColor(session.user.id)
-                  )}>
+                  <span
+                    className={cn(
+                      'grid h-full w-full place-items-center text-white',
+                      avatarColor(session.user.id)
+                    )}
+                  >
                     {initials(session.user.name)}
                   </span>
                 )}
               </div>
               <div className="relative group">
-                <button className={linkClass}>
-                  {t.profile}
-                </button>
+                <button className={linkClass}>{t.profile}</button>
                 <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
                   <Link
                     href="/profile"
@@ -289,21 +293,23 @@ export default function Navbar() {
               >
                 {t.forms}
               </Link>
-              <Link
-                href="/admin/notifications"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.notifications}
-              </Link>
               {isSuperAdmin && (
-                <Link
-                  href="/admin/site"
-                  className={linkClass}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t.admin}
-                </Link>
+                <>
+                  <Link
+                    href="/admin/notifications"
+                    className={linkClass}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t.notifications}
+                  </Link>
+                  <Link
+                    href="/admin/site"
+                    className={linkClass}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t.admin}
+                  </Link>
+                </>
               )}
             </>
           )}
@@ -317,11 +323,13 @@ export default function Navbar() {
           {session ? (
             <>
               <div className="flex items-center gap-3 py-2">
-                <div className={cn(
-                  'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
-                  'h-9 w-9 text-xs',
-                  !photoFailed && 'bg-transparent'
-                )}>
+                <div
+                  className={cn(
+                    'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                    'h-9 w-9 text-xs',
+                    !photoFailed && 'bg-transparent'
+                  )}
+                >
                   {!photoFailed ? (
                     <div className="relative h-full w-full">
                       <Image
@@ -335,15 +343,19 @@ export default function Navbar() {
                       />
                     </div>
                   ) : (
-                    <span className={cn(
-                      'grid h-full w-full place-items-center text-white',
-                      avatarColor(session.user.id)
-                    )}>
+                    <span
+                      className={cn(
+                        'grid h-full w-full place-items-center text-white',
+                        avatarColor(session.user.id)
+                      )}
+                    >
                       {initials(session.user.name)}
                     </span>
                   )}
                 </div>
-                <span className="text-sm opacity-80">{session.user.name || 'Usuario'}</span>
+                <span className="text-sm opacity-80">
+                  {session.user.name || 'Usuario'}
+                </span>
               </div>
               <Link
                 href="/profile"
@@ -405,8 +417,7 @@ export default function Navbar() {
                 ))}
               </select>
             </>
-          )
-        }
+          )}
         </div>
       )}
     </nav>
