@@ -115,17 +115,16 @@ model Activity {
 }
 
 model ActivityParticipant {
-  id          String    @id @default(cuid())
-  activityId  String
-  userId      String
-  childId     String?
-  receipt     String?
-  receiptDate DateTime?
-  activity    Activity  @relation(fields: [activityId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
-  child       Child?    @relation(fields: [childId], references: [id])
-
-  @@unique([activityId, userId, childId])
+  id            String    @id @default(cuid())
+  activityId    String
+  userId        String
+  childId       String?
+  participantKey String   @unique
+  receipt       String?
+  receiptDate   DateTime?
+  activity      Activity  @relation(fields: [activityId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+  child         Child?    @relation(fields: [childId], references: [id])
 }
 
 model Child {

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
@@ -12,12 +13,54 @@ interface ActivityPageProps {
   params: { id: string };
 }
 
+type ActivityDetail = Prisma.ActivityGetPayload<{
+  include: {
+    participants: {
+      include: {
+        user: true;
+        child: true;
+      };
+    };
+  };
+}>;
+
+type ActivityParticipantDetail = ActivityDetail['participants'][number];
+
+function getParticipantName(participant: ActivityParticipantDetail) {
+  if (participant.child) {
+    return `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`;
+  }
+
+  return `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`;
+}
+
+function getParticipantSubtitle(participant: ActivityParticipantDetail) {
+  if (participant.child) {
+    return `Registrado por ${participant.user.name ?? 'sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`;
+  }
+
+  return participant.user.email;
+}
+
 export default async function ActivityPage({ params }: ActivityPageProps) {
+  const session = await getServerSession(authOptions);
+  const isAdmin =
+    session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
+
   let activity: any = null;
   try {
     activity = await prisma.activity.findUnique({
       where: { id: params.id },
-      include: { participants: true },
+      include: {
+        participants: isAdmin
+          ? {
+              include: {
+                user: true,
+                child: true,
+              },
+            }
+          : true,
+      },
     });
   } catch (e: any) {
     activity = null;
@@ -30,10 +73,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       </main>
     );
   }
-
-  const session = await getServerSession(authOptions);
-  const isAdmin =
-    session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
 
   const frequencyLabels: Record<string, string> = {
     DAILY: 'Diaria',
@@ -213,6 +252,75 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             </div>
           </div>
         </div>
+
+        {isAdmin && (
+          <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="font-heading text-2xl font-semibold">
+                  Inscriptos
+                </h2>
+                <p className="text-sm text-muted-foreground font-body mt-1">
+                  {enrolledCount} inscripto
+                  {enrolledCount === 1 ? '' : 's'}
+                </p>
+              </div>
+              {hasCapacity && (
+                <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {remainingSpots} lugares disponibles
+                </div>
+              )}
+            </div>
+
+            {activity.participants.length === 0 ? (
+              <p className="mt-6 text-sm text-muted-foreground font-body">
+                Aún no hay inscriptos en esta actividad.
+              </p>
+            ) : (
+              <ul className="mt-6 divide-y divide-border">
+                {activity.participants.map(
+                  (participant: ActivityParticipantDetail) => (
+                    <li
+                      key={participant.id}
+                      className="py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {getParticipantName(participant)}
+                        </p>
+                        <p className="text-sm text-muted-foreground font-body">
+                          {getParticipantSubtitle(participant)}
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground font-body">
+                          {participant.receipt && (
+                            <span>Comprobante {participant.receipt}</span>
+                          )}
+                          {participant.receiptDate && (
+                            <span>
+                              {participant.receipt ? '· ' : ''}
+                              Pago aprobado el{' '}
+                              {participant.receiptDate.toLocaleDateString(
+                                'es-AR',
+                                {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground font-body">
+                        {participant.child ? 'Hijo/a' : 'Titular'}
+                      </div>
+                    </li>
+                  )
+                )}
+              </ul>
+            )}
+          </section>
+        )}
       </div>
     </main>
   );

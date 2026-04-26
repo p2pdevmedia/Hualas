@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
@@ -56,16 +57,22 @@ export async function POST(req: NextRequest) {
         if (!activity) {
           return NextResponse.json({ received: true });
         }
-        const existingParticipant = await prisma.activityParticipant.findFirst({
-          where: {
-            activityId,
-            userId,
-            childId: childId || null,
-          },
-          select: {
-            id: true,
-          },
-        });
+        const participantChildId = childId || null;
+        const participantKey = getActivityParticipantKey(
+          activityId,
+          userId,
+          participantChildId
+        );
+        const existingParticipant = await prisma.activityParticipant.findUnique(
+          {
+            where: {
+              participantKey,
+            },
+            select: {
+              id: true,
+            },
+          }
+        );
         if (
           activity.capacity != null &&
           !existingParticipant &&
@@ -80,25 +87,22 @@ export async function POST(req: NextRequest) {
         const date =
           payment.date_approved || payment.date_created || new Date();
 
+        const participantData = {
+          participantKey,
+          receipt,
+          receiptDate: new Date(date),
+        };
         await prisma.activityParticipant.upsert({
           where: {
-            activityId_userId_childId: {
-              activityId,
-              userId,
-              childId: childId || null,
-            },
+            participantKey,
           },
           create: {
             activityId,
             userId,
-            childId: childId || null,
-            receipt,
-            receiptDate: new Date(date),
+            childId: participantChildId,
+            ...participantData,
           },
-          update: {
-            receipt,
-            receiptDate: new Date(date),
-          },
+          update: participantData,
         });
       }
     } catch (error: any) {

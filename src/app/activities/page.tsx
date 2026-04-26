@@ -54,7 +54,7 @@ export default async function ActivitiesPage() {
           {activities.map((activity) => (
             <li
               key={activity.id}
-              className="rounded-xl border bg-card p-4 shadow-sm flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+              className="rounded-xl border bg-card p-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <Link
@@ -81,12 +81,20 @@ export default async function ActivitiesPage() {
                   </span>
                 </div>
               </div>
-              <Link
-                href={`/activities/${activity.id}/edit`}
-                className="mt-2 text-sm text-primary hover:underline sm:mt-0 shrink-0"
-              >
-                Editar
-              </Link>
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                <Link
+                  href={`/activities/${activity.id}`}
+                  className="inline-flex items-center justify-center rounded-full border-[1.5px] border-primary px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+                >
+                  Ver
+                </Link>
+                <Link
+                  href={`/activities/${activity.id}/edit`}
+                  className="inline-flex items-center justify-center rounded-full border-[1.5px] border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Editar
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
