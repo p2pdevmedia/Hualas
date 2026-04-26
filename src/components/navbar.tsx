@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import { cn } from '@/lib/utils';
 import type { SiteSettings } from '@/types/site';
 import {
   useTranslation,
@@ -16,6 +17,30 @@ import type { Lang } from '@/lib/i18n';
 const defaultLogo =
   'https://lh6.googleusercontent.com/hX1qgSPLZYte1_e1xQwiDdMTxlxH3h1isoxUqgXoFnylzCCyiLC8q9dvMSSM-cbtHBdkrl_wlkqyknspAH12YnDAIEIdo5fmegdteoOHIUNEK_nu_0fHbE6J6S5WtghSXZiqIPcd1A=w16383';
 
+const AVATAR_COLORS = [
+  'bg-rose-500',
+  'bg-amber-500',
+  'bg-emerald-500',
+  'bg-sky-500',
+  'bg-violet-500',
+  'bg-fuchsia-500',
+  'bg-teal-500',
+  'bg-orange-500',
+];
+
+function avatarColor(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function initials(name: string | null | undefined) {
+  const parts = (name ?? '?').trim().split(/\s+/);
+  return (parts[0]?.[0] ?? '?').concat(parts[1]?.[0] ?? '').toUpperCase();
+}
+
 export default function Navbar() {
   const { data: session } = useSession();
   const role = session?.user.role;
@@ -26,12 +51,17 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
     fetch('/api/site-settings')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setSettings(data));
   }, []);
+
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!session) {
@@ -140,7 +170,33 @@ export default function Navbar() {
             {t.contact}
           </Link>
           {session ? (
-            <>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                'h-9 w-9 text-xs',
+                !photoFailed && 'bg-transparent'
+              )}>
+                {!photoFailed ? (
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={`/api/users/${session.user.id}/photo`}
+                      alt={session.user.name ?? 'Profile photo'}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      sizes="36px"
+                      onError={() => setPhotoFailed(true)}
+                    />
+                  </div>
+                ) : (
+                  <span className={cn(
+                    'grid h-full w-full place-items-center text-white',
+                    avatarColor(session.user.id)
+                  )}>
+                    {initials(session.user.name)}
+                  </span>
+                )}
+              </div>
               <Link href="/profile" className={linkClass}>
                 {t.profile}
               </Link>
@@ -150,7 +206,7 @@ export default function Navbar() {
               >
                 {t.logout}
               </button>
-            </>
+            </div>
           ) : (
             <>
               <Link href="/login" className={linkClass}>
@@ -240,6 +296,35 @@ export default function Navbar() {
           </Link>
           {session ? (
             <>
+              <div className="flex items-center gap-3 py-2">
+                <div className={cn(
+                  'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                  'h-9 w-9 text-xs',
+                  !photoFailed && 'bg-transparent'
+                )}>
+                  {!photoFailed ? (
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={`/api/users/${session.user.id}/photo`}
+                        alt={session.user.name ?? 'Profile photo'}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                        sizes="36px"
+                        onError={() => setPhotoFailed(true)}
+                      />
+                    </div>
+                  ) : (
+                    <span className={cn(
+                      'grid h-full w-full place-items-center text-white',
+                      avatarColor(session.user.id)
+                    )}>
+                      {initials(session.user.name)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm opacity-80">{session.user.name || 'Usuario'}</span>
+              </div>
               <Link
                 href="/profile"
                 className={linkClass}
