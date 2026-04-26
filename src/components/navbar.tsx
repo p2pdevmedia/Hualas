@@ -404,6 +404,7 @@ export default function Navbar() {
               </select>
             </>
           )
+        }
         </div>
       )}
     </nav>
