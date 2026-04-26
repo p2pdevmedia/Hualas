@@ -92,7 +92,10 @@ export default function UsersList({ users }: { users: User[] }) {
                 {u.role}
               </span>
             </Link>
-            <Link href={`/admin/users/${u.id}`} className={linkClass}>
+            <Link
+              href={`/admin/users/${u.id}`}
+              className={`${linkClass} hidden md:inline`}
+            >
               {t.edit}
             </Link>
             <details className="group relative">
@@ -103,6 +106,12 @@ export default function UsersList({ users }: { users: User[] }) {
                 <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
               </summary>
               <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+                <Link
+                  href={`/admin/users/${u.id}`}
+                  className={`${menuItemClass} md:hidden`}
+                >
+                  {t.edit}
+                </Link>
                 <Link
                   href={`/admin/users/${u.id}/child-enrollment`}
                   className={menuItemClass}
