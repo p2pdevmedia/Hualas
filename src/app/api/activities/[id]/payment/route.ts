@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
@@ -50,6 +51,11 @@ export async function POST(
 
     const userId = (session.user as any).id;
     const participantChildId = childId ?? null;
+    const participantKey = getActivityParticipantKey(
+      params.id,
+      userId,
+      participantChildId
+    );
     const receipt = payment.id?.toString() ?? null;
     const date = payment.date_approved || payment.date_created || new Date();
     const receiptDate = new Date(date);
@@ -66,33 +72,23 @@ export async function POST(
       },
     });
 
-    const participant = await prisma.activityParticipant.findFirst({
+    await prisma.activityParticipant.upsert({
       where: {
+        participantKey,
+      },
+      create: {
         activityId: params.id,
         userId,
         childId: participantChildId,
+        participantKey,
+        receipt,
+        receiptDate,
+      },
+      update: {
+        receipt,
+        receiptDate,
       },
     });
-
-    if (participant) {
-      await prisma.activityParticipant.update({
-        where: { id: participant.id },
-        data: {
-          receipt,
-          receiptDate,
-        },
-      });
-    } else {
-      await prisma.activityParticipant.create({
-        data: {
-          activityId: params.id,
-          userId,
-          childId: participantChildId,
-          receipt,
-          receiptDate,
-        },
-      });
-    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
