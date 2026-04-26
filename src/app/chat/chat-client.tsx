@@ -13,11 +13,17 @@ type User = {
   name: string | null;
   role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
 };
-type Message = { from: string; content: string; createdAt?: string };
+type Message = {
+  from: string;
+  content: string;
+  createdAt?: string;
+  readAt?: string | null;
+};
 type Conversation = {
   id: string;
   participants: { id: string; name: string | null }[];
   messages: Message[];
+  unreadCount?: number;
 };
 
 const AVATAR_COLORS = [
@@ -83,6 +89,16 @@ function Avatar({
   );
 }
 
+function UnreadIndicator() {
+  return (
+    <span
+      className="inline-flex h-2.5 w-2.5 rounded-full bg-red-500"
+      aria-label="Mensajes sin leer"
+      title="Mensajes sin leer"
+    />
+  );
+}
+
 export default function ChatClient() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
@@ -125,10 +141,10 @@ export default function ChatClient() {
       setMessages([]);
       return;
     }
-    fetchThread(recipient);
+    fetchThread(recipient).then(fetchHistory);
     const id = window.setInterval(() => fetchThread(recipient), POLL_THREAD_MS);
     return () => window.clearInterval(id);
-  }, [recipient, fetchThread]);
+  }, [recipient, fetchThread, fetchHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -146,6 +162,7 @@ export default function ChatClient() {
       user: User;
       lastMessage: Message | null;
       lastAt: number;
+      unreadCount: number;
     };
 
     const items: Contact[] = selectable.map((u) => {
@@ -154,7 +171,12 @@ export default function ChatClient() {
       );
       const last = conv?.messages[conv.messages.length - 1] ?? null;
       const lastAt = last?.createdAt ? new Date(last.createdAt).getTime() : 0;
-      return { user: u, lastMessage: last, lastAt };
+      return {
+        user: u,
+        lastMessage: last,
+        lastAt,
+        unreadCount: conv?.unreadCount ?? 0,
+      };
     });
 
     items.sort((a, b) => {
@@ -209,8 +231,9 @@ export default function ChatClient() {
                 No hay contactos disponibles
               </p>
             ) : (
-              contacts.map(({ user, lastMessage }) => {
+              contacts.map(({ user, lastMessage, unreadCount }) => {
                 const isSelected = recipient === user.id;
+                const hasUnread = unreadCount > 0;
                 const previewSender =
                   lastMessage && lastMessage.from === session?.user.id
                     ? 'Vos: '
@@ -230,11 +253,14 @@ export default function ChatClient() {
                         <span className="truncate font-semibold text-sm">
                           {user.name ?? 'Sin nombre'}
                         </span>
-                        {lastMessage?.createdAt && (
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {formatPreviewTime(lastMessage.createdAt)}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {hasUnread && <UnreadIndicator />}
+                          {lastMessage?.createdAt && (
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatPreviewTime(lastMessage.createdAt)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="truncate text-xs text-muted-foreground">
                         {lastMessage

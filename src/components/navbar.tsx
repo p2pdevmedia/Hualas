@@ -25,6 +25,7 @@ export default function Navbar() {
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
     fetch('/api/site-settings')
@@ -32,12 +33,52 @@ export default function Navbar() {
       .then((data) => setSettings(data));
   }, []);
 
+  useEffect(() => {
+    if (!session) {
+      setHasUnreadMessages(false);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/messages');
+        if (!res.ok) return;
+        const conversations = (await res.json()) as { unreadCount?: number }[];
+        if (!cancelled) {
+          setHasUnreadMessages(
+            conversations.some((c) => (c.unreadCount ?? 0) > 0)
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setHasUnreadMessages(false);
+        }
+      }
+    };
+
+    fetchUnread();
+    const id = window.setInterval(fetchUnread, 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [session]);
+
   const logoUrl = settings?.logo
     ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
     : defaultLogo;
 
   const linkClass =
     'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+
+  const renderUnreadIcon = () => (
+    <span
+      className="inline-flex h-2.5 w-2.5 rounded-full bg-red-500"
+      aria-label="Mensajes sin leer"
+      title="Mensajes sin leer"
+    />
+  );
 
   return (
     <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
@@ -69,8 +110,12 @@ export default function Navbar() {
             {t.activities}
           </Link>
           {session && (
-            <Link href="/chat" className={linkClass}>
-              {t.chat}
+            <Link
+              href="/chat"
+              className={`${linkClass} inline-flex items-center gap-2`}
+            >
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
             </Link>
           )}
           {isAdmin && (
@@ -145,10 +190,11 @@ export default function Navbar() {
           {session && (
             <Link
               href="/chat"
-              className={linkClass}
+              className={`${linkClass} inline-flex items-center gap-2`}
               onClick={() => setMenuOpen(false)}
             >
-              {t.chat}
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
             </Link>
           )}
           {isAdmin && (

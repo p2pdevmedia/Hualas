@@ -39,7 +39,11 @@ export async function GET(req: NextRequest) {
       from: m.senderId,
       content: m.body,
       createdAt: m.createdAt.toISOString(),
+      readAt: m.readAt?.toISOString() ?? null,
     })),
+    unreadCount: c.messages.filter(
+      (m) => m.senderId !== session.user.id && m.readAt === null
+    ).length,
   }));
 
   return NextResponse.json(data);
