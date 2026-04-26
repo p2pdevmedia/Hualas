@@ -47,11 +47,26 @@ export default async function ViewUserPage({
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {user.name} {user.lastName}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 overflow-hidden rounded-full border bg-muted shrink-0">
+              {user.profilePhoto ? (
+                <img
+                  src={`/api/users/${user.id}/photo?v=${user.updatedAt.getTime()}`}
+                  alt={`Foto de perfil de ${user.name ?? 'usuario'}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
+                  {(user.name?.[0] ?? '?').toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {user.name} {user.lastName}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            </div>
           </div>
           <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
             {user.role}
@@ -107,6 +122,9 @@ export default async function ViewUserPage({
                         {child.documentType} {child.documentNumber}
                       </span>
                     )}
+                    {child.documentFrontPhoto && child.documentBackPhoto && (
+                      <span>· DNI con frente y dorso cargados</span>
+                    )}
                     {child.birthDate && (
                       <span>
                         · {child.birthDate.toLocaleDateString('es-AR')}
@@ -118,13 +136,57 @@ export default async function ViewUserPage({
                       {child.address}
                     </p>
                   )}
+                  {[
+                    child.allergies,
+                    child.regularMedication,
+                    child.relevantDiseases,
+                    child.previousInjuries,
+                    child.physicalRestrictions,
+                    child.bloodGroup,
+                    child.primaryDoctor,
+                    child.doctorPhone,
+                    child.observations,
+                  ].some(Boolean) && (
+                    <div className="grid gap-2 rounded-lg border bg-muted/20 p-3 text-xs sm:grid-cols-2">
+                      {[
+                        ['Alergias', child.allergies],
+                        ['Medicación habitual', child.regularMedication],
+                        ['Enfermedades relevantes', child.relevantDiseases],
+                        ['Lesiones previas', child.previousInjuries],
+                        ['Restricciones físicas', child.physicalRestrictions],
+                        ['Grupo sanguíneo', child.bloodGroup],
+                        ['Médico de cabecera', child.primaryDoctor],
+                        ['Teléfono médico', child.doctorPhone],
+                        ['Observaciones', child.observations],
+                      ]
+                        .filter(([, value]) => Boolean(value))
+                        .map(([label, value]) => (
+                          <div key={label}>
+                            <span className="font-medium text-foreground">
+                              {label}:
+                            </span>{' '}
+                            <span className="text-muted-foreground">
+                              {value as string}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
-                <Link
-                  href={`/admin/users/${user.id}/children/${child.id}/edit`}
-                  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
-                >
-                  Editar
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/admin/users/${user.id}/children/${child.id}/view`}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+                  >
+                    Ver
+                  </Link>
+                  <Link
+                    href={`/admin/users/${user.id}/children/${child.id}/edit`}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
+                  >
+                    Editar
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

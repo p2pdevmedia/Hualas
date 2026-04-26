@@ -9,11 +9,21 @@ type Child = {
   lastName: string | null;
   documentType: string | null;
   documentNumber: string | null;
+  documentFrontPhoto: string | null;
+  documentBackPhoto: string | null;
   birthDate: string | null;
   address: string | null;
   gender: string | null;
   nationality: string | null;
   maritalStatus: string | null;
+  allergies: string | null;
+  regularMedication: string | null;
+  relevantDiseases: string | null;
+  previousInjuries: string | null;
+  physicalRestrictions: string | null;
+  bloodGroup: string | null;
+  primaryDoctor: string | null;
+  doctorPhone: string | null;
   observations: string | null;
 };
 
@@ -23,11 +33,21 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
   const [lastName, setLastName] = useState('');
   const [documentType, setDocumentType] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
+  const [documentFrontPhoto, setDocumentFrontPhoto] = useState('');
+  const [documentBackPhoto, setDocumentBackPhoto] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [address, setAddress] = useState('');
   const [gender, setGender] = useState('');
   const [nationality, setNationality] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
+  const [allergies, setAllergies] = useState('');
+  const [regularMedication, setRegularMedication] = useState('');
+  const [relevantDiseases, setRelevantDiseases] = useState('');
+  const [previousInjuries, setPreviousInjuries] = useState('');
+  const [physicalRestrictions, setPhysicalRestrictions] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [primaryDoctor, setPrimaryDoctor] = useState('');
+  const [doctorPhone, setDoctorPhone] = useState('');
   const [observations, setObservations] = useState('');
 
   const inputClass =
@@ -39,6 +59,36 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
       .then((data) => setChildren(data));
   }, [userId]);
 
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 1280;
+        const scale = Math.min(
+          maxSize / image.width,
+          maxSize / image.height,
+          1
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(image.src);
+          reject(new Error('No se pudo procesar la imagen'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(image.src);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(image.src);
+        reject(new Error('No se pudo leer la imagen'));
+      };
+      image.src = URL.createObjectURL(file);
+    });
+
   async function addChild(e: React.FormEvent) {
     e.preventDefault();
     const res = await fetch(`/api/users/${userId}/children`, {
@@ -49,11 +99,21 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
         lastName,
         documentType,
         documentNumber,
+        documentFrontPhoto,
+        documentBackPhoto,
         birthDate,
         address,
         gender: gender || undefined,
         nationality,
         maritalStatus,
+        allergies,
+        regularMedication,
+        relevantDiseases,
+        previousInjuries,
+        physicalRestrictions,
+        bloodGroup,
+        primaryDoctor,
+        doctorPhone,
         observations,
       }),
     });
@@ -64,11 +124,21 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
       setLastName('');
       setDocumentType('');
       setDocumentNumber('');
+      setDocumentFrontPhoto('');
+      setDocumentBackPhoto('');
       setBirthDate('');
       setAddress('');
       setGender('');
       setNationality('');
       setMaritalStatus('');
+      setAllergies('');
+      setRegularMedication('');
+      setRelevantDiseases('');
+      setPreviousInjuries('');
+      setPhysicalRestrictions('');
+      setBloodGroup('');
+      setPrimaryDoctor('');
+      setDoctorPhone('');
       setObservations('');
     }
   }
@@ -89,6 +159,11 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
                 {c.documentType && (
                   <span className="text-muted-foreground ml-2">
                     · {c.documentType} {c.documentNumber}
+                  </span>
+                )}
+                {c.documentFrontPhoto && c.documentBackPhoto && (
+                  <span className="text-muted-foreground ml-2">
+                    · DNI completo
                   </span>
                 )}
               </li>
@@ -131,6 +206,38 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
             onChange={(e) => setDocumentNumber(e.target.value)}
             placeholder="Número / Código"
           />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-muted-foreground space-y-1">
+              <span>Foto delantera DNI</span>
+              <input
+                className={inputClass}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                required={documentType === 'DNI'}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setDocumentFrontPhoto(await toDataUrl(file));
+                }}
+              />
+            </label>
+            <label className="text-sm text-muted-foreground space-y-1">
+              <span>Foto trasera DNI</span>
+              <input
+                className={inputClass}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                required={documentType === 'DNI'}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setDocumentBackPhoto(await toDataUrl(file));
+                }}
+              />
+            </label>
+          </div>
           <input
             className={inputClass}
             type="date"
@@ -167,12 +274,63 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
             onChange={(e) => setMaritalStatus(e.target.value)}
             placeholder="Estado Civil"
           />
-          <textarea
-            className={`${inputClass} min-h-[80px] resize-y`}
-            value={observations}
-            onChange={(e) => setObservations(e.target.value)}
-            placeholder="Observaciones"
-          />
+          <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Ficha médica</h3>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={allergies}
+              onChange={(e) => setAllergies(e.target.value)}
+              placeholder="Alergias"
+            />
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={regularMedication}
+              onChange={(e) => setRegularMedication(e.target.value)}
+              placeholder="Medicación habitual"
+            />
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={relevantDiseases}
+              onChange={(e) => setRelevantDiseases(e.target.value)}
+              placeholder="Enfermedades relevantes"
+            />
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={previousInjuries}
+              onChange={(e) => setPreviousInjuries(e.target.value)}
+              placeholder="Lesiones previas"
+            />
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={physicalRestrictions}
+              onChange={(e) => setPhysicalRestrictions(e.target.value)}
+              placeholder="Restricciones físicas"
+            />
+            <input
+              className={inputClass}
+              value={bloodGroup}
+              onChange={(e) => setBloodGroup(e.target.value)}
+              placeholder="Grupo sanguíneo"
+            />
+            <input
+              className={inputClass}
+              value={primaryDoctor}
+              onChange={(e) => setPrimaryDoctor(e.target.value)}
+              placeholder="Médico de cabecera"
+            />
+            <input
+              className={inputClass}
+              value={doctorPhone}
+              onChange={(e) => setDoctorPhone(e.target.value)}
+              placeholder="Teléfono médico"
+            />
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={observations}
+              onChange={(e) => setObservations(e.target.value)}
+              placeholder="Observaciones"
+            />
+          </div>
           <Button type="submit" className="w-full">
             Agregar hijo
           </Button>

@@ -13,6 +13,8 @@ interface User {
   email: string;
   dni: string | null;
   role: string;
+  profilePhoto: string | null;
+  updatedAt: Date;
 }
 
 export default function UsersList({ users }: { users: User[] }) {
@@ -63,6 +65,19 @@ export default function UsersList({ users }: { users: User[] }) {
       <ul className="divide-y divide-border">
         {filtered.map((u) => (
           <li key={u.id} className="flex items-center gap-3 py-3 flex-wrap">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
+              {u.profilePhoto ? (
+                <img
+                  src={`/api/users/${u.id}/photo?v=${new Date(u.updatedAt).getTime()}`}
+                  alt={`Foto de perfil de ${u.name ?? 'usuario'}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted-foreground">
+                  {(u.name?.[0] ?? '?').toUpperCase()}
+                </div>
+              )}
+            </div>
             <Link
               href={`/admin/users/${u.id}/view`}
               className="flex-1 rounded-md text-sm transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -77,7 +92,10 @@ export default function UsersList({ users }: { users: User[] }) {
                 {u.role}
               </span>
             </Link>
-            <Link href={`/admin/users/${u.id}`} className={linkClass}>
+            <Link
+              href={`/admin/users/${u.id}`}
+              className={`${linkClass} hidden sm:inline`}
+            >
               {t.edit}
             </Link>
             <details className="group relative">
@@ -88,6 +106,12 @@ export default function UsersList({ users }: { users: User[] }) {
                 <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
               </summary>
               <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+                <Link
+                  href={`/admin/users/${u.id}`}
+                  className={`${menuItemClass} sm:hidden`}
+                >
+                  {t.edit}
+                </Link>
                 <Link
                   href={`/admin/users/${u.id}/child-enrollment`}
                   className={menuItemClass}

@@ -5,6 +5,8 @@ export const childCreateSchema = z.object({
   lastName: z.string().optional(),
   documentType: z.string().optional(),
   documentNumber: z.string().optional(),
+  documentFrontPhoto: z.string().optional(),
+  documentBackPhoto: z.string().optional(),
   birthDate: z.string().optional(),
   address: z.string().optional(),
   gender: z
@@ -12,5 +14,13 @@ export const childCreateSchema = z.object({
     .optional(),
   nationality: z.string().optional(),
   maritalStatus: z.string().optional(),
+  allergies: z.string().optional(),
+  regularMedication: z.string().optional(),
+  relevantDiseases: z.string().optional(),
+  previousInjuries: z.string().optional(),
+  physicalRestrictions: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  primaryDoctor: z.string().optional(),
+  doctorPhone: z.string().optional(),
   observations: z.string().optional(),
 });

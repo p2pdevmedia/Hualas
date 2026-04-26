@@ -18,6 +18,7 @@ model User {
   address              String?
   phone                String?
   observations         String?
+  profilePhoto         String?
   nationality          String?
   maritalStatus        String?
   password             String
@@ -135,11 +136,21 @@ model Child {
   lastName             String?
   documentType         String?
   documentNumber       String?
+  documentFrontPhoto   String?
+  documentBackPhoto    String?
   birthDate            DateTime?
   address              String?
   gender               Gender?
   nationality          String?
   maritalStatus        String?
+  allergies            String?
+  regularMedication    String?
+  relevantDiseases     String?
+  previousInjuries     String?
+  physicalRestrictions String?
+  bloodGroup           String?
+  primaryDoctor        String?
+  doctorPhone          String?
   observations         String?
   createdAt            DateTime              @default(now())
   activityParticipants ActivityParticipant[]
