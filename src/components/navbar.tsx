@@ -46,6 +46,8 @@ export default function Navbar() {
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isMember = !!session && !isAdmin;
+  const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
   const t = translations.nav;
   const actions = translations.actions;
@@ -138,8 +140,8 @@ export default function Navbar() {
         </button>
 
         <div className="hidden md:flex md:items-center md:gap-6">
-          <Link href="/activities" className={linkClass}>
-            {t.activities}
+          <Link href={activitiesHref} className={linkClass}>
+            {isMember ? t.myActivities : t.activities}
           </Link>
           {session && (
             <Link
@@ -255,11 +257,11 @@ export default function Navbar() {
       {menuOpen && (
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
           <Link
-            href="/activities"
+            href={activitiesHref}
             className={linkClass}
             onClick={() => setMenuOpen(false)}
           >
-            {t.activities}
+            {isMember ? t.myActivities : t.activities}
           </Link>
           {session && (
             <Link
