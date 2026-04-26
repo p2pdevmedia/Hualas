@@ -173,12 +173,20 @@ export default async function ViewUserPage({
                     </div>
                   )}
                 </div>
-                <Link
-                  href={`/admin/users/${user.id}/children/${child.id}/edit`}
-                  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
-                >
-                  Editar
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/admin/users/${user.id}/children/${child.id}/view`}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+                  >
+                    Ver
+                  </Link>
+                  <Link
+                    href={`/admin/users/${user.id}/children/${child.id}/edit`}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
+                  >
+                    Editar
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>
