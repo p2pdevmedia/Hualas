@@ -12,6 +12,8 @@ type User = {
   id: string;
   name: string | null;
   role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
+  profilePhoto: string | null;
+  updatedAt: string;
 };
 type Message = {
   from: string;
@@ -70,21 +72,37 @@ function formatPreviewTime(iso: string | undefined) {
 function Avatar({
   id,
   name,
+  profilePhoto,
+  photoVersion,
   size = 'md',
 }: {
   id: string;
   name: string | null;
+  profilePhoto?: string | null;
+  photoVersion?: string | null;
   size?: 'sm' | 'md';
 }) {
+  const src = profilePhoto
+    ? `/api/users/${id}/photo${photoVersion ? `?v=${new Date(photoVersion).getTime()}` : ''}`
+    : null;
+
   return (
     <div
       className={cn(
-        'shrink-0 rounded-full text-white grid place-items-center font-semibold',
+        'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold',
         size === 'md' ? 'h-11 w-11 text-sm' : 'h-9 w-9 text-xs',
         avatarColor(id)
       )}
     >
-      {initials(name)}
+      {src ? (
+        <img
+          src={src}
+          alt={`Foto de perfil de ${name ?? 'usuario'}`}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        initials(name)
+      )}
     </div>
   );
 }
@@ -247,7 +265,12 @@ export default function ChatClient() {
                       isSelected && 'bg-muted'
                     )}
                   >
-                    <Avatar id={user.id} name={user.name} />
+                    <Avatar
+                      id={user.id}
+                      name={user.name}
+                      profilePhoto={user.profilePhoto}
+                      photoVersion={user.updatedAt}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate font-semibold text-sm">
@@ -294,6 +317,8 @@ export default function ChatClient() {
                 <Avatar
                   id={selectedUser.id}
                   name={selectedUser.name}
+                  profilePhoto={selectedUser.profilePhoto}
+                  photoVersion={selectedUser.updatedAt}
                   size="sm"
                 />
                 <span className="font-semibold">
