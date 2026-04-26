@@ -46,7 +46,9 @@ export default function Navbar() {
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const isSuperAdmin = role === 'SUPER_ADMIN';
-  const t = useTranslation().nav;
+  const translations = useTranslation();
+  const t = translations.nav;
+  const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -212,7 +214,7 @@ export default function Navbar() {
                     href="/profile/children"
                     className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t"
                   >
-                    {t.myChildren}
+                    {actions.myChildren}
                   </Link>
                 </div>
               </div>
