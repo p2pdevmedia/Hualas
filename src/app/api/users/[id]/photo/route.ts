@@ -9,11 +9,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session) {
+    return new NextResponse(null, { status: 401 });
   }
 
   const user = await prisma.user.findUnique({
@@ -22,16 +19,20 @@ export async function GET(
   });
 
   if (!user?.profilePhoto) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return new NextResponse(null, { status: 404 });
   }
 
-  const blob = await get(user.profilePhoto, { access: 'private' });
-  if (!blob || blob.statusCode !== 200) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  try {
+    const blob = await get(user.profilePhoto, { access: 'private' });
+    if (!blob || blob.statusCode !== 200) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const headers = Object.fromEntries(blob.headers.entries());
+    headers['Cache-Control'] = 'private, no-store, max-age=0';
+
+    return new NextResponse(blob.stream, { headers });
+  } catch {
+    return new NextResponse(null, { status: 404 });
   }
-
-  const headers = Object.fromEntries(blob.headers.entries());
-  headers['Cache-Control'] = 'private, no-store, max-age=0';
-
-  return new NextResponse(blob.stream, { headers });
 }
