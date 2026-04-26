@@ -45,6 +45,8 @@ export default function ChildrenManager({
   const [gender, setGender] = useState('');
   const [nationality, setNationality] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
+  const [relationshipDeclarationAccepted, setRelationshipDeclarationAccepted] =
+    useState(false);
   const [allergies, setAllergies] = useState('');
   const [regularMedication, setRegularMedication] = useState('');
   const [relevantDiseases, setRelevantDiseases] = useState('');
@@ -141,6 +143,7 @@ export default function ChildrenManager({
       setGender('');
       setNationality('');
       setMaritalStatus('');
+      setRelationshipDeclarationAccepted(false);
       setAllergies('');
       setRegularMedication('');
       setRelevantDiseases('');
@@ -274,6 +277,21 @@ export default function ChildrenManager({
           onChange={(e) => setMaritalStatus(e.target.value)}
           placeholder="Estado Civil"
         />
+        <label className="text-sm flex items-start gap-2 text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={relationshipDeclarationAccepted}
+            onChange={(e) =>
+              setRelationshipDeclarationAccepted(e.target.checked)
+            }
+            className="accent-primary mt-0.5"
+            required
+          />
+          <span>
+            Declaro, bajo carácter de declaración jurada, que soy padre, madre
+            o tutor legal del menor que estoy registrando.
+          </span>
+        </label>
         <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
           <h3 className="text-sm font-semibold">Ficha médica</h3>
           <textarea
