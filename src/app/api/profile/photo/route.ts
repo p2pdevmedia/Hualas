@@ -1,4 +1,4 @@
-import { del, put } from '@vercel/blob';
+import { del, get, put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
   const pathname = `profile-photos/${session.user.id}/${crypto.randomUUID()}${extensionFor(file)}`;
   const blob = await put(pathname, file, {
-    access: 'public',
+    access: 'private',
     contentType: file.type,
   });
 
@@ -80,7 +80,33 @@ export async function POST(req: Request) {
     await del(currentUser.profilePhoto).catch(() => undefined);
   }
 
-  return NextResponse.json({
-    profilePhoto: blob.url,
+  return NextResponse.json({ ok: true });
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+    select: { profilePhoto: true },
+  });
+
+  if (!currentUser?.profilePhoto) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const blob = await get(currentUser.profilePhoto, { access: 'private' });
+  if (!blob || blob.statusCode !== 200) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const headers = Object.fromEntries(blob.headers.entries());
+  headers['Cache-Control'] = 'private, no-store, max-age=0';
+
+  return new NextResponse(blob.stream, {
+    headers,
   });
 }

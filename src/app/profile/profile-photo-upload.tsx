@@ -7,17 +7,20 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 type Props = {
-  initialPhoto: string | null;
+  hasPhoto: boolean;
+  photoVersion: number;
   name: string | null;
   lastName: string | null;
 };
 
 export default function ProfilePhotoUpload({
-  initialPhoto,
+  hasPhoto,
+  photoVersion,
   name,
   lastName,
 }: Props) {
-  const [photoUrl, setPhotoUrl] = useState(initialPhoto ?? '');
+  const [hasCurrentPhoto, setHasCurrentPhoto] = useState(hasPhoto);
+  const [currentPhotoVersion, setCurrentPhotoVersion] = useState(photoVersion);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -28,8 +31,12 @@ export default function ProfilePhotoUpload({
   const router = useRouter();
 
   useEffect(() => {
-    setPhotoUrl(initialPhoto ?? '');
-  }, [initialPhoto]);
+    setHasCurrentPhoto(hasPhoto);
+  }, [hasPhoto]);
+
+  useEffect(() => {
+    setCurrentPhotoVersion(photoVersion);
+  }, [photoVersion]);
 
   useEffect(() => {
     if (!isCameraOpen) return;
@@ -89,10 +96,9 @@ export default function ProfilePhotoUpload({
         const body = await res.json().catch(() => null);
         throw new Error(body?.error || 'Upload failed');
       }
-      const data = (await res.json()) as { profilePhoto?: string };
-      if (data.profilePhoto) {
-        setPhotoUrl(data.profilePhoto);
-      }
+      await res.json().catch(() => null);
+      setHasCurrentPhoto(true);
+      setCurrentPhotoVersion(Date.now());
       setMessage('Foto actualizada');
       router.refresh();
     } catch (err) {
@@ -149,10 +155,10 @@ export default function ProfilePhotoUpload({
   return (
     <div className="space-y-4">
       <div className="mx-auto flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border bg-muted/30 shadow-sm">
-        {photoUrl ? (
+        {hasCurrentPhoto ? (
           <div className="relative h-full w-full">
             <Image
-              src={photoUrl}
+              src={`/api/profile/photo?v=${currentPhotoVersion}`}
               alt="Foto de perfil"
               fill
               className="object-cover"
