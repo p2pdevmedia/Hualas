@@ -17,6 +17,7 @@ export default async function ProfilePage() {
       name: true,
       lastName: true,
       profilePhoto: true,
+      updatedAt: true,
       dni: true,
       birthDate: true,
       gender: true,
@@ -35,7 +36,8 @@ export default async function ProfilePage() {
       <div className="rounded-2xl border bg-card p-6 shadow-sm">
         <div className="grid gap-6 md:grid-cols-[220px,1fr] md:items-center">
           <ProfilePhotoUpload
-            initialPhoto={user.profilePhoto}
+            hasPhoto={Boolean(user.profilePhoto)}
+            photoVersion={user.updatedAt.getTime()}
             name={user.name}
             lastName={user.lastName}
           />
