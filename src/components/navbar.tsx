@@ -36,7 +36,7 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-function initials(name: string | null) {
+function initials(name: string | null | undefined) {
   const parts = (name ?? '?').trim().split(/\s+/);
   return (parts[0]?.[0] ?? '?').concat(parts[1]?.[0] ?? '').toUpperCase();
 }
@@ -61,7 +61,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setPhotoFailed(false);
-  }, [session?.user?.id, session?.user?.updatedAt]);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!session) {
@@ -179,7 +179,7 @@ export default function Navbar() {
                 {!photoFailed ? (
                   <div className="relative h-full w-full">
                     <Image
-                      src={`/api/users/${session.user.id}/photo?v=${new Date(session.user.updatedAt || Date.now()).getTime()}`}
+                      src={`/api/users/${session.user.id}/photo`}
                       alt={session.user.name ?? 'Profile photo'}
                       fill
                       unoptimized
@@ -305,7 +305,7 @@ export default function Navbar() {
                   {!photoFailed ? (
                     <div className="relative h-full w-full">
                       <Image
-                        src={`/api/users/${session.user.id}/photo?v=${new Date(session.user.updatedAt || Date.now()).getTime()}`}
+                        src={`/api/users/${session.user.id}/photo`}
                         alt={session.user.name ?? 'Profile photo'}
                         fill
                         unoptimized
