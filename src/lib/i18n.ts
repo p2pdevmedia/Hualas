@@ -20,6 +20,8 @@ export const translations = {
     actions: {
       view: 'Ver',
       edit: 'Editar',
+      myChildren: 'Mis Hijos',
+      addChild: 'Agregar hijo',
       childEnrollment: 'Agregar hijo',
       resetPassword: 'Restablecer contraseña',
       delete: 'Eliminar',
@@ -53,6 +55,8 @@ export const translations = {
     actions: {
       view: 'Ver',
       edit: 'Editar',
+      myChildren: 'Meus Filhos',
+      addChild: 'Adicionar filho',
       childEnrollment: 'Adicionar filho',
       resetPassword: 'Redefinir senha',
       delete: 'Excluir',
@@ -86,6 +90,8 @@ export const translations = {
     actions: {
       view: 'View',
       edit: 'Edit',
+      myChildren: 'My Children',
+      addChild: 'Add child',
       childEnrollment: 'Add child',
       resetPassword: 'Reset password',
       delete: 'Delete',
@@ -119,6 +125,8 @@ export const translations = {
     actions: {
       view: "Voir",
       edit: "Modifier",
+      myChildren: "Mes Enfants",
+      addChild: "Ajouter un enfant",
       childEnrollment: "Ajouter un enfant",
       resetPassword: "Réinitialiser le mot de passe",
       delete: "Supprimer",
