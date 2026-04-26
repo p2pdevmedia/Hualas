@@ -13,6 +13,8 @@ interface User {
   email: string;
   dni: string | null;
   role: string;
+  profilePhoto: string | null;
+  updatedAt: Date;
 }
 
 export default function UsersList({ users }: { users: User[] }) {
@@ -63,6 +65,19 @@ export default function UsersList({ users }: { users: User[] }) {
       <ul className="divide-y divide-border">
         {filtered.map((u) => (
           <li key={u.id} className="flex items-center gap-3 py-3 flex-wrap">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
+              {u.profilePhoto ? (
+                <img
+                  src={`/api/users/${u.id}/photo?v=${new Date(u.updatedAt).getTime()}`}
+                  alt={`Foto de perfil de ${u.name ?? 'usuario'}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted-foreground">
+                  {(u.name?.[0] ?? '?').toUpperCase()}
+                </div>
+              )}
+            </div>
             <Link
               href={`/admin/users/${u.id}/view`}
               className="flex-1 rounded-md text-sm transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"

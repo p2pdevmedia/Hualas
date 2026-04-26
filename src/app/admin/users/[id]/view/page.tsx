@@ -47,11 +47,26 @@ export default async function ViewUserPage({
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {user.name} {user.lastName}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 overflow-hidden rounded-full border bg-muted shrink-0">
+              {user.profilePhoto ? (
+                <img
+                  src={`/api/users/${user.id}/photo?v=${user.updatedAt.getTime()}`}
+                  alt={`Foto de perfil de ${user.name ?? 'usuario'}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
+                  {(user.name?.[0] ?? '?').toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {user.name} {user.lastName}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            </div>
           </div>
           <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
             {user.role}
