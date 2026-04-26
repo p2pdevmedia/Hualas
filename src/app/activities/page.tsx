@@ -76,7 +76,7 @@ export default async function ActivitiesPage() {
                   <span>·</span>
                   <span>
                     {activity.capacity
-                      ? `${activity.participants.length}/${activity.capacity} cupo`
+                      ? `${Math.max(activity.capacity - activity.participants.length, 0)} cupos restantes`
                       : `${activity.participants.length} suscriptos`}
                   </span>
                 </div>
