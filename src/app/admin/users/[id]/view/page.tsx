@@ -122,6 +122,9 @@ export default async function ViewUserPage({
                         {child.documentType} {child.documentNumber}
                       </span>
                     )}
+                    {child.documentFrontPhoto && child.documentBackPhoto && (
+                      <span>· DNI con frente y dorso cargados</span>
+                    )}
                     {child.birthDate && (
                       <span>
                         · {child.birthDate.toLocaleDateString('es-AR')}

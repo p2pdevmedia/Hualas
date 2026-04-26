@@ -5,6 +5,8 @@ export const childCreateSchema = z.object({
   lastName: z.string().optional(),
   documentType: z.string().optional(),
   documentNumber: z.string().optional(),
+  documentFrontPhoto: z.string().optional(),
+  documentBackPhoto: z.string().optional(),
   birthDate: z.string().optional(),
   address: z.string().optional(),
   gender: z
