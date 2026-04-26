@@ -216,14 +216,25 @@ export default function Navbar() {
                   >
                     {actions.myChildren}
                   </Link>
+                  <select
+                    value={lang}
+                    onChange={(e) => setLang(e.target.value as Lang)}
+                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted cursor-pointer"
+                  >
+                    {availableLanguages.map(({ code, flag, label }) => (
+                      <option key={code} value={code}>
+                        {flag} {label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                  >
+                    {t.logout}
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className={linkClass}
-              >
-                {t.logout}
-              </button>
             </div>
           ) : (
             <>
@@ -238,17 +249,6 @@ export default function Navbar() {
               </Link>
             </>
           )}
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value as Lang)}
-            className="bg-transparent text-white opacity-80 hover:opacity-100 cursor-pointer text-sm [&>option]:bg-slate-800 [&>option]:text-white"
-          >
-            {availableLanguages.map(({ code, flag }) => (
-              <option key={code} value={code}>
-                {flag}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -350,6 +350,24 @@ export default function Navbar() {
               >
                 {t.profile}
               </Link>
+              <Link
+                href="/profile/children"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {actions.myChildren}
+              </Link>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as Lang)}
+                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+              >
+                {availableLanguages.map(({ code, flag, label }) => (
+                  <option key={code} value={code}>
+                    {flag} {label}
+                  </option>
+                ))}
+              </select>
               <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className={`${linkClass} text-left`}
@@ -373,19 +391,19 @@ export default function Navbar() {
               >
                 {t.register}
               </Link>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as Lang)}
+                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+              >
+                {availableLanguages.map(({ code, flag, label }) => (
+                  <option key={code} value={code}>
+                    {flag} {label}
+                  </option>
+                ))}
+              </select>
             </>
-          )}
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value as Lang)}
-            className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
-          >
-            {availableLanguages.map(({ code, flag }) => (
-              <option key={code} value={code}>
-                {flag}
-              </option>
-            ))}
-          </select>
+          )
         </div>
       )}
     </nav>
