@@ -161,6 +161,7 @@ export default function ProfilePhotoUpload({
               src={`/api/profile/photo?v=${currentPhotoVersion}`}
               alt="Foto de perfil"
               fill
+              unoptimized
               className="object-cover"
               sizes="160px"
             />
