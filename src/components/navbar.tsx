@@ -197,9 +197,25 @@ export default function Navbar() {
                   </span>
                 )}
               </div>
-              <Link href="/profile" className={linkClass}>
-                {t.profile}
-              </Link>
+              <div className="relative group">
+                <button className={linkClass}>
+                  {t.profile}
+                </button>
+                <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
+                  <Link
+                    href="/profile"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm"
+                  >
+                    {t.profile}
+                  </Link>
+                  <Link
+                    href="/profile/children"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t"
+                  >
+                    {t.myChildren}
+                  </Link>
+                </div>
+              </div>
               <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className={linkClass}
