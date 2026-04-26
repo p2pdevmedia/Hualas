@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { ArrowLeft, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,7 @@ type User = {
   id: string;
   name: string | null;
   role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
+  updatedAt: string;
 };
 type Message = { from: string; content: string; createdAt?: string };
 type Conversation = {
@@ -64,21 +66,50 @@ function formatPreviewTime(iso: string | undefined) {
 function Avatar({
   id,
   name,
+  photoVersion,
   size = 'md',
 }: {
   id: string;
   name: string | null;
+  photoVersion: number;
   size?: 'sm' | 'md';
 }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [id, photoVersion]);
+
   return (
     <div
       className={cn(
-        'shrink-0 rounded-full text-white grid place-items-center font-semibold',
+        'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
         size === 'md' ? 'h-11 w-11 text-sm' : 'h-9 w-9 text-xs',
-        avatarColor(id)
+        !photoFailed && 'bg-transparent'
       )}
     >
-      {initials(name)}
+      {!photoFailed ? (
+        <div className="relative h-full w-full">
+          <Image
+            src={`/api/users/${id}/photo?v=${photoVersion}`}
+            alt={name ?? 'Foto de perfil'}
+            fill
+            unoptimized
+            className="object-cover"
+            sizes={size === 'md' ? '44px' : '36px'}
+            onError={() => setPhotoFailed(true)}
+          />
+        </div>
+      ) : (
+        <span
+          className={cn(
+            'grid h-full w-full place-items-center text-white',
+            avatarColor(id)
+          )}
+        >
+          {initials(name)}
+        </span>
+      )}
     </div>
   );
 }
@@ -224,7 +255,11 @@ export default function ChatClient() {
                       isSelected && 'bg-muted'
                     )}
                   >
-                    <Avatar id={user.id} name={user.name} />
+                    <Avatar
+                      id={user.id}
+                      name={user.name}
+                      photoVersion={new Date(user.updatedAt).getTime()}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate font-semibold text-sm">
@@ -268,6 +303,7 @@ export default function ChatClient() {
                 <Avatar
                   id={selectedUser.id}
                   name={selectedUser.name}
+                  photoVersion={new Date(selectedUser.updatedAt).getTime()}
                   size="sm"
                 />
                 <span className="font-semibold">
