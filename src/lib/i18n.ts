@@ -20,7 +20,7 @@ export const translations = {
     actions: {
       view: 'Ver',
       edit: 'Editar',
-      childEnrollment: 'Hijos',
+      childEnrollment: 'Agregar hijo',
       resetPassword: 'Restablecer contraseña',
       delete: 'Eliminar',
       moreActions: 'Más acciones',
@@ -53,7 +53,7 @@ export const translations = {
     actions: {
       view: 'Ver',
       edit: 'Editar',
-      childEnrollment: 'Filhos',
+      childEnrollment: 'Adicionar filho',
       resetPassword: 'Redefinir senha',
       delete: 'Excluir',
       moreActions: 'Mais ações',
@@ -86,7 +86,7 @@ export const translations = {
     actions: {
       view: 'View',
       edit: 'Edit',
-      childEnrollment: 'Children',
+      childEnrollment: 'Add child',
       resetPassword: 'Reset password',
       delete: 'Delete',
       moreActions: 'More actions',
@@ -117,12 +117,12 @@ export const translations = {
       welcome: 'Bienvenue au Club Hualas',
     },
     actions: {
-      view: 'Voir',
-      edit: 'Modifier',
-      childEnrollment: 'Enfants',
-      resetPassword: 'Réinitialiser le mot de passe',
-      delete: 'Supprimer',
-      moreActions: 'Plus d’actions',
+      view: ‘Voir’,
+      edit: ‘Modifier’,
+      childEnrollment: ‘Ajouter un enfant’,
+      resetPassword: ‘Réinitialiser le mot de passe’,
+      delete: ‘Supprimer’,
+      moreActions: ‘Plus d’actions’,
     },
     auth: {
       showPassword: 'Afficher le mot de passe',
