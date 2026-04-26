@@ -21,6 +21,8 @@ export default async function UsersPage() {
       email: true,
       dni: true,
       role: true,
+      profilePhoto: true,
+      updatedAt: true,
     },
   });
 
