@@ -14,6 +14,20 @@ export async function GET(
 
   const otherUserId = params.userId;
 
+  await prisma.message.updateMany({
+    where: {
+      readAt: null,
+      senderId: otherUserId,
+      conversation: {
+        participants: { some: { userId: session.user.id } },
+        AND: { participants: { some: { userId: otherUserId } } },
+      },
+    },
+    data: {
+      readAt: new Date(),
+    },
+  });
+
   const conversations = await prisma.conversation.findMany({
     where: {
       participants: {
@@ -37,6 +51,7 @@ export async function GET(
       from: m.senderId,
       content: m.body,
       createdAt: m.createdAt.toISOString(),
+      readAt: m.readAt?.toISOString() ?? null,
     }));
 
   return NextResponse.json(messages);
