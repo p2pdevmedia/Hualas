@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
@@ -121,6 +123,11 @@ export async function OPTIONS() {
 }
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'SUPER_ADMIN') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const notifications = await prisma.mercadoPagoNotification.findMany({
     orderBy: { createdAt: 'desc' },
   });
