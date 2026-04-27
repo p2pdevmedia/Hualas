@@ -60,7 +60,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     );
   }
 
-  const [participants, professors, days] = await Promise.all([
+  const [participants, activityProfessors, professorOptions, days] =
+    await Promise.all([
     prisma.activityParticipant
       .findMany({
         where: { activityId: activity.id },
@@ -94,11 +95,44 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         console.error('[activity-page] professors query failed', error);
         return [];
       }),
+    prisma.user
+      .findMany({
+        where: {
+          role: 'PROFESSOR',
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          email: true,
+        },
+        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+      })
+      .catch((error) => {
+        console.error(
+          '[activity-page] professor options query failed',
+          error
+        );
+        return [];
+      }),
     prisma.activityDay
       .findMany({
         where: { activityId: activity.id },
         orderBy: { date: 'asc' },
         include: {
+          professors: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
+            },
+          },
           attendances: {
             select: {
               activityParticipantId: true,
@@ -121,6 +155,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     ONE_TIME: 'Un solo pago',
   };
   const enrolledCount = participants.length;
+  const activityProfessorIds = activityProfessors.map(
+    (assignment: { userId: string }) => assignment.userId
+  );
   const capacity = activity.capacity;
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
@@ -129,9 +166,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isFull = hasCapacity && remainingSpots === 0;
   const canManageDays =
     isAdmin ||
-    professors.some(
-      (assignment: { userId: string }) => assignment.userId === session?.user.id
-    );
+    activityProfessorIds.includes(session?.user.id ?? '');
 
   let registrations: Array<{
     id: string;
@@ -153,7 +188,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     }));
   }
 
-  const professorLabels = professors.map((assignment: any) => {
+  const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
     return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
   });
@@ -228,10 +263,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 {
                   label: 'Cupo',
                   value: hasCapacity
-                    ? `${activity.capacity} lugares`
+                    ? `${capacity} lugares`
                     : 'Ilimitado',
                 },
-                professors.length > 0 && {
+                activityProfessors.length > 0 && {
                   label: 'Profesores',
                   value: professorLabels.join(', '),
                 },
@@ -322,7 +357,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground font-body text-center">
                 {hasCapacity
-                  ? `${enrolledCount} de ${activity.capacity} lugares ocupados`
+                  ? `${enrolledCount} de ${capacity} lugares ocupados`
                   : `${enrolledCount} personas ya inscriptas`}
               </p>
             </div>
@@ -332,6 +367,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         <ActivityDaysPanel
           activityId={activity.id}
           canManageDays={canManageDays}
+          professors={professorOptions}
+          defaultProfessorIds={activityProfessorIds}
           registrations={registrations}
           days={days.map((day: any) => ({
             id: day.id,
@@ -341,6 +378,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             geoLocation: day.geoLocation,
             latitude: day.latitude,
             longitude: day.longitude,
+            canEdit:
+              isAdmin ||
+              activityProfessorIds.includes(session?.user.id ?? '') ||
+              day.professors.some(
+                (assignment: { userId: string }) =>
+                  assignment.userId === session?.user.id
+              ),
+            assignedProfessors: day.professors.map((assignment: any) => ({
+              id: assignment.user.id,
+              name: assignment.user.name,
+              lastName: assignment.user.lastName,
+              email: assignment.user.email,
+            })),
             attendances: day.attendances.map((attendance: any) => ({
               activityParticipantId: attendance.activityParticipantId,
               status: attendance.status,

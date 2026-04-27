@@ -2,47 +2,57 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { activityDayCreateSchema } from '@/lib/validations/activity';
+import { activityDayUpdateSchema } from '@/lib/validations/activity';
 
-export async function POST(
+export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { dayId: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const activity = await prisma.activity.findUnique({
-    where: { id: params.id },
+  const day = await prisma.activityDay.findUnique({
+    where: { id: params.dayId },
     select: {
       id: true,
+      activityId: true,
       professors: {
         select: {
           userId: true,
         },
       },
+      activity: {
+        select: {
+          professors: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  if (!activity) {
-    return NextResponse.json(
-      { error: 'Actividad no encontrada' },
-      { status: 404 }
-    );
+  if (!day) {
+    return NextResponse.json({ error: 'Día no encontrado' }, { status: 404 });
   }
 
   const isAdmin =
     session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-  const isAssignedProfessor = activity.professors.some(
+  const isActivityProfessor = day.activity.professors.some(
+    (assignment) => assignment.userId === session.user.id
+  );
+  const isDayProfessor = day.professors.some(
     (assignment) => assignment.userId === session.user.id
   );
 
-  if (!isAdmin && !isAssignedProfessor) {
+  if (!isAdmin && !isActivityProfessor && !isDayProfessor) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const data = activityDayCreateSchema.parse(await req.json());
+  const data = activityDayUpdateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds));
   const validProfessors = await prisma.user.findMany({
     where: {
@@ -59,10 +69,9 @@ export async function POST(
     );
   }
 
-  const activityDay = await prisma.activityDay.create({
+  const updatedDay = await prisma.activityDay.update({
+    where: { id: day.id },
     data: {
-      activityId: activity.id,
-      createdById: session.user.id,
       date: data.date,
       schedule: data.schedule,
       description: data.description,
@@ -70,12 +79,27 @@ export async function POST(
       latitude: data.latitude,
       longitude: data.longitude,
       professors: {
+        deleteMany: {},
         create: professorIds.map((userId) => ({
           user: { connect: { id: userId } },
         })),
       },
     },
+    include: {
+      professors: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  return NextResponse.json(activityDay);
+  return NextResponse.json(updatedDay);
 }

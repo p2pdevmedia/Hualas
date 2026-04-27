@@ -8,40 +8,41 @@ datasource db {
 }
 
 model User {
-  id                   String                    @id @default(cuid())
-  email                String                    @unique
-  name                 String?
-  lastName             String?
-  dni                  String?                   @unique
-  birthDate            DateTime?
-  gender               Gender?
-  address              String?
-  phone                String?
-  observations         String?
-  allergies            String?
-  regularMedication    String?
-  relevantDiseases     String?
-  previousInjuries     String?
-  physicalRestrictions String?
-  bloodGroup           String?
-  primaryDoctor        String?
-  doctorPhone          String?
-  profilePhoto         String?
-  nationality          String?
-  maritalStatus        String?
-  password             String
-  role                 Role                      @default(MEMBER)
-  isActive             Boolean                   @default(true)
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  messages             Message[]
-  conversations        ConversationParticipant[]
-  passwordResetTokens  PasswordResetToken[]
-  formResponses        FormResponse[]
-  activityParticipants ActivityParticipant[]
-  activityProfessors   ActivityProfessor[]
-  createdActivityDays  ActivityDay[]             @relation("ActivityDayCreatedBy")
-  children             Child[]
+  id                    String                    @id @default(cuid())
+  email                 String                    @unique
+  name                  String?
+  lastName              String?
+  dni                   String?                   @unique
+  birthDate             DateTime?
+  gender                Gender?
+  address               String?
+  phone                 String?
+  observations          String?
+  allergies             String?
+  regularMedication     String?
+  relevantDiseases      String?
+  previousInjuries      String?
+  physicalRestrictions  String?
+  bloodGroup            String?
+  primaryDoctor         String?
+  doctorPhone           String?
+  profilePhoto          String?
+  nationality           String?
+  maritalStatus         String?
+  password              String
+  role                  Role                      @default(MEMBER)
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  messages              Message[]
+  conversations         ConversationParticipant[]
+  passwordResetTokens   PasswordResetToken[]
+  formResponses         FormResponse[]
+  activityParticipants  ActivityParticipant[]
+  activityProfessors    ActivityProfessor[]
+  createdActivityDays   ActivityDay[]             @relation("ActivityDayCreatedBy")
+  activityDayProfessors ActivityDayProfessor[]
+  children              Child[]
 }
 
 model PasswordResetToken {
@@ -167,8 +168,22 @@ model ActivityDay {
   activity    Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
   createdBy   User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   attendances ActivityDayAttendance[]
+  professors  ActivityDayProfessor[]
 
   @@index([activityId, date])
+}
+
+model ActivityDayProfessor {
+  id            String      @id @default(cuid())
+  activityDayId String
+  userId        String
+  createdAt     DateTime    @default(now())
+  activityDay   ActivityDay @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityDayId, userId])
+  @@index([userId])
+  @@index([activityDayId])
 }
 
 model ActivityDayAttendance {
