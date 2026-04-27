@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import CreateActivityGate from './create-activity-gate';
+import CreateActivityForm from './form';
 
 export default async function CreateActivityPage() {
   const session = await getServerSession(authOptions);
@@ -27,7 +27,7 @@ export default async function CreateActivityPage() {
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Crear actividad</h1>
-      <CreateActivityGate professors={professors} />
+      <CreateActivityForm professors={professors} />
     </main>
   );
 }
