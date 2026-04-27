@@ -139,6 +139,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/api/activities/[id]/days/route.ts`
   - Validation: `src/lib/validations/activity.ts`
 
+- `PUT /api/activity-days/[dayId]` → update activity day
+  - File: `src/app/api/activity-days/[dayId]/route.ts`
+  - Validation: `src/lib/validations/activity.ts`
+
 - `PATCH /api/activity-days/[dayId]/attendance` → confirm attendance for a day
   - File: `src/app/api/activity-days/[dayId]/attendance/route.ts`
   - Validation: `src/lib/validations/activity.ts`

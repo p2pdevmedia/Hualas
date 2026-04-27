@@ -48,47 +48,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isAdmin =
     session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
 
-  let activity: any = null;
-  try {
-    activity = await prisma.activity.findUnique({
-      where: { id: params.id },
-      include: {
-        participants: isAdmin
-          ? {
-              include: {
-                user: true,
-                child: true,
-              },
-            }
-          : true,
-        professors: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        days: {
-          orderBy: { date: 'asc' },
-          include: {
-            attendances: {
-              select: {
-                activityParticipantId: true,
-                status: true,
-                confirmedAt: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  } catch (e: any) {
-    activity = null;
-  }
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+  });
 
   if (!activity) {
     return (
@@ -98,23 +60,113 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     );
   }
 
+  const [participants, activityProfessors, professorOptions, days] =
+    await Promise.all([
+      prisma.activityParticipant
+        .findMany({
+          where: { activityId: activity.id },
+          include: isAdmin
+            ? {
+                user: true,
+                child: true,
+              }
+            : {
+                child: true,
+              },
+        })
+        .catch((error) => {
+          console.error('[activity-page] participants query failed', error);
+          return [];
+        }),
+      prisma.activityProfessor
+        .findMany({
+          where: { activityId: activity.id },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        })
+        .catch((error) => {
+          console.error('[activity-page] professors query failed', error);
+          return [];
+        }),
+      prisma.user
+        .findMany({
+          where: {
+            role: 'PROFESSOR',
+            isActive: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            email: true,
+          },
+          orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+        })
+        .catch((error) => {
+          console.error(
+            '[activity-page] professor options query failed',
+            error
+          );
+          return [];
+        }),
+      prisma.activityDay
+        .findMany({
+          where: { activityId: activity.id },
+          orderBy: { date: 'asc' },
+          include: {
+            professors: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    lastName: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+            attendances: {
+              select: {
+                activityParticipantId: true,
+                status: true,
+                confirmedAt: true,
+              },
+            },
+          },
+        })
+        .catch((error) => {
+          console.error('[activity-page] days query failed', error);
+          return [];
+        }),
+    ]);
+
   const frequencyLabels: Record<string, string> = {
     DAILY: 'Diaria',
     WEEKLY: 'Semanal',
     MONTHLY: 'Mensual',
     ONE_TIME: 'Un solo pago',
   };
-  const enrolledCount = activity.participants.length;
-  const hasCapacity = activity.capacity != null;
+  const enrolledCount = participants.length;
+  const activityProfessorIds = activityProfessors.map(
+    (assignment: { userId: string }) => assignment.userId
+  );
+  const capacity = activity.capacity;
+  const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
-    ? Math.max(activity.capacity - enrolledCount, 0)
+    ? Math.max(capacity - enrolledCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
   const canManageDays =
-    isAdmin ||
-    activity.professors.some(
-      (assignment: { userId: string }) => assignment.userId === session?.user.id
-    );
+    isAdmin || activityProfessorIds.includes(session?.user.id ?? '');
 
   let registrations: Array<{
     id: string;
@@ -122,22 +174,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }> = [];
 
   if (session) {
-    const activityParticipants = await prisma.activityParticipant.findMany({
-      where: {
-        activityId: activity.id,
-        OR: [
-          { userId: session.user.id },
-          { child: { userId: session.user.id } },
-        ],
-      },
-      include: {
-        child: {
-          select: {
-            name: true,
-            lastName: true,
-          },
-        },
-      },
+    const activityParticipants = participants.filter((participant: any) => {
+      const isOwner = participant.userId === session.user.id;
+      const childOwner = participant.child?.userId === session.user.id;
+      return isOwner || childOwner;
     });
 
     registrations = activityParticipants.map((participant: any) => ({
@@ -148,10 +188,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     }));
   }
 
-  const professorLabels = activity.professors.map((assignment: any) => {
+  const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
     return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
   });
+  const adminParticipants = participants as ActivityParticipantDetail[];
 
   return (
     <main>
@@ -222,10 +263,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 {
                   label: 'Cupo',
                   value: hasCapacity
-                    ? `${activity.capacity} lugares`
+                    ? `${capacity} lugares`
                     : 'Ilimitado',
                 },
-                activity.professors.length > 0 && {
+                activityProfessors.length > 0 && {
                   label: 'Profesores',
                   value: professorLabels.join(', '),
                 },
@@ -316,7 +357,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground font-body text-center">
                 {hasCapacity
-                  ? `${enrolledCount} de ${activity.capacity} lugares ocupados`
+                  ? `${enrolledCount} de ${capacity} lugares ocupados`
                   : `${enrolledCount} personas ya inscriptas`}
               </p>
             </div>
@@ -326,8 +367,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         <ActivityDaysPanel
           activityId={activity.id}
           canManageDays={canManageDays}
+          professors={professorOptions}
+          defaultProfessorIds={activityProfessorIds}
           registrations={registrations}
-          days={activity.days.map((day: any) => ({
+          days={days.map((day: any) => ({
             id: day.id,
             date: day.date.toISOString(),
             schedule: day.schedule,
@@ -335,6 +378,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             geoLocation: day.geoLocation,
             latitude: day.latitude,
             longitude: day.longitude,
+            canEdit:
+              isAdmin ||
+              activityProfessorIds.includes(session?.user.id ?? '') ||
+              day.professors.some(
+                (assignment: { userId: string }) =>
+                  assignment.userId === session?.user.id
+              ),
+            assignedProfessors: day.professors.map((assignment: any) => ({
+              id: assignment.user.id,
+              name: assignment.user.name,
+              lastName: assignment.user.lastName,
+              email: assignment.user.email,
+            })),
             attendances: day.attendances.map((attendance: any) => ({
               activityParticipantId: attendance.activityParticipantId,
               status: attendance.status,
@@ -364,51 +420,49 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               )}
             </div>
 
-            {activity.participants.length === 0 ? (
+            {adminParticipants.length === 0 ? (
               <p className="mt-6 text-sm text-muted-foreground font-body">
                 Aún no hay inscriptos en esta actividad.
               </p>
             ) : (
               <ul className="mt-6 divide-y divide-border">
-                {activity.participants.map(
-                  (participant: ActivityParticipantDetail) => (
-                    <li
-                      key={participant.id}
-                      className="py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          {getParticipantName(participant)}
-                        </p>
-                        <p className="text-sm text-muted-foreground font-body">
-                          {getParticipantSubtitle(participant)}
-                        </p>
-                        <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground font-body">
-                          {participant.receipt && (
-                            <span>Comprobante {participant.receipt}</span>
-                          )}
-                          {participant.receiptDate && (
-                            <span>
-                              {participant.receipt ? '· ' : ''}
-                              Pago aprobado el{' '}
-                              {participant.receiptDate.toLocaleDateString(
-                                'es-AR',
-                                {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                }
-                              )}
-                            </span>
-                          )}
-                        </div>
+                {adminParticipants.map((participant) => (
+                  <li
+                    key={participant.id}
+                    className="py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {getParticipantName(participant)}
+                      </p>
+                      <p className="text-sm text-muted-foreground font-body">
+                        {getParticipantSubtitle(participant)}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground font-body">
+                        {participant.receipt && (
+                          <span>Comprobante {participant.receipt}</span>
+                        )}
+                        {participant.receiptDate && (
+                          <span>
+                            {participant.receipt ? '· ' : ''}
+                            Pago aprobado el{' '}
+                            {participant.receiptDate.toLocaleDateString(
+                              'es-AR',
+                              {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              }
+                            )}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-sm text-muted-foreground font-body">
-                        {participant.child ? 'Hijo/a' : 'Titular'}
-                      </div>
-                    </li>
-                  )
-                )}
+                    </div>
+                    <div className="text-sm text-muted-foreground font-body">
+                      {participant.child ? 'Hijo/a' : 'Titular'}
+                    </div>
+                  </li>
+                ))}
               </ul>
             )}
           </section>

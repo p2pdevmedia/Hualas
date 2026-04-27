@@ -18,7 +18,10 @@ export const activityDayCreateSchema = z.object({
   geoLocation: z.string().min(1),
   latitude: z.number(),
   longitude: z.number(),
+  professorIds: z.array(z.string().min(1)).min(1),
 });
+
+export const activityDayUpdateSchema = activityDayCreateSchema;
 
 export const activityDayAttendanceSchema = z.object({
   participantId: z.string().min(1),

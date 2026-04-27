@@ -51,6 +51,7 @@ Important models:
 - `ActivityParticipant`: user or child registered to an activity.
 - `ActivityProfessor`: professor assignments for activities.
 - `ActivityDay`: scheduled day for an activity with location, description, and schedule.
+- `ActivityDayProfessor`: professor assignments for activity days.
 - `ActivityDayAttendance`: per-day confirmation record for registered participants.
 - `Form`, `FormField`, `FormResponse`: custom admin forms.
 - `Conversation`, `Message`: internal chat.

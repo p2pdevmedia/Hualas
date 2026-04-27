@@ -1,11 +1,17 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import ActivityDayForm from './activity-day-form';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
+
+type ProfessorOption = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+};
 
 type Registration = {
   id: string;
@@ -20,6 +26,8 @@ type ActivityDay = {
   geoLocation: string;
   latitude: number | null;
   longitude: number | null;
+  assignedProfessors: ProfessorOption[];
+  canEdit: boolean;
   attendances: Array<{
     activityParticipantId: string;
     status: AttendanceStatus;
@@ -30,6 +38,8 @@ type ActivityDay = {
 interface ActivityDaysPanelProps {
   activityId: string;
   canManageDays: boolean;
+  professors: ProfessorOption[];
+  defaultProfessorIds: string[];
   registrations: Registration[];
   days: ActivityDay[];
 }
@@ -40,72 +50,18 @@ const statusLabels: Record<AttendanceStatus, string> = {
   NOT_GOING: 'No voy',
 };
 
-const LocationMapPicker = dynamic(() => import('../location-map-picker'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-80 items-center justify-center rounded-lg border bg-muted/20 text-sm text-muted-foreground">
-      Cargando mapa...
-    </div>
-  ),
-});
-
 export default function ActivityDaysPanel({
   activityId,
   canManageDays,
+  professors,
+  defaultProfessorIds,
   registrations,
   days,
 }: ActivityDaysPanelProps) {
   const router = useRouter();
-  const [date, setDate] = useState('');
-  const [schedule, setSchedule] = useState('');
-  const [description, setDescription] = useState('');
-  const [geoLocation, setGeoLocation] = useState('');
-  const [coordinates, setCoordinates] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [saveError, setSaveError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
-
-  const inputClass =
-    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
-
-  async function createDay(e: React.FormEvent) {
-    e.preventDefault();
-    setSaveError('');
-    try {
-      if (!coordinates) {
-        throw new Error('Seleccioná un punto en el mapa');
-      }
-      const res = await fetch(`/api/activities/${activityId}/days`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date,
-          schedule,
-          description: description || undefined,
-          geoLocation,
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-        }),
-      });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo crear el día');
-      }
-      setDate('');
-      setSchedule('');
-      setDescription('');
-      setGeoLocation('');
-      setCoordinates(null);
-      router.refresh();
-    } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : 'No se pudo crear el día'
-      );
-    }
-  }
 
   async function updateAttendance(
     dayId: string,
@@ -159,56 +115,14 @@ export default function ActivityDaysPanel({
       </div>
 
       {canManageDays && (
-        <form
-          onSubmit={createDay}
-          className="mt-5 space-y-3 rounded-lg border bg-background p-4"
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={inputClass}
-              required
-            />
-            <input
-              type="text"
-              value={schedule}
-              onChange={(e) => setSchedule(e.target.value)}
-              className={inputClass}
-              placeholder="Horario"
-              required
-            />
-          </div>
-          <input
-            type="text"
-            value={geoLocation}
-            onChange={(e) => setGeoLocation(e.target.value)}
-            className={inputClass}
-            placeholder="Nombre o referencia del lugar"
-            required
+        <div className="mt-5">
+          <ActivityDayForm
+            activityId={activityId}
+            mode="create"
+            professors={professors}
+            defaultProfessorIds={defaultProfessorIds}
           />
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Punto en el mapa</p>
-            <LocationMapPicker value={coordinates} onChange={setCoordinates} />
-          </div>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={`${inputClass} min-h-[90px] resize-y`}
-            placeholder="Descripción del día"
-          />
-          <div className="flex items-center justify-between gap-3">
-            {saveError ? (
-              <p className="text-sm text-destructive">{saveError}</p>
-            ) : (
-              <span className="text-xs text-muted-foreground">
-                Guardá una fecha, horario y ubicación para el próximo encuentro.
-              </span>
-            )}
-            <Button type="submit">Agregar día</Button>
-          </div>
-        </form>
+        </div>
       )}
 
       {days.length === 0 ? (
@@ -228,6 +142,13 @@ export default function ActivityDaysPanel({
               day.latitude != null && day.longitude != null
                 ? `https://www.openstreetmap.org/?mlat=${day.latitude}&mlon=${day.longitude}#map=17/${day.latitude}/${day.longitude}`
                 : null;
+            const professorLabels = day.assignedProfessors
+              .map(
+                (professor) =>
+                  `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`
+              )
+              .join(', ');
+            const isEditing = editingDayId === day.id;
 
             return (
               <article
@@ -247,6 +168,11 @@ export default function ActivityDaysPanel({
                     <p className="text-sm text-muted-foreground">
                       {day.schedule} · {day.geoLocation}
                     </p>
+                    {day.assignedProfessors.length > 0 && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Profesores: {professorLabels}
+                      </p>
+                    )}
                     {mapHref && (
                       <a
                         href={mapHref}
@@ -258,8 +184,21 @@ export default function ActivityDaysPanel({
                       </a>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {goingCount} confirmados · {notGoingCount} no asistirán
+                  <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground sm:items-end">
+                    <span>
+                      {goingCount} confirmados · {notGoingCount} no asistirán
+                    </span>
+                    {day.canEdit && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingDayId(isEditing ? null : day.id)
+                        }
+                        className="text-primary hover:underline underline-offset-4"
+                      >
+                        {isEditing ? 'Cerrar edición' : 'Editar sesión'}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -267,6 +206,37 @@ export default function ActivityDaysPanel({
                   <p className="mt-3 text-sm text-muted-foreground">
                     {day.description}
                   </p>
+                )}
+
+                {isEditing && (
+                  <div className="mt-4">
+                    <ActivityDayForm
+                      key={day.id}
+                      activityId={activityId}
+                      mode="edit"
+                      dayId={day.id}
+                      professors={professors}
+                      defaultProfessorIds={defaultProfessorIds}
+                      initialValues={{
+                        date: day.date.slice(0, 10),
+                        schedule: day.schedule,
+                        description: day.description ?? '',
+                        geoLocation: day.geoLocation,
+                        coordinates:
+                          day.latitude != null && day.longitude != null
+                            ? {
+                                latitude: day.latitude,
+                                longitude: day.longitude,
+                              }
+                            : null,
+                        professorIds: day.assignedProfessors.map(
+                          (professor) => professor.id
+                        ),
+                      }}
+                      onSaved={() => setEditingDayId(null)}
+                      onCancel={() => setEditingDayId(null)}
+                    />
+                  </div>
                 )}
 
                 {registrations.length > 0 && (
