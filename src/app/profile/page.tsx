@@ -26,6 +26,14 @@ export default async function ProfilePage() {
       nationality: true,
       maritalStatus: true,
       email: true,
+      allergies: true,
+      regularMedication: true,
+      relevantDiseases: true,
+      previousInjuries: true,
+      physicalRestrictions: true,
+      bloodGroup: true,
+      primaryDoctor: true,
+      doctorPhone: true,
     },
   });
   if (!user) {

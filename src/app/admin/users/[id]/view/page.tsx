@@ -85,6 +85,39 @@ export default async function ViewUserPage({
             </p>
           )}
         </div>
+        {[
+          user.allergies,
+          user.regularMedication,
+          user.relevantDiseases,
+          user.previousInjuries,
+          user.physicalRestrictions,
+          user.bloodGroup,
+          user.primaryDoctor,
+          user.doctorPhone,
+        ].some(Boolean) && (
+          <div className="border-t border-border pt-3">
+            <p className="text-sm font-semibold mb-2">Ficha médica</p>
+            <div className="grid gap-2 rounded-lg border bg-muted/20 p-3 text-xs sm:grid-cols-2">
+              {[
+                ['Alergias', user.allergies],
+                ['Medicación habitual', user.regularMedication],
+                ['Enfermedades relevantes', user.relevantDiseases],
+                ['Lesiones previas', user.previousInjuries],
+                ['Restricciones físicas', user.physicalRestrictions],
+                ['Grupo sanguíneo', user.bloodGroup],
+                ['Médico de cabecera', user.primaryDoctor],
+                ['Teléfono médico', user.doctorPhone],
+              ]
+                .filter(([, value]) => Boolean(value))
+                .map(([label, value]) => (
+                  <div key={label}>
+                    <span className="font-medium text-foreground">{label}:</span>{' '}
+                    <span className="text-muted-foreground">{value as string}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">

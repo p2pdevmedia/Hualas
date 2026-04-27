@@ -17,4 +17,12 @@ export const profileUpdateSchema = z.object({
   maritalStatus: z.string().optional(),
   email: z.string().email().optional(),
   password: z.string().min(6).optional(),
+  allergies: z.string().optional(),
+  regularMedication: z.string().optional(),
+  relevantDiseases: z.string().optional(),
+  previousInjuries: z.string().optional(),
+  physicalRestrictions: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  primaryDoctor: z.string().optional(),
+  doctorPhone: z.string().optional(),
 });
