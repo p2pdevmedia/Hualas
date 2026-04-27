@@ -60,7 +60,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     );
   }
 
-  const [participants, professors, days] = await Promise.all([
+  const [participants, activityProfessors, professorOptions, days] =
+    await Promise.all([
     prisma.activityParticipant
       .findMany({
         where: { activityId: activity.id },
@@ -94,11 +95,44 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         console.error('[activity-page] professors query failed', error);
         return [];
       }),
+    prisma.user
+      .findMany({
+        where: {
+          role: 'PROFESSOR',
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          email: true,
+        },
+        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+      })
+      .catch((error) => {
+        console.error(
+          '[activity-page] professor options query failed',
+          error
+        );
+        return [];
+      }),
     prisma.activityDay
       .findMany({
         where: { activityId: activity.id },
         orderBy: { date: 'asc' },
         include: {
+          professors: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
+            },
+          },
           attendances: {
             select: {
               activityParticipantId: true,
@@ -121,6 +155,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     ONE_TIME: 'Un solo pago',
   };
   const enrolledCount = participants.length;
+  const activityProfessorIds = activityProfessors.map(
+    (assignment: { userId: string }) => assignment.userId
+  );
   const capacity = activity.capacity;
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
@@ -129,9 +166,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isFull = hasCapacity && remainingSpots === 0;
   const canManageDays =
     isAdmin ||
-    professors.some(
-      (assignment: { userId: string }) => assignment.userId === session?.user.id
-    );
+    activityProfessorIds.includes(session?.user.id ?? '');
 
   let registrations: Array<{
     id: string;
@@ -153,7 +188,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     }));
   }
 
-  const professorLabels = professors.map((assignment: any) => {
+  const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
     return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
   });
@@ -231,7 +266,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                     ? `${capacity} lugares`
                     : 'Ilimitado',
                 },
-                professors.length > 0 && {
+                activityProfessors.length > 0 && {
                   label: 'Profesores',
                   value: professorLabels.join(', '),
                 },
