@@ -75,7 +75,7 @@ Important models:
 - Public users can see the home/contact pages and auth pages.
 - Logged-in users can access profile, chat, children data, activity checkout, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
-- Logged-in registered users can join activity groups for their own registrations.
+- Logged-in professors and admins assign registered users to activity groups.
 - Activity days can be restricted to a single group; attendance confirmation is blocked for participants outside that group.
 - `ADMIN` and `SUPER_ADMIN` can manage activities, users, forms, and notifications.
 - `SUPER_ADMIN` alone can access site settings.

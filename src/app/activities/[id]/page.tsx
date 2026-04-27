@@ -215,6 +215,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     groupName: string | null;
   }> = [];
 
+  let groupParticipants: Array<{
+    id: string;
+    label: string;
+    groupId: string | null;
+    groupName: string | null;
+  }> = [];
+
   if (session) {
     const activityParticipants = participants.filter((participant: any) => {
       const isOwner = participant.userId === session.user.id;
@@ -233,6 +240,49 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           ? activityGroupById.get(participant.groupMembership.activityGroupId) ??
             null
           : null,
+    }));
+  }
+
+  if (canManageGroups) {
+    const participantsForGroups = await prisma.activityParticipant.findMany({
+      where: { activityId: activity.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+          },
+        },
+        child: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+          },
+        },
+        groupMembership: {
+          select: {
+            activityGroupId: true,
+            activityGroup: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    groupParticipants = participantsForGroups.map((participant: any) => ({
+      id: participant.id,
+      label: participant.child
+        ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
+        : `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`,
+      groupId: participant.groupMembership?.activityGroupId ?? null,
+      groupName: participant.groupMembership?.activityGroup?.name ?? null,
     }));
   }
 
@@ -416,7 +466,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         </div>
 
-        {session && (
+        {canManageGroups && (
           <ActivityGroupsPanel
             activityId={activity.id}
             canManageGroups={canManageGroups}
@@ -427,7 +477,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               memberCount: group._count.members,
               dayCount: group._count.days,
             }))}
-            registrations={registrations}
+            participants={groupParticipants}
           />
         )}
 

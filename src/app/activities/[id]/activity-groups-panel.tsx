@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ActivityGroupForm from './activity-group-form';
 
@@ -12,7 +12,7 @@ type ActivityGroup = {
   dayCount: number;
 };
 
-type Registration = {
+type Participant = {
   id: string;
   label: string;
   groupId: string | null;
@@ -23,46 +23,83 @@ interface ActivityGroupsPanelProps {
   activityId: string;
   canManageGroups: boolean;
   groups: ActivityGroup[];
-  registrations: Registration[];
+  participants: Participant[];
 }
 
 export default function ActivityGroupsPanel({
   activityId,
   canManageGroups,
   groups,
-  registrations,
+  participants,
 }: ActivityGroupsPanelProps) {
   const router = useRouter();
-  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState('');
+  const [selectedGroups, setSelectedGroups] = useState<Record<string, string>>(
+    {}
+  );
 
-  async function updateMembership(
-    groupId: string,
-    participantId: string,
-    currentGroupId: string | null
-  ) {
-    const key = `${participantId}:${groupId}`;
+  useEffect(() => {
+    setSelectedGroups(
+      Object.fromEntries(
+        participants.map((participant) => [
+          participant.id,
+          participant.groupId ?? '',
+        ])
+      )
+    );
+  }, [participants]);
+
+  async function saveParticipantGroup(participantId: string) {
+    const participant = participants.find((item) => item.id === participantId);
+    if (!participant) {
+      return;
+    }
+
+    const nextGroupId = selectedGroups[participantId] ?? '';
+    const currentGroupId = participant.groupId ?? '';
+    if (nextGroupId === currentGroupId) {
+      return;
+    }
+
     setError('');
-    setSavingKey(key);
+    setSavingParticipantId(participantId);
 
     try {
-      const isLeaving = currentGroupId === groupId;
-      const res = await fetch(`/api/activity-groups/${groupId}/members`, {
-        method: isLeaving ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId }),
-      });
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo actualizar el grupo');
+      if (!nextGroupId) {
+        if (!currentGroupId) {
+          return;
+        }
+        const res = await fetch(`/api/activity-groups/${currentGroupId}/members`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ participantId }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          throw new Error(payload?.error || 'No se pudo quitar del grupo');
+        }
+      } else {
+        const res = await fetch(`/api/activity-groups/${nextGroupId}/members`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ participantId }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          throw new Error(payload?.error || 'No se pudo asignar el grupo');
+        }
       }
 
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo actualizar el grupo');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo actualizar el grupo'
+      );
     } finally {
-      setSavingKey(null);
+      setSavingParticipantId(null);
     }
   }
 
@@ -72,8 +109,8 @@ export default function ActivityGroupsPanel({
         <div>
           <h2 className="font-heading text-2xl font-semibold">Grupos</h2>
           <p className="text-sm text-muted-foreground font-body mt-1">
-            Los grupos organizan a los inscriptos y permiten restringir
-            sesiones a un grupo específico.
+            Los profesores y administradores crean grupos y asignan inscriptos a
+            cada uno.
           </p>
         </div>
         {canManageGroups && (
@@ -92,77 +129,67 @@ export default function ActivityGroupsPanel({
       <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">
-            Tus inscriptos
+            Inscriptos de la actividad
           </h3>
-          {registrations.length === 0 ? (
+          {participants.length === 0 ? (
             <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-              No tenés inscriptos propios para agrupar.
+              Todavía no hay inscriptos para asignar.
             </p>
           ) : (
             <div className="space-y-3">
-              {registrations.map((registration) => {
-                const isGrouped = registration.groupId != null;
+              {participants.map((participant) => {
+                const selectedGroupId = selectedGroups[participant.id] ?? '';
+                const currentGroupId = participant.groupId ?? '';
+                const isSaving = savingParticipantId === participant.id;
+
                 return (
                   <article
-                    key={registration.id}
+                    key={participant.id}
                     className="rounded-lg border bg-background p-4"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="font-medium">{registration.label}</p>
+                        <p className="font-medium">{participant.label}</p>
                         <p className="text-xs text-muted-foreground">
-                          Grupo actual:{' '}
-                          {registration.groupName ?? 'Sin grupo'}
+                          Grupo actual: {participant.groupName ?? 'Sin grupo'}
                         </p>
                       </div>
-                      {registration.groupName && (
+                      {participant.groupName && (
                         <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                          {registration.groupName}
+                          {participant.groupName}
                         </span>
                       )}
                     </div>
 
-                    {groups.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {groups.map((group) => {
-                          const isCurrentGroup =
-                            registration.groupId === group.id;
-                          const isSaving = savingKey === `${registration.id}:${group.id}`;
-
-                          return (
-                            <button
-                              key={group.id}
-                              type="button"
-                              disabled={isSaving}
-                              onClick={() =>
-                                updateMembership(
-                                  group.id,
-                                  registration.id,
-                                  registration.groupId
-                                )
-                              }
-                              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                                isCurrentGroup
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'border border-border bg-background text-foreground hover:bg-muted'
-                              }`}
-                            >
-                              {isSaving
-                                ? 'Guardando...'
-                                : isCurrentGroup
-                                  ? 'Salir'
-                                  : isGrouped
-                                    ? 'Mover aquí'
-                                    : 'Unirse'}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        Creá grupos primero para poder asignar inscriptos.
-                      </p>
-                    )}
+                    <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                      <select
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        value={selectedGroupId}
+                        onChange={(e) =>
+                          setSelectedGroups((current) => ({
+                            ...current,
+                            [participant.id]: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">Sin grupo</option>
+                        {groups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={
+                          isSaving || selectedGroupId === currentGroupId
+                        }
+                        onClick={() => saveParticipantGroup(participant.id)}
+                        className="rounded-md border border-border bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSaving ? 'Guardando...' : 'Guardar grupo'}
+                      </button>
+                    </div>
                   </article>
                 );
               })}
@@ -171,7 +198,9 @@ export default function ActivityGroupsPanel({
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-foreground">Grupos creados</h3>
+          <h3 className="text-sm font-semibold text-foreground">
+            Grupos creados
+          </h3>
           {groups.length === 0 ? (
             <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
               Todavía no hay grupos creados.
@@ -197,7 +226,8 @@ export default function ActivityGroupsPanel({
                     </span>
                   </div>
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {group.dayCount} sesión{group.dayCount === 1 ? '' : 'es'} asignada{group.dayCount === 1 ? '' : 's'}
+                    {group.dayCount} sesión{group.dayCount === 1 ? '' : 'es'}{' '}
+                    asignada{group.dayCount === 1 ? '' : 's'}
                   </p>
                 </article>
               ))}

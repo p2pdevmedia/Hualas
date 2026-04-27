@@ -24,6 +24,34 @@ async function getAuthorizedParticipant(participantId: string) {
   });
 }
 
+async function canManageGroupMembership(
+  sessionUserId: string,
+  sessionRole: string,
+  activityId: string
+) {
+  const activity = await prisma.activity.findUnique({
+    where: { id: activityId },
+    select: {
+      professors: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  if (!activity) {
+    return false;
+  }
+
+  const isAdmin =
+    sessionRole === 'ADMIN' || sessionRole === 'SUPER_ADMIN';
+  return (
+    isAdmin ||
+    activity.professors.some((assignment) => assignment.userId === sessionUserId)
+  );
+}
+
 export async function POST(
   req: Request,
   { params }: { params: { groupId: string } }
@@ -45,6 +73,15 @@ export async function POST(
     return NextResponse.json({ error: 'Grupo no encontrado' }, { status: 404 });
   }
 
+  const canManage = await canManageGroupMembership(
+    session.user.id,
+    session.user.role,
+    group.activityId
+  );
+  if (!canManage) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { participantId } = membershipSchema.parse(await req.json());
   const participant = await getAuthorizedParticipant(participantId);
 
@@ -53,14 +90,6 @@ export async function POST(
       { error: 'Inscripto no encontrado' },
       { status: 404 }
     );
-  }
-
-  const isOwner =
-    participant.userId === session.user.id ||
-    participant.child?.userId === session.user.id;
-
-  if (!isOwner) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   if (participant.activityId !== group.activityId) {
@@ -107,6 +136,15 @@ export async function DELETE(
     return NextResponse.json({ error: 'Grupo no encontrado' }, { status: 404 });
   }
 
+  const canManage = await canManageGroupMembership(
+    session.user.id,
+    session.user.role,
+    group.activityId
+  );
+  if (!canManage) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { participantId } = membershipSchema.parse(await req.json());
   const participant = await getAuthorizedParticipant(participantId);
 
@@ -115,14 +153,6 @@ export async function DELETE(
       { error: 'Inscripto no encontrado' },
       { status: 404 }
     );
-  }
-
-  const isOwner =
-    participant.userId === session.user.id ||
-    participant.child?.userId === session.user.id;
-
-  if (!isOwner) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   if (participant.activityId !== group.activityId) {
