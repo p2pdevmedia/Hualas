@@ -139,6 +139,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/api/activities/[id]/days/route.ts`
   - Validation: `src/lib/validations/activity.ts`
 
+- `POST /api/activities/[id]/groups` → create activity group
+  - File: `src/app/api/activities/[id]/groups/route.ts`
+  - Validation: `src/lib/validations/activity.ts`
+
 - `PUT /api/activity-days/[dayId]` → update activity day
   - File: `src/app/api/activity-days/[dayId]/route.ts`
   - Validation: `src/lib/validations/activity.ts`
@@ -146,6 +150,12 @@ Agents should check this before searching the codebase.
 - `PATCH /api/activity-days/[dayId]/attendance` → confirm attendance for a day
   - File: `src/app/api/activity-days/[dayId]/attendance/route.ts`
   - Validation: `src/lib/validations/activity.ts`
+
+- `POST /api/activity-groups/[groupId]/members` → join activity group
+  - File: `src/app/api/activity-groups/[groupId]/members/route.ts`
+
+- `DELETE /api/activity-groups/[groupId]/members` → leave activity group
+  - File: `src/app/api/activity-groups/[groupId]/members/route.ts`
 
 ### Forms
 

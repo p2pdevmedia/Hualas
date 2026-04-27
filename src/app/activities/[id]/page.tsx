@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
+import ActivityGroupsPanel from './activity-groups-panel';
 import ActivityDaysPanel from './activity-days-panel';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -60,7 +61,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     );
   }
 
-  const [participants, activityProfessors, professorOptions, days] =
+  const [participants, activityProfessors, professorOptions, activityGroups, days] =
     await Promise.all([
     prisma.activityParticipant
       .findMany({
@@ -69,9 +70,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           ? {
               user: true,
               child: true,
+              groupMembership: {
+                select: {
+                  activityGroupId: true,
+                },
+              },
             }
           : {
               child: true,
+              groupMembership: {
+                select: {
+                  activityGroupId: true,
+                },
+              },
             },
       })
       .catch((error) => {
@@ -116,6 +127,23 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         );
         return [];
       }),
+    prisma.activityGroup
+      .findMany({
+        where: { activityId: activity.id },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              days: true,
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        console.error('[activity-page] activity groups query failed', error);
+        return [];
+      }),
     prisma.activityDay
       .findMany({
         where: { activityId: activity.id },
@@ -131,6 +159,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   email: true,
                 },
               },
+            },
+          },
+          activityGroup: {
+            select: {
+              id: true,
+              name: true,
             },
           },
           attendances: {
@@ -158,12 +192,18 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const activityProfessorIds = activityProfessors.map(
     (assignment: { userId: string }) => assignment.userId
   );
+  const activityGroupById = new Map(
+    activityGroups.map((group: any) => [group.id, group.name])
+  );
   const capacity = activity.capacity;
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
     ? Math.max(capacity - enrolledCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
+  const canManageGroups =
+    isAdmin ||
+    activityProfessorIds.includes(session?.user.id ?? '');
   const canManageDays =
     isAdmin ||
     activityProfessorIds.includes(session?.user.id ?? '');
@@ -171,6 +211,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   let registrations: Array<{
     id: string;
     label: string;
+    groupId: string | null;
+    groupName: string | null;
   }> = [];
 
   if (session) {
@@ -185,6 +227,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       label: participant.child
         ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
         : (session.user.name ?? 'Yo'),
+      groupId: participant.groupMembership?.activityGroupId ?? null,
+      groupName:
+        participant.groupMembership?.activityGroupId
+          ? activityGroupById.get(participant.groupMembership.activityGroupId) ??
+            null
+          : null,
     }));
   }
 
@@ -192,6 +240,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     const professor = assignment.user;
     return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
   });
+  const activityGroupOptions = activityGroups.map((group: any) => ({
+    id: group.id,
+    name: group.name,
+  }));
   const adminParticipants = participants as ActivityParticipantDetail[];
 
   return (
@@ -364,10 +416,26 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         </div>
 
+        {session && (
+          <ActivityGroupsPanel
+            activityId={activity.id}
+            canManageGroups={canManageGroups}
+            groups={activityGroups.map((group: any) => ({
+              id: group.id,
+              name: group.name,
+              description: group.description,
+              memberCount: group._count.members,
+              dayCount: group._count.days,
+            }))}
+            registrations={registrations}
+          />
+        )}
+
         <ActivityDaysPanel
           activityId={activity.id}
           canManageDays={canManageDays}
           professors={professorOptions}
+          groups={activityGroupOptions}
           defaultProfessorIds={activityProfessorIds}
           registrations={registrations}
           days={days.map((day: any) => ({
@@ -378,6 +446,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             geoLocation: day.geoLocation,
             latitude: day.latitude,
             longitude: day.longitude,
+            activityGroupId: day.activityGroupId,
+            activityGroup: day.activityGroup,
             canEdit:
               isAdmin ||
               activityProfessorIds.includes(session?.user.id ?? '') ||

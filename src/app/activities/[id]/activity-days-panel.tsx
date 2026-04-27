@@ -16,6 +16,13 @@ type ProfessorOption = {
 type Registration = {
   id: string;
   label: string;
+  groupId: string | null;
+  groupName: string | null;
+};
+
+type GroupOption = {
+  id: string;
+  name: string;
 };
 
 type ActivityDay = {
@@ -26,6 +33,11 @@ type ActivityDay = {
   geoLocation: string;
   latitude: number | null;
   longitude: number | null;
+  activityGroupId: string | null;
+  activityGroup: {
+    id: string;
+    name: string;
+  } | null;
   assignedProfessors: ProfessorOption[];
   canEdit: boolean;
   attendances: Array<{
@@ -39,6 +51,7 @@ interface ActivityDaysPanelProps {
   activityId: string;
   canManageDays: boolean;
   professors: ProfessorOption[];
+  groups: GroupOption[];
   defaultProfessorIds: string[];
   registrations: Registration[];
   days: ActivityDay[];
@@ -54,6 +67,7 @@ export default function ActivityDaysPanel({
   activityId,
   canManageDays,
   professors,
+  groups,
   defaultProfessorIds,
   registrations,
   days,
@@ -120,6 +134,7 @@ export default function ActivityDaysPanel({
             activityId={activityId}
             mode="create"
             professors={professors}
+            groups={groups}
             defaultProfessorIds={defaultProfessorIds}
           />
         </div>
@@ -173,6 +188,11 @@ export default function ActivityDaysPanel({
                         Profesores: {professorLabels}
                       </p>
                     )}
+                    {day.activityGroup && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Restringida al grupo {day.activityGroup.name}
+                      </p>
+                    )}
                     {mapHref && (
                       <a
                         href={mapHref}
@@ -216,6 +236,7 @@ export default function ActivityDaysPanel({
                       mode="edit"
                       dayId={day.id}
                       professors={professors}
+                      groups={groups}
                       defaultProfessorIds={defaultProfessorIds}
                       initialValues={{
                         date: day.date.slice(0, 10),
@@ -232,6 +253,7 @@ export default function ActivityDaysPanel({
                         professorIds: day.assignedProfessors.map(
                           (professor) => professor.id
                         ),
+                        activityGroupId: day.activityGroupId,
                       }}
                       onSaved={() => setEditingDayId(null)}
                       onCancel={() => setEditingDayId(null)}
@@ -254,6 +276,9 @@ export default function ActivityDaysPanel({
                           currentAttendance?.status ?? 'PENDING';
                         const key = `${day.id}:${registration.id}`;
                         const isSaving = savingKey === key;
+                        const isAllowedForDay =
+                          !day.activityGroupId ||
+                          registration.groupId === day.activityGroupId;
 
                         return (
                           <div
@@ -268,6 +293,9 @@ export default function ActivityDaysPanel({
                                 <p className="text-xs text-muted-foreground">
                                   Estado actual: {statusLabels[currentStatus]}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Grupo: {registration.groupName ?? 'Sin grupo'}
+                                </p>
                               </div>
                               {isSaving && (
                                 <span className="text-xs text-muted-foreground">
@@ -275,35 +303,42 @@ export default function ActivityDaysPanel({
                                 </span>
                               )}
                             </div>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {(
-                                [
-                                  'GOING',
-                                  'NOT_GOING',
-                                  'PENDING',
-                                ] as AttendanceStatus[]
-                              ).map((status) => (
-                                <button
-                                  key={status}
-                                  type="button"
-                                  disabled={isSaving}
-                                  onClick={() =>
-                                    updateAttendance(
-                                      day.id,
-                                      registration.id,
-                                      status
-                                    )
-                                  }
-                                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                                    currentStatus === status
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'border border-border bg-background text-foreground hover:bg-muted'
-                                  }`}
-                                >
-                                  {statusLabels[status]}
-                                </button>
-                              ))}
-                            </div>
+                            {isAllowedForDay ? (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {(
+                                  [
+                                    'GOING',
+                                    'NOT_GOING',
+                                    'PENDING',
+                                  ] as AttendanceStatus[]
+                                ).map((status) => (
+                                  <button
+                                    key={status}
+                                    type="button"
+                                    disabled={isSaving}
+                                    onClick={() =>
+                                      updateAttendance(
+                                        day.id,
+                                        registration.id,
+                                        status
+                                      )
+                                    }
+                                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                                      currentStatus === status
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'border border-border bg-background text-foreground hover:bg-muted'
+                                    }`}
+                                  >
+                                    {statusLabels[status]}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                Este día está restringido al grupo{' '}
+                                {day.activityGroup?.name ?? 'seleccionado'}.
+                              </p>
+                            )}
                           </div>
                         );
                       })}
