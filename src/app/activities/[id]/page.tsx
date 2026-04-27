@@ -333,6 +333,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             schedule: day.schedule,
             description: day.description,
             geoLocation: day.geoLocation,
+            latitude: day.latitude,
+            longitude: day.longitude,
             attendances: day.attendances.map((attendance: any) => ({
               activityParticipantId: attendance.activityParticipantId,
               status: attendance.status,

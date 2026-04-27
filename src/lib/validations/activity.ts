@@ -16,6 +16,8 @@ export const activityDayCreateSchema = z.object({
   schedule: z.string().min(1),
   description: z.string().optional(),
   geoLocation: z.string().min(1),
+  latitude: z.number(),
+  longitude: z.number(),
 });
 
 export const activityDayAttendanceSchema = z.object({

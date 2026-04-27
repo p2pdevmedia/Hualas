@@ -51,6 +51,8 @@ export async function POST(
       schedule: data.schedule,
       description: data.description,
       geoLocation: data.geoLocation,
+      latitude: data.latitude,
+      longitude: data.longitude,
     },
   });
 
