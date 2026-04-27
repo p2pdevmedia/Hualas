@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -16,10 +17,10 @@ export async function GET(request: Request) {
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
-  const where: Record<string, unknown> = {};
+  const where: Prisma.AccountingMovementWhereInput = {};
   if (type) where.type = type;
   if (from || to) {
-    const dateFilter: Record<string, Date> = {};
+    const dateFilter: Prisma.DateTimeFilter = {};
     if (from) dateFilter.gte = new Date(from);
     if (to) dateFilter.lte = new Date(to);
     where.date = dateFilter;
@@ -43,7 +44,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const parsed = movementSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const movement = await prisma.accountingMovement.create({

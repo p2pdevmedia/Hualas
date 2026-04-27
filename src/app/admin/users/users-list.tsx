@@ -17,7 +17,13 @@ interface User {
   updatedAt: Date;
 }
 
-export default function UsersList({ users }: { users: User[] }) {
+export default function UsersList({
+  users,
+  readOnly = false,
+}: {
+  users: User[];
+  readOnly?: boolean;
+}) {
   const t = useTranslation().actions;
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -92,48 +98,52 @@ export default function UsersList({ users }: { users: User[] }) {
                 {u.role}
               </span>
             </Link>
-            <Link
-              href={`/admin/users/${u.id}`}
-              className={`${linkClass} hidden sm:inline`}
-            >
-              {t.edit}
-            </Link>
-            <details className="group relative">
-              <summary
-                aria-label={t.moreActions}
-                className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
-              >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-              </summary>
-              <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+            {!readOnly && (
+              <>
                 <Link
                   href={`/admin/users/${u.id}`}
-                  className={`${menuItemClass} sm:hidden`}
+                  className={`${linkClass} hidden sm:inline`}
                 >
                   {t.edit}
                 </Link>
-                <Link
-                  href={`/admin/users/${u.id}/child-enrollment`}
-                  className={menuItemClass}
-                >
-                  {t.childEnrollment}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => resetPassword(u.id)}
-                  className={menuItemClass}
-                >
-                  {t.resetPassword}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteUser(u.id)}
-                  className={`${menuItemClass} text-red-600 hover:bg-red-50`}
-                >
-                  {t.delete}
-                </button>
-              </div>
-            </details>
+                <details className="group relative">
+                  <summary
+                    aria-label={t.moreActions}
+                    className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
+                  >
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                  </summary>
+                  <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+                    <Link
+                      href={`/admin/users/${u.id}`}
+                      className={`${menuItemClass} sm:hidden`}
+                    >
+                      {t.edit}
+                    </Link>
+                    <Link
+                      href={`/admin/users/${u.id}/child-enrollment`}
+                      className={menuItemClass}
+                    >
+                      {t.childEnrollment}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => resetPassword(u.id)}
+                      className={menuItemClass}
+                    >
+                      {t.resetPassword}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteUser(u.id)}
+                      className={`${menuItemClass} text-red-600 hover:bg-red-50`}
+                    >
+                      {t.delete}
+                    </button>
+                  </div>
+                </details>
+              </>
+            )}
           </li>
         ))}
       </ul>

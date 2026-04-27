@@ -17,7 +17,10 @@ export async function PUT(
   const body = await request.json();
   const parsed = movementSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const movement = await prisma.accountingMovement.update({

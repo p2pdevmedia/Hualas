@@ -21,16 +21,27 @@ export async function POST(
     return NextResponse.json({ error: 'No file received' }, { status: 400 });
   }
   if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'File must be an image' },
+      { status: 400 }
+    );
   }
   if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File must be under 5 MB' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'File must be under 5 MB' },
+      { status: 400 }
+    );
   }
 
-  const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.jpg';
+  const ext = file.name.includes('.')
+    ? file.name.slice(file.name.lastIndexOf('.'))
+    : '.jpg';
   const pathname = `accounting/receipts/${params.id}/${crypto.randomUUID()}${ext}`;
 
-  const blob = await put(pathname, file, { access: 'public', contentType: file.type });
+  const blob = await put(pathname, file, {
+    access: 'public',
+    contentType: file.type,
+  });
 
   await prisma.accountingMovement.update({
     where: { id: params.id },

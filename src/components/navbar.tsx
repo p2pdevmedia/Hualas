@@ -46,6 +46,7 @@ export default function Navbar() {
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isAccounting = role === 'COUNTER' || isAdmin;
   const isMember = !!session && !isAdmin;
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
@@ -171,6 +172,11 @@ export default function Navbar() {
                 </>
               )}
             </>
+          )}
+          {isAccounting && (
+            <Link href="/accounting" className={linkClass}>
+              {t.accounting}
+            </Link>
           )}
           <Link href="/contact" className={linkClass}>
             {t.contact}
@@ -312,6 +318,15 @@ export default function Navbar() {
                 </>
               )}
             </>
+          )}
+          {isAccounting && (
+            <Link
+              href="/accounting"
+              className={linkClass}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t.accounting}
+            </Link>
           )}
           <Link
             href="/contact"
