@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ActivityGroupForm from './activity-group-form';
 
@@ -243,11 +244,19 @@ export default function ActivityGroupsPanel({
                           {group.memberCount} inscriptos
                         </span>
                       </div>
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        {group.dayCount} sesión
-                        {group.dayCount === 1 ? '' : 'es'} asignada
-                        {group.dayCount === 1 ? '' : 's'}
-                      </p>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          {group.dayCount} sesión
+                          {group.dayCount === 1 ? '' : 'es'} asignada
+                          {group.dayCount === 1 ? '' : 's'}
+                        </p>
+                        <Link
+                          href={`/activities/${activityId}/groups/${group.id}`}
+                          className="inline-flex items-center justify-center rounded-full border border-primary px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5"
+                        >
+                          Ver grupo
+                        </Link>
+                      </div>
                     </article>
                   ))}
                 </div>

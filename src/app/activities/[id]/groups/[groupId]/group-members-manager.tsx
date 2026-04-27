@@ -1,0 +1,235 @@
+'use client';
+
+import { useEffect, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+
+type Member = {
+  participantId: string;
+  label: string;
+  subtitle: string;
+  currentGroupName: string | null;
+};
+
+type AvailableParticipant = Member;
+
+interface ActivityGroupMembersManagerProps {
+  groupId: string;
+  groupName: string;
+  members: Member[];
+  availableParticipants: AvailableParticipant[];
+}
+
+export default function ActivityGroupMembersManager({
+  groupId,
+  groupName,
+  members,
+  availableParticipants,
+}: ActivityGroupMembersManagerProps) {
+  const router = useRouter();
+  const [selectedParticipantId, setSelectedParticipantId] = useState(
+    availableParticipants[0]?.participantId ?? ''
+  );
+  const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
+    null
+  );
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (availableParticipants.length === 0) {
+      setSelectedParticipantId('');
+      return;
+    }
+
+    const selectedExists = availableParticipants.some(
+      (participant) => participant.participantId === selectedParticipantId
+    );
+
+    if (!selectedExists) {
+      setSelectedParticipantId(availableParticipants[0]?.participantId ?? '');
+    }
+  }, [availableParticipants, selectedParticipantId]);
+
+  async function mutateMembership(
+    participantId: string,
+    method: 'POST' | 'DELETE'
+  ) {
+    setError('');
+    setSavingParticipantId(participantId);
+
+    try {
+      const res = await fetch(`/api/activity-groups/${groupId}/members`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(
+          payload?.error || 'No se pudo actualizar la membresia del grupo'
+        );
+      }
+
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'No se pudo actualizar el grupo'
+      );
+    } finally {
+      setSavingParticipantId(null);
+    }
+  }
+
+  async function handleAddParticipant(e: FormEvent) {
+    e.preventDefault();
+
+    if (!selectedParticipantId) {
+      return;
+    }
+
+    await mutateMembership(selectedParticipantId, 'POST');
+  }
+
+  return (
+    <section className="rounded-xl border bg-card p-6 shadow-sm space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="font-heading text-2xl font-semibold">
+            Miembros del grupo
+          </h2>
+          <p className="text-sm text-muted-foreground font-body mt-1">
+            Agregá o quitá participantes de {groupName} desde esta vista.
+          </p>
+        </div>
+        <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+          {members.length} miembro{members.length === 1 ? '' : 's'}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border bg-background p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Miembros
+          </p>
+          <p className="mt-1 text-2xl font-semibold">{members.length}</p>
+        </div>
+        <div className="rounded-lg border bg-background p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Disponibles
+          </p>
+          <p className="mt-1 text-2xl font-semibold">
+            {availableParticipants.length}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-background p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Estado
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Los participantes se mueven entre grupos en el momento.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">
+            Participantes del grupo
+          </h3>
+          {members.length === 0 ? (
+            <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+              Todavía no hay participantes en este grupo.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {members.map((member) => {
+                const isSaving = savingParticipantId === member.participantId;
+
+                return (
+                  <article
+                    key={member.participantId}
+                    className="rounded-lg border bg-background p-4"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-medium">{member.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {member.subtitle}
+                        </p>
+                      </div>
+                      {member.currentGroupName && (
+                        <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                          {member.currentGroupName}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={isSaving}
+                        onClick={() =>
+                          mutateMembership(member.participantId, 'DELETE')
+                        }
+                        className="border-destructive text-destructive hover:bg-destructive/5"
+                      >
+                        {isSaving ? 'Quitando...' : 'Sacar del grupo'}
+                      </Button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">
+            Agregar participante
+          </h3>
+          {availableParticipants.length === 0 ? (
+            <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+              No hay participantes disponibles para agregar.
+            </p>
+          ) : (
+            <form
+              onSubmit={handleAddParticipant}
+              className="space-y-3 rounded-lg border bg-background p-4"
+            >
+              <select
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={selectedParticipantId}
+                onChange={(e) => setSelectedParticipantId(e.target.value)}
+              >
+                {availableParticipants.map((participant) => (
+                  <option
+                    key={participant.participantId}
+                    value={participant.participantId}
+                  >
+                    {participant.label}
+                    {participant.currentGroupName
+                      ? ` - ${participant.currentGroupName}`
+                      : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Si el participante ya pertenece a otro grupo, se moverá a
+                  {` ${groupName}.`}
+                </p>
+                <Button type="submit" disabled={!selectedParticipantId}>
+                  Agregar al grupo
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </section>
+  );
+}

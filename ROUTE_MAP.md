@@ -41,6 +41,10 @@ Agents should check this before searching the codebase.
     - `src/app/activities/[id]/register-button.tsx`
     - `src/app/activities/[id]/payment-handler.tsx`
 
+- `/activities/[id]/groups/[groupId]` → Activity group detail
+  - File: `src/app/activities/[id]/groups/[groupId]/page.tsx`
+  - Related component: `src/app/activities/[id]/groups/[groupId]/group-members-manager.tsx`
+
 - `/activities/[id]/edit` → Edit activity
   - File: `src/app/activities/[id]/edit/page.tsx`
   - Related form: `src/app/activities/[id]/edit/form.tsx`
