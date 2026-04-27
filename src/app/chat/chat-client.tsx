@@ -11,7 +11,7 @@ const POLL_HISTORY_MS = 8000;
 type User = {
   id: string;
   name: string | null;
-  role: 'ADMIN' | 'MEMBER' | 'SUPER_ADMIN';
+  role: 'ADMIN' | 'MEMBER' | 'PROFESSOR' | 'SUPER_ADMIN';
   profilePhoto: string | null;
   updatedAt: string;
 };

@@ -111,8 +111,12 @@ export default async function ViewUserPage({
                 .filter(([, value]) => Boolean(value))
                 .map(([label, value]) => (
                   <div key={label}>
-                    <span className="font-medium text-foreground">{label}:</span>{' '}
-                    <span className="text-muted-foreground">{value as string}</span>
+                    <span className="font-medium text-foreground">
+                      {label}:
+                    </span>{' '}
+                    <span className="text-muted-foreground">
+                      {value as string}
+                    </span>
                   </div>
                 ))}
             </div>
@@ -297,7 +301,7 @@ export default async function ViewUserPage({
         href="/admin/users"
         className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
       >
-        ← Volver a padres
+        ← Volver a usuarios
       </Link>
     </div>
   );

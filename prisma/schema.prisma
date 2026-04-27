@@ -39,6 +39,8 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   formResponses        FormResponse[]
   activityParticipants ActivityParticipant[]
+  activityProfessors   ActivityProfessor[]
+  createdActivityDays  ActivityDay[]             @relation("ActivityDayCreatedBy")
   children             Child[]
 }
 
@@ -119,20 +121,67 @@ model Activity {
   price        Int                   @default(0)
   capacity     Int?
   participants ActivityParticipant[]
+  professors   ActivityProfessor[]
+  days         ActivityDay[]
   createdAt    DateTime              @default(now())
 }
 
 model ActivityParticipant {
-  id            String    @id @default(cuid())
-  activityId    String
-  userId        String
-  childId       String?
-  participantKey String   @unique
-  receipt       String?
-  receiptDate   DateTime?
-  activity      Activity  @relation(fields: [activityId], references: [id])
-  user          User      @relation(fields: [userId], references: [id])
-  child         Child?    @relation(fields: [childId], references: [id])
+  id             String                  @id @default(cuid())
+  activityId     String
+  userId         String
+  childId        String?
+  participantKey String                  @unique
+  receipt        String?
+  receiptDate    DateTime?
+  activity       Activity                @relation(fields: [activityId], references: [id])
+  user           User                    @relation(fields: [userId], references: [id])
+  child          Child?                  @relation(fields: [childId], references: [id])
+  attendances    ActivityDayAttendance[]
+}
+
+model ActivityProfessor {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String
+  createdAt  DateTime @default(now())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId])
+}
+
+model ActivityDay {
+  id          String                  @id @default(cuid())
+  activityId  String
+  createdById String
+  date        DateTime
+  schedule    String
+  description String?
+  geoLocation String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  activity    Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdBy   User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  attendances ActivityDayAttendance[]
+
+  @@index([activityId, date])
+}
+
+model ActivityDayAttendance {
+  id                    String              @id @default(cuid())
+  activityDayId         String
+  activityParticipantId String
+  status                AttendanceStatus    @default(PENDING)
+  confirmedAt           DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  activityDay           ActivityDay         @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
+  activityParticipant   ActivityParticipant @relation(fields: [activityParticipantId], references: [id], onDelete: Cascade)
+
+  @@unique([activityDayId, activityParticipantId])
+  @@index([activityParticipantId])
 }
 
 model Child {
@@ -182,6 +231,7 @@ model MercadoPagoNotification {
 enum Role {
   ADMIN
   MEMBER
+  PROFESSOR
   SUPER_ADMIN
 }
 
@@ -198,4 +248,10 @@ enum Gender {
   NON_BINARY
   UNDISCLOSED
   OTHER
+}
+
+enum AttendanceStatus {
+  PENDING
+  GOING
+  NOT_GOING
 }

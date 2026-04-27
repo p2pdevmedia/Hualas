@@ -45,10 +45,18 @@ export default function EditUserForm({ user }: { user: User }) {
   const [role, setRole] = useState(user.role);
   const [observations, setObservations] = useState(user.observations ?? '');
   const [allergies, setAllergies] = useState(user.allergies ?? '');
-  const [regularMedication, setRegularMedication] = useState(user.regularMedication ?? '');
-  const [relevantDiseases, setRelevantDiseases] = useState(user.relevantDiseases ?? '');
-  const [previousInjuries, setPreviousInjuries] = useState(user.previousInjuries ?? '');
-  const [physicalRestrictions, setPhysicalRestrictions] = useState(user.physicalRestrictions ?? '');
+  const [regularMedication, setRegularMedication] = useState(
+    user.regularMedication ?? ''
+  );
+  const [relevantDiseases, setRelevantDiseases] = useState(
+    user.relevantDiseases ?? ''
+  );
+  const [previousInjuries, setPreviousInjuries] = useState(
+    user.previousInjuries ?? ''
+  );
+  const [physicalRestrictions, setPhysicalRestrictions] = useState(
+    user.physicalRestrictions ?? ''
+  );
   const [bloodGroup, setBloodGroup] = useState(user.bloodGroup ?? '');
   const [primaryDoctor, setPrimaryDoctor] = useState(user.primaryDoctor ?? '');
   const [doctorPhone, setDoctorPhone] = useState(user.doctorPhone ?? '');
@@ -95,13 +103,13 @@ export default function EditUserForm({ user }: { user: User }) {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Padre actualizado');
+      setSuccess('Usuario actualizado');
       setTimeout(() => {
         router.push('/admin/users');
         router.refresh();
       }, 1000);
     } catch (e) {
-      setError('No se pudo actualizar el padre');
+      setError('No se pudo actualizar el usuario');
     }
   }
 
@@ -243,7 +251,7 @@ export default function EditUserForm({ user }: { user: User }) {
           onChange={(e) => setIsActive(e.target.checked)}
           className="accent-primary"
         />
-        Padre activo
+        Usuario activo
       </label>
       {canEditRole && (
         <select
@@ -253,6 +261,7 @@ export default function EditUserForm({ user }: { user: User }) {
         >
           <option value="ADMIN">ADMIN</option>
           <option value="MEMBER">MEMBER</option>
+          <option value="PROFESSOR">PROFESSOR</option>
           <option value="SUPER_ADMIN">SUPER_ADMIN</option>
         </select>
       )}

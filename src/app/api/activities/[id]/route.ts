@@ -16,9 +16,44 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const data = activityCreateSchema.parse(await req.json());
+  const professorIds = Array.from(new Set(data.professorIds ?? []));
+  if (data.professorIds !== undefined && professorIds.length > 0) {
+    const validProfessors = await prisma.user.findMany({
+      where: {
+        id: { in: professorIds },
+        role: 'PROFESSOR',
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    if (validProfessors.length !== professorIds.length) {
+      return NextResponse.json(
+        { error: 'Uno o más profesores no son válidos' },
+        { status: 400 }
+      );
+    }
+  }
+
   const activity = await prisma.activity.update({
     where: { id: params.id },
-    data,
+    data: {
+      name: data.name,
+      date: data.date,
+      frequency: data.frequency,
+      image: data.image,
+      description: data.description,
+      price: data.price,
+      capacity: data.capacity,
+      professors:
+        data.professorIds === undefined
+          ? undefined
+          : {
+              deleteMany: {},
+              create: professorIds.map((userId) => ({
+                user: { connect: { id: userId } },
+              })),
+            },
+    },
   });
   return NextResponse.json(activity);
 }

@@ -3,8 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import ProfessorPicker from '../professor-picker';
 
-export default function CreateActivityForm() {
+type ProfessorOption = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+};
+
+interface CreateActivityFormProps {
+  professors: ProfessorOption[];
+}
+
+export default function CreateActivityForm({
+  professors,
+}: CreateActivityFormProps) {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [image, setImage] = useState('');
@@ -14,6 +28,7 @@ export default function CreateActivityForm() {
   const [frequency, setFrequency] = useState<
     'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
   >('ONE_TIME');
+  const [professorIds, setProfessorIds] = useState<string[]>([]);
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -37,6 +52,7 @@ export default function CreateActivityForm() {
           frequency,
           price: Number(price),
           capacity: capacity ? Number(capacity) : undefined,
+          professorIds,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
@@ -48,6 +64,7 @@ export default function CreateActivityForm() {
       setPrice('');
       setCapacity('');
       setFrequency('ONE_TIME');
+      setProfessorIds([]);
       setTimeout(() => {
         router.push('/activities');
         router.refresh();
@@ -114,6 +131,11 @@ export default function CreateActivityForm() {
         value={capacity}
         onChange={(e) => setCapacity(e.target.value)}
         className={inputClass}
+      />
+      <ProfessorPicker
+        professors={professors}
+        value={professorIds}
+        onChange={setProfessorIds}
       />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}

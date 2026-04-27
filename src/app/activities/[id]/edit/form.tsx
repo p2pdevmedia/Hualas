@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import ProfessorPicker from '../../professor-picker';
+
+type ProfessorOption = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+};
 
 interface EditActivityFormProps {
   activity: {
@@ -14,10 +22,15 @@ interface EditActivityFormProps {
     description?: string | null;
     price: number;
     capacity?: number | null;
+    professorIds: string[];
   };
+  professors: ProfessorOption[];
 }
 
-export default function EditActivityForm({ activity }: EditActivityFormProps) {
+export default function EditActivityForm({
+  activity,
+  professors,
+}: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
   const [frequency, setFrequency] = useState<
@@ -27,6 +40,9 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
   const [capacity, setCapacity] = useState(activity.capacity?.toString() ?? '');
+  const [professorIds, setProfessorIds] = useState<string[]>(
+    activity.professorIds
+  );
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -50,6 +66,7 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
           frequency,
           price: Number(price),
           capacity: capacity ? Number(capacity) : undefined,
+          professorIds,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
@@ -120,6 +137,11 @@ export default function EditActivityForm({ activity }: EditActivityFormProps) {
         value={capacity}
         onChange={(e) => setCapacity(e.target.value)}
         className={inputClass}
+      />
+      <ProfessorPicker
+        professors={professors}
+        value={professorIds}
+        onChange={setProfessorIds}
       />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
