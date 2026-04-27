@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ type ActivityDay = {
   schedule: string;
   description: string | null;
   geoLocation: string;
+  latitude: number | null;
+  longitude: number | null;
   attendances: Array<{
     activityParticipantId: string;
     status: AttendanceStatus;
@@ -37,6 +40,15 @@ const statusLabels: Record<AttendanceStatus, string> = {
   NOT_GOING: 'No voy',
 };
 
+const LocationMapPicker = dynamic(() => import('../location-map-picker'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-80 items-center justify-center rounded-lg border bg-muted/20 text-sm text-muted-foreground">
+      Cargando mapa...
+    </div>
+  ),
+});
+
 export default function ActivityDaysPanel({
   activityId,
   canManageDays,
@@ -48,6 +60,10 @@ export default function ActivityDaysPanel({
   const [schedule, setSchedule] = useState('');
   const [description, setDescription] = useState('');
   const [geoLocation, setGeoLocation] = useState('');
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [error, setError] = useState('');
   const [saveError, setSaveError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -59,6 +75,9 @@ export default function ActivityDaysPanel({
     e.preventDefault();
     setSaveError('');
     try {
+      if (!coordinates) {
+        throw new Error('Seleccioná un punto en el mapa');
+      }
       const res = await fetch(`/api/activities/${activityId}/days`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,6 +86,8 @@ export default function ActivityDaysPanel({
           schedule,
           description: description || undefined,
           geoLocation,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
         }),
       });
       if (!res.ok) {
@@ -77,6 +98,7 @@ export default function ActivityDaysPanel({
       setSchedule('');
       setDescription('');
       setGeoLocation('');
+      setCoordinates(null);
       router.refresh();
     } catch (err) {
       setSaveError(
@@ -163,9 +185,13 @@ export default function ActivityDaysPanel({
             value={geoLocation}
             onChange={(e) => setGeoLocation(e.target.value)}
             className={inputClass}
-            placeholder="GeoUbicación"
+            placeholder="Nombre o referencia del lugar"
             required
           />
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Punto en el mapa</p>
+            <LocationMapPicker value={coordinates} onChange={setCoordinates} />
+          </div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -198,6 +224,10 @@ export default function ActivityDaysPanel({
             const notGoingCount = day.attendances.filter(
               (attendance) => attendance.status === 'NOT_GOING'
             ).length;
+            const mapHref =
+              day.latitude != null && day.longitude != null
+                ? `https://www.openstreetmap.org/?mlat=${day.latitude}&mlon=${day.longitude}#map=17/${day.latitude}/${day.longitude}`
+                : null;
 
             return (
               <article
@@ -217,6 +247,16 @@ export default function ActivityDaysPanel({
                     <p className="text-sm text-muted-foreground">
                       {day.schedule} · {day.geoLocation}
                     </p>
+                    {mapHref && (
+                      <a
+                        href={mapHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-block text-xs text-primary hover:underline underline-offset-4"
+                      >
+                        Abrir en OpenStreetMap
+                      </a>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {goingCount} confirmados · {notGoingCount} no asistirán
