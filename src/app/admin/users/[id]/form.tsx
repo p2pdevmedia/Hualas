@@ -20,6 +20,14 @@ type User = {
   maritalStatus: string | null;
   isActive: boolean;
   observations: string | null;
+  allergies: string | null;
+  regularMedication: string | null;
+  relevantDiseases: string | null;
+  previousInjuries: string | null;
+  physicalRestrictions: string | null;
+  bloodGroup: string | null;
+  primaryDoctor: string | null;
+  doctorPhone: string | null;
 };
 
 export default function EditUserForm({ user }: { user: User }) {
@@ -36,6 +44,14 @@ export default function EditUserForm({ user }: { user: User }) {
   const [isActive, setIsActive] = useState(user.isActive);
   const [role, setRole] = useState(user.role);
   const [observations, setObservations] = useState(user.observations ?? '');
+  const [allergies, setAllergies] = useState(user.allergies ?? '');
+  const [regularMedication, setRegularMedication] = useState(user.regularMedication ?? '');
+  const [relevantDiseases, setRelevantDiseases] = useState(user.relevantDiseases ?? '');
+  const [previousInjuries, setPreviousInjuries] = useState(user.previousInjuries ?? '');
+  const [physicalRestrictions, setPhysicalRestrictions] = useState(user.physicalRestrictions ?? '');
+  const [bloodGroup, setBloodGroup] = useState(user.bloodGroup ?? '');
+  const [primaryDoctor, setPrimaryDoctor] = useState(user.primaryDoctor ?? '');
+  const [doctorPhone, setDoctorPhone] = useState(user.doctorPhone ?? '');
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -63,6 +79,14 @@ export default function EditUserForm({ user }: { user: User }) {
         email,
         isActive,
         observations,
+        allergies,
+        regularMedication,
+        relevantDiseases,
+        previousInjuries,
+        physicalRestrictions,
+        bloodGroup,
+        primaryDoctor,
+        doctorPhone,
       };
       if (canEditRole) body.role = role;
       const res = await fetch(`/api/users/${user.id}`, {
@@ -151,6 +175,60 @@ export default function EditUserForm({ user }: { user: User }) {
         onChange={(e) => setObservations(e.target.value)}
         placeholder="Observaciones"
       />
+
+      {/* Medical Sheet */}
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+        <h3 className="text-sm font-semibold">Ficha médica</h3>
+        <textarea
+          className={`${inputClass} min-h-[72px] resize-y`}
+          value={allergies}
+          onChange={(e) => setAllergies(e.target.value)}
+          placeholder="Alergias"
+        />
+        <textarea
+          className={`${inputClass} min-h-[72px] resize-y`}
+          value={regularMedication}
+          onChange={(e) => setRegularMedication(e.target.value)}
+          placeholder="Medicación habitual"
+        />
+        <textarea
+          className={`${inputClass} min-h-[72px] resize-y`}
+          value={relevantDiseases}
+          onChange={(e) => setRelevantDiseases(e.target.value)}
+          placeholder="Enfermedades relevantes"
+        />
+        <textarea
+          className={`${inputClass} min-h-[72px] resize-y`}
+          value={previousInjuries}
+          onChange={(e) => setPreviousInjuries(e.target.value)}
+          placeholder="Lesiones previas"
+        />
+        <textarea
+          className={`${inputClass} min-h-[72px] resize-y`}
+          value={physicalRestrictions}
+          onChange={(e) => setPhysicalRestrictions(e.target.value)}
+          placeholder="Restricciones físicas"
+        />
+        <input
+          className={inputClass}
+          value={bloodGroup}
+          onChange={(e) => setBloodGroup(e.target.value)}
+          placeholder="Grupo sanguíneo"
+        />
+        <input
+          className={inputClass}
+          value={primaryDoctor}
+          onChange={(e) => setPrimaryDoctor(e.target.value)}
+          placeholder="Médico de cabecera"
+        />
+        <input
+          className={inputClass}
+          value={doctorPhone}
+          onChange={(e) => setDoctorPhone(e.target.value)}
+          placeholder="Teléfono médico"
+        />
+      </div>
+
       <input
         className={inputClass}
         value={email}

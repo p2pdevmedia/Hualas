@@ -18,5 +18,13 @@ export const userUpdateSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(['ADMIN', 'MEMBER', 'SUPER_ADMIN']).optional(),
   observations: z.string().optional(),
+  allergies: z.string().optional(),
+  regularMedication: z.string().optional(),
+  relevantDiseases: z.string().optional(),
+  previousInjuries: z.string().optional(),
+  physicalRestrictions: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  primaryDoctor: z.string().optional(),
+  doctorPhone: z.string().optional(),
   isActive: z.boolean().optional(),
 });

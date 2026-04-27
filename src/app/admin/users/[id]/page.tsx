@@ -33,6 +33,14 @@ export default async function EditUserPage({
       maritalStatus: true,
       isActive: true,
       observations: true,
+      allergies: true,
+      regularMedication: true,
+      relevantDiseases: true,
+      previousInjuries: true,
+      physicalRestrictions: true,
+      bloodGroup: true,
+      primaryDoctor: true,
+      doctorPhone: true,
     },
   });
   if (!user) {
