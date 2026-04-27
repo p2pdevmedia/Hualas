@@ -49,7 +49,7 @@ export default async function EditUserPage({
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Editar padre</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Editar usuario</h1>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <EditUserForm
           user={{

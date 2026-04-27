@@ -20,10 +20,22 @@ export default async function EditActivityPage({
   }
   const activity: any = await prisma.activity.findUnique({
     where: { id: params.id },
+    include: { professors: true },
   });
   if (!activity) {
     redirect('/activities');
   }
+
+  const professors = await prisma.user.findMany({
+    where: { role: 'PROFESSOR', isActive: true },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      email: true,
+    },
+    orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+  });
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Editar actividad</h1>
@@ -37,7 +49,11 @@ export default async function EditActivityPage({
           description: activity.description ?? '',
           price: activity.price,
           capacity: activity.capacity ?? null,
+          professorIds: activity.professors.map(
+            (assignment: { userId: string }) => assignment.userId
+          ),
         }}
+        professors={professors}
       />
     </main>
   );

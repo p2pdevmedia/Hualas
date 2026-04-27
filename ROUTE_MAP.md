@@ -58,6 +58,9 @@ Agents should check this before searching the codebase.
   - File: `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`
 
+- `/my-activities` → My activities for members and professors
+  - File: `src/app/my-activities/page.tsx`
+
 ### Admin
 
 - `/admin/users` → Users list
@@ -131,6 +134,14 @@ Agents should check this before searching the codebase.
 - `GET /api/activities/[id]/checkout` → MercadoPago checkout redirect
   - File: `src/app/api/activities/[id]/checkout/route.ts`
   - Mercado Pago helper: `src/lib/mercadopago.ts`
+
+- `POST /api/activities/[id]/days` → create activity day
+  - File: `src/app/api/activities/[id]/days/route.ts`
+  - Validation: `src/lib/validations/activity.ts`
+
+- `PATCH /api/activity-days/[dayId]/attendance` → confirm attendance for a day
+  - File: `src/app/api/activity-days/[dayId]/attendance/route.ts`
+  - Validation: `src/lib/validations/activity.ts`
 
 ### Forms
 

@@ -16,7 +16,7 @@ export const userUpdateSchema = z.object({
   nationality: z.string().optional(),
   maritalStatus: z.string().optional(),
   email: z.string().email().optional(),
-  role: z.enum(['ADMIN', 'MEMBER', 'SUPER_ADMIN']).optional(),
+  role: z.enum(['ADMIN', 'MEMBER', 'PROFESSOR', 'SUPER_ADMIN']).optional(),
   observations: z.string().optional(),
   allergies: z.string().optional(),
   regularMedication: z.string().optional(),

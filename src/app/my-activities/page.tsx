@@ -34,27 +34,47 @@ export default async function MyActivitiesPage() {
       price: number;
     };
   }> = [];
+  let professorAssignments: Array<{
+    id: string;
+    activity: {
+      id: string;
+      name: string;
+      date: Date;
+      frequency: string;
+      price: number;
+    };
+  }> = [];
 
   try {
-    participations = await prisma.activityParticipant.findMany({
-      where: {
-        OR: [{ userId }, { child: { userId } }],
-      },
-      include: {
-        activity: true,
-        child: { select: { id: true, name: true, lastName: true } },
-      },
-      orderBy: { activity: { date: 'asc' } },
-    });
+    [participations, professorAssignments] = await Promise.all([
+      prisma.activityParticipant.findMany({
+        where: {
+          OR: [{ userId }, { child: { userId } }],
+        },
+        include: {
+          activity: true,
+          child: { select: { id: true, name: true, lastName: true } },
+        },
+        orderBy: { activity: { date: 'asc' } },
+      }),
+      prisma.activityProfessor.findMany({
+        where: { userId },
+        include: {
+          activity: true,
+        },
+        orderBy: { activity: { date: 'asc' } },
+      }),
+    ]);
   } catch {
     participations = [];
+    professorAssignments = [];
   }
 
   const grouped = new Map<
     string,
     {
       activity: (typeof participations)[number]['activity'];
-      participants: Array<{ label: string }>;
+      labels: Set<string>;
     }
   >();
 
@@ -62,19 +82,35 @@ export default async function MyActivitiesPage() {
     const key = p.activity.id;
     const label = p.child
       ? `${p.child.name}${p.child.lastName ? ` ${p.child.lastName}` : ''}`
-      : session.user.name ?? 'Yo';
+      : (session.user.name ?? 'Yo');
     const entry = grouped.get(key);
     if (entry) {
-      entry.participants.push({ label });
+      entry.labels.add(label);
     } else {
       grouped.set(key, {
         activity: p.activity,
-        participants: [{ label }],
+        labels: new Set([label]),
       });
     }
   }
 
-  const items = Array.from(grouped.values());
+  for (const assignment of professorAssignments) {
+    const key = assignment.activity.id;
+    const entry = grouped.get(key);
+    if (entry) {
+      entry.labels.add('Profesor');
+    } else {
+      grouped.set(key, {
+        activity: assignment.activity,
+        labels: new Set(['Profesor']),
+      });
+    }
+  }
+
+  const items = Array.from(grouped.values()).map((entry) => ({
+    activity: entry.activity,
+    labels: Array.from(entry.labels),
+  }));
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
@@ -83,17 +119,18 @@ export default async function MyActivitiesPage() {
           Mis actividades
         </h1>
         <p className="text-sm text-muted-foreground">
-          Actividades en las que estás inscripto vos o alguno de tus hijos.
+          Actividades en las que estás inscripto vos, alguno de tus hijos o en
+          las que sos profesor.
         </p>
       </div>
 
       {items.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">
-          <p>Todavía no estás inscripto en ninguna actividad.</p>
+          <p>Todavía no tenés actividades asociadas.</p>
         </div>
       ) : (
         <ul className="space-y-3">
-          {items.map(({ activity, participants }) => (
+          {items.map(({ activity, labels }) => (
             <li
               key={activity.id}
               className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
@@ -116,9 +153,7 @@ export default async function MyActivitiesPage() {
                   <span>·</span>
                   <span>${activity.price}</span>
                   <span>·</span>
-                  <span>
-                    {participants.map((x) => x.label).join(', ')}
-                  </span>
+                  <span>{labels.join(' · ')}</span>
                 </div>
               </div>
             </li>

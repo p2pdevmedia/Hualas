@@ -8,4 +8,17 @@ export const activityCreateSchema = z.object({
   description: z.string().optional(),
   price: z.number().int().nonnegative(),
   capacity: z.number().int().positive().optional(),
+  professorIds: z.array(z.string()).optional(),
+});
+
+export const activityDayCreateSchema = z.object({
+  date: z.string().transform((d) => new Date(d)),
+  schedule: z.string().min(1),
+  description: z.string().optional(),
+  geoLocation: z.string().min(1),
+});
+
+export const activityDayAttendanceSchema = z.object({
+  participantId: z.string().min(1),
+  status: z.enum(['PENDING', 'GOING', 'NOT_GOING']),
 });

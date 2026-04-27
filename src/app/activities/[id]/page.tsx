@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
+import ActivityDaysPanel from './activity-days-panel';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
@@ -60,6 +61,29 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               },
             }
           : true,
+        professors: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        days: {
+          orderBy: { date: 'asc' },
+          include: {
+            attendances: {
+              select: {
+                activityParticipantId: true,
+                status: true,
+                confirmedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   } catch (e: any) {
@@ -86,6 +110,48 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     ? Math.max(activity.capacity - enrolledCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
+  const canManageDays =
+    isAdmin ||
+    activity.professors.some(
+      (assignment: { userId: string }) => assignment.userId === session?.user.id
+    );
+
+  let registrations: Array<{
+    id: string;
+    label: string;
+  }> = [];
+
+  if (session) {
+    const activityParticipants = await prisma.activityParticipant.findMany({
+      where: {
+        activityId: activity.id,
+        OR: [
+          { userId: session.user.id },
+          { child: { userId: session.user.id } },
+        ],
+      },
+      include: {
+        child: {
+          select: {
+            name: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    registrations = activityParticipants.map((participant: any) => ({
+      id: participant.id,
+      label: participant.child
+        ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
+        : (session.user.name ?? 'Yo'),
+    }));
+  }
+
+  const professorLabels = activity.professors.map((assignment: any) => {
+    const professor = assignment.user;
+    return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
+  });
 
   return (
     <main>
@@ -158,6 +224,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   value: hasCapacity
                     ? `${activity.capacity} lugares`
                     : 'Ilimitado',
+                },
+                activity.professors.length > 0 && {
+                  label: 'Profesores',
+                  value: professorLabels.join(', '),
                 },
                 activity.date && {
                   label: 'Fecha',
@@ -252,6 +322,26 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             </div>
           </div>
         </div>
+
+        <ActivityDaysPanel
+          activityId={activity.id}
+          canManageDays={canManageDays}
+          registrations={registrations}
+          days={activity.days.map((day: any) => ({
+            id: day.id,
+            date: day.date.toISOString(),
+            schedule: day.schedule,
+            description: day.description,
+            geoLocation: day.geoLocation,
+            attendances: day.attendances.map((attendance: any) => ({
+              activityParticipantId: attendance.activityParticipantId,
+              status: attendance.status,
+              confirmedAt: attendance.confirmedAt
+                ? attendance.confirmedAt.toISOString()
+                : null,
+            })),
+          }))}
+        />
 
         {isAdmin && (
           <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">

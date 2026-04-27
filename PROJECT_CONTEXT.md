@@ -45,10 +45,13 @@ See `prisma/schema.prisma`.
 
 Important models:
 
-- `User`: adult member / parent account. Roles: `MEMBER`, `ADMIN`, `SUPER_ADMIN`.
+- `User`: adult member / parent account. Roles: `MEMBER`, `PROFESSOR`, `ADMIN`, `SUPER_ADMIN`.
 - `Child`: child profile linked to a `User`.
 - `Activity`: club activity, course, outing, or subscription.
 - `ActivityParticipant`: user or child registered to an activity.
+- `ActivityProfessor`: professor assignments for activities.
+- `ActivityDay`: scheduled day for an activity with location, description, and schedule.
+- `ActivityDayAttendance`: per-day confirmation record for registered participants.
 - `Form`, `FormField`, `FormResponse`: custom admin forms.
 - `Conversation`, `Message`: internal chat.
 - `SiteSetting`: logo/favicon/site branding.
@@ -68,6 +71,7 @@ Important models:
 
 - Public users can see the home/contact pages and auth pages.
 - Logged-in users can access profile, chat, children data, activity checkout, and personal registration flows.
+- Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - `ADMIN` and `SUPER_ADMIN` can manage activities, users, forms, and notifications.
 - `SUPER_ADMIN` alone can access site settings.
 
