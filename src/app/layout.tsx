@@ -1,11 +1,27 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
+import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
 import { prisma } from '@/lib/prisma';
 import { isMercadoPagoTestingEnvironment } from '@/lib/mercadopago';
+import { cn } from '@/lib/utils';
+
+const fontHeading = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  display: 'swap',
+  variable: '--font-heading',
+});
+
+const fontBody = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-body',
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +56,8 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="min-h-screen text-foreground flex flex-col font-body">
+    <html lang="es" className={cn(fontHeading.variable, fontBody.variable)}>
+      <body className="min-h-screen text-foreground flex flex-col font-body antialiased">
         <Providers>
           {isMercadoPagoTestingEnvironment() ? (
             <div className="w-full bg-yellow-300 text-yellow-950 text-sm font-semibold text-center py-2 px-4">
