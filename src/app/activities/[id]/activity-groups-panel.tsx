@@ -34,7 +34,7 @@ export default function ActivityGroupsPanel({
   participants,
 }: ActivityGroupsPanelProps) {
   const router = useRouter();
-  const [showGroupsPanel, setShowGroupsPanel] = useState(true);
+  const [showGroupsPanel, setShowGroupsPanel] = useState(false);
   const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
     null
   );
