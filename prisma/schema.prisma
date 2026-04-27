@@ -282,6 +282,9 @@ model AccountingMovement {
   createdBy     User         @relation(fields: [createdById], references: [id])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  @@index([date])
+  @@index([createdById])
 }
 
 model MercadoPagoNotification {
