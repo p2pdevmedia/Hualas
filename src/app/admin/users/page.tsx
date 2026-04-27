@@ -8,7 +8,7 @@ export default async function UsersPage() {
   const session = await getServerSession(authOptions);
   if (
     !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+    !['ADMIN', 'SUPER_ADMIN', 'COUNTER'].includes(session.user.role)
   ) {
     redirect('/');
   }
@@ -26,11 +26,13 @@ export default async function UsersPage() {
     },
   });
 
+  const readOnly = session.user.role === 'COUNTER';
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <UsersList users={users} />
+        <UsersList users={users} readOnly={readOnly} />
       </div>
     </div>
   );

@@ -65,6 +65,31 @@ Agents should check this before searching the codebase.
 - `/my-activities` → My activities for members and professors
   - File: `src/app/my-activities/page.tsx`
 
+### Accounting
+
+- `/accounting` → Accounting dashboard
+  - File: `src/app/accounting/page.tsx`
+  - Layout guard: `src/app/accounting/layout.tsx`
+
+- `/accounting/movements` → Manual movements list
+  - File: `src/app/accounting/movements/page.tsx`
+  - Related component: `src/app/accounting/movements/movements-table.tsx`
+
+- `/accounting/movements/new` → Create movement
+  - File: `src/app/accounting/movements/new/page.tsx`
+  - Related form: `src/app/accounting/movements/movement-form.tsx`
+
+- `/accounting/movements/[id]/edit` → Edit movement
+  - File: `src/app/accounting/movements/[id]/edit/page.tsx`
+  - Related form: `src/app/accounting/movements/movement-form.tsx`
+
+- `/accounting/payments` → Mercado Pago payments read-only
+  - File: `src/app/accounting/payments/page.tsx`
+
+- `/accounting/reports` → Reports with CSV/PDF export
+  - File: `src/app/accounting/reports/page.tsx`
+  - Related client: `src/app/accounting/reports/reports-client.tsx`
+
 ### Admin
 
 - `/admin/users` → Users list
@@ -185,6 +210,26 @@ Agents should check this before searching the codebase.
   - File: `src/app/api/messages/route.ts`
   - Related page: `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`
+
+### Accounting API
+
+- `GET /api/accounting/movements` → list movements
+  - File: `src/app/api/accounting/movements/route.ts`
+
+- `POST /api/accounting/movements` → create movement
+  - File: `src/app/api/accounting/movements/route.ts`
+
+- `PUT /api/accounting/movements/[id]` → update movement
+  - File: `src/app/api/accounting/movements/[id]/route.ts`
+
+- `DELETE /api/accounting/movements/[id]` → delete movement
+  - File: `src/app/api/accounting/movements/[id]/route.ts`
+
+- `POST /api/accounting/movements/[id]/receipt` → upload receipt image
+  - File: `src/app/api/accounting/movements/[id]/receipt/route.ts`
+
+- `GET /api/accounting/reports` → aggregated report data
+  - File: `src/app/api/accounting/reports/route.ts`
 
 ### Children
 

@@ -43,6 +43,7 @@ model User {
   createdActivityDays   ActivityDay[]             @relation("ActivityDayCreatedBy")
   activityDayProfessors ActivityDayProfessor[]
   children              Child[]
+  accountingMovements   AccountingMovement[]
 }
 
 model PasswordResetToken {
@@ -268,6 +269,24 @@ model SiteSetting {
   backgroundColor String?
 }
 
+model AccountingMovement {
+  id            String       @id @default(cuid())
+  date          DateTime
+  amount        Int
+  type          MovementType
+  category      String
+  description   String
+  receiptNumber String?
+  receiptImage  String?
+  createdById   String
+  createdBy     User         @relation(fields: [createdById], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([date])
+  @@index([createdById])
+}
+
 model MercadoPagoNotification {
   id        String   @id @default(cuid())
   topic     String?
@@ -277,9 +296,15 @@ model MercadoPagoNotification {
 
 enum Role {
   ADMIN
+  COUNTER
   MEMBER
   PROFESSOR
   SUPER_ADMIN
+}
+
+enum MovementType {
+  INCOME
+  EXPENSE
 }
 
 enum ActivityFrequency {
