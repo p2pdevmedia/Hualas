@@ -50,6 +50,8 @@ Important models:
 - `Activity`: club activity, course, outing, or subscription.
 - `ActivityParticipant`: user or child registered to an activity.
 - `ActivityProfessor`: professor assignments for activities.
+- `ActivityGroup`: group definitions within an activity.
+- `ActivityGroupMember`: participant membership in an activity group.
 - `ActivityDay`: scheduled day for an activity with location, description, and schedule.
 - `ActivityDayProfessor`: professor assignments for activity days.
 - `ActivityDayAttendance`: per-day confirmation record for registered participants.
@@ -73,6 +75,8 @@ Important models:
 - Public users can see the home/contact pages and auth pages.
 - Logged-in users can access profile, chat, children data, activity checkout, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
+- Logged-in professors and admins assign registered users to activity groups.
+- Activity days can be restricted to a single group; attendance confirmation is blocked for participants outside that group.
 - `ADMIN` and `SUPER_ADMIN` can manage activities, users, forms, and notifications.
 - `SUPER_ADMIN` alone can access site settings.
 

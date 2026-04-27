@@ -25,12 +25,19 @@ type ActivityDayValues = {
   geoLocation: string;
   coordinates: Coordinates | null;
   professorIds: string[];
+  activityGroupId: string | null;
+};
+
+type GroupOption = {
+  id: string;
+  name: string;
 };
 
 interface ActivityDayFormProps {
   activityId: string;
   mode: 'create' | 'edit';
   professors: ProfessorOption[];
+  groups: GroupOption[];
   defaultProfessorIds: string[];
   initialValues?: ActivityDayValues;
   dayId?: string;
@@ -62,6 +69,7 @@ function buildInitialState(
       geoLocation: '',
       coordinates: null,
       professorIds: defaultProfessorIds,
+      activityGroupId: null,
     }
   );
 }
@@ -70,6 +78,7 @@ export default function ActivityDayForm({
   activityId,
   mode,
   professors,
+  groups,
   defaultProfessorIds,
   initialValues,
   dayId,
@@ -95,6 +104,9 @@ export default function ActivityDayForm({
   const [professorIds, setProfessorIds] = useState<string[]>(
     buildInitialState(initialValues, defaultProfessorIds).professorIds
   );
+  const [activityGroupId, setActivityGroupId] = useState<string | null>(
+    buildInitialState(initialValues, defaultProfessorIds).activityGroupId
+  );
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -107,6 +119,7 @@ export default function ActivityDayForm({
     setGeoLocation('');
     setCoordinates(null);
     setProfessorIds(defaultProfessorIds);
+    setActivityGroupId(null);
   };
 
   async function submitForm(e: React.FormEvent) {
@@ -136,6 +149,7 @@ export default function ActivityDayForm({
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
             professorIds,
+            activityGroupId,
           }),
         }
       );
@@ -202,6 +216,23 @@ export default function ActivityDayForm({
         className={`${inputClass} min-h-[90px] resize-y`}
         placeholder="Descripción de la sesión"
       />
+      <div className="space-y-1">
+        <p className="text-sm font-medium">Grupo de la sesión</p>
+        <select
+          value={activityGroupId ?? ''}
+          onChange={(e) =>
+            setActivityGroupId(e.target.value ? e.target.value : null)
+          }
+          className={inputClass}
+        >
+          <option value="">Sin restricción de grupo</option>
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <ProfessorPicker
         professors={professors}
         value={professorIds}
@@ -212,7 +243,8 @@ export default function ActivityDayForm({
           <p className="text-sm text-destructive">{error}</p>
         ) : (
           <span className="text-xs text-muted-foreground">
-            Guardá fecha, horario, ubicación, mapa y profesores asignados.
+            Guardá fecha, horario, ubicación, mapa, grupo y profesores
+            asignados.
           </span>
         )}
         <div className="flex gap-2">

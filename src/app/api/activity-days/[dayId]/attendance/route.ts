@@ -19,6 +19,7 @@ export async function PATCH(
     select: {
       id: true,
       activityId: true,
+      activityGroupId: true,
     },
   });
 
@@ -37,6 +38,11 @@ export async function PATCH(
           userId: true,
         },
       },
+      groupMembership: {
+        select: {
+          activityGroupId: true,
+        },
+      },
     },
   });
 
@@ -51,6 +57,16 @@ export async function PATCH(
     return NextResponse.json(
       { error: 'El inscripto no pertenece a esta actividad' },
       { status: 400 }
+    );
+  }
+
+  if (
+    day.activityGroupId &&
+    participant.groupMembership?.activityGroupId !== day.activityGroupId
+  ) {
+    return NextResponse.json(
+      { error: 'El día está restringido a otro grupo' },
+      { status: 403 }
     );
   }
 

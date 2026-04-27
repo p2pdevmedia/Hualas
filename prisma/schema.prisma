@@ -123,6 +123,7 @@ model Activity {
   capacity     Int?
   participants ActivityParticipant[]
   professors   ActivityProfessor[]
+  groups       ActivityGroup[]
   days         ActivityDay[]
   createdAt    DateTime              @default(now())
 }
@@ -138,6 +139,7 @@ model ActivityParticipant {
   activity       Activity                @relation(fields: [activityId], references: [id])
   user           User                    @relation(fields: [userId], references: [id])
   child          Child?                  @relation(fields: [childId], references: [id])
+  groupMembership ActivityGroupMember?
   attendances    ActivityDayAttendance[]
 }
 
@@ -153,9 +155,35 @@ model ActivityProfessor {
   @@index([userId])
 }
 
+model ActivityGroup {
+  id          String               @id @default(cuid())
+  activityId  String
+  name        String
+  description String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  activity    Activity             @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  members     ActivityGroupMember[]
+  days        ActivityDay[]
+
+  @@index([activityId])
+}
+
+model ActivityGroupMember {
+  id                    String              @id @default(cuid())
+  activityGroupId       String
+  activityParticipantId  String              @unique
+  createdAt             DateTime            @default(now())
+  activityGroup         ActivityGroup       @relation(fields: [activityGroupId], references: [id], onDelete: Cascade)
+  activityParticipant   ActivityParticipant @relation(fields: [activityParticipantId], references: [id], onDelete: Cascade)
+
+  @@index([activityGroupId])
+}
+
 model ActivityDay {
   id          String                  @id @default(cuid())
   activityId  String
+  activityGroupId String?
   createdById String
   date        DateTime
   schedule    String
@@ -166,11 +194,13 @@ model ActivityDay {
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
   activity    Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityGroup ActivityGroup?        @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
   createdBy   User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   attendances ActivityDayAttendance[]
   professors  ActivityDayProfessor[]
 
   @@index([activityId, date])
+  @@index([activityGroupId])
 }
 
 model ActivityDayProfessor {

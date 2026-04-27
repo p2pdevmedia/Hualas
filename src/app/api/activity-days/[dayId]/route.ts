@@ -54,6 +54,22 @@ export async function PUT(
 
   const data = activityDayUpdateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds));
+  const activityGroupId = data.activityGroupId ?? null;
+  if (activityGroupId) {
+    const group = await prisma.activityGroup.findFirst({
+      where: {
+        id: activityGroupId,
+        activityId: day.activityId,
+      },
+      select: { id: true },
+    });
+    if (!group) {
+      return NextResponse.json(
+        { error: 'El grupo no pertenece a esta actividad' },
+        { status: 400 }
+      );
+    }
+  }
   const validProfessors = await prisma.user.findMany({
     where: {
       id: { in: professorIds },
@@ -78,6 +94,7 @@ export async function PUT(
       geoLocation: data.geoLocation,
       latitude: data.latitude,
       longitude: data.longitude,
+      activityGroupId,
       professors: {
         deleteMany: {},
         create: professorIds.map((userId) => ({

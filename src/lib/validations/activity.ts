@@ -11,6 +11,11 @@ export const activityCreateSchema = z.object({
   professorIds: z.array(z.string()).optional(),
 });
 
+export const activityGroupCreateSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
+
 export const activityDayCreateSchema = z.object({
   date: z.string().transform((d) => new Date(d)),
   schedule: z.string().min(1),
@@ -19,6 +24,7 @@ export const activityDayCreateSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   professorIds: z.array(z.string().min(1)).min(1),
+  activityGroupId: z.string().min(1).nullable().optional(),
 });
 
 export const activityDayUpdateSchema = activityDayCreateSchema;
