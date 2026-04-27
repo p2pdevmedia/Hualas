@@ -7,6 +7,10 @@ export function isAccountingRole(
   return ACCOUNTING_ROLES.includes(role as AccountingRole);
 }
 
+export function isCounterRole(role: string | undefined | null): role is 'COUNTER' {
+  return role === 'COUNTER';
+}
+
 export type MovementType = 'INCOME' | 'EXPENSE';
 
 export const MOVEMENT_CATEGORIES = [

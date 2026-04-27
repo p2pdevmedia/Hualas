@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import type { SiteSettings } from '@/types/site';
+import { isCounterRole } from '@/lib/accounting';
 import {
   useTranslation,
   useLang,
@@ -46,8 +47,9 @@ export default function Navbar() {
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isCounter = isCounterRole(role);
   const isAccounting = role === 'COUNTER' || isAdmin;
-  const isMember = !!session && !isAdmin;
+  const isMember = !!session && !isAdmin && !isCounter;
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
   const t = translations.nav;
@@ -141,10 +143,12 @@ export default function Navbar() {
         </button>
 
         <div className="hidden md:flex md:items-center md:gap-6">
-          <Link href={activitiesHref} className={linkClass}>
-            {isMember ? t.myActivities : t.activities}
-          </Link>
-          {session && (
+          {session && !isCounter && (
+            <Link href={activitiesHref} className={linkClass}>
+              {isMember ? t.myActivities : t.activities}
+            </Link>
+          )}
+          {session && !isCounter && (
             <Link
               href="/chat"
               className={`${linkClass} inline-flex items-center gap-2`}
@@ -266,14 +270,16 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
-          <Link
-            href={activitiesHref}
-            className={linkClass}
-            onClick={() => setMenuOpen(false)}
-          >
-            {isMember ? t.myActivities : t.activities}
-          </Link>
-          {session && (
+          {session && !isCounter && (
+            <Link
+              href={activitiesHref}
+              className={linkClass}
+              onClick={() => setMenuOpen(false)}
+            >
+              {isMember ? t.myActivities : t.activities}
+            </Link>
+          )}
+          {session && !isCounter && (
             <Link
               href="/chat"
               className={`${linkClass} inline-flex items-center gap-2`}

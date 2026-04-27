@@ -2,14 +2,15 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isCounterRole } from '@/lib/accounting';
 import UsersList from './users-list';
 
 export default async function UsersPage() {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    !['ADMIN', 'SUPER_ADMIN', 'COUNTER'].includes(session.user.role)
-  ) {
+  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+    if (isCounterRole(session?.user?.role)) {
+      redirect('/accounting');
+    }
     redirect('/');
   }
 
@@ -25,14 +26,11 @@ export default async function UsersPage() {
       updatedAt: true,
     },
   });
-
-  const readOnly = session.user.role === 'COUNTER';
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <UsersList users={users} readOnly={readOnly} />
+        <UsersList users={users} />
       </div>
     </div>
   );
