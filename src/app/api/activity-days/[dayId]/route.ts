@@ -48,12 +48,7 @@ export async function PUT(
     (assignment) => assignment.userId === session.user.id
   );
 
-  if (
-    !isAdmin &&
-    session.user.role !== 'PROFESSOR' &&
-    !isActivityProfessor &&
-    !isDayProfessor
-  ) {
+  if (!isAdmin && !isActivityProfessor && !isDayProfessor) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
