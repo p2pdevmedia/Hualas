@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import ActivityDayForm from './activity-day-form';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
@@ -73,6 +74,7 @@ export default function ActivityDaysPanel({
   days,
 }: ActivityDaysPanelProps) {
   const router = useRouter();
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -122,13 +124,22 @@ export default function ActivityDaysPanel({
           </p>
         </div>
         {canManageDays && (
-          <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-            Administración de días
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+              Administración de días
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCreateForm((current) => !current)}
+            >
+              {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
+            </Button>
           </div>
         )}
       </div>
 
-      {canManageDays && (
+      {canManageDays && showCreateForm && (
         <div className="mt-5">
           <ActivityDayForm
             activityId={activityId}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import ActivityGroupForm from './activity-group-form';
 
 type ActivityGroup = {
@@ -33,6 +34,7 @@ export default function ActivityGroupsPanel({
   participants,
 }: ActivityGroupsPanelProps) {
   const router = useRouter();
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
     null
   );
@@ -114,13 +116,22 @@ export default function ActivityGroupsPanel({
           </p>
         </div>
         {canManageGroups && (
-          <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-            Administración de grupos
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+              Administración de grupos
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCreateForm((current) => !current)}
+            >
+              {showCreateForm ? 'Ocultar formulario' : 'Crear grupo'}
+            </Button>
           </div>
         )}
       </div>
 
-      {canManageGroups && (
+      {canManageGroups && showCreateForm && (
         <div className="mt-5">
           <ActivityGroupForm activityId={activityId} />
         </div>
