@@ -71,11 +71,12 @@ async function getAuditUserId() {
     const requestCookies = cookies();
     const token = await getToken({
       req: {
-        headers: requestHeaders,
+        headers: Object.fromEntries(requestHeaders.entries()),
         cookies: Object.fromEntries(
           requestCookies.getAll().map(({ name, value }) => [name, value])
         ),
       } as any,
+      secret: process.env.NEXTAUTH_SECRET,
     });
 
     return typeof token?.sub === 'string' ? token.sub : null;
