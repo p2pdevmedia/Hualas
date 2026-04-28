@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { DownloadIcon, ReloadIcon, HourglassIcon } from '@radix-ui/react-icons';
+import { DownloadIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
@@ -233,7 +233,7 @@ export default function ReportsClient() {
 
       {loading && (
         <div className="flex items-center gap-2 rounded-2xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-          <HourglassIcon className="h-4 w-4 animate-spin" />
+          <ReloadIcon className="h-4 w-4 animate-spin" />
           Cargando reporte...
         </div>
       )}
