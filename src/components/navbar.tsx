@@ -287,6 +287,12 @@ export default function Navbar() {
                   >
                     {actions.myChildren}
                   </Link>
+                  <Link
+                    href="/profile/payments"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                  >
+                    Pagos
+                  </Link>
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value as Lang)}
@@ -464,6 +470,13 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 {actions.myChildren}
+              </Link>
+              <Link
+                href="/profile/payments"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                Pagos
               </Link>
               <select
                 value={lang}
