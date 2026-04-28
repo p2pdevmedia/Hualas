@@ -294,6 +294,25 @@ model MercadoPagoNotification {
   createdAt DateTime @default(now())
 }
 
+model DbAuditLog {
+  id        String   @id @default(cuid())
+  model     String
+  action    String
+  recordId  String?
+  before    Json?
+  after     Json?
+  args      Json?
+  userId    String?
+  requestId String?
+  createdAt DateTime @default(now())
+
+  @@index([model])
+  @@index([action])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([requestId])
+}
+
 enum Role {
   ADMIN
   COUNTER
