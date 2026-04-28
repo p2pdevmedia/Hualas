@@ -13,7 +13,7 @@ import {
   movementTypeLabel,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
-import { FileTextIcon, ArrowRightIcon } from '@radix-ui/react-icons';
+import { FileIcon, ArrowRightIcon } from '@radix-ui/react-icons';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -194,7 +194,7 @@ export default async function AccountingDashboardPage() {
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-primary hover:underline"
                             >
-                              <FileTextIcon className="h-4 w-4" />
+                              <FileIcon className="h-4 w-4" />
                               Ver
                             </a>
                           ) : (
