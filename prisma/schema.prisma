@@ -260,15 +260,6 @@ model Child {
   activityParticipants ActivityParticipant[]
 }
 
-model SiteSetting {
-  id              Int     @id
-  logo            String?
-  favicon         String?
-  navbarColor     String?
-  footerColor     String?
-  backgroundColor String?
-}
-
 model AccountingMovement {
   id            String       @id @default(cuid())
   date          DateTime
