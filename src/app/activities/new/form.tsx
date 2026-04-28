@@ -23,7 +23,6 @@ export default function CreateActivityForm({
 }: CreateActivityFormProps) {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
-  const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [capacity, setCapacity] = useState('');
@@ -49,7 +48,6 @@ export default function CreateActivityForm({
         body: JSON.stringify({
           name,
           date,
-          image: image || undefined,
           description: description || undefined,
           frequency,
           price: Number(price),
@@ -62,7 +60,6 @@ export default function CreateActivityForm({
       setSuccess('Actividad creada');
       setName('');
       setDate('');
-      setImage('');
       setDescription('');
       setPrice('');
       setCapacity('');
@@ -88,13 +85,6 @@ export default function CreateActivityForm({
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className={inputClass}
-      />
-      <input
-        type="url"
-        placeholder="URL de la imagen"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
         className={inputClass}
       />
       <select

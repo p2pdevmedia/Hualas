@@ -46,7 +46,6 @@ export default async function EditActivityPage({
           name: activity.name,
           date: activity.date.toISOString().split('T')[0],
           frequency: activity.frequency,
-          image: activity.image ?? '',
           description: activity.description ?? '',
           price: activity.price,
           capacity: activity.capacity ?? null,

@@ -18,7 +18,6 @@ interface EditActivityFormProps {
     name: string;
     date: string;
     frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
-    image?: string | null;
     description?: string | null;
     price: number;
     capacity?: number | null;
@@ -36,7 +35,6 @@ export default function EditActivityForm({
   const [frequency, setFrequency] = useState<
     'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
   >(activity.frequency);
-  const [image, setImage] = useState(activity.image || '');
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
   const [capacity, setCapacity] = useState(activity.capacity?.toString() ?? '');
@@ -61,7 +59,6 @@ export default function EditActivityForm({
         body: JSON.stringify({
           name,
           date,
-          image: image || undefined,
           description: description || undefined,
           frequency,
           price: Number(price),
@@ -94,13 +91,6 @@ export default function EditActivityForm({
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className={inputClass}
-      />
-      <input
-        type="url"
-        placeholder="URL de la imagen"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
         className={inputClass}
       />
       <select
