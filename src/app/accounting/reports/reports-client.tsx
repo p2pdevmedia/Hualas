@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download, FileDown, Loader2, RefreshCw } from 'lucide-react';
+import { DownloadIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
@@ -211,7 +211,7 @@ export default function ReportsClient() {
               variant="outline"
               onClick={() => window.location.reload()}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <ReloadIcon className="mr-2 h-4 w-4" />
               Actualizar
             </Button>
             <Button
@@ -220,11 +220,11 @@ export default function ReportsClient() {
               onClick={downloadCsv}
               disabled={!data}
             >
-              <Download className="mr-2 h-4 w-4" />
+              <DownloadIcon className="mr-2 h-4 w-4" />
               CSV
             </Button>
             <Button type="button" onClick={downloadPdf} disabled={!data}>
-              <FileDown className="mr-2 h-4 w-4" />
+              <DownloadIcon className="mr-2 h-4 w-4" />
               PDF
             </Button>
           </div>
@@ -233,7 +233,7 @@ export default function ReportsClient() {
 
       {loading && (
         <div className="flex items-center gap-2 rounded-2xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <HourglassIcon className="h-4 w-4 animate-spin" />
           Cargando reporte...
         </div>
       )}

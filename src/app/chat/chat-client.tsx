@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeftIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
 import {
   Box,
   Flex,
@@ -342,7 +342,7 @@ export default function ChatClient() {
                       onClick={() => setRecipient('')}
                       aria-label="Volver"
                     >
-                      <ArrowLeft className="h-5 w-5" />
+                      <ArrowLeftIcon className="h-5 w-5" />
                     </button>
                   </Box>
                   <Avatar
@@ -411,7 +411,7 @@ export default function ChatClient() {
                         disabled={!input.trim()}
                         aria-label="Enviar"
                       >
-                        <Send className="h-4 w-4" />
+                        <PaperPlaneIcon className="h-4 w-4" />
                       </button>
                     </Box>
                   </Flex>

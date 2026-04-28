@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { Box, Flex, Text } from '@radix-ui/themes';
 import { Input } from '@/components/ui/input';
@@ -112,7 +112,7 @@ export default function UsersList({
                     aria-label={t.moreActions}
                     className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
                   >
-                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <DotsHorizontalIcon className="h-4 w-4" aria-hidden="true" />
                   </summary>
                   <Box className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
                     <Link

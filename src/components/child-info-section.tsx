@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 
 interface ChildInfoSectionProps {
   title: string;
@@ -23,7 +23,7 @@ export default function ChildInfoSection({
         className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/60 transition-colors"
       >
         <h3 className="font-semibold text-sm">{title}</h3>
-        <ChevronDown
+        <ChevronDownIcon
           className={`h-4 w-4 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}

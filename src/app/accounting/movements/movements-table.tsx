@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Filter, PencilLine, ReceiptText, Trash2 } from 'lucide-react';
+import { FilterIcon, PencilIcon, FileTextIcon, TrashIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import {
   formatAccountingDate,
@@ -108,7 +108,7 @@ export default function MovementsTable({
           </div>
           <div className="flex gap-2">
             <Button type="button" onClick={applyFilters}>
-              <Filter className="mr-2 h-4 w-4" />
+              <FilterIcon className="mr-2 h-4 w-4" />
               Filtrar
             </Button>
             <Button type="button" variant="outline" onClick={clearFilters}>
@@ -179,7 +179,7 @@ export default function MovementsTable({
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-primary hover:underline"
                       >
-                        <ReceiptText className="h-4 w-4" />
+                        <FileTextIcon className="h-4 w-4" />
                         Abrir
                       </a>
                     ) : (
@@ -193,7 +193,7 @@ export default function MovementsTable({
                         <Link
                           href={`/accounting/movements/${movement.id}/edit`}
                         >
-                          <PencilLine className="mr-2 h-4 w-4" />
+                          <PencilIcon className="mr-2 h-4 w-4" />
                           Editar
                         </Link>
                       </Button>
@@ -204,7 +204,7 @@ export default function MovementsTable({
                         onClick={() => deleteMovement(movement.id)}
                         disabled={deletingId === movement.id}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <TrashIcon className="mr-2 h-4 w-4" />
                         {deletingId === movement.id
                           ? 'Eliminando...'
                           : 'Eliminar'}

@@ -13,7 +13,7 @@ import {
   movementTypeLabel,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
-import { ReceiptText, ArrowRight } from 'lucide-react';
+import { FileTextIcon, ArrowRightIcon } from '@radix-ui/react-icons';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -141,7 +141,7 @@ export default async function AccountingDashboardPage() {
               <Button asChild variant="outline">
                 <Link href="/accounting/movements">
                   Ver todos
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRightIcon className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </Flex>
@@ -194,7 +194,7 @@ export default async function AccountingDashboardPage() {
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-primary hover:underline"
                             >
-                              <ReceiptText className="h-4 w-4" />
+                              <FileTextIcon className="h-4 w-4" />
                               Ver
                             </a>
                           ) : (
@@ -226,7 +226,7 @@ export default async function AccountingDashboardPage() {
               <Button asChild variant="outline">
                 <Link href="/accounting/payments">
                   Ver todos
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRightIcon className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </Flex>

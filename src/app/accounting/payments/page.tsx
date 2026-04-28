@@ -13,7 +13,7 @@ import {
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 
 type SearchParams = {
   from?: string;
@@ -82,7 +82,7 @@ export default async function PaymentsPage({
           <Button asChild variant="outline">
             <Link href="/accounting/reports">
               Ir a reportes
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </Flex>
@@ -127,7 +127,7 @@ export default async function PaymentsPage({
             </Box>
             <Flex gap="2" className="mt-3 flex-wrap">
               <Button type="submit">
-                <Search className="mr-2 h-4 w-4" />
+                <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
                 Buscar
               </Button>
               <Button asChild variant="outline">

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Upload, FileImage } from 'lucide-react';
+import { UploadIcon, ImageIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import {
   MOVEMENT_CATEGORIES,
@@ -232,12 +232,12 @@ export default function MovementForm({
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="mr-2 h-4 w-4" />
+            <UploadIcon className="mr-2 h-4 w-4" />
             Seleccionar imagen
           </Button>
           {receiptFile ? (
             <span className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs">
-              <FileImage className="h-4 w-4" />
+              <ImageIcon className="h-4 w-4" />
               {receiptFile.name}
             </span>
           ) : (

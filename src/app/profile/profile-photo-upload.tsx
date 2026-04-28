@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, ImageUp, X } from 'lucide-react';
+import { CameraIcon, UploadIcon, Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -190,7 +190,7 @@ export default function ProfilePhotoUpload({
               onClick={handleCapture}
               disabled={isUploading}
             >
-              <Camera className="mr-2 h-4 w-4" />
+              <CameraIcon className="mr-2 h-4 w-4" />
               Tomar foto
             </Button>
             <Button
@@ -202,7 +202,7 @@ export default function ProfilePhotoUpload({
               }}
               disabled={isUploading}
             >
-              <X className="mr-2 h-4 w-4" />
+              <Cross1Icon className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
           </div>
@@ -215,7 +215,7 @@ export default function ProfilePhotoUpload({
               onClick={() => setIsCameraOpen(true)}
               disabled={isUploading}
             >
-              <Camera className="mr-2 h-4 w-4" />
+              <CameraIcon className="mr-2 h-4 w-4" />
               Usar cámara
             </Button>
             <Button
@@ -224,7 +224,7 @@ export default function ProfilePhotoUpload({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              <ImageUp className="mr-2 h-4 w-4" />
+              <UploadIcon className="mr-2 h-4 w-4" />
               Subir foto
             </Button>
           </div>

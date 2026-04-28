@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImageUp, Trash2 } from 'lucide-react';
+import { UploadIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
@@ -140,7 +140,7 @@ export default function ActivityImageUpload({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-            <ImageUp className="h-8 w-8" />
+            <UploadIcon className="h-8 w-8" />
             <p className="text-center text-sm">Arrastra una imagen aquí</p>
           </div>
         )}
@@ -154,7 +154,7 @@ export default function ActivityImageUpload({
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <ImageUp className="mr-2 h-4 w-4" />
+            <UploadIcon className="mr-2 h-4 w-4" />
             Seleccionar imagen
           </Button>
           {hasCurrentImage && (
@@ -165,7 +165,7 @@ export default function ActivityImageUpload({
               disabled={isUploading}
               className="text-destructive hover:text-destructive"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <TrashIcon className="mr-2 h-4 w-4" />
               Eliminar imagen
             </Button>
           )}
