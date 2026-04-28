@@ -260,6 +260,7 @@ export default function EditUserForm({ user }: { user: User }) {
           onChange={(e) => setRole(e.target.value)}
         >
           <option value="ADMIN">ADMIN</option>
+          <option value="COUNTER">COUNTER</option>
           <option value="MEMBER">MEMBER</option>
           <option value="PROFESSOR">PROFESSOR</option>
           <option value="SUPER_ADMIN">SUPER_ADMIN</option>
