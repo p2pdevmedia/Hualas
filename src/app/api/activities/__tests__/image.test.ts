@@ -18,7 +18,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { POST } from '../[id]/image/route';
+import { POST, DELETE } from '../[id]/image/route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import * as blob from '@vercel/blob';
@@ -192,5 +192,97 @@ describe('POST /api/activities/[id]/image', () => {
     expect(blob.del).toHaveBeenCalledWith(
       'https://blob.vercelusercontent.com/old/image.jpg'
     );
+  });
+});
+
+describe('DELETE /api/activities/[id]/image', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns 401 if not authenticated', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce(null);
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'DELETE',
+    });
+
+    const res = await DELETE(req, { params: { id: '123' } });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 if not admin', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce({
+      user: { id: 'user1', role: 'MEMBER' },
+    });
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'DELETE',
+    });
+
+    const res = await DELETE(req, { params: { id: '123' } });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 if activity not found', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce({
+      user: { id: 'user1', role: 'ADMIN' },
+    });
+    (prisma.activity.findUnique as jest.Mock).mockResolvedValueOnce(null);
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'DELETE',
+    });
+
+    const res = await DELETE(req, { params: { id: '123' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 if activity has no image', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce({
+      user: { id: 'user1', role: 'ADMIN' },
+    });
+    (prisma.activity.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: '123',
+      image: null,
+    });
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'DELETE',
+    });
+
+    const res = await DELETE(req, { params: { id: '123' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('successfully deletes image from blob and updates activity', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce({
+      user: { id: 'user1', role: 'ADMIN' },
+    });
+    (prisma.activity.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: '123',
+      image: 'https://blob.vercelusercontent.com/activity-images/123/uuid.jpg',
+    });
+    (blob.del as jest.Mock).mockResolvedValueOnce(undefined);
+    (prisma.activity.update as jest.Mock).mockResolvedValueOnce({
+      id: '123',
+      image: null,
+    });
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'DELETE',
+    });
+
+    const res = await DELETE(req, { params: { id: '123' } });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(blob.del).toHaveBeenCalledWith(
+      'https://blob.vercelusercontent.com/activity-images/123/uuid.jpg'
+    );
+    expect(prisma.activity.update).toHaveBeenCalledWith({
+      where: { id: '123' },
+      data: { image: null },
+    });
   });
 });

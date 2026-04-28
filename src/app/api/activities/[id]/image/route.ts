@@ -78,3 +78,37 @@ export async function POST(
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+    select: { image: true },
+  });
+
+  if (!activity || !activity.image) {
+    return NextResponse.json(
+      { error: 'Imagen no encontrada' },
+      { status: 404 }
+    );
+  }
+
+  await del(activity.image).catch(() => undefined);
+
+  await prisma.activity.update({
+    where: { id: params.id },
+    data: { image: null },
+  });
+
+  return NextResponse.json({ ok: true });
+}
