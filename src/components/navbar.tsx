@@ -166,17 +166,29 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <>
-                  <Link href="/admin/notifications" className={linkClass}>
-                    {t.notifications}
-                  </Link>
-                  <Link href="/admin/audit-log" className={linkClass}>
-                    {t.auditLog}
-                  </Link>
-                  <Link href="/admin/site" className={linkClass}>
-                    {t.admin}
-                  </Link>
-                </>
+                <div className="relative group">
+                  <button className={linkClass}>Administrador</button>
+                  <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
+                    <Link
+                      href="/admin/site"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                    >
+                      /admin/site
+                    </Link>
+                    <Link
+                      href="/admin/notifications"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    >
+                      Notificaciones
+                    </Link>
+                    <Link
+                      href="/admin/audit-log"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    >
+                      Registro de auditoría
+                    </Link>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -309,29 +321,32 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium opacity-90">
+                    Administrador
+                  </span>
+                  <Link
+                    href="/admin/site"
+                    className={linkClass}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    /admin/site
+                  </Link>
                   <Link
                     href="/admin/notifications"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    {t.notifications}
+                    Notificaciones
                   </Link>
                   <Link
                     href="/admin/audit-log"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    {t.auditLog}
+                    Registro de auditoría
                   </Link>
-                  <Link
-                    href="/admin/site"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {t.admin}
-                  </Link>
-                </>
+                </div>
               )}
             </>
           )}
