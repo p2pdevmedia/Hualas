@@ -54,10 +54,28 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        mist: 'hsl(var(--mist))',
+        ink: 'hsl(var(--ink))',
+        bone: 'hsl(var(--bone))',
+      },
+      backgroundImage: {
+        'gradient-cinematic': 'var(--gradient-cinematic)',
+        'gradient-cinematic-strong': 'var(--gradient-cinematic-strong)',
+        'gradient-moss': 'var(--gradient-moss)',
+        'gradient-glacier': 'var(--gradient-glacier)',
+        'gradient-obsidian': 'var(--gradient-obsidian)',
       },
       fontFamily: {
         heading: ['var(--font-heading)', 'Cormorant Garamond', 'serif'],
         body: ['var(--font-body)', 'DM Sans', 'system-ui', 'sans-serif'],
+        mono: [
+          'var(--font-mono)',
+          'JetBrains Mono',
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'monospace',
+        ],
       },
       borderRadius: {
         lg: 'var(--radius)',

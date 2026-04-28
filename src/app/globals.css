@@ -19,6 +19,7 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 100 15% 91%; /* #E8EDE6 mist */
     --muted-foreground: 60 5% 45%; /* stone */
+    --mist: 100 12% 88%; /* superficie elevada */
     --accent: 187 20% 57%; /* glacier */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 70% 48%;
@@ -31,32 +32,61 @@
     --input: 100 12% 86%;
     --ring: 122 20% 30%;
     --radius: 0.5rem;
+
+    /* Constantes (no tema-dependientes) */
+    --ink: 0 0% 0%;
+    --bone: 37 30% 96%;
+    --gradient-cinematic: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--ink) / 0.85) 100%
+    );
+    --gradient-cinematic-strong: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--ink) / 0.65) 50%,
+      hsl(var(--ink) / 0.95) 100%
+    );
+    --gradient-moss: linear-gradient(
+      135deg,
+      #1c2117 0%,
+      #3d5a3e 60%,
+      #2a4a2c 100%
+    );
+    --gradient-glacier: linear-gradient(
+      135deg,
+      #1c2117 0%,
+      #4a6b6f 60%,
+      #7ba3a8 100%
+    );
+    --gradient-obsidian: linear-gradient(135deg, #000 0%, #1c2117 100%);
   }
 
   .dark {
-    /* Cielo patagónico nocturno */
-    --background: 89 18% 8%; /* obsidiana */
+    /* Cielo patagónico nocturno — más profundo, cinemático */
+    --background: 89 18% 5%; /* obsidiana profunda */
     --foreground: 37 25% 92%; /* lino claro */
-    --card: 89 16% 11%;
+    --card: 100 8% 10%;
     --card-foreground: 37 25% 92%;
-    --popover: 89 16% 11%;
+    --popover: 100 8% 10%;
     --popover-foreground: 37 25% 92%;
     --primary: 122 22% 55%; /* musgo iluminado */
-    --primary-foreground: 89 18% 8%;
+    --primary-foreground: 89 18% 5%;
     --secondary: 187 25% 62%;
-    --secondary-foreground: 89 18% 8%;
+    --secondary-foreground: 89 18% 5%;
     --muted: 100 8% 16%;
     --muted-foreground: 60 8% 65%;
+    --mist: 100 8% 12%; /* card elevada en dark */
     --accent: 187 25% 62%; /* glaciar */
-    --accent-foreground: 89 18% 8%;
+    --accent-foreground: 89 18% 5%;
     --destructive: 0 65% 55%;
-    --destructive-foreground: 89 18% 8%;
+    --destructive-foreground: 89 18% 5%;
     --success: 160 50% 48%;
-    --success-foreground: 89 18% 8%;
+    --success-foreground: 89 18% 5%;
     --warning: 38 80% 60%;
-    --warning-foreground: 89 18% 8%;
-    --border: 100 8% 22%;
-    --input: 100 8% 22%;
+    --warning-foreground: 89 18% 5%;
+    --border: 100 8% 18%;
+    --input: 100 8% 18%;
     --ring: 122 22% 55%;
   }
 
@@ -105,5 +135,68 @@
   }
   .hairline {
     @apply border-t border-border;
+  }
+  .text-mono {
+    font-family:
+      var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+
+@layer components {
+  .marquee {
+    --marquee-duration: 40s;
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: 2rem;
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      hsl(var(--background)) 5%,
+      hsl(var(--background)) 95%,
+      transparent
+    );
+  }
+  .marquee__track {
+    display: flex;
+    flex-shrink: 0;
+    min-width: 100%;
+    gap: 2rem;
+    animation: marquee-scroll var(--marquee-duration) linear infinite;
+  }
+  .marquee[data-pause-on-hover='true']:hover .marquee__track {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-snap-x > * {
+    scroll-snap-align: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

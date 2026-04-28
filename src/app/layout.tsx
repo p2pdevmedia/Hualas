@@ -1,7 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
-import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
+import { Cormorant_Garamond, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
@@ -21,6 +21,13 @@ const fontBody = DM_Sans({
   weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-body',
+});
+
+const fontMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  variable: '--font-mono',
 });
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +63,11 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="es" className={cn(fontHeading.variable, fontBody.variable)}>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={cn(fontHeading.variable, fontBody.variable, fontMono.variable)}
+    >
       <body className="min-h-screen text-foreground flex flex-col font-body antialiased">
         <Providers>
           {isMercadoPagoTestingEnvironment() ? (
