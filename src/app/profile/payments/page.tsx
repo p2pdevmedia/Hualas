@@ -23,7 +23,7 @@ export default async function ProfilePaymentsPage() {
     where: {
       OR: [
         { userId: session.user.id },
-        { child: { parentId: session.user.id } },
+        { child: { userId: session.user.id } },
       ],
       receipt: { not: null },
     },
