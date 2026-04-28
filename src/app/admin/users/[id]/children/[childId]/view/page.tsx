@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Heading, Text, Box, Flex, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
@@ -31,45 +32,46 @@ export default async function ViewChildPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {child.name} {child.lastName}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Hijo de {child.user.name} {child.user.lastName}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/admin/users/${params.id}/children/${params.childId}/edit`}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
-            >
-              Editar
-            </Link>
-            <Link
-              href={`/admin/users/${params.id}/view`}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
-            >
-              ← Volver
-            </Link>
-          </div>
-        </div>
+    <Container>
+      <div className="py-8 space-y-6">
+        {/* Header */}
+        <Box className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+          <Flex justify="between" align="start" gap="4">
+            <div>
+              <Heading size="8">
+                {child.name} {child.lastName}
+              </Heading>
+              <Text size="2" color="gray" className="mt-1">
+                Hijo de {child.user.name} {child.user.lastName}
+              </Text>
+            </div>
+            <Flex gap="2">
+              <Link
+                href={`/admin/users/${params.id}/children/${params.childId}/edit`}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+              >
+                Editar
+              </Link>
+              <Link
+                href={`/admin/users/${params.id}/view`}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
+              >
+                ← Volver
+              </Link>
+            </Flex>
+          </Flex>
 
-        {/* Document info summary */}
-        {(child.documentFrontPhoto || child.documentBackPhoto) && (
-          <div className="text-xs rounded-full bg-muted px-3 py-1 font-medium w-fit">
-            DNI con frente y dorso cargados
-          </div>
-        )}
-      </div>
+          {/* Document info summary */}
+          {(child.documentFrontPhoto || child.documentBackPhoto) && (
+            <Text size="1" weight="medium" className="rounded-full bg-muted px-3 py-1 w-fit">
+              DNI con frente y dorso cargados
+            </Text>
+          )}
+        </Box>
 
       {/* Información Personal */}
       <ChildInfoSection title="Información Personal">
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <Box className="grid grid-cols-2 gap-4 text-sm">
           {child.name && (
             <div>
               <span className="font-medium block text-foreground">Nombre</span>
@@ -134,7 +136,7 @@ export default async function ViewChildPage({
               <span className="text-muted-foreground">{child.address}</span>
             </div>
           )}
-        </div>
+        </Box>
       </ChildInfoSection>
 
       {/* Documentación */}
@@ -318,12 +320,13 @@ export default async function ViewChildPage({
       )}
 
       {child.activityParticipants.length === 0 && (
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">
+        <Box className="rounded-xl border bg-card p-6 shadow-sm">
+          <Text size="2" color="gray">
             Sin actividades registradas.
-          </p>
-        </div>
+          </Text>
+        </Box>
       )}
-    </div>
+      </div>
+    </Container>
   );
 }

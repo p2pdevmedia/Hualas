@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
@@ -24,22 +25,24 @@ export default async function EditMovementPage({
   }
 
   return (
-    <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-6 shadow-sm">
-      <h2 className="mb-4 text-2xl font-bold tracking-tight">
-        Editar movimiento
-      </h2>
-      <MovementForm
-        movement={{
-          id: movement.id,
-          date: movement.date.toISOString().split('T')[0],
-          amount: movement.amount,
-          type: movement.type,
-          category: movement.category,
-          description: movement.description,
-          receiptNumber: movement.receiptNumber,
-          receiptImage: movement.receiptImage,
-        }}
-      />
-    </div>
+    <Container>
+      <Box className="rounded-2xl border bg-card p-6 shadow-sm">
+        <Heading size="8" mb="4">
+          Editar movimiento
+        </Heading>
+        <MovementForm
+          movement={{
+            id: movement.id,
+            date: movement.date.toISOString().split('T')[0],
+            amount: movement.amount,
+            type: movement.type,
+            category: movement.category,
+            description: movement.description,
+            receiptNumber: movement.receiptNumber,
+            receiptImage: movement.receiptImage,
+          }}
+        />
+      </Box>
+    </Container>
   );
 }

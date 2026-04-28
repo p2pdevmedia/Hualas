@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Text, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditForm from './edit-form';
@@ -22,17 +23,21 @@ export default async function EditFormPage({
   });
   if (!form) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-muted-foreground">Formulario no encontrado.</p>
-      </div>
+      <Container>
+        <div className="py-8">
+          <Text color="gray">Formulario no encontrado.</Text>
+        </div>
+      </Container>
     );
   }
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Editar formulario</h1>
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <EditForm form={form} />
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Editar formulario</Heading>
+        <Box className="rounded-xl border bg-card p-6 shadow-sm">
+          <EditForm form={form} />
+        </Box>
       </div>
-    </div>
+    </Container>
   );
 }

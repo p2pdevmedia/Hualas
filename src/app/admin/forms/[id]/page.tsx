@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Text, Container, Heading, Box } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -30,48 +31,52 @@ export default async function FormResponsesPage({
   });
   if (!form) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <p className="text-muted-foreground">Formulario no encontrado.</p>
-      </div>
+      <Container>
+        <div className="py-8">
+          <Text color="gray">Formulario no encontrado.</Text>
+        </div>
+      </Container>
     );
   }
   const fieldMap = Object.fromEntries(form.fields.map((f) => [f.id, f.label]));
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Respuestas: {form.title}
-      </h1>
-      {form.responses.length === 0 && (
-        <p className="text-sm text-muted-foreground">Sin respuestas todavía.</p>
-      )}
-      <ul className="space-y-3">
-        {form.responses.map((r) => (
-          <li
-            key={r.id}
-            className="rounded-xl border bg-card shadow-sm overflow-hidden"
-          >
-            <details>
-              <summary className="px-4 py-3 cursor-pointer font-medium hover:bg-muted/40 transition-colors">
-                {r.user?.name || r.user?.email || 'Anónimo'}
-              </summary>
-              <ul className="px-4 pb-4 pt-2 space-y-1 border-t border-border">
-                {Object.entries(r.data as Record<string, unknown>).map(
-                  ([fieldId, value]) => (
-                    <li key={fieldId} className="text-sm">
-                      <span className="font-medium">
-                        {fieldMap[fieldId] || fieldId}:
-                      </span>{' '}
-                      <span className="text-muted-foreground">
-                        {String(value)}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            </details>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Respuestas: {form.title}</Heading>
+        {form.responses.length === 0 && (
+          <Text size="2" color="gray">
+            Sin respuestas todavía.
+          </Text>
+        )}
+        <Box className="space-y-3">
+          {form.responses.map((r) => (
+            <Box
+              key={r.id}
+              className="rounded-xl border bg-card shadow-sm overflow-hidden"
+            >
+              <details>
+                <summary className="px-4 py-3 cursor-pointer font-medium hover:bg-muted/40 transition-colors">
+                  {r.user?.name || r.user?.email || 'Anónimo'}
+                </summary>
+                <Box className="px-4 pb-4 pt-2 space-y-1 border-t border-border">
+                  {Object.entries(r.data as Record<string, unknown>).map(
+                    ([fieldId, value]) => (
+                      <Box key={fieldId} className="text-sm">
+                        <Text weight="medium" className="inline">
+                          {fieldMap[fieldId] || fieldId}:
+                        </Text>{' '}
+                        <Text color="gray" className="inline">
+                          {String(value)}
+                        </Text>
+                      </Box>
+                    )
+                  )}
+                </Box>
+              </details>
+            </Box>
+          ))}
+        </Box>
+      </div>
+    </Container>
   );
 }

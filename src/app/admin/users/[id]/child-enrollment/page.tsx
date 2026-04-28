@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import AdminChildrenManager from './children';
 
@@ -16,11 +17,11 @@ export default async function ChildEnrollmentPage({
     redirect('/');
   }
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Inscripción de hijos
-      </h1>
-      <AdminChildrenManager userId={params.id} />
-    </div>
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Inscripción de hijos</Heading>
+        <AdminChildrenManager userId={params.id} />
+      </div>
+    </Container>
   );
 }

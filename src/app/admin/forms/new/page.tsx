@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import NewForm from '../new-form';
 
@@ -12,11 +13,13 @@ export default async function NewFormPage() {
     redirect('/');
   }
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Nuevo formulario</h1>
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <NewForm />
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Nuevo formulario</Heading>
+        <Box className="rounded-xl border bg-card p-6 shadow-sm">
+          <NewForm />
+        </Box>
       </div>
-    </div>
+    </Container>
   );
 }
