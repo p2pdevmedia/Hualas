@@ -138,6 +138,11 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
+          {isMember && (
+            <Link href="/activities/cart" className={linkClass}>
+              Carrito
+            </Link>
+          )}
           {session && (
             <Link
               href="/chat"
@@ -276,6 +281,15 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               {isMember ? t.myActivities : t.activities}
+            </Link>
+          )}
+          {isMember && (
+            <Link
+              href="/activities/cart"
+              className={linkClass}
+              onClick={() => setMenuOpen(false)}
+            >
+              Carrito
             </Link>
           )}
           {session && (

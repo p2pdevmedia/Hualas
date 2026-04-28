@@ -447,7 +447,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   Cupo completo
                 </Button>
               ) : (
-                <RegisterButton activityId={activity.id} />
+                <RegisterButton activityId={activity.id} activityName={activity.name} activityPrice={Number(activity.price)} />
               )}
               <Link
                 href="/contact"
