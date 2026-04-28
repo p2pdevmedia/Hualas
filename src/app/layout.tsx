@@ -5,7 +5,6 @@ import { Barlow_Condensed, Inter, Archivo } from 'next/font/google';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
-import { prisma } from '@/lib/prisma';
 import { isMercadoPagoTestingEnvironment } from '@/lib/mercadopago';
 import { cn } from '@/lib/utils';
 
@@ -41,23 +40,12 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata() {
-  const settings = await getSiteSettings();
-  const iconUrl = settings?.favicon
-    ? `https://gateway.pinata.cloud/ipfs/${settings.favicon}`
-    : undefined;
+  const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
   return {
     title: 'Hualas Club',
     description: 'Club de montaña en San Martín de los Andes, Patagonia',
-    icons: iconUrl ? [{ url: iconUrl }] : undefined,
+    icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}` }],
   };
-}
-
-async function getSiteSettings() {
-  try {
-    return await prisma.siteSetting.findUnique({ where: { id: 1 } });
-  } catch {
-    return null;
-  }
 }
 
 export default async function RootLayout({
