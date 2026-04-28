@@ -14,10 +14,12 @@ type ProfessorOption = {
 
 interface CreateActivityFormProps {
   professors: ProfessorOption[];
+  onSuccess?: (activityId: string) => void;
 }
 
 export default function CreateActivityForm({
   professors,
+  onSuccess,
 }: CreateActivityFormProps) {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
@@ -56,6 +58,7 @@ export default function CreateActivityForm({
         }),
       });
       if (!res.ok) throw new Error('Request failed');
+      const json = await res.json();
       setSuccess('Actividad creada');
       setName('');
       setDate('');
@@ -65,10 +68,7 @@ export default function CreateActivityForm({
       setCapacity('');
       setFrequency('ONE_TIME');
       setProfessorIds([]);
-      setTimeout(() => {
-        router.push('/activities');
-        router.refresh();
-      }, 1000);
+      onSuccess?.(json.id);
     } catch (e) {
       setError('No se pudo crear la actividad');
     }

@@ -2,7 +2,14 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import CreateActivityForm from './form';
+import CreateActivityPageClient from './page-client';
+
+type ProfessorOption = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+};
 
 export default async function CreateActivityPage() {
   const session = await getServerSession(authOptions);
@@ -24,10 +31,5 @@ export default async function CreateActivityPage() {
     orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
   });
 
-  return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Crear actividad</h1>
-      <CreateActivityForm professors={professors} />
-    </main>
-  );
+  return <CreateActivityPageClient professors={professors} />;
 }
