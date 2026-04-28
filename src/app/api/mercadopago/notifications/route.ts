@@ -43,9 +43,13 @@ export async function POST(req: NextRequest) {
       const payment = await new Payment(client).get({ id });
 
       if (payment.status === 'approved' && payment.external_reference) {
-        const [activityId, userId, childId] =
-          payment.external_reference.split(':');
-        const activity = await prisma.activity.findUnique({
+        const references = payment.external_reference.startsWith('cart|')
+          ? payment.external_reference.replace('cart|', '').split(',').filter(Boolean)
+          : [payment.external_reference];
+
+        for (const reference of references) {
+          const [activityId, userId, childId] = reference.split(':');
+          const activity = await prisma.activity.findUnique({
           where: { id: activityId },
           select: {
             capacity: true,
@@ -94,18 +98,19 @@ export async function POST(req: NextRequest) {
           receipt,
           receiptDate: new Date(date),
         };
-        await prisma.activityParticipant.upsert({
-          where: {
-            participantKey,
-          },
-          create: {
-            activityId,
-            userId,
-            childId: participantChildId,
-            ...participantData,
-          },
-          update: participantData,
-        });
+          await prisma.activityParticipant.upsert({
+            where: {
+              participantKey,
+            },
+            create: {
+              activityId,
+              userId,
+              childId: participantChildId,
+              ...participantData,
+            },
+            update: participantData,
+          });
+        }
       }
     } catch (error: any) {
       // ignore missing payments, rethrow other errors
