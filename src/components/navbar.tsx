@@ -6,7 +6,6 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import type { SiteSettings } from '@/types/site';
 import { isCounterRole } from '@/lib/accounting';
 import {
   useTranslation,
@@ -15,8 +14,8 @@ import {
 } from './language-provider';
 import type { Lang } from '@/lib/i18n';
 
-const defaultLogo =
-  'https://lh6.googleusercontent.com/hX1qgSPLZYte1_e1xQwiDdMTxlxH3h1isoxUqgXoFnylzCCyiLC8q9dvMSSM-cbtHBdkrl_wlkqyknspAH12YnDAIEIdo5fmegdteoOHIUNEK_nu_0fHbE6J6S5WtghSXZiqIPcd1A=w16383';
+const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
+const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/logo.png`;
 
 const AVATAR_COLORS = [
   'bg-rose-500',
@@ -56,15 +55,8 @@ export default function Navbar() {
   const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/site-settings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setSettings(data));
-  }, []);
 
   useEffect(() => {
     setPhotoFailed(false);
@@ -102,9 +94,7 @@ export default function Navbar() {
     };
   }, [session]);
 
-  const logoUrl = settings?.logo
-    ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
-    : defaultLogo;
+  const logoUrl = defaultLogo;
 
   const linkClass =
     'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
@@ -166,17 +156,23 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <>
-                  <Link href="/admin/notifications" className={linkClass}>
-                    {t.notifications}
-                  </Link>
-                  <Link href="/admin/audit-log" className={linkClass}>
-                    {t.auditLog}
-                  </Link>
-                  <Link href="/admin/site" className={linkClass}>
-                    {t.admin}
-                  </Link>
-                </>
+                <div className="relative group">
+                  <button className={linkClass}>Administrador</button>
+                  <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
+                    <Link
+                      href="/admin/notifications"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                    >
+                      Notificaciones
+                    </Link>
+                    <Link
+                      href="/admin/audit-log"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    >
+                      Registro de auditoría
+                    </Link>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -309,29 +305,25 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium opacity-90">
+                    Administrador
+                  </span>
                   <Link
                     href="/admin/notifications"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    {t.notifications}
+                    Notificaciones
                   </Link>
                   <Link
                     href="/admin/audit-log"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    {t.auditLog}
+                    Registro de auditoría
                   </Link>
-                  <Link
-                    href="/admin/site"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {t.admin}
-                  </Link>
-                </>
+                </div>
               )}
             </>
           )}

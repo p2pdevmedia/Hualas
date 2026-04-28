@@ -112,10 +112,6 @@ Agents should check this before searching the codebase.
 - `/admin/notifications` → MercadoPago notifications
   - File: `src/app/admin/notifications/page.tsx`
 
-- `/admin/site` → Site settings (SUPER_ADMIN only)
-  - File: `src/app/admin/site/page.tsx`
-  - Related component: `src/app/admin/site/site-settings-form.tsx`
-
 ### Forms (public/admin usage)
 
 - `/forms/[id]` → Form display
@@ -240,18 +236,6 @@ Agents should check this before searching the codebase.
 - `POST /api/children` → create child
   - File: `src/app/api/children/route.ts`
   - Validation: `src/lib/validations/child.ts`
-
-### Site Settings
-
-- `GET /api/site-settings` → get branding
-  - File: `src/app/api/site-settings/route.ts`
-  - Related page: `src/app/admin/site/page.tsx`
-  - Related component: `src/app/admin/site/site-settings-form.tsx`
-
-- `POST /api/site-settings` → update branding
-  - File: `src/app/api/site-settings/route.ts`
-  - Related page: `src/app/admin/site/page.tsx`
-  - Related component: `src/app/admin/site/site-settings-form.tsx`
 
 ### Mercado Pago
 

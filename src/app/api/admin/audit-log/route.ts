@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -54,11 +55,11 @@ export async function GET(req: NextRequest) {
       userIds.add(log.userId);
     }
 
-    if (log.model === 'User' && log.action === 'create' && log.recordId) {
+    if (log.model === 'User' && (log.action === 'create' || log.action === 'update') && log.recordId) {
       userIds.add(log.recordId);
     }
 
-    if (log.model === 'Activity' && log.action === 'create' && log.recordId) {
+    if (log.model === 'Activity' && (log.action === 'create' || log.action === 'update') && log.recordId) {
       activityIds.add(log.recordId);
     }
 
