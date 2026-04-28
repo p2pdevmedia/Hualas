@@ -126,6 +126,82 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   return `${log.model} ${log.action} por ${actor}.`;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getStringField(
+  record: Record<string, unknown> | null,
+  keys: string[]
+): string | null {
+  if (!record) return null;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function buildHumanSummary(log: AuditLog) {
+  const after = asRecord(log.after);
+  const before = asRecord(log.before);
+  const args = asRecord(log.args);
+  const actor = log.userId ?? 'Sistema';
+
+  if (log.model === 'User' && log.action === 'create') {
+    const userLabel =
+      getStringField(after, ['name', 'fullName']) ??
+      getStringField(after, ['email']) ??
+      log.recordId ??
+      'Sin nombre';
+
+    return `Nuevo usuario creado: ${userLabel}. Creado por: ${actor}.`;
+  }
+
+  if (log.model === 'Message' && log.action === 'create') {
+    const fromUser =
+      getStringField(after, ['senderId', 'authorId', 'fromUserId']) ??
+      actor;
+    const toUser =
+      getStringField(after, ['receiverId', 'toUserId']) ??
+      getStringField(args ? asRecord(args.data) : null, ['receiverId']) ??
+      getStringField(args ? asRecord(args.where) : null, ['id']) ??
+      'destinatario';
+    const text = getStringField(after, ['text', 'content', 'message']) ?? '—';
+
+    return `Mensaje enviado de ${fromUser} a ${toUser}: ${text}`;
+  }
+
+  if (log.model === 'Activity' && log.action === 'create') {
+    const activityName =
+      getStringField(after, ['name', 'title']) ?? log.recordId ?? 'Sin nombre';
+
+    return `Actividad creada: ${activityName}. Creada por: ${actor}.`;
+  }
+
+  if (log.action === 'update') {
+    return `${log.model} actualizado (ID: ${log.recordId ?? '—'}) por ${actor}.`;
+  }
+
+  if (log.action === 'delete') {
+    return `${log.model} eliminado (ID: ${log.recordId ?? '—'}) por ${actor}.`;
+  }
+
+  if (log.action === 'create') {
+    return `${log.model} creado (ID: ${log.recordId ?? '—'}) por ${actor}.`;
+  }
+
+  return `${log.model} ${log.action} (ID: ${log.recordId ?? '—'}) por ${actor}.`;
+}
+
 export default function AuditLogTable() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [page, setPage] = useState(1);
@@ -204,13 +280,11 @@ export default function AuditLogTable() {
                     <td className="whitespace-nowrap px-4 py-2 text-xs text-muted-foreground">
                       {new Date(log.createdAt).toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-2">{buildHumanSummary(log, data)}</td>
+                    <td className="px-4 py-2">{buildHumanSummary(log)}</td>
                     <td className="px-4 py-2 font-mono">{log.model}</td>
                     <td className="px-4 py-2 font-mono">{log.action}</td>
                     <td className="px-4 py-2 text-xs text-blue-600 underline">
-                      {expanded === log.id
-                        ? 'Ocultar info completa'
-                        : 'Ver info completa'}
+                      {expanded === log.id ? 'Ocultar info completa' : 'Ver info completa'}
                     </td>
                   </tr>
                   {expanded === log.id && (
