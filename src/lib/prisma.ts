@@ -65,6 +65,11 @@ function toRecordId(result: unknown, args: unknown) {
   return null;
 }
 
+const isProd = process.env.NODE_ENV === 'production';
+const SESSION_COOKIE_NAME = isProd
+  ? '__Secure-next-auth.session-token'
+  : 'next-auth.session-token';
+
 async function getAuditUserId() {
   try {
     const requestHeaders = headers();
@@ -77,10 +82,13 @@ async function getAuditUserId() {
         ),
       } as any,
       secret: process.env.NEXTAUTH_SECRET,
+      cookieName: SESSION_COOKIE_NAME,
+      secureCookie: isProd,
     });
 
     return typeof token?.sub === 'string' ? token.sub : null;
-  } catch {
+  } catch (error) {
+    console.error('[DbAuditLog] getAuditUserId failed', error);
     return null;
   }
 }
