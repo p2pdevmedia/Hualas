@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Box, Container, Heading, Text, Flex } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { isCounterRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
@@ -117,53 +118,62 @@ export default async function MyActivitiesPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Mis actividades
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Actividades en las que estás inscripto vos, alguno de tus hijos o en
-          las que sos profesor.
-        </p>
-      </div>
+    <Container size="4" px={{ initial: '4', sm: '4' }} py="6">
+      <Box asChild>
+        <main>
+          <Box className="mb-6">
+            <Heading size="7" weight="medium" className="tracking-tight">
+              Mis actividades
+            </Heading>
+            <Text size="2" color="gray">
+              Actividades en las que estás inscripto vos, alguno de tus hijos o en
+              las que sos profesor.
+            </Text>
+          </Box>
 
-      {items.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">
-          <p>Todavía no tenés actividades asociadas.</p>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {items.map(({ activity, labels }) => (
-            <li
-              key={activity.id}
-              className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <Link
-                  href={`/activities/${activity.id}`}
-                  className="text-base font-semibold transition-colors hover:text-primary"
-                >
-                  {activity.name}
-                </Link>
-                <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                  <span>
-                    {
-                      frequencyLabels[
-                        activity.frequency as keyof typeof frequencyLabels
-                      ]
-                    }
-                  </span>
-                  <span>·</span>
-                  <span>${activity.price}</span>
-                  <span>·</span>
-                  <span>{labels.join(' · ')}</span>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+          {items.length === 0 ? (
+            <Box className="py-16 text-center">
+              <Text color="gray">Todavía no tenés actividades asociadas.</Text>
+            </Box>
+          ) : (
+            <Box asChild>
+              <ul className="space-y-3">
+                {items.map(({ activity, labels }) => (
+                  <Box
+                    asChild
+                    key={activity.id}
+                    className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <li>
+                      <Box>
+                        <Link
+                          href={`/activities/${activity.id}`}
+                          className="text-base font-semibold transition-colors hover:text-primary"
+                        >
+                          {activity.name}
+                        </Link>
+                        <Flex gap="3" wrap="wrap" className="mt-1">
+                          <Text size="2" color="gray">
+                            {
+                              frequencyLabels[
+                                activity.frequency as keyof typeof frequencyLabels
+                              ]
+                            }
+                          </Text>
+                          <Text size="2" color="gray">·</Text>
+                          <Text size="2" color="gray">${activity.price}</Text>
+                          <Text size="2" color="gray">·</Text>
+                          <Text size="2" color="gray">{labels.join(' · ')}</Text>
+                        </Flex>
+                      </Box>
+                    </li>
+                  </Box>
+                ))}
+              </ul>
+            </Box>
+          )}
+        </main>
+      </Box>
+    </Container>
   );
 }

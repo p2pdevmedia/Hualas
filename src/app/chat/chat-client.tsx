@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { ArrowLeft, Send } from 'lucide-react';
+import { Box, Flex, Container, Text, Button as RadixButton } from '@radix-ui/themes';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const POLL_THREAD_MS = 3000;
 const POLL_HISTORY_MS = 8000;
@@ -235,167 +238,190 @@ export default function ChatClient() {
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-9rem)] max-w-6xl px-2 py-4 md:px-4">
-      <div className="flex h-full overflow-hidden rounded-xl border bg-card shadow-sm">
-        <aside
+    <Container size="4" px={{ initial: '2', md: '4' }} py="4">
+      <Box className="flex h-[calc(100vh-9rem)] overflow-hidden rounded-xl border bg-card shadow-sm">
+        <Box
+          asChild
           className={cn(
             'w-full flex-col border-r md:flex md:w-80',
             recipient ? 'hidden' : 'flex'
           )}
         >
-          <div className="border-b px-4 py-4">
-            <h1 className="text-xl font-bold tracking-tight">Mensajes</h1>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {contacts.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                No hay contactos disponibles
-              </p>
-            ) : (
-              contacts.map(({ user, lastMessage, unreadCount }) => {
-                const isSelected = recipient === user.id;
-                const hasUnread = unreadCount > 0;
-                const previewSender =
-                  lastMessage && lastMessage.from === session?.user.id
-                    ? 'Vos: '
-                    : '';
-                return (
-                  <button
-                    key={user.id}
-                    onClick={() => setRecipient(user.id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
-                      isSelected && 'bg-muted'
-                    )}
-                  >
-                    <Avatar
-                      id={user.id}
-                      name={user.name}
-                      profilePhoto={user.profilePhoto}
-                      photoVersion={user.updatedAt}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-semibold text-sm">
-                          {user.name ?? 'Sin nombre'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {hasUnread && <UnreadIndicator />}
-                          {lastMessage?.createdAt && (
-                            <span className="shrink-0 text-xs text-muted-foreground">
-                              {formatPreviewTime(lastMessage.createdAt)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {lastMessage
-                          ? `${previewSender}${lastMessage.content}`
-                          : 'Iniciar conversación'}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </aside>
+          <aside>
+            <Box className="border-b px-4 py-4">
+              <Text size="6" weight="bold" className="tracking-tight">Mensajes</Text>
+            </Box>
+            <Box className="flex-1 overflow-y-auto">
+              {contacts.length === 0 ? (
+                <Box p="4">
+                  <Text size="2" color="gray">
+                    No hay contactos disponibles
+                  </Text>
+                </Box>
+              ) : (
+                contacts.map(({ user, lastMessage, unreadCount }) => {
+                  const isSelected = recipient === user.id;
+                  const hasUnread = unreadCount > 0;
+                  const previewSender =
+                    lastMessage && lastMessage.from === session?.user.id
+                      ? 'Vos: '
+                      : '';
+                  return (
+                    <Box
+                      asChild
+                      key={user.id}
+                      className={cn(
+                        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 cursor-pointer',
+                        isSelected && 'bg-muted'
+                      )}
+                    >
+                      <button
+                        onClick={() => setRecipient(user.id)}
+                      >
+                        <Avatar
+                          id={user.id}
+                          name={user.name}
+                          profilePhoto={user.profilePhoto}
+                          photoVersion={user.updatedAt}
+                        />
+                        <Box className="min-w-0 flex-1">
+                          <Flex justify="between" align="center" gap="2">
+                            <Text size="2" weight="medium" className="truncate">
+                              {user.name ?? 'Sin nombre'}
+                            </Text>
+                            <Flex align="center" gap="2" className="shrink-0">
+                              {hasUnread && <UnreadIndicator />}
+                              {lastMessage?.createdAt && (
+                                <Text size="1" color="gray" className="shrink-0">
+                                  {formatPreviewTime(lastMessage.createdAt)}
+                                </Text>
+                              )}
+                            </Flex>
+                          </Flex>
+                          <Text size="1" color="gray" className="truncate">
+                            {lastMessage
+                              ? `${previewSender}${lastMessage.content}`
+                              : 'Iniciar conversación'}
+                          </Text>
+                        </Box>
+                      </button>
+                    </Box>
+                  );
+                })
+              )}
+            </Box>
+          </aside>
+        </Box>
 
-        <section
+        <Box
+          asChild
           className={cn(
             'flex-1 flex-col',
             recipient ? 'flex' : 'hidden md:flex'
           )}
         >
-          {selectedUser ? (
-            <>
-              <div className="flex items-center gap-3 border-b px-4 py-3">
-                <button
-                  onClick={() => setRecipient('')}
-                  className="rounded-md p-1 hover:bg-muted md:hidden"
-                  aria-label="Volver"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-                <Avatar
-                  id={selectedUser.id}
-                  name={selectedUser.name}
-                  profilePhoto={selectedUser.profilePhoto}
-                  photoVersion={selectedUser.updatedAt}
-                  size="sm"
-                />
-                <span className="font-semibold">
-                  {selectedUser.name ?? 'Sin nombre'}
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-                {messages.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground py-8">
-                    Empezá la conversación enviando un mensaje
-                  </p>
-                ) : (
-                  messages.map((m, i) => {
-                    const isOwn = m.from === session?.user.id;
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          'flex',
-                          isOwn ? 'justify-end' : 'justify-start'
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            'max-w-[75%] rounded-2xl px-4 py-2 text-sm break-words',
-                            isOwn
-                              ? 'bg-primary text-primary-foreground rounded-br-sm'
-                              : 'bg-muted text-foreground rounded-bl-sm'
-                          )}
-                        >
-                          {m.content}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              <div className="border-t p-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Escribir mensaje..."
-                    className="flex-1 rounded-full border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={!input.trim()}
-                    className="rounded-full bg-primary p-2.5 text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40"
-                    aria-label="Enviar"
+          <section>
+            {selectedUser ? (
+              <>
+                <Flex align="center" gap="3" className="border-b px-4 py-3">
+                  <Box
+                    asChild
+                    className="rounded-md p-1 hover:bg-muted md:hidden cursor-pointer"
                   >
-                    <Send className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center px-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Seleccioná un contacto para empezar a chatear
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-    </div>
+                    <button
+                      onClick={() => setRecipient('')}
+                      aria-label="Volver"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </button>
+                  </Box>
+                  <Avatar
+                    id={selectedUser.id}
+                    name={selectedUser.name}
+                    profilePhoto={selectedUser.profilePhoto}
+                    photoVersion={selectedUser.updatedAt}
+                    size="sm"
+                  />
+                  <Text weight="medium">
+                    {selectedUser.name ?? 'Sin nombre'}
+                  </Text>
+                </Flex>
+
+                <Box className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+                  {messages.length === 0 ? (
+                    <Box className="text-center py-8">
+                      <Text size="2" color="gray">
+                        Empezá la conversación enviando un mensaje
+                      </Text>
+                    </Box>
+                  ) : (
+                    messages.map((m, i) => {
+                      const isOwn = m.from === session?.user.id;
+                      return (
+                        <Flex
+                          key={i}
+                          justify={isOwn ? 'end' : 'start'}
+                        >
+                          <Box
+                            className={cn(
+                              'max-w-[75%] rounded-2xl px-4 py-2 text-sm break-words',
+                              isOwn
+                                ? 'bg-primary text-primary-foreground rounded-br-sm'
+                                : 'bg-muted text-foreground rounded-bl-sm'
+                            )}
+                          >
+                            <Text size="2">
+                              {m.content}
+                            </Text>
+                          </Box>
+                        </Flex>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </Box>
+
+                <Box className="border-t p-3">
+                  <Flex gap="2" align="center">
+                    <Box className="flex-1">
+                      <input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Escribir mensaje..."
+                        className="flex-1 rounded-full border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                          }
+                        }}
+                      />
+                    </Box>
+                    <Box
+                      asChild
+                      className="rounded-full bg-primary p-2.5 text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40 cursor-pointer"
+                    >
+                      <button
+                        onClick={sendMessage}
+                        disabled={!input.trim()}
+                        aria-label="Enviar"
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    </Box>
+                  </Flex>
+                </Box>
+              </>
+            ) : (
+              <Box className="flex-1 flex items-center justify-center px-6 text-center">
+                <Text size="2" color="gray">
+                  Seleccioná un contacto para empezar a chatear
+                </Text>
+              </Box>
+            )}
+          </section>
+        </Box>
+      </Box>
+    </Container>
   );
 }

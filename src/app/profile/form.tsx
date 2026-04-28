@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Box, Flex, Heading, Text } from '@radix-ui/themes';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectItem } from '@/components/ui/select';
 
 type User = {
   name: string | null;
@@ -50,9 +54,6 @@ export default function ProfileForm({ user }: { user: User }) {
   const [success, setSuccess] = useState('');
   const router = useRouter();
 
-  const inputClass =
-    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -93,149 +94,136 @@ export default function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3" autoComplete="on">
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          className={inputClass}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-        />
-        <input
-          className={inputClass}
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Apellido"
-        />
-      </div>
-      <input
-        className={inputClass}
-        value={dni}
-        onChange={(e) => setDni(e.target.value)}
-        placeholder="DNI"
-      />
-      <input
-        className={inputClass}
-        type="date"
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
-      />
-      <select
-        className={inputClass}
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Género</option>
-        <option value="FEMALE">Femenino</option>
-        <option value="MALE">Masculino</option>
-        <option value="NON_BINARY">No Binario</option>
-        <option value="UNDISCLOSED">Prefiero no decirlo</option>
-        <option value="OTHER">Otro</option>
-      </select>
-      <input
-        className={inputClass}
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Domicilio"
-      />
-      <input
-        className={inputClass}
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Teléfono"
-      />
-      <input
-        className={inputClass}
-        value={nationality}
-        onChange={(e) => setNationality(e.target.value)}
-        placeholder="Nacionalidad"
-      />
-      <input
-        className={inputClass}
-        value={maritalStatus}
-        onChange={(e) => setMaritalStatus(e.target.value)}
-        placeholder="Estado Civil"
-      />
+    <Box asChild>
+      <form onSubmit={submit} autoComplete="on">
+        <Box className="space-y-3">
+          <Flex gap="3" direction={{ initial: 'column', md: 'row' }}>
+            <Input
+              placeholder="Nombre"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Input
+              placeholder="Apellido"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </Flex>
+          <Input
+            placeholder="DNI"
+            value={dni}
+            onChange={(e) => setDni(e.target.value)}
+          />
+          <Input
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
+          <Select
+            value={gender}
+            onValueChange={setGender}
+          >
+            <SelectItem value="">Género</SelectItem>
+            <SelectItem value="FEMALE">Femenino</SelectItem>
+            <SelectItem value="MALE">Masculino</SelectItem>
+            <SelectItem value="NON_BINARY">No Binario</SelectItem>
+            <SelectItem value="UNDISCLOSED">Prefiero no decirlo</SelectItem>
+            <SelectItem value="OTHER">Otro</SelectItem>
+          </Select>
+          <Input
+            placeholder="Domicilio"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+          <Input
+            placeholder="Teléfono"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <Input
+            placeholder="Nacionalidad"
+            value={nationality}
+            onChange={(e) => setNationality(e.target.value)}
+          />
+          <Input
+            placeholder="Estado Civil"
+            value={maritalStatus}
+            onChange={(e) => setMaritalStatus(e.target.value)}
+          />
 
-      {/* Medical Sheet */}
-      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
-        <h3 className="text-sm font-semibold">Ficha médica</h3>
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={allergies}
-          onChange={(e) => setAllergies(e.target.value)}
-          placeholder="Alergias"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={regularMedication}
-          onChange={(e) => setRegularMedication(e.target.value)}
-          placeholder="Medicación habitual"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={relevantDiseases}
-          onChange={(e) => setRelevantDiseases(e.target.value)}
-          placeholder="Enfermedades relevantes"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={previousInjuries}
-          onChange={(e) => setPreviousInjuries(e.target.value)}
-          placeholder="Lesiones previas"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={physicalRestrictions}
-          onChange={(e) => setPhysicalRestrictions(e.target.value)}
-          placeholder="Restricciones físicas"
-        />
-        <input
-          className={inputClass}
-          value={bloodGroup}
-          onChange={(e) => setBloodGroup(e.target.value)}
-          placeholder="Grupo sanguíneo"
-        />
-        <input
-          className={inputClass}
-          value={primaryDoctor}
-          onChange={(e) => setPrimaryDoctor(e.target.value)}
-          placeholder="Médico de cabecera"
-        />
-        <input
-          className={inputClass}
-          value={doctorPhone}
-          onChange={(e) => setDoctorPhone(e.target.value)}
-          placeholder="Teléfono médico"
-        />
-      </div>
+          {/* Medical Sheet */}
+          <Box className="rounded-lg border bg-muted/20 p-4">
+            <Box className="space-y-3">
+              <Heading size="4">Ficha médica</Heading>
+              <Textarea
+                placeholder="Alergias"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+              />
+              <Textarea
+                placeholder="Medicación habitual"
+                value={regularMedication}
+                onChange={(e) => setRegularMedication(e.target.value)}
+              />
+              <Textarea
+                placeholder="Enfermedades relevantes"
+                value={relevantDiseases}
+                onChange={(e) => setRelevantDiseases(e.target.value)}
+              />
+              <Textarea
+                placeholder="Lesiones previas"
+                value={previousInjuries}
+                onChange={(e) => setPreviousInjuries(e.target.value)}
+              />
+              <Textarea
+                placeholder="Restricciones físicas"
+                value={physicalRestrictions}
+                onChange={(e) => setPhysicalRestrictions(e.target.value)}
+              />
+              <Input
+                placeholder="Grupo sanguíneo"
+                value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+              />
+              <Input
+                placeholder="Médico de cabecera"
+                value={primaryDoctor}
+                onChange={(e) => setPrimaryDoctor(e.target.value)}
+              />
+              <Input
+                placeholder="Teléfono médico"
+                value={doctorPhone}
+                onChange={(e) => setDoctorPhone(e.target.value)}
+              />
+            </Box>
+          </Box>
 
-      <input
-        className={inputClass}
-        id="profile-email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        className={inputClass}
-        id="profile-new-password"
-        name="new-password"
-        type="password"
-        autoComplete="new-password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Nueva contraseña"
-      />
-      <input type="hidden" name="username" value={user.email} />
-      {error && <p className="text-destructive text-sm">{error}</p>}
-      {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">
-        Guardar cambios
-      </Button>
-    </form>
+          <Input
+            id="profile-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            id="profile-new-password"
+            name="new-password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Nueva contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <input type="hidden" name="username" value={user.email} />
+          {error && <Text size="2" color="red">{error}</Text>}
+          {success && <Text size="2" color="green">{success}</Text>}
+          <Button type="submit" className="w-full">
+            Guardar cambios
+          </Button>
+        </Box>
+      </form>
+    </Box>
   );
 }
