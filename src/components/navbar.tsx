@@ -6,7 +6,6 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import type { SiteSettings } from '@/types/site';
 import { isCounterRole } from '@/lib/accounting';
 import {
   useTranslation,
@@ -56,15 +55,8 @@ export default function Navbar() {
   const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/site-settings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setSettings(data));
-  }, []);
 
   useEffect(() => {
     setPhotoFailed(false);
@@ -102,9 +94,7 @@ export default function Navbar() {
     };
   }, [session]);
 
-  const logoUrl = settings?.logo
-    ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
-    : defaultLogo;
+  const logoUrl = defaultLogo;
 
   const linkClass =
     'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
@@ -170,14 +160,8 @@ export default function Navbar() {
                   <button className={linkClass}>Administrador</button>
                   <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
                     <Link
-                      href="/admin/site"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
-                    >
-                      /admin/site
-                    </Link>
-                    <Link
                       href="/admin/notifications"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
                     >
                       Notificaciones
                     </Link>
@@ -325,13 +309,6 @@ export default function Navbar() {
                   <span className="text-sm font-medium opacity-90">
                     Administrador
                   </span>
-                  <Link
-                    href="/admin/site"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    /admin/site
-                  </Link>
                   <Link
                     href="/admin/notifications"
                     className={linkClass}
