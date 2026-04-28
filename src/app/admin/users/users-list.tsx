@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/components/language-provider';
+import { PasswordResetDialog } from './password-reset-dialog';
 
 interface User {
   id: string;
@@ -41,18 +42,6 @@ export default function UsersList({
     'text-sm text-primary hover:text-primary/80 hover:underline underline-offset-4';
   const menuItemClass =
     'block w-full rounded px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors';
-
-  async function resetPassword(id: string) {
-    const res = await fetch(`/api/users/${id}/reset-password`, {
-      method: 'POST',
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      alert(`New password: ${data.password}`);
-      router.refresh();
-    }
-  }
 
   async function deleteUser(id: string) {
     await fetch(`/api/users/${id}`, { method: 'DELETE' });
@@ -126,13 +115,14 @@ export default function UsersList({
                     >
                       {t.childEnrollment}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => resetPassword(u.id)}
-                      className={menuItemClass}
-                    >
-                      {t.resetPassword}
-                    </button>
+                    <PasswordResetDialog
+                      userId={u.id}
+                      trigger={
+                        <button type="button" className={menuItemClass}>
+                          {t.resetPassword}
+                        </button>
+                      }
+                    />
                     <button
                       type="button"
                       onClick={() => deleteUser(u.id)}
