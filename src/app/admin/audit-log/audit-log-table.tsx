@@ -65,6 +65,18 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
 
   const actor = (log.userId && usersById[log.userId]) || 'Sistema';
 
+  if (log.model === 'User' && log.action === 'login') {
+    const userLabel =
+      getStringField(after, ['name']) ??
+      getStringField(after, ['email']) ??
+      'Usuario';
+    const time = new Date(log.createdAt).toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${userLabel} se logeo en la app a las ${time}`;
+  }
+
   if (log.model === 'User' && log.action === 'create') {
     const createdUserName =
       (log.recordId && usersById[log.recordId]) ||

@@ -74,6 +74,27 @@ export const authOptions: NextAuthOptions = {
         user.id = existingUser.id;
         (user as any).role = existingUser.role;
       }
+
+      const now = new Date();
+      await Promise.all([
+        prisma.user.update({
+          where: { id: user.id! },
+          data: { lastLogin: now },
+        }),
+        prisma.dbAuditLog.create({
+          data: {
+            model: 'User',
+            action: 'login',
+            recordId: user.id,
+            userId: user.id,
+            after: {
+              email: user.email,
+              name: user.name,
+            },
+          },
+        }),
+      ]);
+
       return true;
     },
     async jwt({ token, user, trigger, session }) {
