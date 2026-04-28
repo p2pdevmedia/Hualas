@@ -6,65 +6,18 @@ import { prisma } from '@/lib/prisma';
 
 const PAGE_SIZE = 25;
 
-function asRecord(value: unknown): Record<string, unknown> | null {
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): JsonRecord | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
 
-  return value as Record<string, unknown>;
+  return value as JsonRecord;
 }
 
-function collectUserIdsFromLog(log: {
-  userId: string | null;
-  recordId: string | null;
-  model: string;
-  before: Prisma.JsonValue | null;
-  after: Prisma.JsonValue | null;
-  args: Prisma.JsonValue | null;
-}) {
-  const userIds = new Set<string>();
-
-  if (log.userId) {
-    userIds.add(log.userId);
-  }
-
-  if (log.model === 'User' && log.recordId) {
-    userIds.add(log.recordId);
-  }
-
-  const after = asRecord(log.after);
-  const before = asRecord(log.before);
-  const args = asRecord(log.args);
-  const argsData = asRecord(args?.data);
-  const argsWhere = asRecord(args?.where);
-
-  const candidateValues = [
-    after?.senderId,
-    after?.receiverId,
-    after?.authorId,
-    after?.fromUserId,
-    after?.toUserId,
-    before?.senderId,
-    before?.receiverId,
-    before?.authorId,
-    before?.fromUserId,
-    before?.toUserId,
-    argsData?.senderId,
-    argsData?.receiverId,
-    argsData?.authorId,
-    argsData?.fromUserId,
-    argsData?.toUserId,
-    argsWhere?.id,
-    argsWhere?.userId,
-  ];
-
-  for (const value of candidateValues) {
-    if (typeof value === 'string' && value.trim()) {
-      userIds.add(value.trim());
-    }
-  }
-
-  return userIds;
+function getString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 export async function GET(req: NextRequest) {
@@ -94,30 +47,105 @@ export async function GET(req: NextRequest) {
   ]);
 
   const userIds = new Set<string>();
+  const activityIds = new Set<string>();
+  const conversationIds = new Set<string>();
+
   for (const log of logs) {
-    for (const userId of collectUserIdsFromLog(log)) {
-      userIds.add(userId);
+    if (log.userId) {
+      userIds.add(log.userId);
+    }
+
+    if (log.model === 'User' && (log.action === 'create' || log.action === 'update') && log.recordId) {
+      userIds.add(log.recordId);
+    }
+
+    if (log.model === 'Activity' && (log.action === 'create' || log.action === 'update') && log.recordId) {
+      activityIds.add(log.recordId);
+    }
+
+    const after = asRecord(log.after);
+    const args = asRecord(log.args);
+    const argsData = asRecord(args?.data);
+
+    const senderId =
+      getString(after?.senderId) ?? getString(argsData?.senderId) ?? null;
+    if (senderId) {
+      userIds.add(senderId);
+    }
+
+    const conversationId =
+      getString(after?.conversationId) ??
+      getString(argsData?.conversationId) ??
+      null;
+    if (conversationId) {
+      conversationIds.add(conversationId);
     }
   }
 
-  const users = userIds.size
-    ? await prisma.user.findMany({
-        where: { id: { in: Array.from(userIds) } },
-        select: { id: true, name: true, lastName: true, email: true },
-      })
-    : [];
+  const [users, activities, conversations] = await Promise.all([
+    userIds.size
+      ? prisma.user.findMany({
+          where: { id: { in: Array.from(userIds) } },
+          select: { id: true, name: true, lastName: true, email: true },
+        })
+      : Promise.resolve([]),
+    activityIds.size
+      ? prisma.activity.findMany({
+          where: { id: { in: Array.from(activityIds) } },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    conversationIds.size
+      ? prisma.conversation.findMany({
+          where: { id: { in: Array.from(conversationIds) } },
+          select: {
+            id: true,
+            participants: {
+              select: {
+                userId: true,
+                user: {
+                  select: { id: true, name: true, lastName: true, email: true },
+                },
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
 
-  const usersById = users.reduce<Record<string, string>>((acc, user) => {
-    const fullName = [user.name, user.lastName].filter(Boolean).join(' ').trim();
-    acc[user.id] = fullName || user.email;
-    return acc;
-  }, {});
+  const usersById = Object.fromEntries(
+    users.map((user) => {
+      const displayName = [user.name, user.lastName].filter(Boolean).join(' ');
+      return [user.id, displayName || user.email];
+    })
+  );
+
+  const activitiesById = Object.fromEntries(
+    activities.map((activity) => [activity.id, activity.name])
+  );
+
+  const conversationParticipantsById = Object.fromEntries(
+    conversations.map((conversation) => [
+      conversation.id,
+      conversation.participants.map((participant) => ({
+        userId: participant.userId,
+        name:
+          [participant.user.name, participant.user.lastName]
+            .filter(Boolean)
+            .join(' ') || participant.user.email,
+      })),
+    ])
+  );
 
   return NextResponse.json({
     logs,
     total,
     page,
     pageSize: PAGE_SIZE,
-    usersById,
+    lookups: {
+      usersById,
+      activitiesById,
+      conversationParticipantsById,
+    },
   });
 }

@@ -19,7 +19,14 @@ interface ApiResponse {
   total: number;
   page: number;
   pageSize: number;
-  usersById?: Record<string, string>;
+  lookups?: {
+    usersById?: Record<string, string>;
+    activitiesById?: Record<string, string>;
+    conversationParticipantsById?: Record<
+      string,
+      Array<{ userId: string; name: string }>
+    >;
+  };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -46,55 +53,80 @@ function getStringField(
   return null;
 }
 
-function resolvePersonLabel(
-  candidate: string | null | undefined,
-  usersById: Record<string, string>
-) {
-  if (!candidate) return 'Sistema';
-  return usersById[candidate] ?? candidate;
-}
-
-function buildHumanSummary(log: AuditLog, usersById: Record<string, string>) {
+function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   const after = asRecord(log.after);
-  const before = asRecord(log.before);
   const args = asRecord(log.args);
-  const actor = resolvePersonLabel(log.userId, usersById);
+  const argsData = asRecord(args?.data);
+
+  const usersById = data?.lookups?.usersById ?? {};
+  const activitiesById = data?.lookups?.activitiesById ?? {};
+  const participantsByConversation =
+    data?.lookups?.conversationParticipantsById ?? {};
+
+  const actor = (log.userId && usersById[log.userId]) || 'Sistema';
 
   if (log.model === 'User' && log.action === 'create') {
-    const userLabel =
-      getStringField(after, ['name', 'fullName']) ??
-      getStringField(after, ['email']) ??
-      log.recordId ??
-      'Sin nombre';
+    const createdUserName =
+      (log.recordId && usersById[log.recordId]) ||
+      getStringField(after, ['name', 'fullName', 'email']) ||
+      'Usuario';
 
-    return `Nuevo usuario creado: ${userLabel}. Creado por: ${actor}.`;
+    return `Nuevo usuario creado: ${createdUserName}. Creado por: ${actor}.`;
+  }
+
+  if (log.model === 'User' && log.action === 'update') {
+    const userLabel =
+      (log.recordId && usersById[log.recordId]) ||
+      getStringField(after, ['name', 'fullName']) ||
+      'Usuario';
+
+    return `Usuario actualizado: ${userLabel}. Actualizado por: ${actor}.`;
   }
 
   if (log.model === 'Message' && log.action === 'create') {
-    const fromUser =
-      resolvePersonLabel(
-        getStringField(after, ['senderId', 'authorId', 'fromUserId']) ??
-          getStringField(before, ['senderId', 'authorId', 'fromUserId']),
-        usersById
-      ) ??
-      actor;
-    const toUserRaw =
-      getStringField(after, ['receiverId', 'toUserId']) ??
-      getStringField(before, ['receiverId', 'toUserId']) ??
-      getStringField(args ? asRecord(args.data) : null, ['receiverId']) ??
-      getStringField(args ? asRecord(args.where) : null, ['id']) ??
-      'destinatario';
-    const toUser = resolvePersonLabel(toUserRaw, usersById);
-    const text = getStringField(after, ['text', 'content', 'message']) ?? '—';
+    const senderId =
+      getStringField(after, ['senderId']) ??
+      getStringField(argsData, ['senderId']) ??
+      null;
+    const conversationId =
+      getStringField(after, ['conversationId']) ??
+      getStringField(argsData, ['conversationId']) ??
+      null;
+    const messageBody =
+      getStringField(after, ['body', 'content', 'message']) ??
+      getStringField(argsData, ['body', 'content', 'message']) ??
+      '—';
 
-    return `Mensaje enviado de ${fromUser} a ${toUser}: ${text}`;
+    const senderName = (senderId && usersById[senderId]) || actor;
+
+    const conversationParticipants =
+      (conversationId && participantsByConversation[conversationId]) || [];
+    const recipients = conversationParticipants
+      .filter((participant) => participant.userId !== senderId)
+      .map((participant) => participant.name)
+      .filter(Boolean);
+
+    const recipientLabel = recipients.length > 0 ? recipients.join(', ') : 'destinatario';
+
+    return `Mensaje enviado de ${senderName} a ${recipientLabel}: ${messageBody}`;
   }
 
   if (log.model === 'Activity' && log.action === 'create') {
     const activityName =
-      getStringField(after, ['name', 'title']) ?? log.recordId ?? 'Sin nombre';
+      (log.recordId && activitiesById[log.recordId]) ||
+      getStringField(after, ['name', 'title']) ||
+      'Actividad';
 
     return `Actividad creada: ${activityName}. Creada por: ${actor}.`;
+  }
+
+  if (log.model === 'Activity' && log.action === 'update') {
+    const activityName =
+      (log.recordId && activitiesById[log.recordId]) ||
+      getStringField(after, ['name', 'title']) ||
+      'Actividad';
+
+    return `Actividad actualizada: ${activityName}. Actualizada por: ${actor}.`;
   }
 
   if (log.action === 'update') {
@@ -191,7 +223,7 @@ export default function AuditLogTable() {
                       {new Date(log.createdAt).toLocaleString('es-AR')}
                     </td>
                     <td className="px-4 py-2">
-                      {buildHumanSummary(log, data.usersById ?? {})}
+                      {buildHumanSummary(log, data)}
                     </td>
                     <td className="px-4 py-2 font-mono">{log.model}</td>
                     <td className="px-4 py-2 font-mono">{log.action}</td>
