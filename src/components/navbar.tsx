@@ -15,7 +15,7 @@ import {
 import type { Lang } from '@/lib/i18n';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
-const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/logo.png`;
+const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
 
 const AVATAR_COLORS = [
   'bg-rose-500',
