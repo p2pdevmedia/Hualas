@@ -170,6 +170,9 @@ export default function Navbar() {
                   <Link href="/admin/notifications" className={linkClass}>
                     {t.notifications}
                   </Link>
+                  <Link href="/admin/audit-log" className={linkClass}>
+                    {t.auditLog}
+                  </Link>
                   <Link href="/admin/site" className={linkClass}>
                     {t.admin}
                   </Link>
@@ -313,6 +316,13 @@ export default function Navbar() {
                     onClick={() => setMenuOpen(false)}
                   >
                     {t.notifications}
+                  </Link>
+                  <Link
+                    href="/admin/audit-log"
+                    className={linkClass}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t.auditLog}
                   </Link>
                   <Link
                     href="/admin/site"
