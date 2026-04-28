@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 interface AuditLog {
   id: string;
@@ -10,6 +10,7 @@ interface AuditLog {
   userId: string | null;
   before: unknown;
   after: unknown;
+  args: unknown;
   createdAt: string;
 }
 
@@ -18,6 +19,111 @@ interface ApiResponse {
   total: number;
   page: number;
   pageSize: number;
+  lookups?: {
+    usersById?: Record<string, string>;
+    activitiesById?: Record<string, string>;
+    conversationParticipantsById?: Record<
+      string,
+      Array<{ userId: string; name: string }>
+    >;
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getStringField(
+  record: Record<string, unknown> | null,
+  keys: string[]
+): string | null {
+  if (!record) return null;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
+  const after = asRecord(log.after);
+  const args = asRecord(log.args);
+  const argsData = asRecord(args?.data);
+
+  const usersById = data?.lookups?.usersById ?? {};
+  const activitiesById = data?.lookups?.activitiesById ?? {};
+  const participantsByConversation =
+    data?.lookups?.conversationParticipantsById ?? {};
+
+  const actor = (log.userId && usersById[log.userId]) || 'Sistema';
+
+  if (log.model === 'User' && log.action === 'create') {
+    const createdUserName =
+      (log.recordId && usersById[log.recordId]) ||
+      getStringField(after, ['name', 'fullName', 'email']) ||
+      'Usuario';
+
+    return `Nuevo usuario creado: ${createdUserName}. Creado por: ${actor}.`;
+  }
+
+  if (log.model === 'Message' && log.action === 'create') {
+    const senderId =
+      getStringField(after, ['senderId']) ??
+      getStringField(argsData, ['senderId']) ??
+      null;
+    const conversationId =
+      getStringField(after, ['conversationId']) ??
+      getStringField(argsData, ['conversationId']) ??
+      null;
+    const messageBody =
+      getStringField(after, ['body', 'content', 'message']) ??
+      getStringField(argsData, ['body', 'content', 'message']) ??
+      '—';
+
+    const senderName = (senderId && usersById[senderId]) || actor;
+
+    const conversationParticipants =
+      (conversationId && participantsByConversation[conversationId]) || [];
+    const recipients = conversationParticipants
+      .filter((participant) => participant.userId !== senderId)
+      .map((participant) => participant.name)
+      .filter(Boolean);
+
+    const recipientLabel = recipients.length > 0 ? recipients.join(', ') : 'destinatario';
+
+    return `Mensaje enviado de ${senderName} a ${recipientLabel}: ${messageBody}`;
+  }
+
+  if (log.model === 'Activity' && log.action === 'create') {
+    const activityName =
+      (log.recordId && activitiesById[log.recordId]) ||
+      getStringField(after, ['name', 'title']) ||
+      'Actividad';
+
+    return `Actividad creada: ${activityName}. Creada por: ${actor}.`;
+  }
+
+  if (log.action === 'update') {
+    return `${log.model} actualizado por ${actor}.`;
+  }
+
+  if (log.action === 'delete') {
+    return `${log.model} eliminado por ${actor}.`;
+  }
+
+  if (log.action === 'create') {
+    return `${log.model} creado por ${actor}.`;
+  }
+
+  return `${log.model} ${log.action} por ${actor}.`;
 }
 
 export default function AuditLogTable() {
@@ -80,59 +186,78 @@ export default function AuditLogTable() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Fecha</th>
+                <th className="px-4 py-2">Resumen</th>
                 <th className="px-4 py-2">Modelo</th>
                 <th className="px-4 py-2">Acción</th>
-                <th className="px-4 py-2">RecordId</th>
-                <th className="px-4 py-2">UserId</th>
                 <th className="px-4 py-2">Detalle</th>
               </tr>
             </thead>
             <tbody>
               {data.logs.map((log) => (
-                <>
+                <Fragment key={log.id}>
                   <tr
-                    key={log.id}
-                    className="border-t hover:bg-muted/50 cursor-pointer"
+                    className="cursor-pointer border-t hover:bg-muted/50"
                     onClick={() =>
                       setExpanded(expanded === log.id ? null : log.id)
                     }
                   >
-                    <td className="px-4 py-2 whitespace-nowrap text-xs text-muted-foreground">
+                    <td className="whitespace-nowrap px-4 py-2 text-xs text-muted-foreground">
                       {new Date(log.createdAt).toLocaleString('es-AR')}
                     </td>
+                    <td className="px-4 py-2">{buildHumanSummary(log, data)}</td>
                     <td className="px-4 py-2 font-mono">{log.model}</td>
                     <td className="px-4 py-2 font-mono">{log.action}</td>
-                    <td className="px-4 py-2 font-mono text-xs">
-                      {log.recordId ?? '—'}
-                    </td>
-                    <td className="px-4 py-2 font-mono text-xs">
-                      {log.userId ?? '—'}
-                    </td>
                     <td className="px-4 py-2 text-xs text-blue-600 underline">
-                      {expanded === log.id ? 'Cerrar' : 'Ver'}
+                      {expanded === log.id
+                        ? 'Ocultar info completa'
+                        : 'Ver info completa'}
                     </td>
                   </tr>
                   {expanded === log.id && (
-                    <tr key={`${log.id}-detail`} className="bg-muted/30">
-                      <td colSpan={6} className="px-4 py-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <tr className="bg-muted/30">
+                      <td colSpan={5} className="px-4 py-3">
+                        <div className="mb-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
+                          <p>
+                            <span className="font-semibold">Record ID:</span>{' '}
+                            <span className="font-mono">{log.recordId ?? '—'}</span>
+                          </p>
+                          <p>
+                            <span className="font-semibold">User ID:</span>{' '}
+                            <span className="font-mono">{log.userId ?? '—'}</span>
+                          </p>
+                          <p>
+                            <span className="font-semibold">Fecha:</span>{' '}
+                            {new Date(log.createdAt).toLocaleString('es-AR')}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                           <div>
-                            <p className="text-xs font-semibold mb-1 text-muted-foreground">
+                            <p className="mb-1 text-xs font-semibold text-muted-foreground">
                               Antes
                             </p>
-                            <pre className="overflow-x-auto text-xs bg-muted p-2 rounded-md max-h-60">
+                            <pre className="max-h-60 overflow-x-auto rounded-md bg-muted p-2 text-xs">
                               {log.before != null
                                 ? JSON.stringify(log.before, null, 2)
                                 : '—'}
                             </pre>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold mb-1 text-muted-foreground">
+                            <p className="mb-1 text-xs font-semibold text-muted-foreground">
                               Después
                             </p>
-                            <pre className="overflow-x-auto text-xs bg-muted p-2 rounded-md max-h-60">
+                            <pre className="max-h-60 overflow-x-auto rounded-md bg-muted p-2 text-xs">
                               {log.after != null
                                 ? JSON.stringify(log.after, null, 2)
+                                : '—'}
+                            </pre>
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                              Args de operación
+                            </p>
+                            <pre className="max-h-60 overflow-x-auto rounded-md bg-muted p-2 text-xs">
+                              {log.args != null
+                                ? JSON.stringify(log.args, null, 2)
                                 : '—'}
                             </pre>
                           </div>
@@ -140,7 +265,7 @@ export default function AuditLogTable() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
