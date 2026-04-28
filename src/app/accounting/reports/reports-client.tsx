@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { DownloadIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { DownloadIcon, ReloadIcon, HourglassIcon } from '@radix-ui/react-icons';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
