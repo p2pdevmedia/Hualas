@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
+import { cookies, headers } from 'next/headers';
 import { getToken } from 'next-auth/jwt';
-import { headers } from 'next/headers';
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -68,8 +68,14 @@ function toRecordId(result: unknown, args: unknown) {
 async function getAuditUserId() {
   try {
     const requestHeaders = headers();
+    const requestCookies = cookies();
     const token = await getToken({
-      req: { headers: requestHeaders } as any,
+      req: {
+        headers: requestHeaders,
+        cookies: Object.fromEntries(
+          requestCookies.getAll().map(({ name, value }) => [name, value])
+        ),
+      } as any,
     });
 
     return typeof token?.sub === 'string' ? token.sub : null;
