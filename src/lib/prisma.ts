@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
+import { getToken } from 'next-auth/jwt';
+import { headers } from 'next/headers';
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -26,7 +28,13 @@ const WRITE_ACTIONS = new Set([
   'deleteMany',
 ]);
 
-const AUDITED_ACTIONS = new Set(['update', 'delete', 'upsert', 'updateMany', 'deleteMany']);
+const AUDITED_ACTIONS = new Set([
+  'update',
+  'delete',
+  'upsert',
+  'updateMany',
+  'deleteMany',
+]);
 const AUDIT_EXCLUDED_OPERATIONS = new Set(['Message:updateMany']);
 
 function shouldSkipAudit(model: string, operation: string) {
@@ -39,7 +47,7 @@ function toJsonString<T>(value: T): string | null {
   }
 
   return JSON.stringify(value, (_key, currentValue) =>
-    typeof currentValue === 'bigint' ? currentValue.toString() : currentValue,
+    typeof currentValue === 'bigint' ? currentValue.toString() : currentValue
   );
 }
 
@@ -57,12 +65,29 @@ function toRecordId(result: unknown, args: unknown) {
   return null;
 }
 
+async function getAuditUserId() {
+  try {
+    const requestHeaders = headers();
+    const token = await getToken({
+      req: { headers: requestHeaders } as any,
+    });
+
+    return typeof token?.sub === 'string' ? token.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export const prisma = basePrisma.$extends({
   name: 'audit-log',
   query: {
     $allModels: {
       async $allOperations({ model, operation, args, query }) {
-        if (!model || String(model) === 'DbAuditLog' || !WRITE_ACTIONS.has(operation)) {
+        if (
+          !model ||
+          String(model) === 'DbAuditLog' ||
+          !WRITE_ACTIONS.has(operation)
+        ) {
           return query(args);
         }
 
@@ -74,17 +99,24 @@ export const prisma = basePrisma.$extends({
 
         try {
           if (AUDITED_ACTIONS.has(operation)) {
-            const where = (args as { where?: Record<string, any> } | null)?.where;
+            const where = (args as { where?: Record<string, any> } | null)
+              ?.where;
 
             if (operation === 'updateMany' || operation === 'deleteMany') {
-              const delegateName = model.charAt(0).toLowerCase() + model.slice(1);
-              before = await (basePrisma as Record<string, any>)[delegateName].findMany({
+              const delegateName =
+                model.charAt(0).toLowerCase() + model.slice(1);
+              before = await (basePrisma as Record<string, any>)[
+                delegateName
+              ].findMany({
                 where,
                 take: 100,
               });
             } else if (where) {
-              const delegateName = model.charAt(0).toLowerCase() + model.slice(1);
-              before = await (basePrisma as Record<string, any>)[delegateName].findUnique({
+              const delegateName =
+                model.charAt(0).toLowerCase() + model.slice(1);
+              before = await (basePrisma as Record<string, any>)[
+                delegateName
+              ].findUnique({
                 where,
               });
             }
@@ -100,6 +132,7 @@ export const prisma = basePrisma.$extends({
           const afterJson = toJsonString(result);
           const argsJson = toJsonString(args);
           const recordId = toRecordId(result, args);
+          const userId = await getAuditUserId();
 
           await basePrisma.$executeRaw`
             INSERT INTO "DbAuditLog" (
@@ -121,7 +154,7 @@ export const prisma = basePrisma.$extends({
               ${beforeJson}::jsonb,
               ${afterJson}::jsonb,
               ${argsJson}::jsonb,
-              ${null},
+              ${userId},
               ${null},
               NOW()
             )
