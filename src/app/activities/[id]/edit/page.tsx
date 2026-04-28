@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditActivityForm from './form';
+import ActivityImageUpload from '../../activity-image-upload';
 
 interface EditActivityPageProps {
   params: { id: string };
@@ -55,6 +56,13 @@ export default async function EditActivityPage({
         }}
         professors={professors}
       />
+      <div className="mt-8 border-t pt-8">
+        <h2 className="mb-4 text-xl font-semibold">Imagen de la actividad</h2>
+        <ActivityImageUpload
+          activityId={params.id}
+          currentImageUrl={activity.image ?? undefined}
+        />
+      </div>
     </main>
   );
 }
