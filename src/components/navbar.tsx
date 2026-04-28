@@ -160,14 +160,8 @@ export default function Navbar() {
                   <button className={linkClass}>Administrador</button>
                   <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
                     <Link
-                      href="/admin/site"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
-                    >
-                      /admin/site
-                    </Link>
-                    <Link
                       href="/admin/notifications"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
                     >
                       Notificaciones
                     </Link>
@@ -315,13 +309,6 @@ export default function Navbar() {
                   <span className="text-sm font-medium opacity-90">
                     Administrador
                   </span>
-                  <Link
-                    href="/admin/site"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    /admin/site
-                  </Link>
                   <Link
                     href="/admin/notifications"
                     className={linkClass}
