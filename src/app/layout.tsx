@@ -14,10 +14,11 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata() {
+  const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
   return {
     title: 'Hualas Club',
     description: 'Club de montaña en San Martín de los Andes, Patagonia',
-    icons: [{ url: '/favicon.ico' }],
+    icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/favicon.ico` }],
   };
 }
 
