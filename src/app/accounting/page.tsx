@@ -125,7 +125,13 @@ export default async function AccountingDashboardPage() {
 
         <Box className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <Box className="rounded-2xl border bg-card p-5 shadow-sm">
-            <Flex justify="between" align="start" gap="3" mb="4" className="flex-col sm:flex-row">
+            <Flex
+              justify="between"
+              align="start"
+              gap="3"
+              mb="4"
+              className="flex-col sm:flex-row"
+            >
               <Box>
                 <Heading size="6">Últimos movimientos</Heading>
                 <Text size="2" color="gray">
@@ -204,7 +210,13 @@ export default async function AccountingDashboardPage() {
           </Box>
 
           <Box className="rounded-2xl border bg-card p-5 shadow-sm">
-            <Flex justify="between" align="start" gap="3" mb="4" className="flex-col sm:flex-row">
+            <Flex
+              justify="between"
+              align="start"
+              gap="3"
+              mb="4"
+              className="flex-col sm:flex-row"
+            >
               <Box>
                 <Heading size="6">Pagos MP recientes</Heading>
                 <Text size="2" color="gray">

@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { ArrowLeft, Send } from 'lucide-react';
-import { Box, Flex, Container, Text, Button as RadixButton } from '@radix-ui/themes';
+import {
+  Box,
+  Flex,
+  Container,
+  Text,
+  Button as RadixButton,
+} from '@radix-ui/themes';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -249,7 +255,9 @@ export default function ChatClient() {
         >
           <aside>
             <Box className="border-b px-4 py-4">
-              <Text size="6" weight="bold" className="tracking-tight">Mensajes</Text>
+              <Text size="6" weight="bold" className="tracking-tight">
+                Mensajes
+              </Text>
             </Box>
             <Box className="flex-1 overflow-y-auto">
               {contacts.length === 0 ? (
@@ -275,9 +283,7 @@ export default function ChatClient() {
                         isSelected && 'bg-muted'
                       )}
                     >
-                      <button
-                        onClick={() => setRecipient(user.id)}
-                      >
+                      <button onClick={() => setRecipient(user.id)}>
                         <Avatar
                           id={user.id}
                           name={user.name}
@@ -292,7 +298,11 @@ export default function ChatClient() {
                             <Flex align="center" gap="2" className="shrink-0">
                               {hasUnread && <UnreadIndicator />}
                               {lastMessage?.createdAt && (
-                                <Text size="1" color="gray" className="shrink-0">
+                                <Text
+                                  size="1"
+                                  color="gray"
+                                  className="shrink-0"
+                                >
                                   {formatPreviewTime(lastMessage.createdAt)}
                                 </Text>
                               )}
@@ -358,10 +368,7 @@ export default function ChatClient() {
                     messages.map((m, i) => {
                       const isOwn = m.from === session?.user.id;
                       return (
-                        <Flex
-                          key={i}
-                          justify={isOwn ? 'end' : 'start'}
-                        >
+                        <Flex key={i} justify={isOwn ? 'end' : 'start'}>
                           <Box
                             className={cn(
                               'max-w-[75%] rounded-2xl px-4 py-2 text-sm break-words',
@@ -370,9 +377,7 @@ export default function ChatClient() {
                                 : 'bg-muted text-foreground rounded-bl-sm'
                             )}
                           >
-                            <Text size="2">
-                              {m.content}
-                            </Text>
+                            <Text size="2">{m.content}</Text>
                           </Box>
                         </Flex>
                       );

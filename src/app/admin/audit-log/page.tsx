@@ -15,7 +15,8 @@ export default async function AuditLogPage() {
       <div className="py-8 space-y-4">
         <Heading size="8">Registro de auditoría</Heading>
         <Text size="2" color="gray">
-          Historial de cambios en la base de datos. Solo visible para Super Admin.
+          Historial de cambios en la base de datos. Solo visible para Super
+          Admin.
         </Text>
         <AuditLogTable />
       </div>

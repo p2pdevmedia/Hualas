@@ -26,7 +26,13 @@ export default async function FormsPage() {
   return (
     <Container>
       <div className="py-8">
-        <Flex justify="between" align="center" mb="6" gap="4" className="flex-col sm:flex-row">
+        <Flex
+          justify="between"
+          align="center"
+          mb="6"
+          gap="4"
+          className="flex-col sm:flex-row"
+        >
           <Heading size="8">Formularios</Heading>
           <Link href="/admin/forms/new">
             <Button>Nuevo formulario</Button>

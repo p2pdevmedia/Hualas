@@ -28,13 +28,18 @@ export default async function AccountingLayout({
       <Box className="flex flex-col gap-6 py-6">
         <header className="space-y-3">
           <Box className="space-y-1">
-            <Text size="2" weight="medium" color="cyan" className="uppercase tracking-[0.2em]">
+            <Text
+              size="2"
+              weight="medium"
+              color="cyan"
+              className="uppercase tracking-[0.2em]"
+            >
               Contaduría
             </Text>
             <Heading size="9">Gestión financiera del club</Heading>
             <Text size="2" color="gray" className="max-w-3xl">
-              Registra movimientos manuales, revisa pagos de Mercado Pago y genera
-              reportes del período.
+              Registra movimientos manuales, revisa pagos de Mercado Pago y
+              genera reportes del período.
             </Text>
           </Box>
 

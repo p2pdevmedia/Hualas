@@ -73,19 +73,19 @@ export default async function MovementsPage({
         </Flex>
 
         <MovementsTable
-        movements={movements.map((movement) => ({
-          id: movement.id,
-          date: movement.date.toISOString(),
-          amount: movement.amount,
-          type: movement.type,
-          category: movement.category,
-          description: movement.description,
-          receiptNumber: movement.receiptNumber,
-          receiptImage: movement.receiptImage,
-          createdBy:
-            `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
-        }))}
-        initialFilters={{ type, from, to }}
+          movements={movements.map((movement) => ({
+            id: movement.id,
+            date: movement.date.toISOString(),
+            amount: movement.amount,
+            type: movement.type,
+            category: movement.category,
+            description: movement.description,
+            receiptNumber: movement.receiptNumber,
+            receiptImage: movement.receiptImage,
+            createdBy:
+              `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
+          }))}
+          initialFilters={{ type, from, to }}
         />
       </div>
     </Container>

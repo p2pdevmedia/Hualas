@@ -61,7 +61,8 @@ export default async function ChildrenPage() {
                 </h2>
                 {child.birthDate && (
                   <p className="text-xs text-muted-foreground">
-                    {new Date().getFullYear() - child.birthDate.getFullYear()} años
+                    {new Date().getFullYear() - child.birthDate.getFullYear()}{' '}
+                    años
                   </p>
                 )}
               </div>
@@ -70,7 +71,8 @@ export default async function ChildrenPage() {
               <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
                 {child.bloodGroup && (
                   <p className="text-muted-foreground">
-                    <span className="font-medium">Grupo sanguíneo:</span> {child.bloodGroup}
+                    <span className="font-medium">Grupo sanguíneo:</span>{' '}
+                    {child.bloodGroup}
                   </p>
                 )}
                 {child.allergies && (
@@ -82,7 +84,8 @@ export default async function ChildrenPage() {
                 )}
                 {child.primaryDoctor && (
                   <p className="text-muted-foreground">
-                    <span className="font-medium">Médico:</span> {child.primaryDoctor}
+                    <span className="font-medium">Médico:</span>{' '}
+                    {child.primaryDoctor}
                   </p>
                 )}
               </div>

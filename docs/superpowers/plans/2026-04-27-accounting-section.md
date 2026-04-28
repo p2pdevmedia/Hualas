@@ -13,6 +13,7 @@
 ## File Map
 
 ### New files
+
 - `src/lib/accounting.ts` — categories const, role helpers, formatAmount
 - `src/lib/validations/accounting.ts` — Zod schemas
 - `src/app/accounting/layout.tsx` — access guard + sub-nav
@@ -31,6 +32,7 @@
 - `src/app/api/accounting/reports/route.ts` — GET aggregated data
 
 ### Modified files
+
 - `prisma/schema.prisma` — COUNTER role, AccountingMovement model, MovementType enum
 - `src/lib/i18n.ts` — add accounting nav key to all 4 languages
 - `src/components/navbar.tsx` — add Contaduría link
@@ -125,7 +127,9 @@ git commit -m "feat: add COUNTER role and AccountingMovement model"
 export const ACCOUNTING_ROLES = ['COUNTER', 'ADMIN', 'SUPER_ADMIN'] as const;
 export type AccountingRole = (typeof ACCOUNTING_ROLES)[number];
 
-export function isAccountingRole(role: string | undefined | null): role is AccountingRole {
+export function isAccountingRole(
+  role: string | undefined | null
+): role is AccountingRole {
   return ACCOUNTING_ROLES.includes(role as AccountingRole);
 }
 
@@ -257,7 +261,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const parsed = movementSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const movement = await prisma.accountingMovement.create({
@@ -317,7 +324,10 @@ export async function PUT(
   const body = await request.json();
   const parsed = movementSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const movement = await prisma.accountingMovement.update({
@@ -389,16 +399,27 @@ export async function POST(
     return NextResponse.json({ error: 'No file received' }, { status: 400 });
   }
   if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'File must be an image' },
+      { status: 400 }
+    );
   }
   if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File must be under 5 MB' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'File must be under 5 MB' },
+      { status: 400 }
+    );
   }
 
-  const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.jpg';
+  const ext = file.name.includes('.')
+    ? file.name.slice(file.name.lastIndexOf('.'))
+    : '.jpg';
   const pathname = `accounting/receipts/${params.id}/${crypto.randomUUID()}${ext}`;
 
-  const blob = await put(pathname, file, { access: 'public', contentType: file.type });
+  const blob = await put(pathname, file, {
+    access: 'public',
+    contentType: file.type,
+  });
 
   await prisma.accountingMovement.update({
     where: { id: params.id },
@@ -465,13 +486,18 @@ export async function GET(request: Request) {
     }),
   ]);
 
-  const totalIncome = movements.filter((m) => m.type === 'INCOME').reduce((s, m) => s + m.amount, 0);
-  const totalExpense = movements.filter((m) => m.type === 'EXPENSE').reduce((s, m) => s + m.amount, 0);
+  const totalIncome = movements
+    .filter((m) => m.type === 'INCOME')
+    .reduce((s, m) => s + m.amount, 0);
+  const totalExpense = movements
+    .filter((m) => m.type === 'EXPENSE')
+    .reduce((s, m) => s + m.amount, 0);
   const totalMp = mpPayments.reduce((s, p) => s + p.activity.price * 100, 0);
 
   const byCategory: Record<string, { income: number; expense: number }> = {};
   for (const m of movements) {
-    if (!byCategory[m.category]) byCategory[m.category] = { income: 0, expense: 0 };
+    if (!byCategory[m.category])
+      byCategory[m.category] = { income: 0, expense: 0 };
     if (m.type === 'INCOME') byCategory[m.category].income += m.amount;
     else byCategory[m.category].expense += m.amount;
   }
@@ -527,7 +553,11 @@ const navLinks = [
   { href: '/accounting/reports', label: 'Reportes' },
 ];
 
-export default async function AccountingLayout({ children }: { children: React.ReactNode }) {
+export default async function AccountingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getServerSession(authOptions);
   if (!isAccountingRole((session?.user as any)?.role)) {
     redirect('/');
@@ -574,7 +604,15 @@ import { prisma } from '@/lib/prisma';
 import { formatAmount } from '@/lib/accounting';
 import Link from 'next/link';
 
-function SummaryCard({ label, value, colorClass }: { label: string; value: string; colorClass: string }) {
+function SummaryCard({
+  label,
+  value,
+  colorClass,
+}: {
+  label: string;
+  value: string;
+  colorClass: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-5 shadow-sm space-y-1">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -586,74 +624,141 @@ function SummaryCard({ label, value, colorClass }: { label: string; value: strin
 export default async function AccountingPage() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const endOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59
+  );
 
-  const [monthMovements, recentMovements, recentMpPayments] = await Promise.all([
-    prisma.accountingMovement.findMany({
-      where: { date: { gte: startOfMonth, lte: endOfMonth } },
-    }),
-    prisma.accountingMovement.findMany({
-      orderBy: { date: 'desc' },
-      take: 10,
-      include: { createdBy: { select: { name: true, lastName: true } } },
-    }),
-    prisma.activityParticipant.findMany({
-      where: { receipt: { not: null }, receiptDate: { gte: startOfMonth, lte: endOfMonth } },
-      orderBy: { receiptDate: 'desc' },
-      take: 5,
-      include: {
-        activity: { select: { name: true, price: true } },
-        user: { select: { name: true, lastName: true } },
-        child: { select: { name: true } },
-      },
-    }),
-  ]);
+  const [monthMovements, recentMovements, recentMpPayments] = await Promise.all(
+    [
+      prisma.accountingMovement.findMany({
+        where: { date: { gte: startOfMonth, lte: endOfMonth } },
+      }),
+      prisma.accountingMovement.findMany({
+        orderBy: { date: 'desc' },
+        take: 10,
+        include: { createdBy: { select: { name: true, lastName: true } } },
+      }),
+      prisma.activityParticipant.findMany({
+        where: {
+          receipt: { not: null },
+          receiptDate: { gte: startOfMonth, lte: endOfMonth },
+        },
+        orderBy: { receiptDate: 'desc' },
+        take: 5,
+        include: {
+          activity: { select: { name: true, price: true } },
+          user: { select: { name: true, lastName: true } },
+          child: { select: { name: true } },
+        },
+      }),
+    ]
+  );
 
-  const totalIncome = monthMovements.filter((m) => m.type === 'INCOME').reduce((s, m) => s + m.amount, 0);
-  const totalExpense = monthMovements.filter((m) => m.type === 'EXPENSE').reduce((s, m) => s + m.amount, 0);
-  const totalMp = recentMpPayments.reduce((s, p) => s + p.activity.price * 100, 0);
+  const totalIncome = monthMovements
+    .filter((m) => m.type === 'INCOME')
+    .reduce((s, m) => s + m.amount, 0);
+  const totalExpense = monthMovements
+    .filter((m) => m.type === 'EXPENSE')
+    .reduce((s, m) => s + m.amount, 0);
+  const totalMp = recentMpPayments.reduce(
+    (s, p) => s + p.activity.price * 100,
+    0
+  );
 
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <SummaryCard label="Ingresos del mes" value={formatAmount(totalIncome)} colorClass="text-emerald-600" />
-        <SummaryCard label="Gastos del mes" value={formatAmount(totalExpense)} colorClass="text-red-600" />
-        <SummaryCard label="Balance neto" value={formatAmount(totalIncome - totalExpense)} colorClass="text-blue-600" />
-        <SummaryCard label="Cobrado vía MP (mes)" value={formatAmount(totalMp)} colorClass="text-violet-600" />
+        <SummaryCard
+          label="Ingresos del mes"
+          value={formatAmount(totalIncome)}
+          colorClass="text-emerald-600"
+        />
+        <SummaryCard
+          label="Gastos del mes"
+          value={formatAmount(totalExpense)}
+          colorClass="text-red-600"
+        />
+        <SummaryCard
+          label="Balance neto"
+          value={formatAmount(totalIncome - totalExpense)}
+          colorClass="text-blue-600"
+        />
+        <SummaryCard
+          label="Cobrado vía MP (mes)"
+          value={formatAmount(totalMp)}
+          colorClass="text-violet-600"
+        />
       </div>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Últimos movimientos manuales</h2>
-          <Link href="/accounting/movements" className="text-sm text-primary hover:underline">Ver todos</Link>
+          <h2 className="text-base font-semibold">
+            Últimos movimientos manuales
+          </h2>
+          <Link
+            href="/accounting/movements"
+            className="text-sm text-primary hover:underline"
+          >
+            Ver todos
+          </Link>
         </div>
         <div className="rounded-xl border bg-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Fecha</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Tipo</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Categoría</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Descripción</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Monto</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Fecha
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Tipo
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Categoría
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Descripción
+                </th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                  Monto
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {recentMovements.map((m) => (
                 <tr key={m.id}>
-                  <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{new Date(m.date).toLocaleDateString('es-AR')}</td>
+                  <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
+                    {new Date(m.date).toLocaleDateString('es-AR')}
+                  </td>
                   <td className="px-4 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${m.type === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${m.type === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+                    >
                       {m.type === 'INCOME' ? 'Ingreso' : 'Egreso'}
                     </span>
                   </td>
                   <td className="px-4 py-2">{m.category}</td>
-                  <td className="px-4 py-2 max-w-[200px] truncate">{m.description}</td>
-                  <td className="px-4 py-2 text-right font-medium">{formatAmount(m.amount)}</td>
+                  <td className="px-4 py-2 max-w-[200px] truncate">
+                    {m.description}
+                  </td>
+                  <td className="px-4 py-2 text-right font-medium">
+                    {formatAmount(m.amount)}
+                  </td>
                 </tr>
               ))}
               {recentMovements.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Sin movimientos registrados</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-muted-foreground"
+                  >
+                    Sin movimientos registrados
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -662,30 +767,61 @@ export default async function AccountingPage() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Últimos pagos vía Mercado Pago</h2>
-          <Link href="/accounting/payments" className="text-sm text-primary hover:underline">Ver todos</Link>
+          <h2 className="text-base font-semibold">
+            Últimos pagos vía Mercado Pago
+          </h2>
+          <Link
+            href="/accounting/payments"
+            className="text-sm text-primary hover:underline"
+          >
+            Ver todos
+          </Link>
         </div>
         <div className="rounded-xl border bg-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Fecha</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Actividad</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Participante</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Monto</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Fecha
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Actividad
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                  Participante
+                </th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                  Monto
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {recentMpPayments.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{p.receiptDate ? new Date(p.receiptDate).toLocaleDateString('es-AR') : '—'}</td>
+                  <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
+                    {p.receiptDate
+                      ? new Date(p.receiptDate).toLocaleDateString('es-AR')
+                      : '—'}
+                  </td>
                   <td className="px-4 py-2">{p.activity.name}</td>
-                  <td className="px-4 py-2">{p.child?.name ?? `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim()}</td>
-                  <td className="px-4 py-2 text-right font-medium">{formatAmount(p.activity.price * 100)}</td>
+                  <td className="px-4 py-2">
+                    {p.child?.name ??
+                      `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim()}
+                  </td>
+                  <td className="px-4 py-2 text-right font-medium">
+                    {formatAmount(p.activity.price * 100)}
+                  </td>
                 </tr>
               ))}
               {recentMpPayments.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Sin pagos MP este mes</td></tr>
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-6 text-center text-muted-foreground"
+                  >
+                    Sin pagos MP este mes
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -730,16 +866,30 @@ type MovementData = {
   receiptImage?: string | null;
 };
 
-export default function MovementForm({ movement }: { movement?: MovementData }) {
+export default function MovementForm({
+  movement,
+}: {
+  movement?: MovementData;
+}) {
   const router = useRouter();
   const isEdit = !!movement;
 
-  const [date, setDate] = useState(movement?.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
-  const [amountPesos, setAmountPesos] = useState(movement ? String(movement.amount / 100) : '');
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(movement?.type ?? 'INCOME');
-  const [category, setCategory] = useState(movement?.category ?? MOVEMENT_CATEGORIES[0]);
+  const [date, setDate] = useState(
+    movement?.date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+  );
+  const [amountPesos, setAmountPesos] = useState(
+    movement ? String(movement.amount / 100) : ''
+  );
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(
+    movement?.type ?? 'INCOME'
+  );
+  const [category, setCategory] = useState(
+    movement?.category ?? MOVEMENT_CATEGORIES[0]
+  );
   const [description, setDescription] = useState(movement?.description ?? '');
-  const [receiptNumber, setReceiptNumber] = useState(movement?.receiptNumber ?? '');
+  const [receiptNumber, setReceiptNumber] = useState(
+    movement?.receiptNumber ?? ''
+  );
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -758,7 +908,9 @@ export default function MovementForm({ movement }: { movement?: MovementData }) 
 
     try {
       const res = await fetch(
-        isEdit ? `/api/accounting/movements/${movement!.id}` : '/api/accounting/movements',
+        isEdit
+          ? `/api/accounting/movements/${movement!.id}`
+          : '/api/accounting/movements',
         {
           method: isEdit ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -807,11 +959,22 @@ export default function MovementForm({ movement }: { movement?: MovementData }) 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Fecha *</label>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className={inputClass} />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className={inputClass}
+          />
         </div>
         <div>
           <label className={labelClass}>Tipo *</label>
-          <select value={type} onChange={(e) => setType(e.target.value as 'INCOME' | 'EXPENSE')} required className={inputClass}>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as 'INCOME' | 'EXPENSE')}
+            required
+            className={inputClass}
+          >
             <option value="INCOME">Ingreso</option>
             <option value="EXPENSE">Egreso</option>
           </select>
@@ -834,9 +997,16 @@ export default function MovementForm({ movement }: { movement?: MovementData }) 
         </div>
         <div>
           <label className={labelClass}>Categoría *</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} required className={inputClass}>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+            className={inputClass}
+          >
             {MOVEMENT_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </div>
@@ -857,13 +1027,28 @@ export default function MovementForm({ movement }: { movement?: MovementData }) 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Nro. comprobante</label>
-          <input type="text" value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} className={inputClass} />
+          <input
+            type="text"
+            value={receiptNumber}
+            onChange={(e) => setReceiptNumber(e.target.value)}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className={labelClass}>Imagen comprobante</label>
-          <input type="file" accept="image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)} className="w-full text-sm" />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
+            className="w-full text-sm"
+          />
           {movement?.receiptImage && !receiptFile && (
-            <a href={movement.receiptImage} target="_blank" rel="noopener noreferrer" className="mt-1 text-xs text-primary hover:underline block">
+            <a
+              href={movement.receiptImage}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 text-xs text-primary hover:underline block"
+            >
               Ver comprobante actual
             </a>
           )}
@@ -878,7 +1063,11 @@ export default function MovementForm({ movement }: { movement?: MovementData }) 
           disabled={saving}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear movimiento'}
+          {saving
+            ? 'Guardando...'
+            : isEdit
+              ? 'Guardar cambios'
+              : 'Crear movimiento'}
         </button>
         <button
           type="button"
@@ -906,6 +1095,7 @@ git commit -m "feat: add shared MovementForm client component"
 ### Task 11: Movements list page
 
 **Files:**
+
 - Create `src/app/accounting/movements/movements-table.tsx`
 - Create `src/app/accounting/movements/page.tsx`
 
@@ -931,9 +1121,15 @@ type Movement = {
   receiptImage: string | null;
 };
 
-export default function MovementsTable({ initialMovements }: { initialMovements: Movement[] }) {
+export default function MovementsTable({
+  initialMovements,
+}: {
+  initialMovements: Movement[];
+}) {
   const router = useRouter();
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>(
+    'ALL'
+  );
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -953,21 +1149,38 @@ export default function MovementsTable({ initialMovements }: { initialMovements:
     router.refresh();
   };
 
-  const inputClass = 'rounded-md border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+  const inputClass =
+    'rounded-md border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 items-center">
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)} className={inputClass}>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+          className={inputClass}
+        >
           <option value="ALL">Todos</option>
           <option value="INCOME">Ingresos</option>
           <option value="EXPENSE">Egresos</option>
         </select>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          Desde <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={inputClass} />
+          Desde{' '}
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          Hasta <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={inputClass} />
+          Hasta{' '}
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
       </div>
 
@@ -975,36 +1188,68 @@ export default function MovementsTable({ initialMovements }: { initialMovements:
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Fecha</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Tipo</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Categoría</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Descripción</th>
-              <th className="px-4 py-2 text-right font-medium text-muted-foreground">Monto</th>
-              <th className="px-4 py-2 text-center font-medium text-muted-foreground">Comp.</th>
-              <th className="px-4 py-2 text-right font-medium text-muted-foreground">Acciones</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Fecha
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Tipo
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Categoría
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Descripción
+              </th>
+              <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                Monto
+              </th>
+              <th className="px-4 py-2 text-center font-medium text-muted-foreground">
+                Comp.
+              </th>
+              <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map((m) => (
               <tr key={m.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{new Date(m.date).toLocaleDateString('es-AR')}</td>
+                <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
+                  {new Date(m.date).toLocaleDateString('es-AR')}
+                </td>
                 <td className="px-4 py-2">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${m.type === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${m.type === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+                  >
                     {m.type === 'INCOME' ? 'Ingreso' : 'Egreso'}
                   </span>
                 </td>
                 <td className="px-4 py-2">{m.category}</td>
-                <td className="px-4 py-2 max-w-[220px] truncate">{m.description}</td>
-                <td className="px-4 py-2 text-right font-medium">{formatAmount(m.amount)}</td>
+                <td className="px-4 py-2 max-w-[220px] truncate">
+                  {m.description}
+                </td>
+                <td className="px-4 py-2 text-right font-medium">
+                  {formatAmount(m.amount)}
+                </td>
                 <td className="px-4 py-2 text-center">
                   {m.receiptImage ? (
-                    <a href={m.receiptImage} target="_blank" rel="noopener noreferrer" title="Ver comprobante">
+                    <a
+                      href={m.receiptImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Ver comprobante"
+                    >
                       <FileImage className="h-4 w-4 mx-auto text-primary" />
                     </a>
-                  ) : '—'}
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td className="px-4 py-2 text-right whitespace-nowrap">
-                  <Link href={`/accounting/movements/${m.id}/edit`} className="text-primary hover:underline text-xs mr-3">
+                  <Link
+                    href={`/accounting/movements/${m.id}/edit`}
+                    className="text-primary hover:underline text-xs mr-3"
+                  >
                     Editar
                   </Link>
                   <button
@@ -1018,12 +1263,21 @@ export default function MovementsTable({ initialMovements }: { initialMovements:
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Sin movimientos</td></tr>
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-muted-foreground"
+                >
+                  Sin movimientos
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">{filtered.length} movimiento{filtered.length !== 1 ? 's' : ''}</p>
+      <p className="text-xs text-muted-foreground">
+        {filtered.length} movimiento{filtered.length !== 1 ? 's' : ''}
+      </p>
     </div>
   );
 }
@@ -1072,6 +1326,7 @@ git commit -m "feat: add accounting movements list page"
 ### Task 12: New and edit movement pages
 
 **Files:**
+
 - Create `src/app/accounting/movements/new/page.tsx`
 - Create `src/app/accounting/movements/[id]/edit/page.tsx`
 
@@ -1101,8 +1356,14 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import MovementForm from '../../movement-form';
 
-export default async function EditMovementPage({ params }: { params: { id: string } }) {
-  const movement = await prisma.accountingMovement.findUnique({ where: { id: params.id } });
+export default async function EditMovementPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const movement = await prisma.accountingMovement.findUnique({
+    where: { id: params.id },
+  });
   if (!movement) notFound();
 
   return (
@@ -1165,18 +1426,30 @@ export default async function PaymentsPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Fecha</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Actividad</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Participante</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Recibo</th>
-              <th className="px-4 py-2 text-right font-medium text-muted-foreground">Monto</th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Fecha
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Actividad
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Participante
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                Recibo
+              </th>
+              <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                Monto
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {payments.map((p) => (
               <tr key={p.id} className="hover:bg-muted/30">
                 <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
-                  {p.receiptDate ? new Date(p.receiptDate).toLocaleDateString('es-AR') : '—'}
+                  {p.receiptDate
+                    ? new Date(p.receiptDate).toLocaleDateString('es-AR')
+                    : '—'}
                 </td>
                 <td className="px-4 py-2">{p.activity.name}</td>
                 <td className="px-4 py-2">
@@ -1184,17 +1457,31 @@ export default async function PaymentsPage() {
                     ? `${p.child.name} ${p.child.lastName ?? ''}`.trim()
                     : `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim()}
                 </td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">{p.receipt ?? '—'}</td>
-                <td className="px-4 py-2 text-right font-medium">{formatAmount(p.activity.price * 100)}</td>
+                <td className="px-4 py-2 text-muted-foreground text-xs">
+                  {p.receipt ?? '—'}
+                </td>
+                <td className="px-4 py-2 text-right font-medium">
+                  {formatAmount(p.activity.price * 100)}
+                </td>
               </tr>
             ))}
             {payments.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Sin pagos registrados</td></tr>
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-muted-foreground"
+                >
+                  Sin pagos registrados
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">{payments.length} pago{payments.length !== 1 ? 's' : ''} registrado{payments.length !== 1 ? 's' : ''}</p>
+      <p className="text-xs text-muted-foreground">
+        {payments.length} pago{payments.length !== 1 ? 's' : ''} registrado
+        {payments.length !== 1 ? 's' : ''}
+      </p>
     </div>
   );
 }
@@ -1213,6 +1500,7 @@ git commit -m "feat: add accounting MP payments read-only page"
 ### Task 14: Reports page with CSV and PDF export
 
 **Files:**
+
 - Create `src/app/accounting/reports/reports-client.tsx`
 - Create `src/app/accounting/reports/page.tsx`
 
@@ -1251,8 +1539,14 @@ type ReportData = {
 
 export default function ReportsClient() {
   const now = new Date();
-  const [from, setFrom] = useState(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10));
-  const [to, setTo] = useState(new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10));
+  const [from, setFrom] = useState(
+    new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  );
+  const [to, setTo] = useState(
+    new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      .toISOString()
+      .slice(0, 10)
+  );
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -1274,7 +1568,14 @@ export default function ReportsClient() {
   const exportCsv = () => {
     if (!data) return;
     const rows = [
-      ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Monto (ARS)', 'Comprobante'],
+      [
+        'Fecha',
+        'Tipo',
+        'Categoría',
+        'Descripción',
+        'Monto (ARS)',
+        'Comprobante',
+      ],
       ...data.movements.map((m) => [
         new Date(m.date).toLocaleDateString('es-AR'),
         m.type === 'INCOME' ? 'Ingreso' : 'Egreso',
@@ -1284,7 +1585,9 @@ export default function ReportsClient() {
         m.receiptNumber ?? '',
       ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1350,18 +1653,29 @@ export default function ReportsClient() {
     doc.save(`reporte-contaduria-${from}-${to}.pdf`);
   };
 
-  const inputClass = 'rounded-md border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+  const inputClass =
+    'rounded-md border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-3 items-end">
         <div className="space-y-1">
           <label className="block text-xs text-muted-foreground">Desde</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className={inputClass}
+          />
         </div>
         <div className="space-y-1">
           <label className="block text-xs text-muted-foreground">Hasta</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className={inputClass}
+          />
         </div>
         <button
           onClick={fetchReport}
@@ -1378,14 +1692,35 @@ export default function ReportsClient() {
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: 'Ingresos', value: formatAmount(data.totalIncome), color: 'text-emerald-600' },
-              { label: 'Egresos', value: formatAmount(data.totalExpense), color: 'text-red-600' },
-              { label: 'Balance neto', value: formatAmount(data.netBalance), color: 'text-blue-600' },
-              { label: 'Cobrado vía MP', value: formatAmount(data.totalMp), color: 'text-violet-600' },
+              {
+                label: 'Ingresos',
+                value: formatAmount(data.totalIncome),
+                color: 'text-emerald-600',
+              },
+              {
+                label: 'Egresos',
+                value: formatAmount(data.totalExpense),
+                color: 'text-red-600',
+              },
+              {
+                label: 'Balance neto',
+                value: formatAmount(data.netBalance),
+                color: 'text-blue-600',
+              },
+              {
+                label: 'Cobrado vía MP',
+                value: formatAmount(data.totalMp),
+                color: 'text-violet-600',
+              },
             ].map((card) => (
-              <div key={card.label} className="rounded-xl border bg-card p-4 shadow-sm">
+              <div
+                key={card.label}
+                className="rounded-xl border bg-card p-4 shadow-sm"
+              >
                 <p className="text-xs text-muted-foreground">{card.label}</p>
-                <p className={`text-lg font-bold ${card.color}`}>{card.value}</p>
+                <p className={`text-lg font-bold ${card.color}`}>
+                  {card.value}
+                </p>
               </div>
             ))}
           </div>
@@ -1394,33 +1729,60 @@ export default function ReportsClient() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Categoría</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Ingresos</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Egresos</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Neto</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                    Categoría
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                    Ingresos
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                    Egresos
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                    Neto
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {Object.entries(data.byCategory).map(([cat, v]) => (
                   <tr key={cat}>
                     <td className="px-4 py-2">{cat}</td>
-                    <td className="px-4 py-2 text-right text-emerald-600">{formatAmount(v.income)}</td>
-                    <td className="px-4 py-2 text-right text-red-600">{formatAmount(v.expense)}</td>
-                    <td className="px-4 py-2 text-right font-medium">{formatAmount(v.income - v.expense)}</td>
+                    <td className="px-4 py-2 text-right text-emerald-600">
+                      {formatAmount(v.income)}
+                    </td>
+                    <td className="px-4 py-2 text-right text-red-600">
+                      {formatAmount(v.expense)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {formatAmount(v.income - v.expense)}
+                    </td>
                   </tr>
                 ))}
                 {Object.keys(data.byCategory).length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Sin movimientos en el período</td></tr>
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-6 text-center text-muted-foreground"
+                    >
+                      Sin movimientos en el período
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           <div className="flex gap-3">
-            <button onClick={exportCsv} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+            <button
+              onClick={exportCsv}
+              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
               Exportar CSV
             </button>
-            <button onClick={exportPdf} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+            <button
+              onClick={exportPdf}
+              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
               Exportar PDF
             </button>
           </div>
@@ -1460,6 +1822,7 @@ git commit -m "feat: add accounting reports page with CSV and PDF export"
 ### Task 15: Users list readOnly for COUNTER
 
 **Files:**
+
 - Modify `src/app/admin/users/users-list.tsx`
 - Modify `src/app/admin/users/page.tsx`
 
@@ -1480,38 +1843,56 @@ export default function UsersList({ users, readOnly = false }: { users: User[]; 
 Then wrap the edit link and the `<details>` block (lines 95–136) with `{!readOnly && (...)}`:
 
 ```tsx
-            {!readOnly && (
-              <Link
-                href={`/admin/users/${u.id}`}
-                className={`${linkClass} hidden sm:inline`}
-              >
-                {t.edit}
-              </Link>
-            )}
-            {!readOnly && (
-              <details className="group relative">
-                <summary
-                  aria-label={t.moreActions}
-                  className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
-                >
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                </summary>
-                <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
-                  <Link href={`/admin/users/${u.id}`} className={`${menuItemClass} sm:hidden`}>
-                    {t.edit}
-                  </Link>
-                  <Link href={`/admin/users/${u.id}/child-enrollment`} className={menuItemClass}>
-                    {t.childEnrollment}
-                  </Link>
-                  <button type="button" onClick={() => resetPassword(u.id)} className={menuItemClass}>
-                    {t.resetPassword}
-                  </button>
-                  <button type="button" onClick={() => deleteUser(u.id)} className={`${menuItemClass} text-red-600 hover:bg-red-50`}>
-                    {t.delete}
-                  </button>
-                </div>
-              </details>
-            )}
+{
+  !readOnly && (
+    <Link
+      href={`/admin/users/${u.id}`}
+      className={`${linkClass} hidden sm:inline`}
+    >
+      {t.edit}
+    </Link>
+  );
+}
+{
+  !readOnly && (
+    <details className="group relative">
+      <summary
+        aria-label={t.moreActions}
+        className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
+      >
+        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+      </summary>
+      <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+        <Link
+          href={`/admin/users/${u.id}`}
+          className={`${menuItemClass} sm:hidden`}
+        >
+          {t.edit}
+        </Link>
+        <Link
+          href={`/admin/users/${u.id}/child-enrollment`}
+          className={menuItemClass}
+        >
+          {t.childEnrollment}
+        </Link>
+        <button
+          type="button"
+          onClick={() => resetPassword(u.id)}
+          className={menuItemClass}
+        >
+          {t.resetPassword}
+        </button>
+        <button
+          type="button"
+          onClick={() => deleteUser(u.id)}
+          className={`${menuItemClass} text-red-600 hover:bg-red-50`}
+        >
+          {t.delete}
+        </button>
+      </div>
+    </details>
+  );
+}
 ```
 
 - [ ] **Step 2: Update UsersPage to allow COUNTER**
@@ -1573,6 +1954,7 @@ git commit -m "feat: allow COUNTER to view users list in read-only mode"
 ### Task 16: i18n + navbar
 
 **Files:**
+
 - Modify `src/lib/i18n.ts`
 - Modify `src/components/navbar.tsx`
 
@@ -1606,11 +1988,13 @@ const canSeeAccounting = isAdmin || isCounter;
 In both the desktop nav section (`hidden md:flex`) and the mobile menu section, add the accounting link **before** the contact link:
 
 ```tsx
-{canSeeAccounting && (
-  <Link href="/accounting" className={linkClass}>
-    {t.accounting}
-  </Link>
-)}
+{
+  canSeeAccounting && (
+    <Link href="/accounting" className={linkClass}>
+      {t.accounting}
+    </Link>
+  );
+}
 ```
 
 In the mobile version, also pass `onClick={() => setMenuOpen(false)}` to the Link.
@@ -1711,6 +2095,7 @@ git commit -m "docs: add accounting routes to ROUTE_MAP.md"
 ## Self-Review
 
 Spec coverage:
+
 - ✅ COUNTER role → Tasks 1, 16, 8, 15
 - ✅ Manual movements CRUD + receipt upload → Tasks 4, 5, 6, 10, 11, 12
 - ✅ MP payments view (read-only) → Tasks 7, 13

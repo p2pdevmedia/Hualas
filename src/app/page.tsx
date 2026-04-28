@@ -22,11 +22,22 @@ export default function Home() {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <Container maxWidth="4" mx="auto" className="h-full flex flex-col justify-end pb-10">
-          <Text size="1" className="text-white/60 uppercase tracking-widest mb-3">
+        <Container
+          maxWidth="4"
+          mx="auto"
+          className="h-full flex flex-col justify-end pb-10"
+        >
+          <Text
+            size="1"
+            className="text-white/60 uppercase tracking-widest mb-3"
+          >
             📍 San Martín de los Andes · Neuquén, Patagonia
           </Text>
-          <Heading size="7" weight="bold" className="text-white leading-tight mb-3">
+          <Heading
+            size="7"
+            weight="bold"
+            className="text-white leading-tight mb-3"
+          >
             Explorá la Patagonia
             <br />
             con nosotros
@@ -42,7 +53,11 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button variant="outline" size="2" className="border-white/70 text-white hover:bg-white/10">
+              <Button
+                variant="outline"
+                size="2"
+                className="border-white/70 text-white hover:bg-white/10"
+              >
                 Conocer el club
               </Button>
             </Link>
@@ -61,19 +76,23 @@ export default function Home() {
             <Flex gap="6" className="grid grid-cols-1 md:grid-cols-3">
               {/* Feature 1 */}
               <Box className="text-center">
-                <Text size="5" className="mb-3">⛰️</Text>
+                <Text size="5" className="mb-3">
+                  ⛰️
+                </Text>
                 <Heading size="4" weight="bold" className="mb-2">
                   Montaña
                 </Heading>
                 <Text size="2" className="text-gray-600">
-                  Expediciones y travesías en los Andes patagónicos para todos los
-                  niveles.
+                  Expediciones y travesías en los Andes patagónicos para todos
+                  los niveles.
                 </Text>
               </Box>
 
               {/* Feature 2 */}
               <Box className="text-center">
-                <Text size="5" className="mb-3">🧗</Text>
+                <Text size="5" className="mb-3">
+                  🧗
+                </Text>
                 <Heading size="4" weight="bold" className="mb-2">
                   Escalada
                 </Heading>
@@ -85,7 +104,9 @@ export default function Home() {
 
               {/* Feature 3 */}
               <Box className="text-center">
-                <Text size="5" className="mb-3">🌿</Text>
+                <Text size="5" className="mb-3">
+                  🌿
+                </Text>
                 <Heading size="4" weight="bold" className="mb-2">
                   Infancias
                 </Heading>

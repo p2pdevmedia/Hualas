@@ -44,7 +44,9 @@ export default function ActivityGroupForm({
       setDescription('');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear el grupo');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo crear el grupo'
+      );
     } finally {
       setSaving(false);
     }

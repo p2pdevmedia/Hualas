@@ -80,7 +80,9 @@ export default async function ViewMyChildPage({
           )}
           {child.lastName && (
             <div>
-              <span className="font-medium block text-foreground">Apellido</span>
+              <span className="font-medium block text-foreground">
+                Apellido
+              </span>
               <span className="text-muted-foreground">{child.lastName}</span>
             </div>
           )}
@@ -269,7 +271,9 @@ export default async function ViewMyChildPage({
                 <span className="font-medium block text-foreground">
                   Grupo Sanguíneo
                 </span>
-                <span className="text-muted-foreground">{child.bloodGroup}</span>
+                <span className="text-muted-foreground">
+                  {child.bloodGroup}
+                </span>
               </div>
             )}
             {child.primaryDoctor && (

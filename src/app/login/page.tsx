@@ -105,13 +105,21 @@ export default function LoginPage() {
               className="w-full flex items-center justify-center gap-2"
               onClick={() => signIn('google', { callbackUrl: '/' })}
             >
-              <Image src="/google.svg" alt="Google logo" width={18} height={18} />
+              <Image
+                src="/google.svg"
+                alt="Google logo"
+                width={18}
+                height={18}
+              />
               {t.signInWithGoogle}
             </Button>
 
             <Text size="2" className="text-center">
               ¿No tienes cuenta?{' '}
-              <Link href="/register" className="text-grass-600 hover:text-grass-900 font-medium">
+              <Link
+                href="/register"
+                className="text-grass-600 hover:text-grass-900 font-medium"
+              >
                 Regístrate aquí
               </Link>
             </Text>

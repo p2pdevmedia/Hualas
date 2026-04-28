@@ -22,7 +22,9 @@ export default function CreateActivityPageClient({
   professors,
 }: CreateActivityPageClientProps) {
   const router = useRouter();
-  const [createdActivityId, setCreatedActivityId] = useState<string | null>(null);
+  const [createdActivityId, setCreatedActivityId] = useState<string | null>(
+    null
+  );
 
   const handleActivityCreated = (activityId: string) => {
     setCreatedActivityId(activityId);
@@ -45,7 +47,10 @@ export default function CreateActivityPageClient({
           Crear actividad
         </Heading>
         {!createdActivityId ? (
-          <CreateActivityForm professors={professors} onSuccess={handleActivityCreated} />
+          <CreateActivityForm
+            professors={professors}
+            onSuccess={handleActivityCreated}
+          />
         ) : (
           <Box className="space-y-6">
             <Box>
@@ -57,7 +62,11 @@ export default function CreateActivityPageClient({
                 onSuccess={handleImageUploadComplete}
               />
             </Box>
-            <Button onClick={handleSkipUpload} variant="outline" className="w-full">
+            <Button
+              onClick={handleSkipUpload}
+              variant="outline"
+              className="w-full"
+            >
               Saltar y volver a actividades
             </Button>
           </Box>

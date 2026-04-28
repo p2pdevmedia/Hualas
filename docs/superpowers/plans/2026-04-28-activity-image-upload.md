@@ -36,6 +36,7 @@ src/
 ## Task 1: Create Image Utility Helper with Tests
 
 **Files:**
+
 - Create: `src/lib/image-utils.ts`
 - Create: `src/lib/__tests__/image-utils.test.ts`
 
@@ -152,6 +153,7 @@ git commit -m "feat: add image MIME type to extension utility"
 ## Task 2: Create API Endpoint - POST Image Upload
 
 **Files:**
+
 - Create: `src/app/api/activities/[id]/image/route.ts`
 - Create: `src/app/api/activities/__tests__/image.test.ts`
 
@@ -457,6 +459,7 @@ git commit -m "feat: add POST endpoint for activity image upload"
 ## Task 3: Create API Endpoint - DELETE Image
 
 **Files:**
+
 - Modify: `src/app/api/activities/[id]/image/route.ts`
 - Modify: `src/app/api/activities/__tests__/image.test.ts`
 
@@ -622,6 +625,7 @@ git commit -m "feat: add DELETE endpoint for activity image removal"
 ## Task 4: Create ActivityImageUpload Component
 
 **Files:**
+
 - Create: `src/app/activities/activity-image-upload.tsx`
 
 ### Step 1: Review ProfilePhotoUpload for reference pattern
@@ -835,6 +839,7 @@ git commit -m "feat: add ActivityImageUpload component with drag-drop and delete
 ## Task 5: Integrate Upload Component into Create Activity Page
 
 **Files:**
+
 - Modify: `src/app/activities/new/page.tsx`
 
 ### Step 1: Read current page to understand structure
@@ -970,6 +975,7 @@ git commit -m "feat: integrate ActivityImageUpload into create activity flow"
 ## Task 6: Integrate Upload Component into Edit Activity Page
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/edit/page.tsx`
 
 ### Step 1: Read current edit page

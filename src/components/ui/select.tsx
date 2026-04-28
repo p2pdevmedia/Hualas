@@ -26,22 +26,16 @@ export function Select({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium mb-1">
-          {label}
-        </label>
+        <label className="block text-sm font-medium mb-1">{label}</label>
       )}
       <RadixSelect.Root value={value} onValueChange={onValueChange}>
         <RadixSelect.Trigger
           className={cn('w-full', className)}
           placeholder={placeholder}
         />
-        <RadixSelect.Content>
-          {children}
-        </RadixSelect.Content>
+        <RadixSelect.Content>{children}</RadixSelect.Content>
       </RadixSelect.Root>
-      {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
     </div>
   );
 }

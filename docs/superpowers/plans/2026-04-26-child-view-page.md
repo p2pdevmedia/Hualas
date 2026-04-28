@@ -13,10 +13,12 @@
 ## File Structure
 
 **New Files:**
+
 - `/src/app/admin/users/[id]/children/[childId]/view/page.tsx` — View-only page component
 - `/src/components/child-info-section.tsx` — Reusable collapsible section component
 
 **Modified Files:**
+
 - `/src/app/admin/users/[id]/view/page.tsx` — Add "Ver" button to children list
 
 ---
@@ -26,6 +28,7 @@
 ### Task 1: Create Collapsible Section Component
 
 **Files:**
+
 - Create: `/src/components/child-info-section.tsx`
 
 - [ ] **Step 1: Create the collapsible section component**
@@ -73,6 +76,7 @@ export default function ChildInfoSection({
 - [ ] **Step 2: Verify component can be imported**
 
 Run in terminal:
+
 ```bash
 grep -n "export default function ChildInfoSection" src/components/child-info-section.tsx
 ```
@@ -91,6 +95,7 @@ git commit -m "feat: add collapsible section component for child info"
 ### Task 2: Create Child View Page
 
 **Files:**
+
 - Create: `/src/app/admin/users/[id]/children/[childId]/view/page.tsx`
 
 - [ ] **Step 1: Create the view page with server-side data fetch**
@@ -178,7 +183,9 @@ export default async function ViewChildPage({
           )}
           {child.lastName && (
             <div>
-              <span className="font-medium block text-foreground">Apellido</span>
+              <span className="font-medium block text-foreground">
+                Apellido
+              </span>
               <span className="text-muted-foreground">{child.lastName}</span>
             </div>
           )}
@@ -238,7 +245,10 @@ export default async function ViewChildPage({
       </ChildInfoSection>
 
       {/* Documentación */}
-      {(child.documentType || child.documentNumber || child.documentFrontPhoto || child.documentBackPhoto) && (
+      {(child.documentType ||
+        child.documentNumber ||
+        child.documentFrontPhoto ||
+        child.documentBackPhoto) && (
         <ChildInfoSection title="Documentación">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -364,7 +374,9 @@ export default async function ViewChildPage({
                 <span className="font-medium block text-foreground">
                   Grupo Sanguíneo
                 </span>
-                <span className="text-muted-foreground">{child.bloodGroup}</span>
+                <span className="text-muted-foreground">
+                  {child.bloodGroup}
+                </span>
               </div>
             )}
             {child.primaryDoctor && (
@@ -409,7 +421,8 @@ export default async function ViewChildPage({
               <li key={ap.id} className="py-2 text-sm">
                 <span className="font-medium">{ap.activity.name}</span>
                 <span className="text-muted-foreground text-xs block mt-0.5">
-                  {ap.activity.date.toLocaleDateString('es-AR')} · ${ap.activity.price}
+                  {ap.activity.date.toLocaleDateString('es-AR')} · $
+                  {ap.activity.price}
                 </span>
               </li>
             ))}
@@ -432,6 +445,7 @@ export default async function ViewChildPage({
 - [ ] **Step 2: Verify page structure and imports**
 
 Run in terminal:
+
 ```bash
 grep -n "export default async function ViewChildPage" src/app/admin/users/[id]/children/[childId]/view/page.tsx
 ```
@@ -450,11 +464,13 @@ git commit -m "feat: add child information view page"
 ### Task 3: Update Parent View Page with "Ver" Button
 
 **Files:**
+
 - Modify: `/src/app/admin/users/[id]/view/page.tsx:176-181`
 
 - [ ] **Step 1: Read the current children list section**
 
 Read the file to understand the current button structure:
+
 ```bash
 sed -n '176,181p' src/app/admin/users/[id]/view/page.tsx
 ```
@@ -466,30 +482,31 @@ Expected output shows the current "Editar" button.
 Find the section with the "Editar" button (around line 176-181) and replace it with:
 
 ```tsx
-                <div className="flex gap-2">
-                  <Link
-                    href={`/admin/users/${user.id}/children/${child.id}/view`}
-                    className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
-                  >
-                    Ver
-                  </Link>
-                  <Link
-                    href={`/admin/users/${user.id}/children/${child.id}/edit`}
-                    className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
-                  >
-                    Editar
-                  </Link>
-                </div>
+<div className="flex gap-2">
+  <Link
+    href={`/admin/users/${user.id}/children/${child.id}/view`}
+    className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+  >
+    Ver
+  </Link>
+  <Link
+    href={`/admin/users/${user.id}/children/${child.id}/edit`}
+    className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
+  >
+    Editar
+  </Link>
+</div>
 ```
 
 Replace this in the file:
+
 ```tsx
-                <Link
-                  href={`/admin/users/${user.id}/children/${child.id}/edit`}
-                  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
-                >
-                  Editar
-                </Link>
+<Link
+  href={`/admin/users/${user.id}/children/${child.id}/edit`}
+  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+>
+  Editar
+</Link>
 ```
 
 With the code above (keeping all other code the same).
@@ -497,6 +514,7 @@ With the code above (keeping all other code the same).
 - [ ] **Step 3: Verify the change looks correct**
 
 Run:
+
 ```bash
 sed -n '176,195p' src/app/admin/users/[id]/view/page.tsx
 ```

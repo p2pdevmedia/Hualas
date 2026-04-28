@@ -46,7 +46,11 @@ export default async function ProfilePage() {
       <Box className="space-y-6">
         <Card>
           <Box p="6">
-            <Flex gap="6" direction={{ initial: 'column', md: 'row' }} align={{ initial: 'stretch', md: 'center' }}>
+            <Flex
+              gap="6"
+              direction={{ initial: 'column', md: 'row' }}
+              align={{ initial: 'stretch', md: 'center' }}
+            >
               <Box>
                 <ProfilePhotoUpload
                   hasPhoto={Boolean(user.profilePhoto)}
@@ -56,7 +60,9 @@ export default async function ProfilePage() {
                 />
               </Box>
               <Box className="space-y-2">
-                <Heading size="7" weight="bold">Mi perfil</Heading>
+                <Heading size="7" weight="bold">
+                  Mi perfil
+                </Heading>
                 <Text size="2" color="gray">
                   Actualizá tus datos y guardá una foto de perfil tomada con la
                   cámara o subida desde tu dispositivo.

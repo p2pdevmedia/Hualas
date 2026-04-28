@@ -118,7 +118,8 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
       .map((participant) => participant.name)
       .filter(Boolean);
 
-    const recipientLabel = recipients.length > 0 ? recipients.join(', ') : 'destinatario';
+    const recipientLabel =
+      recipients.length > 0 ? recipients.join(', ') : 'destinatario';
 
     return `Mensaje enviado de ${senderName} a ${recipientLabel}: ${messageBody}`;
   }
@@ -240,7 +241,9 @@ export default function AuditLogTable() {
                     <td className="px-4 py-2 font-mono">{log.model}</td>
                     <td className="px-4 py-2 font-mono">{log.action}</td>
                     <td className="px-4 py-2 text-xs text-blue-600 underline">
-                      {expanded === log.id ? 'Ocultar info completa' : 'Ver info completa'}
+                      {expanded === log.id
+                        ? 'Ocultar info completa'
+                        : 'Ver info completa'}
                     </td>
                   </tr>
                   {expanded === log.id && (
@@ -249,11 +252,15 @@ export default function AuditLogTable() {
                         <div className="mb-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
                           <p>
                             <span className="font-semibold">Record ID:</span>{' '}
-                            <span className="font-mono">{log.recordId ?? '—'}</span>
+                            <span className="font-mono">
+                              {log.recordId ?? '—'}
+                            </span>
                           </p>
                           <p>
                             <span className="font-semibold">User ID:</span>{' '}
-                            <span className="font-mono">{log.userId ?? '—'}</span>
+                            <span className="font-mono">
+                              {log.userId ?? '—'}
+                            </span>
                           </p>
                           <p>
                             <span className="font-semibold">Fecha:</span>{' '}

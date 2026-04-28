@@ -22,9 +22,7 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Content className={cn(className)}>
-        {title && (
-          <RadixDialog.Title>{title}</RadixDialog.Title>
-        )}
+        {title && <RadixDialog.Title>{title}</RadixDialog.Title>}
         {children}
       </RadixDialog.Content>
     </RadixDialog.Root>

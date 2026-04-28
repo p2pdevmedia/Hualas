@@ -13,6 +13,7 @@
 ### Task 1: Add `auditLog` translation key to all 4 languages in i18n
 
 **Files:**
+
 - Modify: `src/lib/i18n.ts:14` (es nav block), `:51` (pt nav block), `:88` (en nav block), `:125` (fr nav block)
 
 - [ ] **Step 1: Add key to Spanish nav block (line ~14)**
@@ -67,6 +68,7 @@ git commit -m "feat(i18n): add auditLog nav translation key"
 ### Task 2: Add Audit Log link to navbar (desktop + mobile)
 
 **Files:**
+
 - Modify: `src/components/navbar.tsx:168-178` (desktop isSuperAdmin block), `src/components/navbar.tsx:308-325` (mobile isSuperAdmin block)
 
 - [ ] **Step 1: Add link in desktop isSuperAdmin block**
@@ -74,19 +76,21 @@ git commit -m "feat(i18n): add auditLog nav translation key"
 In `src/components/navbar.tsx`, inside the desktop `{isSuperAdmin && (...)}` block (around line 168), add the audit log link **after** the notifications link and **before** the admin/site link:
 
 ```tsx
-{isSuperAdmin && (
-  <>
-    <Link href="/admin/notifications" className={linkClass}>
-      {t.notifications}
-    </Link>
-    <Link href="/admin/audit-log" className={linkClass}>
-      {t.auditLog}
-    </Link>
-    <Link href="/admin/site" className={linkClass}>
-      {t.admin}
-    </Link>
-  </>
-)}
+{
+  isSuperAdmin && (
+    <>
+      <Link href="/admin/notifications" className={linkClass}>
+        {t.notifications}
+      </Link>
+      <Link href="/admin/audit-log" className={linkClass}>
+        {t.auditLog}
+      </Link>
+      <Link href="/admin/site" className={linkClass}>
+        {t.admin}
+      </Link>
+    </>
+  );
+}
 ```
 
 - [ ] **Step 2: Add link in mobile isSuperAdmin block**
@@ -94,31 +98,33 @@ In `src/components/navbar.tsx`, inside the desktop `{isSuperAdmin && (...)}` blo
 In `src/components/navbar.tsx`, inside the mobile `{isSuperAdmin && (...)}` block (around line 308), add the audit log link in the same position:
 
 ```tsx
-{isSuperAdmin && (
-  <>
-    <Link
-      href="/admin/notifications"
-      className={linkClass}
-      onClick={() => setMenuOpen(false)}
-    >
-      {t.notifications}
-    </Link>
-    <Link
-      href="/admin/audit-log"
-      className={linkClass}
-      onClick={() => setMenuOpen(false)}
-    >
-      {t.auditLog}
-    </Link>
-    <Link
-      href="/admin/site"
-      className={linkClass}
-      onClick={() => setMenuOpen(false)}
-    >
-      {t.admin}
-    </Link>
-  </>
-)}
+{
+  isSuperAdmin && (
+    <>
+      <Link
+        href="/admin/notifications"
+        className={linkClass}
+        onClick={() => setMenuOpen(false)}
+      >
+        {t.notifications}
+      </Link>
+      <Link
+        href="/admin/audit-log"
+        className={linkClass}
+        onClick={() => setMenuOpen(false)}
+      >
+        {t.auditLog}
+      </Link>
+      <Link
+        href="/admin/site"
+        className={linkClass}
+        onClick={() => setMenuOpen(false)}
+      >
+        {t.admin}
+      </Link>
+    </>
+  );
+}
 ```
 
 - [ ] **Step 3: Verify build**
@@ -141,6 +147,7 @@ git commit -m "feat(navbar): add Audit Log link for SUPER_ADMIN"
 ### Task 3: Create API route `GET /api/admin/audit-log`
 
 **Files:**
+
 - Create: `src/app/api/admin/audit-log/route.ts`
 
 - [ ] **Step 1: Create the route file**
@@ -205,6 +212,7 @@ git commit -m "feat(api): add GET /api/admin/audit-log for SUPER_ADMIN"
 ### Task 4: Create the Audit Log client table component
 
 **Files:**
+
 - Create: `src/app/admin/audit-log/audit-log-table.tsx`
 
 - [ ] **Step 1: Create the client component**
@@ -414,6 +422,7 @@ git commit -m "feat(audit-log): add client table component"
 ### Task 5: Create the Audit Log page (server component)
 
 **Files:**
+
 - Create: `src/app/admin/audit-log/page.tsx`
 
 - [ ] **Step 1: Create the page**
@@ -434,7 +443,9 @@ export default async function AuditLogPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Registro de auditoría</h1>
+      <h1 className="text-2xl font-bold tracking-tight">
+        Registro de auditoría
+      </h1>
       <p className="text-sm text-muted-foreground">
         Historial de cambios en la base de datos. Solo visible para Super Admin.
       </p>
@@ -478,6 +489,7 @@ pnpm dev
 ```
 
 Manual checks:
+
 1. Log in as `SUPER_ADMIN` → navbar shows "Registro de auditoría" link (desktop and mobile).
 2. Navigate to `/admin/audit-log` → page loads with table.
 3. Perform any write operation (e.g., edit a user) → new row appears in audit log with correct `userId`.

@@ -1,4 +1,5 @@
 # Radix UI Themes Migration Design
+
 **Date:** 2026-04-28  
 **Branch:** `feature/radix-ui`  
 **Scope:** 100% UI migration across all pages and components
@@ -10,6 +11,7 @@
 Migrate Hualas UI from Tailwind CSS to **Radix UI Themes** — a complete component + theming system. The migration uses a **staged, layer-by-layer approach** to minimize risk and ensure all functionality (payments, chat, forms) continues working.
 
 **Key decisions:**
+
 - Use Radix UI Themes (not just components)
 - Maintain Tailwind CSS for utilities (spacing, responsive, flexbox)
 - Replace lucide-react icons with Radix UI native icons
@@ -21,6 +23,7 @@ Migrate Hualas UI from Tailwind CSS to **Radix UI Themes** — a complete compon
 ## Architecture
 
 ### Tech Stack
+
 ```
 Next.js 14 App Router
   ↓
@@ -34,6 +37,7 @@ Radix UI Icons (replace lucide-react)
 ```
 
 ### Theme Configuration
+
 - **Primary color:** Mountain green (e.g., `#16a34a` or similar)
 - **Secondary color:** Mountain blue (e.g., `#0369a1` or similar)
 - **Neutral colors:** Grays for backgrounds, text, borders
@@ -107,9 +111,11 @@ src/
 ## Migration Strategy: 6-Step Approach
 
 ### **Step 1: Setup Radix UI + Theme Configuration**
+
 **Goal:** Configure Radix UI Themes globally and ensure all pages inherit the theme.
 
 **Tasks:**
+
 - Install `@radix-ui/themes` and `@radix-ui/icons`
 - Create `src/lib/theme.ts` with mountain-themed color config
 - Update `src/app/layout.tsx` to wrap app with `<Theme>` provider
@@ -118,6 +124,7 @@ src/
 - Verify theme applies globally to a test page
 
 **Validation:**
+
 - ✅ Theme colors visible on home page
 - ✅ No TypeScript errors
 - ✅ Build succeeds
@@ -125,9 +132,11 @@ src/
 ---
 
 ### **Step 2: Migrate Base Components**
+
 **Goal:** Create Radix UI wrapper components that match existing API.
 
 **Components to migrate:**
+
 - `Button` (Radix Button)
 - `Input` (Radix TextField)
 - `Select` (Radix Select)
@@ -157,6 +166,7 @@ export function Button({ className, ...props }) {
 ```
 
 **Validation:**
+
 - ✅ All base components render correctly
 - ✅ Existing props still work (size, variant, disabled)
 - ✅ No visual regressions
@@ -165,19 +175,23 @@ export function Button({ className, ...props }) {
 ---
 
 ### **Step 3: Migrate Layout Components**
+
 **Goal:** Update Navbar and Footer with Radix UI.
 
 **Components:**
+
 - `Navbar` — Navigation bar with logo, menu, user avatar, language selector
 - `Footer` — Footer with links and info
 
 **Changes:**
+
 - Replace custom Tailwind styling with Radix UI components
 - Update navigation dropdowns to use Radix DropdownMenu
 - Ensure responsive design with Radix UI's responsive props
 - Maintain existing functionality (language toggle, auth logic)
 
 **Validation:**
+
 - ✅ Navbar renders on all pages
 - ✅ Mobile menu works
 - ✅ Auth-dependent items appear/disappear correctly
@@ -187,21 +201,25 @@ export function Button({ className, ...props }) {
 ---
 
 ### **Step 4: Migrate Public Pages**
+
 **Goal:** Redesign public-facing pages with Radix UI.
 
 **Pages:**
+
 - `/` — Home page
 - `/contact` — Contact form
 - `/login` — Login page
 - `/register` — Register page
 
 **Approach:**
+
 - Use Radix UI components (Card, Input, Button, Dialog)
 - Maintain existing form validation (Zod + React Hook Form)
 - Keep Mercado Pago integration logic unchanged
 - Update visual hierarchy to match Radix UI Themes
 
 **Validation:**
+
 - ✅ All pages load without errors
 - ✅ Forms submit correctly
 - ✅ No functional regressions
@@ -211,21 +229,25 @@ export function Button({ className, ...props }) {
 ---
 
 ### **Step 5: Migrate User Pages**
+
 **Goal:** Redesign authenticated user pages with Radix UI.
 
 **Pages:**
+
 - `/profile` — User profile page
 - `/profile` (profile form) — Edit profile
 - `/chat` — Internal messaging
 - `/my-activities` — User's activities
 
 **Approach:**
+
 - Replace Tailwind components with Radix UI
 - Maintain existing API calls and state management
 - Update form inputs (profile edit, etc.)
 - Keep chat polling logic unchanged
 
 **Validation:**
+
 - ✅ Protected pages require auth
 - ✅ Profile photo uploads work
 - ✅ Chat real-time updates work
@@ -235,9 +257,11 @@ export function Button({ className, ...props }) {
 ---
 
 ### **Step 6: Migrate Admin + Complex Pages**
+
 **Goal:** Redesign admin dashboard and complex pages with Radix UI.
 
 **Pages:**
+
 - `/activities` — Activities list
 - `/activities/new` — Create activity
 - `/activities/[id]/edit` — Edit activity
@@ -246,6 +270,7 @@ export function Button({ className, ...props }) {
 - `/accounting/*` — Accounting dashboard
 
 **Approach:**
+
 - Replace data tables with Radix Table
 - Update modals/dialogs (Radix Dialog)
 - Migrate form components (Radix Input, Select, Checkbox)
@@ -253,6 +278,7 @@ export function Button({ className, ...props }) {
 - Update status indicators, badges, labels
 
 **Validation:**
+
 - ✅ All admin pages load and function
 - ✅ Data tables display correctly
 - ✅ Sorting/filtering works
@@ -264,7 +290,9 @@ export function Button({ className, ...props }) {
 ## Component Guidelines
 
 ### Wrapper Pattern
+
 All Radix UI components should be wrapped to:
+
 1. Provide sensible defaults
 2. Ensure consistency across the app
 3. Allow easy updates (e.g., if we need custom styling)
@@ -273,17 +301,23 @@ All Radix UI components should be wrapped to:
 // Example: Button wrapper
 import { Button as RadixButton, type ButtonProps } from '@radix-ui/themes';
 
-export function Button({ variant = 'solid', size = 'md', ...props }: ButtonProps) {
+export function Button({
+  variant = 'solid',
+  size = 'md',
+  ...props
+}: ButtonProps) {
   return <RadixButton variant={variant} size={size} {...props} />;
 }
 ```
 
 ### Tailwind + Radix UI
+
 - Use Radix UI for component structure and theme colors
 - Use Tailwind for spacing, layout, responsive (`md:`, `lg:`)
 - Avoid conflicting class names (use `cn()` utility)
 
 ### Icons
+
 - Replace all `lucide-react` imports with Radix UI icons
 - Radix UI provides `@radix-ui/icons`
 - Usage: `import { CheckIcon } from '@radix-ui/react-icons';`
@@ -293,22 +327,26 @@ export function Button({ variant = 'solid', size = 'md', ...props }: ButtonProps
 ## Integration Points
 
 ### Form Validation
+
 - Keep Zod for schema validation
 - Integrate with Radix UI Input/Select components
 - Maintain React Hook Form for state management
 - Display validation errors with Radix UI components
 
 ### Payments (Mercado Pago)
+
 - No changes to payment logic
 - Update UI only (buttons, status displays, modals)
 - Maintain existing checkout flow
 
 ### Chat
+
 - No changes to Socket.io logic
 - Update message display with Radix UI components
 - Maintain real-time updates
 
 ### Database / API
+
 - No changes to Prisma queries
 - No changes to API routes
 - Only UI components affected
@@ -321,6 +359,7 @@ export function Button({ variant = 'solid', size = 'md', ...props }: ButtonProps
 ✅ All authenticated routes render correctly  
 ✅ All admin routes render correctly  
 ✅ Zero functional regressions:
+
 - User registration and login work
 - Activity registration and payment flow works
 - Chat sends/receives messages
@@ -332,37 +371,40 @@ export function Button({ variant = 'solid', size = 'md', ...props }: ButtonProps
 ✅ Dark mode works (if enabled)  
 ✅ Build succeeds  
 ✅ Tests pass  
-✅ No TypeScript errors  
+✅ No TypeScript errors
 
 ---
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|-----------|
-| Big scope (many pages) | Staged approach reduces risk per step |
-| Radix UI API differences | Wrapper components abstract differences |
-| Form validation breakage | Test all forms after each step |
-| Payment flow breaks | Verify checkout end-to-end in step 4 |
-| Dark mode conflicts | Test both light and dark modes |
-| Icon missing | Have fallback or find Radix UI equivalent |
-| Performance regression | Monitor bundle size; Radix UI is optimized |
+| Risk                     | Mitigation                                 |
+| ------------------------ | ------------------------------------------ |
+| Big scope (many pages)   | Staged approach reduces risk per step      |
+| Radix UI API differences | Wrapper components abstract differences    |
+| Form validation breakage | Test all forms after each step             |
+| Payment flow breaks      | Verify checkout end-to-end in step 4       |
+| Dark mode conflicts      | Test both light and dark modes             |
+| Icon missing             | Have fallback or find Radix UI equivalent  |
+| Performance regression   | Monitor bundle size; Radix UI is optimized |
 
 ---
 
 ## Dependencies to Install/Remove
 
 **Install:**
+
 ```bash
 npm install @radix-ui/themes @radix-ui/icons
 ```
 
 **Remove:**
+
 ```bash
 npm uninstall lucide-react
 ```
 
 **Keep:**
+
 ```
 @radix-ui/react-dialog
 @radix-ui/react-dropdown-menu
@@ -379,6 +421,7 @@ npm uninstall lucide-react
 ## Rollback Plan
 
 If critical issues arise:
+
 1. Revert to `main` branch
 2. Each step is isolated, so failures don't cascade
 3. Keep git history clean with small, reviewable commits

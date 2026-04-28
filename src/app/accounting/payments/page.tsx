@@ -138,55 +138,55 @@ export default async function PaymentsPage({
         </Box>
 
         <Box className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-muted/20 text-left text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Fecha</th>
-              <th className="px-4 py-3 font-medium">Actividad</th>
-              <th className="px-4 py-3 font-medium">Participante</th>
-              <th className="px-4 py-3 font-medium">Monto</th>
-              <th className="px-4 py-3 font-medium">Nro. recibo</th>
-              <th className="px-4 py-3 font-medium">Comprobante</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {payments.length === 0 ? (
+          <table className="min-w-full text-sm">
+            <thead className="border-b bg-muted/20 text-left text-muted-foreground">
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-10 text-center text-muted-foreground"
-                >
-                  No hay pagos con esos filtros.
-                </td>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Actividad</th>
+                <th className="px-4 py-3 font-medium">Participante</th>
+                <th className="px-4 py-3 font-medium">Monto</th>
+                <th className="px-4 py-3 font-medium">Nro. recibo</th>
+                <th className="px-4 py-3 font-medium">Comprobante</th>
               </tr>
-            ) : (
-              payments.map((payment) => (
-                <tr key={payment.id} className="align-top">
-                  <td className="px-4 py-3">
-                    {payment.receiptDate
-                      ? formatAccountingDate(payment.receiptDate)
-                      : '-'}
-                  </td>
-                  <td className="px-4 py-3">{payment.activity.name}</td>
-                  <td className="px-4 py-3">
-                    {formatPersonName(payment.child ?? payment.user)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {formatAmount(payment.activity.price * 100)}
-                  </td>
-                  <td className="px-4 py-3">{payment.receipt ?? '-'}</td>
-                  <td className="px-4 py-3">
-                    {payment.receipt ? (
-                      <span className="text-xs text-success">Registrado</span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    )}
+            </thead>
+            <tbody className="divide-y">
+              {payments.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-10 text-center text-muted-foreground"
+                  >
+                    No hay pagos con esos filtros.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                payments.map((payment) => (
+                  <tr key={payment.id} className="align-top">
+                    <td className="px-4 py-3">
+                      {payment.receiptDate
+                        ? formatAccountingDate(payment.receiptDate)
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-3">{payment.activity.name}</td>
+                    <td className="px-4 py-3">
+                      {formatPersonName(payment.child ?? payment.user)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatAmount(payment.activity.price * 100)}
+                    </td>
+                    <td className="px-4 py-3">{payment.receipt ?? '-'}</td>
+                    <td className="px-4 py-3">
+                      {payment.receipt ? (
+                        <span className="text-xs text-success">Registrado</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </Box>
       </div>
     </Container>

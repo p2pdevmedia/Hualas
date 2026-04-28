@@ -5,8 +5,18 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Box, Flex, Button as RadixButton, Avatar as RadixAvatar, Text } from '@radix-ui/themes';
-import { HamburgerMenuIcon, ExitIcon, DotFilledIcon } from '@radix-ui/react-icons';
+import {
+  Box,
+  Flex,
+  Button as RadixButton,
+  Avatar as RadixAvatar,
+  Text,
+} from '@radix-ui/themes';
+import {
+  HamburgerMenuIcon,
+  ExitIcon,
+  DotFilledIcon,
+} from '@radix-ui/react-icons';
 import { cn } from '@/lib/utils';
 import { isCounterRole } from '@/lib/accounting';
 import {
@@ -113,11 +123,7 @@ export default function Navbar() {
 
   return (
     <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
-      <Flex
-        justify="between"
-        align="center"
-        className="mx-auto max-w-6xl"
-      >
+      <Flex justify="between" align="center" className="mx-auto max-w-6xl">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <Image
@@ -134,11 +140,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <Flex
-          gap="6"
-          align="center"
-          className="hidden md:flex md:items-center"
-        >
+        <Flex gap="6" align="center" className="hidden md:flex md:items-center">
           {session && !isCounter && (
             <Link href={activitiesHref} className={linkClass}>
               {isMember ? t.myActivities : t.activities}
@@ -230,14 +232,22 @@ export default function Navbar() {
                         className={cn(
                           'grid h-full w-full place-items-center text-white',
                           {
-                            'bg-rose-500': avatarColor(session.user.id) === 'tomato',
-                            'bg-amber-500': avatarColor(session.user.id) === 'orange',
-                            'bg-yellow-500': avatarColor(session.user.id) === 'amber',
-                            'bg-emerald-500': avatarColor(session.user.id) === 'grass',
-                            'bg-sky-500': avatarColor(session.user.id) === 'sky',
-                            'bg-violet-500': avatarColor(session.user.id) === 'violet',
-                            'bg-pink-500': avatarColor(session.user.id) === 'pink',
-                            'bg-purple-500': avatarColor(session.user.id) === 'plum',
+                            'bg-rose-500':
+                              avatarColor(session.user.id) === 'tomato',
+                            'bg-amber-500':
+                              avatarColor(session.user.id) === 'orange',
+                            'bg-yellow-500':
+                              avatarColor(session.user.id) === 'amber',
+                            'bg-emerald-500':
+                              avatarColor(session.user.id) === 'grass',
+                            'bg-sky-500':
+                              avatarColor(session.user.id) === 'sky',
+                            'bg-violet-500':
+                              avatarColor(session.user.id) === 'violet',
+                            'bg-pink-500':
+                              avatarColor(session.user.id) === 'pink',
+                            'bg-purple-500':
+                              avatarColor(session.user.id) === 'plum',
                           }
                         )}
                       >
@@ -422,14 +432,22 @@ export default function Navbar() {
                         className={cn(
                           'grid h-full w-full place-items-center text-white',
                           {
-                            'bg-rose-500': avatarColor(session.user.id) === 'tomato',
-                            'bg-amber-500': avatarColor(session.user.id) === 'orange',
-                            'bg-yellow-500': avatarColor(session.user.id) === 'amber',
-                            'bg-emerald-500': avatarColor(session.user.id) === 'grass',
-                            'bg-sky-500': avatarColor(session.user.id) === 'sky',
-                            'bg-violet-500': avatarColor(session.user.id) === 'violet',
-                            'bg-pink-500': avatarColor(session.user.id) === 'pink',
-                            'bg-purple-500': avatarColor(session.user.id) === 'plum',
+                            'bg-rose-500':
+                              avatarColor(session.user.id) === 'tomato',
+                            'bg-amber-500':
+                              avatarColor(session.user.id) === 'orange',
+                            'bg-yellow-500':
+                              avatarColor(session.user.id) === 'amber',
+                            'bg-emerald-500':
+                              avatarColor(session.user.id) === 'grass',
+                            'bg-sky-500':
+                              avatarColor(session.user.id) === 'sky',
+                            'bg-violet-500':
+                              avatarColor(session.user.id) === 'violet',
+                            'bg-pink-500':
+                              avatarColor(session.user.id) === 'pink',
+                            'bg-purple-500':
+                              avatarColor(session.user.id) === 'plum',
                           }
                         )}
                       >

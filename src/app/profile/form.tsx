@@ -40,10 +40,18 @@ export default function ProfileForm({ user }: { user: User }) {
   const [nationality, setNationality] = useState(user.nationality ?? '');
   const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [allergies, setAllergies] = useState(user.allergies ?? '');
-  const [regularMedication, setRegularMedication] = useState(user.regularMedication ?? '');
-  const [relevantDiseases, setRelevantDiseases] = useState(user.relevantDiseases ?? '');
-  const [previousInjuries, setPreviousInjuries] = useState(user.previousInjuries ?? '');
-  const [physicalRestrictions, setPhysicalRestrictions] = useState(user.physicalRestrictions ?? '');
+  const [regularMedication, setRegularMedication] = useState(
+    user.regularMedication ?? ''
+  );
+  const [relevantDiseases, setRelevantDiseases] = useState(
+    user.relevantDiseases ?? ''
+  );
+  const [previousInjuries, setPreviousInjuries] = useState(
+    user.previousInjuries ?? ''
+  );
+  const [physicalRestrictions, setPhysicalRestrictions] = useState(
+    user.physicalRestrictions ?? ''
+  );
   const [bloodGroup, setBloodGroup] = useState(user.bloodGroup ?? '');
   const [primaryDoctor, setPrimaryDoctor] = useState(user.primaryDoctor ?? '');
   const [doctorPhone, setDoctorPhone] = useState(user.doctorPhone ?? '');
@@ -119,10 +127,7 @@ export default function ProfileForm({ user }: { user: User }) {
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
           />
-          <Select
-            value={gender}
-            onValueChange={setGender}
-          >
+          <Select value={gender} onValueChange={setGender}>
             <SelectItem value="">Género</SelectItem>
             <SelectItem value="FEMALE">Femenino</SelectItem>
             <SelectItem value="MALE">Masculino</SelectItem>
@@ -217,8 +222,16 @@ export default function ProfileForm({ user }: { user: User }) {
             onChange={(e) => setPassword(e.target.value)}
           />
           <input type="hidden" name="username" value={user.email} />
-          {error && <Text size="2" color="red">{error}</Text>}
-          {success && <Text size="2" color="green">{success}</Text>}
+          {error && (
+            <Text size="2" color="red">
+              {error}
+            </Text>
+          )}
+          {success && (
+            <Text size="2" color="green">
+              {success}
+            </Text>
+          )}
           <Button type="submit" className="w-full">
             Guardar cambios
           </Button>

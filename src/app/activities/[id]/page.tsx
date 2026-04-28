@@ -61,8 +61,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     );
   }
 
-  const [participants, activityProfessors, professorOptions, activityGroups, days] =
-    await Promise.all([
+  const [
+    participants,
+    activityProfessors,
+    professorOptions,
+    activityGroups,
+    days,
+  ] = await Promise.all([
     prisma.activityParticipant
       .findMany({
         where: { activityId: activity.id },
@@ -121,10 +126,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
       })
       .catch((error) => {
-        console.error(
-          '[activity-page] professor options query failed',
-          error
-        );
+        console.error('[activity-page] professor options query failed', error);
         return [];
       }),
     prisma.activityGroup
@@ -202,11 +204,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
   const canManageGroups =
-    isAdmin ||
-    activityProfessorIds.includes(session?.user.id ?? '');
+    isAdmin || activityProfessorIds.includes(session?.user.id ?? '');
   const canManageDays =
-    isAdmin ||
-    activityProfessorIds.includes(session?.user.id ?? '');
+    isAdmin || activityProfessorIds.includes(session?.user.id ?? '');
 
   let registrations: Array<{
     id: string;
@@ -235,11 +235,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
         : (session.user.name ?? 'Yo'),
       groupId: participant.groupMembership?.activityGroupId ?? null,
-      groupName:
-        participant.groupMembership?.activityGroupId
-          ? activityGroupById.get(participant.groupMembership.activityGroupId) ??
-            null
-          : null,
+      groupName: participant.groupMembership?.activityGroupId
+        ? (activityGroupById.get(participant.groupMembership.activityGroupId) ??
+          null)
+        : null,
     }));
   }
 
@@ -365,9 +364,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 },
                 {
                   label: 'Cupo',
-                  value: hasCapacity
-                    ? `${capacity} lugares`
-                    : 'Ilimitado',
+                  value: hasCapacity ? `${capacity} lugares` : 'Ilimitado',
                 },
                 activityProfessors.length > 0 && {
                   label: 'Profesores',

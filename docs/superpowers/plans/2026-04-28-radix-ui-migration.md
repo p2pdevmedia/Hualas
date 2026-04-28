@@ -60,6 +60,7 @@ src/
 ## Task 1.1: Install Radix UI Themes and Icons
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Add Radix UI Themes and Icons to dependencies**
@@ -69,6 +70,7 @@ npm install @radix-ui/themes @radix-ui/icons
 ```
 
 Verify it added to `package.json`:
+
 ```json
 {
   "dependencies": {
@@ -105,6 +107,7 @@ git commit -m "deps: add Radix UI Themes and Icons, remove lucide-react"
 ## Task 1.2: Create Radix UI Theme Configuration
 
 **Files:**
+
 - Create: `src/lib/theme.ts`
 
 - [ ] **Step 1: Create theme configuration file**
@@ -116,19 +119,19 @@ git commit -m "deps: add Radix UI Themes and Icons, remove lucide-react"
 export const hualasTheme = {
   // Primary: Mountain green
   accent: 'grass', // Radix UI built-in: grass green
-  
+
   // Secondary: Mountain blue
   // We'll use 'sky' for secondary
-  
+
   // Neutrals: Grays
   gray: 'mauve', // Radix UI built-in: neutral gray
-  
+
   // Dark mode support
   appearance: 'light' as const, // or 'dark', or 'inherit'
-  
+
   // Scaling
   scaling: '100%',
-  
+
   // Radius
   radius: 'medium',
 };
@@ -157,6 +160,7 @@ git commit -m "config: add Radix UI theme configuration (mountain green/blue)"
 ## Task 1.3: Update Root Layout to Wrap with Theme Provider
 
 **Files:**
+
 - Modify: `src/app/layout.tsx` (lines 1-50)
 
 - [ ] **Step 1: Read current layout**
@@ -209,6 +213,7 @@ export default function RootLayout({
 ```
 
 **Key changes:**
+
 - Import `Theme` from `@radix-ui/themes`
 - Import Radix UI theme styles (`@radix-ui/themes/styles.css`)
 - Wrap `<Providers>` with `<Theme>` component
@@ -246,6 +251,7 @@ git commit -m "feat: add Radix UI Theme provider to root layout"
 ## Task 1.4: Verify Theme is Applied Globally
 
 **Files:**
+
 - Test: Home page visual
 
 - [ ] **Step 1: Start dev server**
@@ -279,6 +285,7 @@ Ctrl+C
 ## Task 2.1: Create Button Component Wrapper
 
 **Files:**
+
 - Create: `src/components/ui/button.tsx`
 
 - [ ] **Step 1: Create button wrapper**
@@ -341,6 +348,7 @@ git commit -m "feat: add Button component wrapper for Radix UI"
 ## Task 2.2: Create Input Component Wrapper
 
 **Files:**
+
 - Create: `src/components/ui/input.tsx`
 
 - [ ] **Step 1: Create input wrapper**
@@ -407,6 +415,7 @@ git commit -m "feat: add Input component wrapper for Radix UI"
 ## Task 2.3: Create Select Component Wrapper
 
 **Files:**
+
 - Create: `src/components/ui/select.tsx`
 
 - [ ] **Step 1: Create select wrapper**
@@ -486,6 +495,7 @@ git commit -m "feat: add Select component wrapper for Radix UI"
 ## Task 2.4: Create Dialog Component Wrapper
 
 **Files:**
+
 - Create: `src/components/ui/dialog.tsx`
 
 - [ ] **Step 1: Create dialog wrapper**
@@ -547,6 +557,7 @@ git commit -m "feat: add Dialog component wrapper for Radix UI"
 ## Task 2.5: Create Remaining Base Components (Batch)
 
 **Files:**
+
 - Create: `src/components/ui/textarea.tsx`
 - Create: `src/components/ui/label.tsx`
 - Create: `src/components/ui/card.tsx`
@@ -709,6 +720,7 @@ git commit -m "feat: add base UI component wrappers for Radix UI (input, textare
 ## Task 3.1: Update Navbar with Radix UI
 
 **Files:**
+
 - Modify: `src/components/navbar.tsx` (full file)
 
 - [ ] **Step 1: Read current navbar**
@@ -940,6 +952,7 @@ git commit -m "feat: redesign Navbar with Radix UI components"
 ## Task 3.2: Update Footer with Radix UI
 
 **Files:**
+
 - Modify: `src/components/footer.tsx`
 
 - [ ] **Step 1: Read current footer**
@@ -1042,6 +1055,7 @@ git commit -m "feat: redesign Footer with Radix UI components"
 ## Task 4.1: Update Home Page
 
 **Files:**
+
 - Modify: `src/app/page.tsx`
 
 - [ ] **Step 1: Read current home page**
@@ -1079,7 +1093,7 @@ export default function Home() {
           <Text size="4" className="text-gray-600 mb-8">
             Club de montaña comunitario en San Martín de los Andes, Patagonia
           </Text>
-          
+
           <Flex gap="4" justify="center">
             {session ? (
               <>
@@ -1117,7 +1131,7 @@ export default function Home() {
         <Heading size="6" weight="bold" className="mb-8 text-center">
           Nuestros Servicios
         </Heading>
-        
+
         <Flex gap="6" className="grid grid-cols-1 md:grid-cols-3">
           {/* Feature 1 */}
           <Box
@@ -1195,6 +1209,7 @@ git commit -m "feat: redesign Home page with Radix UI"
 ## Task 4.2: Update Login Page
 
 **Files:**
+
 - Modify: `src/app/login/page.tsx`
 
 - [ ] **Step 1: Rewrite login page**
@@ -1310,6 +1325,7 @@ git commit -m "feat: redesign Login page with Radix UI"
 ## Task 4.3: Update Register Page
 
 **Files:**
+
 - Modify: `src/app/register/page.tsx`
 
 - [ ] **Step 1: Rewrite register page with Radix UI**
@@ -1439,6 +1455,7 @@ git commit -m "feat: redesign Register page with Radix UI"
 ## Task 4.4: Update Contact Page
 
 **Files:**
+
 - Modify: `src/app/contact/page.tsx`
 
 - [ ] **Step 1: Rewrite contact page**
@@ -1558,6 +1575,7 @@ git commit -m "feat: redesign Contact page with Radix UI"
 ## Task 5.1: Update Profile Page
 
 **Files:**
+
 - Modify: `src/app/profile/page.tsx`
 
 - [ ] **Step 1-3:** Rewrite profile page to use Radix UI components instead of Tailwind
@@ -1565,6 +1583,7 @@ git commit -m "feat: redesign Contact page with Radix UI"
 Replace all `className="..."` with Radix UI components (`<Box>`, `<Heading>`, `<Button>`, etc.). Use `Input` and `Textarea` wrappers from Step 2.
 
 Example pattern:
+
 ```typescript
 // OLD:
 <div className="max-w-2xl mx-auto p-4">
@@ -1597,6 +1616,7 @@ git commit -m "feat: redesign Profile page with Radix UI"
 ## Task 5.2: Update Chat Page
 
 **Files:**
+
 - Modify: `src/app/chat/page.tsx` and `src/app/chat/chat-client.tsx`
 
 - [ ] **Steps 1-5:** Follow same pattern as Task 5.1
@@ -1613,6 +1633,7 @@ git commit -m "feat: redesign Chat page with Radix UI"
 ## Task 5.3: Update My Activities Page
 
 **Files:**
+
 - Modify: `src/app/my-activities/page.tsx`
 
 - [ ] **Steps 1-5:** Follow same pattern
@@ -1633,6 +1654,7 @@ git commit -m "feat: redesign My Activities page with Radix UI"
 ## Task 6.1-6.N: Admin Pages (Activities, Users, Forms, Accounting)
 
 **Files to update:**
+
 - `src/app/activities/page.tsx` and related forms
 - `src/app/admin/users/page.tsx`
 - `src/app/admin/forms/page.tsx`
@@ -1643,6 +1665,7 @@ git commit -m "feat: redesign My Activities page with Radix UI"
 For complex components like tables, use the Radix UI Table wrapper created in Step 2.
 
 Example (admin users list):
+
 ```typescript
 import { Box, Heading, Table } from '@radix-ui/themes';
 
@@ -1790,6 +1813,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>" \
 **Time Estimate:** 4-6 hours (depending on code complexity)
 
 **Success Criteria (All must pass):**
+
 - ✅ Build succeeds with no errors
 - ✅ All tests pass
 - ✅ No TypeScript errors

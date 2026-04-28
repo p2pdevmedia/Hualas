@@ -60,12 +60,17 @@ export async function PATCH(
   if (data.observations !== undefined)
     updateData.observations = data.observations;
   if (data.allergies !== undefined) updateData.allergies = data.allergies;
-  if (data.regularMedication !== undefined) updateData.regularMedication = data.regularMedication;
-  if (data.relevantDiseases !== undefined) updateData.relevantDiseases = data.relevantDiseases;
-  if (data.previousInjuries !== undefined) updateData.previousInjuries = data.previousInjuries;
-  if (data.physicalRestrictions !== undefined) updateData.physicalRestrictions = data.physicalRestrictions;
+  if (data.regularMedication !== undefined)
+    updateData.regularMedication = data.regularMedication;
+  if (data.relevantDiseases !== undefined)
+    updateData.relevantDiseases = data.relevantDiseases;
+  if (data.previousInjuries !== undefined)
+    updateData.previousInjuries = data.previousInjuries;
+  if (data.physicalRestrictions !== undefined)
+    updateData.physicalRestrictions = data.physicalRestrictions;
   if (data.bloodGroup !== undefined) updateData.bloodGroup = data.bloodGroup;
-  if (data.primaryDoctor !== undefined) updateData.primaryDoctor = data.primaryDoctor;
+  if (data.primaryDoctor !== undefined)
+    updateData.primaryDoctor = data.primaryDoctor;
   if (data.doctorPhone !== undefined) updateData.doctorPhone = data.doctorPhone;
   if (data.email !== undefined) updateData.email = data.email;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;

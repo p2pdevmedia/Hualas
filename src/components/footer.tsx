@@ -5,9 +5,7 @@ import { Share2Icon, PlayIcon } from '@radix-ui/react-icons';
 
 export default function Footer() {
   return (
-    <footer
-      className="px-4 py-8 text-white bg-slate-800"
-    >
+    <footer className="px-4 py-8 text-white bg-slate-800">
       <Box className="mx-auto max-w-4xl">
         <Flex direction="column" align="center" gap="4" className="text-center">
           <Text size="5" weight="bold">

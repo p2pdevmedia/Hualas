@@ -50,7 +50,9 @@ export default function ActivityImageUpload({
       setMessage('Imagen actualizada');
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo subir la imagen');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo subir la imagen'
+      );
     } finally {
       setIsUploading(false);
     }
@@ -105,7 +107,9 @@ export default function ActivityImageUpload({
       setMessage('Imagen eliminada');
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo eliminar la imagen');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo eliminar la imagen'
+      );
     } finally {
       setIsUploading(false);
     }

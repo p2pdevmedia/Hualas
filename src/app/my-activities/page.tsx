@@ -126,8 +126,8 @@ export default async function MyActivitiesPage() {
               Mis actividades
             </Heading>
             <Text size="2" color="gray">
-              Actividades en las que estás inscripto vos, alguno de tus hijos o en
-              las que sos profesor.
+              Actividades en las que estás inscripto vos, alguno de tus hijos o
+              en las que sos profesor.
             </Text>
           </Box>
 
@@ -160,10 +160,18 @@ export default async function MyActivitiesPage() {
                               ]
                             }
                           </Text>
-                          <Text size="2" color="gray">·</Text>
-                          <Text size="2" color="gray">${activity.price}</Text>
-                          <Text size="2" color="gray">·</Text>
-                          <Text size="2" color="gray">{labels.join(' · ')}</Text>
+                          <Text size="2" color="gray">
+                            ·
+                          </Text>
+                          <Text size="2" color="gray">
+                            ${activity.price}
+                          </Text>
+                          <Text size="2" color="gray">
+                            ·
+                          </Text>
+                          <Text size="2" color="gray">
+                            {labels.join(' · ')}
+                          </Text>
                         </Flex>
                       </Box>
                     </li>
