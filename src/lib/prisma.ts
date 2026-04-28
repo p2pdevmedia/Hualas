@@ -27,6 +27,11 @@ const WRITE_ACTIONS = new Set([
 ]);
 
 const AUDITED_ACTIONS = new Set(['update', 'delete', 'upsert', 'updateMany', 'deleteMany']);
+const AUDIT_EXCLUDED_OPERATIONS = new Set(['Message:updateMany']);
+
+function shouldSkipAudit(model: string, operation: string) {
+  return AUDIT_EXCLUDED_OPERATIONS.has(`${model}:${operation}`);
+}
 
 function toJsonString<T>(value: T): string | null {
   if (value === undefined) {
@@ -58,6 +63,10 @@ export const prisma = basePrisma.$extends({
     $allModels: {
       async $allOperations({ model, operation, args, query }) {
         if (!model || String(model) === 'DbAuditLog' || !WRITE_ACTIONS.has(operation)) {
+          return query(args);
+        }
+
+        if (shouldSkipAudit(model, operation)) {
           return query(args);
         }
 
