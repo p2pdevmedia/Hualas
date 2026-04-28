@@ -55,7 +55,7 @@ export async function POST(
 
   const pathname = `activity-images/${params.id}/${crypto.randomUUID()}${extensionFor(file)}`;
   const blob = await put(pathname, file, {
-    access: 'public',
+    access: 'private',
     contentType: file.type,
   });
 
