@@ -45,7 +45,13 @@ model User {
   activityDayProfessors ActivityDayProfessor[]
   children              Child[]
   accountingMovements   AccountingMovement[]
+  responsibleFamilyGroups FamilyGroup[]      @relation("FamilyGroupResponsible")
+  familyMemberships       FamilyGroupMember[] @relation("FamilyGroupMemberUser")
+  memberMonthlyCharges    MemberMonthlyCharge[] @relation("MemberMonthlyCharges")
+  ordersAsResponsible     Order[]            @relation("OrderResponsible")
+  orderItems              OrderItem[]        @relation("OrderItemMember")
 }
+
 
 model PasswordResetToken {
   id        String   @id @default(cuid())
@@ -128,7 +134,9 @@ model Activity {
   groups       ActivityGroup[]
   days         ActivityDay[]
   createdAt    DateTime              @default(now())
+  orderItems    OrderItem[]
 }
+
 
 model ActivityParticipant {
   id             String                  @id @default(cuid())
@@ -305,6 +313,143 @@ model DbAuditLog {
   @@index([requestId])
 }
 
+
+model FamilyGroup {
+  id                 String              @id @default(cuid())
+  name               String
+  responsibleUserId  String?
+  responsibleUser    User?               @relation("FamilyGroupResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  responsibleName    String
+  responsibleEmail   String
+  responsiblePhone   String?
+  members            FamilyGroupMember[]
+  orders             Order[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([responsibleUserId])
+}
+
+model FamilyGroupMember {
+  id                    String                  @id @default(cuid())
+  familyGroupId         String
+  memberId              String
+  relationship          FamilyRelationship      @default(CHILD)
+  isPaymentResponsible  Boolean                 @default(false)
+  createdAt             DateTime                @default(now())
+  familyGroup           FamilyGroup             @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
+  member                User                    @relation("FamilyGroupMemberUser", fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([familyGroupId, memberId])
+  @@index([memberId])
+}
+
+model BillableConcept {
+  id             String                @id @default(cuid())
+  code           BillableConceptCode   @unique
+  name           String
+  description    String?
+  defaultAmount  Int                   @default(0)
+  active         Boolean               @default(true)
+  orderItems     OrderItem[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+}
+
+model MemberMonthlyCharge {
+  id           String             @id @default(cuid())
+  memberId     String
+  periodMonth  Int
+  periodYear   Int
+  concept      BillableConceptCode
+  amount       Int
+  status       MonthlyChargeStatus @default(PENDING)
+  orderItemId  String?
+  paymentId    String?
+  paidAt       DateTime?
+  member       User               @relation("MemberMonthlyCharges", fields: [memberId], references: [id], onDelete: Cascade)
+  orderItem    OrderItem?         @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  payment      Payment?           @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@unique([memberId, periodMonth, periodYear, concept])
+  @@index([status, periodMonth, periodYear])
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  familyGroupId     String?
+  responsibleUserId String?
+  responsibleUser   User?         @relation("OrderResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  familyGroup       FamilyGroup?  @relation(fields: [familyGroupId], references: [id], onDelete: SetNull)
+  responsibleName   String
+  responsibleEmail  String
+  responsiblePhone  String?
+  periodMonth       Int
+  periodYear        Int
+  status            OrderStatus   @default(DRAFT)
+  subtotal          Int           @default(0)
+  discountTotal     Int           @default(0)
+  surchargeTotal    Int           @default(0)
+  total             Int           @default(0)
+  paidAt            DateTime?
+  items             OrderItem[]
+  payments          Payment[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([familyGroupId, periodMonth, periodYear])
+  @@index([responsibleUserId])
+}
+
+model OrderItem {
+  id                String               @id @default(cuid())
+  orderId           String
+  memberId          String?
+  activityId        String?
+  billableConceptId String
+  description       String
+  quantity          Int                  @default(1)
+  unitPrice         Int
+  total             Int
+  periodMonth       Int
+  periodYear        Int
+  status            OrderItemStatus      @default(PENDING)
+  order             Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  member            User?                @relation("OrderItemMember", fields: [memberId], references: [id], onDelete: SetNull)
+  activity          Activity?            @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  billableConcept   BillableConcept      @relation(fields: [billableConceptId], references: [id], onDelete: Restrict)
+  monthlyCharges    MemberMonthlyCharge[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@unique([orderId, memberId, activityId, billableConceptId, periodMonth, periodYear])
+  @@index([orderId, status])
+}
+
+model Payment {
+  id                String               @id @default(cuid())
+  orderId           String
+  provider          PaymentProvider
+  providerPaymentId String?
+  amount            Int
+  currency          String               @default("ARS")
+  status            PaymentStatus        @default(PENDING)
+  paidAt            DateTime?
+  payerName         String?
+  payerEmail        String?
+  receiptUrl        String?
+  rawData           Json?
+  order             Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  monthlyCharges    MemberMonthlyCharge[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([orderId, status])
+  @@index([provider, providerPaymentId])
+}
+
 enum Role {
   ADMIN
   COUNTER
@@ -337,4 +482,58 @@ enum AttendanceStatus {
   PENDING
   GOING
   NOT_GOING
+}
+
+
+enum FamilyRelationship {
+  CHILD
+  PARENT
+  RESPONSIBLE
+  OTHER
+}
+
+enum BillableConceptCode {
+  SOCIAL_FEE
+  ACTIVITY_FEE
+  REGISTRATION_FEE
+  INSURANCE
+  DISCOUNT
+  SURCHARGE
+  OTHER
+}
+
+enum MonthlyChargeStatus {
+  PENDING
+  PAID
+  CANCELLED
+  WAIVED
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAID
+  PARTIALLY_PAID
+  CANCELLED
+  EXPIRED
+}
+
+enum OrderItemStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentProvider {
+  MANUAL_TRANSFER
+  MERCADO_PAGO
+  CASH
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
