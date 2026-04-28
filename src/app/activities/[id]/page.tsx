@@ -306,9 +306,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       {activity.image ? (
         <div className="relative w-full h-52 overflow-hidden">
           <Image
-            src={activity.image}
+            src={`/api/activities/${activity.id}/image`}
             alt={activity.name}
             fill
+            unoptimized
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />

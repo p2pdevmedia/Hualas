@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImageUp, Trash2, X } from 'lucide-react';
+import { ImageUp, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
@@ -17,7 +17,7 @@ export default function ActivityImageUpload({
   onSuccess,
 }: Props) {
   const [hasCurrentImage, setHasCurrentImage] = useState(!!currentImageUrl);
-  const [imageUrl, setImageUrl] = useState(currentImageUrl);
+  const [imageVersion, setImageVersion] = useState<number>(Date.now());
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -26,7 +26,7 @@ export default function ActivityImageUpload({
 
   useEffect(() => {
     setHasCurrentImage(!!currentImageUrl);
-    setImageUrl(currentImageUrl);
+    setImageVersion(Date.now());
   }, [currentImageUrl]);
 
   const uploadFile = async (file: File) => {
@@ -44,9 +44,9 @@ export default function ActivityImageUpload({
         const body = await res.json().catch(() => null);
         throw new Error(body?.error || 'Upload failed');
       }
-      const data = await res.json().catch(() => null);
+      await res.json().catch(() => null);
       setHasCurrentImage(true);
-      setImageUrl(data?.url || currentImageUrl);
+      setImageVersion(Date.now());
       setMessage('Imagen actualizada');
       onSuccess?.();
     } catch (err) {
@@ -101,7 +101,7 @@ export default function ActivityImageUpload({
         throw new Error(body?.error || 'Delete failed');
       }
       setHasCurrentImage(false);
-      setImageUrl(undefined);
+      setImageVersion(Date.now());
       setMessage('Imagen eliminada');
       onSuccess?.();
     } catch (err) {
@@ -123,10 +123,10 @@ export default function ActivityImageUpload({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
-        {hasCurrentImage && imageUrl ? (
+        {hasCurrentImage ? (
           <div className="relative h-full w-full">
             <Image
-              src={imageUrl}
+              src={`/api/activities/${activityId}/image?v=${imageVersion}`}
               alt="Imagen de actividad"
               fill
               unoptimized
