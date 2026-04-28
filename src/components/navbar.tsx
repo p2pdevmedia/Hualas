@@ -6,16 +6,14 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { isCounterRole } from '@/lib/accounting';
+import HualasLogo from '@/components/hualas-logo';
+import type { SiteSettings } from '@/types/site';
 import {
   useTranslation,
   useLang,
   availableLanguages,
 } from './language-provider';
 import type { Lang } from '@/lib/i18n';
-
-const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
-const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
 
 const AVATAR_COLORS = [
   'bg-rose-500',
@@ -46,17 +44,23 @@ export default function Navbar() {
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const isSuperAdmin = role === 'SUPER_ADMIN';
-  const isCounter = isCounterRole(role);
   const isAccounting = role === 'COUNTER' || isAdmin;
-  const isMember = !!session && !isAdmin && !isCounter;
+  const isMember = !!session && !isAdmin;
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
   const t = translations.nav;
   const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setSettings(data));
+  }, []);
 
   useEffect(() => {
     setPhotoFailed(false);
@@ -94,10 +98,13 @@ export default function Navbar() {
     };
   }, [session]);
 
-  const logoUrl = defaultLogo;
+  // Admin-uploaded logo (Pinata IPFS) gana sobre el local si existe
+  const remoteLogoUrl = settings?.logo
+    ? `https://gateway.pinata.cloud/ipfs/${settings.logo}`
+    : undefined;
 
   const linkClass =
-    'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+    'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium font-body normal-case';
 
   const renderUnreadIcon = () => (
     <span
@@ -108,19 +115,17 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
+    <nav className="px-4 py-3 text-foreground bg-background border-b border-border">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src={logoUrl}
-            alt="Hualas Club logo"
-            width={36}
-            height={36}
-            unoptimized
-            className="rounded-full"
-          />
-          <span className="font-semibold tracking-tight">
-            Hualas Patagónico
+        <Link href="/" className="flex items-center gap-3">
+          <HualasLogo size={44} src={remoteLogoUrl} priority />
+          <span className="flex flex-col leading-none gap-[3px]">
+            <span className="font-mono font-black uppercase tracking-[0.06em] text-[15px] text-foreground">
+              Hualas Patagónico
+            </span>
+            <span className="font-mono font-bold uppercase tracking-[0.18em] text-[9.5px] text-primary">
+              Escuela de Montaña
+            </span>
           </span>
         </Link>
 
@@ -133,11 +138,9 @@ export default function Navbar() {
         </button>
 
         <div className="hidden md:flex md:items-center md:gap-6">
-          {session && !isCounter && (
-            <Link href={activitiesHref} className={linkClass}>
-              {isMember ? t.myActivities : t.activities}
-            </Link>
-          )}
+          <Link href={activitiesHref} className={linkClass}>
+            {isMember ? t.myActivities : t.activities}
+          </Link>
           {session && (
             <Link
               href="/chat"
@@ -156,23 +159,14 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <div className="relative group">
-                  <button className={linkClass}>Administrador</button>
-                  <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
-                    <Link
-                      href="/admin/notifications"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
-                    >
-                      Notificaciones
-                    </Link>
-                    <Link
-                      href="/admin/audit-log"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
-                    >
-                      Registro de auditoría
-                    </Link>
-                  </div>
-                </div>
+                <>
+                  <Link href="/admin/notifications" className={linkClass}>
+                    {t.notifications}
+                  </Link>
+                  <Link href="/admin/site" className={linkClass}>
+                    {t.admin}
+                  </Link>
+                </>
               )}
             </>
           )}
@@ -221,20 +215,20 @@ export default function Navbar() {
                 <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
                   <Link
                     href="/profile"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-foreground normal-case font-body"
                   >
                     {t.profile}
                   </Link>
                   <Link
                     href="/profile/children"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-foreground normal-case font-body"
                   >
                     {actions.myChildren}
                   </Link>
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value as Lang)}
-                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted cursor-pointer"
+                    className="w-full border-t px-4 py-2 text-sm bg-card text-foreground hover:bg-muted cursor-pointer"
                   >
                     {availableLanguages.map(({ code, flag, label }) => (
                       <option key={code} value={code}>
@@ -244,7 +238,7 @@ export default function Navbar() {
                   </select>
                   <button
                     onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-foreground normal-case font-body"
                   >
                     {t.logout}
                   </button>
@@ -258,7 +252,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/register"
-                className="rounded-md bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25 transition-colors"
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors normal-case font-body"
               >
                 {t.register}
               </Link>
@@ -268,16 +262,14 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
-          {session && !isCounter && (
-            <Link
-              href={activitiesHref}
-              className={linkClass}
-              onClick={() => setMenuOpen(false)}
-            >
-              {isMember ? t.myActivities : t.activities}
-            </Link>
-          )}
+        <div className="mt-3 border-t border-border pt-3 flex flex-col gap-3 md:hidden">
+          <Link
+            href={activitiesHref}
+            className={linkClass}
+            onClick={() => setMenuOpen(false)}
+          >
+            {isMember ? t.myActivities : t.activities}
+          </Link>
           {session && (
             <Link
               href="/chat"
@@ -305,25 +297,22 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium opacity-90">
-                    Administrador
-                  </span>
+                <>
                   <Link
                     href="/admin/notifications"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    Notificaciones
+                    {t.notifications}
                   </Link>
                   <Link
-                    href="/admin/audit-log"
+                    href="/admin/site"
                     className={linkClass}
                     onClick={() => setMenuOpen(false)}
                   >
-                    Registro de auditoría
+                    {t.admin}
                   </Link>
-                </div>
+                </>
               )}
             </>
           )}
@@ -376,7 +365,7 @@ export default function Navbar() {
                     </span>
                   )}
                 </div>
-                <span className="text-sm opacity-80">
+                <span className="text-sm opacity-80 normal-case font-body">
                   {session.user.name || 'Usuario'}
                 </span>
               </div>
@@ -397,7 +386,7 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+                className="bg-transparent text-foreground opacity-80 text-sm w-fit"
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
@@ -431,7 +420,7 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+                className="bg-transparent text-foreground opacity-80 text-sm w-fit"
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
