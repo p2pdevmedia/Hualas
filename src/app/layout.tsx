@@ -1,10 +1,36 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
+import { Barlow_Condensed, Inter, Archivo } from 'next/font/google';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
 import { isMercadoPagoTestingEnvironment } from '@/lib/mercadopago';
+import { cn } from '@/lib/utils';
+
+// Headings: Barlow Condensed — atlético, condensado, 700-800
+const fontHeading = Barlow_Condensed({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-heading',
+});
+
+// Body: Inter — neutro, legible, equivalente libre de Söhne
+const fontBody = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-body',
+});
+
+// Mono / HUD / eyebrows: Archivo — geométrica, técnica, equivalente libre de Söhne Mono
+const fontMono = Archivo({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-mono',
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +54,12 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="min-h-screen text-foreground flex flex-col font-body">
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={cn(fontHeading.variable, fontBody.variable, fontMono.variable)}
+    >
+      <body className="min-h-screen text-foreground flex flex-col font-body antialiased">
         <Providers>
           {isMercadoPagoTestingEnvironment() ? (
             <div className="w-full bg-yellow-300 text-yellow-950 text-sm font-semibold text-center py-2 px-4">
