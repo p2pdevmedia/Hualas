@@ -137,7 +137,9 @@ export default async function Home() {
                       className="h-36 bg-muted bg-cover bg-center"
                       style={
                         activity.image
-                          ? { backgroundImage: `url(${activity.image})` }
+                          ? {
+                              backgroundImage: `url(/api/activities/${activity.id}/image)`,
+                            }
                           : {
                               background:
                                 'linear-gradient(135deg, #2a4a2c, #3D5A3E)',

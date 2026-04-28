@@ -1,9 +1,37 @@
-import { del, put } from '@vercel/blob';
+import { del, get, put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { extensionFor } from '@/lib/image-utils';
+
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+    select: { image: true },
+  });
+
+  if (!activity?.image) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  try {
+    const blob = await get(activity.image, { access: 'private' });
+    if (!blob || blob.statusCode !== 200) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const headers = Object.fromEntries(blob.headers.entries());
+    headers['Cache-Control'] = 'public, max-age=300, stale-while-revalidate=60';
+
+    return new NextResponse(blob.stream, { headers });
+  } catch {
+    return new NextResponse(null, { status: 404 });
+  }
+}
 
 export async function POST(
   req: Request,
