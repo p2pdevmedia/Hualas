@@ -172,9 +172,12 @@ export default function ChatClient() {
     if (!session) return [];
     const isAdmin =
       session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+    const isCounter = session.user.role === 'COUNTER';
     const selectable = isAdmin
       ? users.filter((u) => u.id !== session.user.id)
-      : users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
+      : isCounter
+        ? users.filter((u) => u.id !== session.user.id)
+        : users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
 
     type Contact = {
       user: User;
