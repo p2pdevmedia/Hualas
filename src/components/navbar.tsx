@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
+import { Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import {
   availableLanguages,
 } from './language-provider';
 import type { Lang } from '@/lib/i18n';
+import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
 const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
@@ -57,11 +58,52 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
 
   useEffect(() => {
     setPhotoFailed(false);
   }, [session?.user?.id]);
 
+
+
+  useEffect(() => {
+    if (!session || !isMember) {
+      setCartItemsCount(0);
+      return;
+    }
+
+    const updateCartCount = () => {
+      try {
+        const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
+        if (!raw) {
+          setCartItemsCount(0);
+          return;
+        }
+
+        const items = JSON.parse(raw) as ActivityCartItem[];
+        setCartItemsCount(items.length);
+      } catch {
+        setCartItemsCount(0);
+      }
+    };
+
+    updateCartCount();
+
+    const handleFocus = () => updateCartCount();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === ACTIVITY_CART_STORAGE_KEY) {
+        updateCartCount();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [isMember, session]);
   useEffect(() => {
     if (!session) {
       setHasUnreadMessages(false);
@@ -139,8 +181,17 @@ export default function Navbar() {
             </Link>
           )}
           {isMember && (
-            <Link href="/activities/cart" className={linkClass}>
-              Carrito
+            <Link
+              href="/activities/cart"
+              className={`${linkClass} inline-flex items-center gap-2`}
+            >
+              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+              <span>Carrito</span>
+              {cartItemsCount > 0 && (
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                  {cartItemsCount}
+                </span>
+              )}
             </Link>
           )}
           {session && (
@@ -286,10 +337,16 @@ export default function Navbar() {
           {isMember && (
             <Link
               href="/activities/cart"
-              className={linkClass}
+              className={`${linkClass} inline-flex items-center gap-2`}
               onClick={() => setMenuOpen(false)}
             >
-              Carrito
+              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+              <span>Carrito</span>
+              {cartItemsCount > 0 && (
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                  {cartItemsCount}
+                </span>
+              )}
             </Link>
           )}
           {session && (
