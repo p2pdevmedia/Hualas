@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditActivityForm from './form';
@@ -38,30 +39,36 @@ export default async function EditActivityPage({
     orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
   });
   return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Editar actividad</h1>
-      <EditActivityForm
-        activity={{
-          id: activity.id,
-          name: activity.name,
-          date: activity.date.toISOString().split('T')[0],
-          frequency: activity.frequency,
-          description: activity.description ?? '',
-          price: activity.price,
-          capacity: activity.capacity ?? null,
-          professorIds: activity.professors.map(
-            (assignment: { userId: string }) => assignment.userId
-          ),
-        }}
-        professors={professors}
-      />
-      <div className="mt-8 border-t pt-8">
-        <h2 className="mb-4 text-xl font-semibold">Imagen de la actividad</h2>
-        <ActivityImageUpload
-          activityId={params.id}
-          currentImageUrl={activity.image ?? undefined}
+    <Container>
+      <main className="p-4">
+        <Heading size="8" mb="4">
+          Editar actividad
+        </Heading>
+        <EditActivityForm
+          activity={{
+            id: activity.id,
+            name: activity.name,
+            date: activity.date.toISOString().split('T')[0],
+            frequency: activity.frequency,
+            description: activity.description ?? '',
+            price: activity.price,
+            capacity: activity.capacity ?? null,
+            professorIds: activity.professors.map(
+              (assignment: { userId: string }) => assignment.userId
+            ),
+          }}
+          professors={professors}
         />
-      </div>
-    </main>
+        <Box className="mt-8 border-t pt-8">
+          <Heading size="6" mb="4">
+            Imagen de la actividad
+          </Heading>
+          <ActivityImageUpload
+            activityId={params.id}
+            currentImageUrl={activity.image ?? undefined}
+          />
+        </Box>
+      </main>
+    </Container>
   );
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Text, Flex, Container } from '@radix-ui/themes';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { isAccountingRole } from '@/lib/accounting';
@@ -51,20 +52,27 @@ export default async function MovementsPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Movimientos</h2>
-          <p className="text-sm text-muted-foreground">
-            Filtra ingresos y egresos manuales del club.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/accounting/movements/new">Nuevo movimiento</Link>
-        </Button>
-      </div>
+    <Container>
+      <div className="space-y-6">
+        <Flex
+          direction="column"
+          gap="3"
+          justify="between"
+          align="start"
+          className="sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <Heading size="8">Movimientos</Heading>
+            <Text size="2" color="gray">
+              Filtra ingresos y egresos manuales del club.
+            </Text>
+          </div>
+          <Button asChild>
+            <Link href="/accounting/movements/new">Nuevo movimiento</Link>
+          </Button>
+        </Flex>
 
-      <MovementsTable
+        <MovementsTable
         movements={movements.map((movement) => ({
           id: movement.id,
           date: movement.date.toISOString(),
@@ -78,7 +86,8 @@ export default async function MovementsPage({
             `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
         }))}
         initialFilters={{ type, from, to }}
-      />
-    </div>
+        />
+      </div>
+    </Container>
   );
 }

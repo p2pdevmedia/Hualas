@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditUserForm from './form';
@@ -48,18 +49,20 @@ export default async function EditUserPage({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Editar usuario</h1>
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <EditUserForm
-          user={{
-            ...user,
-            birthDate: user.birthDate
-              ? user.birthDate.toISOString().split('T')[0]
-              : null,
-          }}
-        />
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Editar usuario</Heading>
+        <Box className="rounded-xl border bg-card p-6 shadow-sm">
+          <EditUserForm
+            user={{
+              ...user,
+              birthDate: user.birthDate
+                ? user.birthDate.toISOString().split('T')[0]
+                : null,
+            }}
+          />
+        </Box>
       </div>
-    </div>
+    </Container>
   );
 }

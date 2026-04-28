@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Box, Flex, Text } from '@radix-ui/themes';
 import { useTranslation } from '@/components/language-provider';
 
 interface Form {
@@ -24,14 +25,14 @@ export default function FormList({ forms }: { forms: Form[] }) {
 
   if (forms.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <Text size="2" color="gray">
         No hay formularios creados.
-      </p>
+      </Text>
     );
   }
 
   return (
-    <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
+    <Box className="rounded-xl border bg-card overflow-hidden shadow-sm">
       <table className="w-full text-sm">
         <thead className="bg-muted/50">
           <tr>
@@ -54,7 +55,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
                 {f.responseCount}
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-3">
+                <Flex align="center" gap="3">
                   <Link href={`/admin/forms/${f.id}`} className={linkClass}>
                     {t.view}
                   </Link>
@@ -77,12 +78,12 @@ export default function FormList({ forms }: { forms: Form[] }) {
                   >
                     {t.delete}
                   </button>
-                </div>
+                </Flex>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </Box>
   );
 }

@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Text, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import AuditLogTable from './audit-log-table';
 
@@ -10,14 +11,14 @@ export default async function AuditLogPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Registro de auditoría
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Historial de cambios en la base de datos. Solo visible para Super Admin.
-      </p>
-      <AuditLogTable />
-    </div>
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Registro de auditoría</Heading>
+        <Text size="2" color="gray">
+          Historial de cambios en la base de datos. Solo visible para Super Admin.
+        </Text>
+        <AuditLogTable />
+      </div>
+    </Container>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Heading, Box, Container } from '@radix-ui/themes';
 import { Button } from '@/components/ui/button';
 import CreateActivityForm from './form';
 import ActivityImageUpload from '../activity-image-upload';
@@ -38,24 +39,30 @@ export default function CreateActivityPageClient({
   };
 
   return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Crear actividad</h1>
-      {!createdActivityId ? (
-        <CreateActivityForm professors={professors} onSuccess={handleActivityCreated} />
-      ) : (
-        <div className="space-y-6">
-          <div>
-            <h2 className="mb-4 text-lg font-semibold">Subir imagen de la actividad</h2>
-            <ActivityImageUpload
-              activityId={createdActivityId}
-              onSuccess={handleImageUploadComplete}
-            />
-          </div>
-          <Button onClick={handleSkipUpload} variant="outline" className="w-full">
-            Saltar y volver a actividades
-          </Button>
-        </div>
-      )}
-    </main>
+    <Container>
+      <main className="p-4">
+        <Heading size="8" mb="4">
+          Crear actividad
+        </Heading>
+        {!createdActivityId ? (
+          <CreateActivityForm professors={professors} onSuccess={handleActivityCreated} />
+        ) : (
+          <Box className="space-y-6">
+            <Box>
+              <Heading size="6" mb="4">
+                Subir imagen de la actividad
+              </Heading>
+              <ActivityImageUpload
+                activityId={createdActivityId}
+                onSuccess={handleImageUploadComplete}
+              />
+            </Box>
+            <Button onClick={handleSkipUpload} variant="outline" className="w-full">
+              Saltar y volver a actividades
+            </Button>
+          </Box>
+        )}
+      </main>
+    </Container>
   );
 }

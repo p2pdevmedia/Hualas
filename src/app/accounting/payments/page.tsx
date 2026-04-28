@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Heading, Text, Flex, Box, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
@@ -11,6 +12,7 @@ import {
   isAccountingRole,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ArrowRight, Search } from 'lucide-react';
 
 type SearchParams = {
@@ -62,65 +64,80 @@ export default async function PaymentsPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Pagos MP</h2>
-          <p className="text-sm text-muted-foreground">
-            Registro de participantes con recibo aprobado.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/accounting/reports">
-            Ir a reportes
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-
-      <form className="rounded-2xl border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
-          <label className="space-y-1 text-sm">
-            <span className="font-medium">Desde</span>
-            <input
-              type="date"
-              name="from"
-              defaultValue={from}
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium">Hasta</span>
-            <input
-              type="date"
-              name="to"
-              defaultValue={to}
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </label>
-          <label className="space-y-1 text-sm md:col-span-2">
-            <span className="font-medium">Actividad</span>
-            <input
-              type="text"
-              name="activity"
-              defaultValue={activity}
-              placeholder="Nombre de actividad"
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </label>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button type="submit">
-            <Search className="mr-2 h-4 w-4" />
-            Buscar
-          </Button>
+    <Container>
+      <div className="space-y-6">
+        <Flex
+          direction="column"
+          gap="3"
+          justify="between"
+          align="start"
+          className="sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <Heading size="8">Pagos MP</Heading>
+            <Text size="2" color="gray">
+              Registro de participantes con recibo aprobado.
+            </Text>
+          </div>
           <Button asChild variant="outline">
-            <Link href="/accounting/payments">Limpiar</Link>
+            <Link href="/accounting/reports">
+              Ir a reportes
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
-        </div>
-      </form>
+        </Flex>
 
-      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+        <Box className="rounded-2xl border bg-card p-4 shadow-sm">
+          <form>
+            <Box className="grid gap-3 md:grid-cols-4">
+              <label className="space-y-1 text-sm">
+                <Text size="2" weight="medium">
+                  Desde
+                </Text>
+                <input
+                  type="date"
+                  name="from"
+                  defaultValue={from}
+                  className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <Text size="2" weight="medium">
+                  Hasta
+                </Text>
+                <input
+                  type="date"
+                  name="to"
+                  defaultValue={to}
+                  className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+              <label className="space-y-1 text-sm md:col-span-2">
+                <Text size="2" weight="medium">
+                  Actividad
+                </Text>
+                <input
+                  type="text"
+                  name="activity"
+                  defaultValue={activity}
+                  placeholder="Nombre de actividad"
+                  className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+            </Box>
+            <Flex gap="2" className="mt-3 flex-wrap">
+              <Button type="submit">
+                <Search className="mr-2 h-4 w-4" />
+                Buscar
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/accounting/payments">Limpiar</Link>
+              </Button>
+            </Flex>
+          </form>
+        </Box>
+
+        <Box className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-muted/20 text-left text-muted-foreground">
             <tr>
@@ -170,7 +187,8 @@ export default async function PaymentsPage({
             )}
           </tbody>
         </table>
+        </Box>
       </div>
-    </div>
+    </Container>
   );
 }

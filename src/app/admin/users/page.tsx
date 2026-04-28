@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { Box, Heading, Container } from '@radix-ui/themes';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isCounterRole } from '@/lib/accounting';
@@ -27,11 +28,13 @@ export default async function UsersPage() {
     },
   });
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <UsersList users={users} />
+    <Container>
+      <div className="py-8 space-y-4">
+        <Heading size="8">Usuarios</Heading>
+        <Box className="rounded-xl border bg-card p-6 shadow-sm">
+          <UsersList users={users} />
+        </Box>
       </div>
-    </div>
+    </Container>
   );
 }
