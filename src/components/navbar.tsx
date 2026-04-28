@@ -148,7 +148,7 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {session && !isCounter && (
+          {session && (
             <Link
               href="/chat"
               className={`${linkClass} inline-flex items-center gap-2`}
@@ -279,7 +279,7 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {session && !isCounter && (
+          {session && (
             <Link
               href="/chat"
               className={`${linkClass} inline-flex items-center gap-2`}

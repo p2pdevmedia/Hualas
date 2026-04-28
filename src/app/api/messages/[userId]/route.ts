@@ -92,9 +92,10 @@ export async function POST(
 
   const senderRole = session.user.role;
   const isSenderAdmin = senderRole === 'ADMIN' || senderRole === 'SUPER_ADMIN';
+  const isSenderCounter = senderRole === 'COUNTER';
   const isRecipientAdmin =
     recipient.role === 'ADMIN' || recipient.role === 'SUPER_ADMIN';
-  if (!isSenderAdmin && !isRecipientAdmin) {
+  if (!isSenderAdmin && !isSenderCounter && !isRecipientAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
