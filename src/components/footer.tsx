@@ -1,6 +1,6 @@
 'use client';
 
-import { Instagram, Youtube } from 'lucide-react';
+import { Share2, Play } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -16,7 +16,7 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="Instagram"
             >
-              <Instagram className="h-5 w-5" />
+              <Share2 className="h-5 w-5" />
               <span className="text-sm">@hualas_patagonico</span>
             </a>
             <a
@@ -26,7 +26,7 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="YouTube"
             >
-              <Youtube className="h-5 w-5" />
+              <Play className="h-5 w-5" />
               <span className="text-sm">@escuelademontanahualas</span>
             </a>
           </div>

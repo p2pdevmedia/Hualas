@@ -1,3 +1,6 @@
+import type { Metadata } from 'next';
+import { Theme } from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
@@ -13,14 +16,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export async function generateMetadata() {
-  const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
-  return {
-    title: 'Hualas Club',
-    description: 'Club de montaña en San Martín de los Andes, Patagonia',
-    icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}` }],
-  };
-}
+export const metadata: Metadata = {
+  title: 'Hualas Club',
+  description: 'Club de montaña en San Martín de los Andes, Patagonia',
+};
 
 export default async function RootLayout({
   children,
@@ -28,18 +27,20 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className="min-h-screen text-foreground flex flex-col font-body">
-        <Providers>
-          {isMercadoPagoTestingEnvironment() ? (
-            <div className="w-full bg-yellow-300 text-yellow-950 text-sm font-semibold text-center py-2 px-4">
-              Mercado Pago en modo TESTING
-            </div>
-          ) : null}
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </Providers>
+        <Theme appearance="light" accentColor="grass" grayColor="mauve">
+          <Providers>
+            {isMercadoPagoTestingEnvironment() ? (
+              <div className="w-full bg-yellow-300 text-yellow-950 text-sm font-semibold text-center py-2 px-4">
+                Mercado Pago en modo TESTING
+              </div>
+            ) : null}
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </Providers>
+        </Theme>
       </body>
     </html>
   );
