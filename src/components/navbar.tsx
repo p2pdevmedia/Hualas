@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Box, Flex, Button as RadixButton, Avatar as RadixAvatar, Text } from '@radix-ui/themes';
+import { HamburgerMenuIcon, ExitIcon, DotFilledIcon } from '@radix-ui/react-icons';
 import { cn } from '@/lib/utils';
 import { isCounterRole } from '@/lib/accounting';
 import {
@@ -13,19 +15,20 @@ import {
   availableLanguages,
 } from './language-provider';
 import type { Lang } from '@/lib/i18n';
+import { Button } from './ui/button';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
 const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
 
 const AVATAR_COLORS = [
-  'bg-rose-500',
-  'bg-amber-500',
-  'bg-emerald-500',
-  'bg-sky-500',
-  'bg-violet-500',
-  'bg-fuchsia-500',
-  'bg-teal-500',
-  'bg-orange-500',
+  'tomato',
+  'orange',
+  'amber',
+  'grass',
+  'sky',
+  'violet',
+  'pink',
+  'plum',
 ];
 
 function avatarColor(id: string) {
@@ -54,7 +57,7 @@ export default function Navbar() {
   const t = translations.nav;
   const actions = translations.actions;
   const { lang, setLang } = useLang();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
 
@@ -94,10 +97,11 @@ export default function Navbar() {
     };
   }, [session]);
 
-  const logoUrl = defaultLogo;
-
   const linkClass =
-    'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+    'text-sm font-medium text-white opacity-80 hover:opacity-100 transition-opacity';
+
+  const mobileNavLinkClass =
+    'text-sm font-medium text-white opacity-80 hover:opacity-100 transition-opacity block w-full text-left px-4 py-2';
 
   const renderUnreadIcon = () => (
     <span
@@ -109,10 +113,15 @@ export default function Navbar() {
 
   return (
     <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <Flex
+        justify="between"
+        align="center"
+        className="mx-auto max-w-6xl"
+      >
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <Image
-            src={logoUrl}
+            src={defaultLogo}
             alt="Hualas Club logo"
             width={36}
             height={36}
@@ -124,15 +133,12 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <button
-          className="rounded-md p-1.5 opacity-80 hover:opacity-100 md:hidden"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle menu"
+        {/* Desktop Menu */}
+        <Flex
+          gap="6"
+          align="center"
+          className="hidden md:flex md:items-center"
         >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-
-        <div className="hidden md:flex md:items-center md:gap-6">
           {session && !isCounter && (
             <Link href={activitiesHref} className={linkClass}>
               {isMember ? t.myActivities : t.activities}
@@ -156,23 +162,33 @@ export default function Navbar() {
                 {t.forms}
               </Link>
               {isSuperAdmin && (
-                <div className="relative group">
-                  <button className={linkClass}>Administrador</button>
-                  <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
-                    <Link
-                      href="/admin/notifications"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
-                    >
-                      Notificaciones
-                    </Link>
-                    <Link
-                      href="/admin/audit-log"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
-                    >
-                      Registro de auditoría
-                    </Link>
-                  </div>
-                </div>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className={linkClass}>Administrador</button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content
+                    className="min-w-56 rounded-md border bg-card shadow-lg z-50"
+                    align="start"
+                  >
+                    <DropdownMenu.Item asChild>
+                      <Link
+                        href="/admin/notifications"
+                        className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black cursor-pointer"
+                      >
+                        Notificaciones
+                      </Link>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator className="border-t" />
+                    <DropdownMenu.Item asChild>
+                      <Link
+                        href="/admin/audit-log"
+                        className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black cursor-pointer"
+                      >
+                        Registro de auditoría
+                      </Link>
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
               )}
             </>
           )}
@@ -185,74 +201,97 @@ export default function Navbar() {
             {t.contact}
           </Link>
           {session ? (
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
-                  'h-9 w-9 text-xs',
-                  !photoFailed && 'bg-transparent'
-                )}
-              >
-                {!photoFailed ? (
-                  <div className="relative h-full w-full">
-                    <Image
-                      src={`/api/users/${session.user.id}/photo`}
-                      alt={session.user.name ?? 'Profile photo'}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                      sizes="36px"
-                      onError={() => setPhotoFailed(true)}
-                    />
-                  </div>
-                ) : (
-                  <span
-                    className={cn(
-                      'grid h-full w-full place-items-center text-white',
-                      avatarColor(session.user.id)
-                    )}
-                  >
-                    {initials(session.user.name)}
-                  </span>
-                )}
-              </div>
-              <div className="relative group">
-                <button className={linkClass}>{t.profile}</button>
-                <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
-                  <Link
-                    href="/profile"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
-                  >
-                    {t.profile}
-                  </Link>
-                  <Link
-                    href="/profile/children"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
-                  >
-                    {actions.myChildren}
-                  </Link>
-                  <select
-                    value={lang}
-                    onChange={(e) => setLang(e.target.value as Lang)}
-                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted cursor-pointer"
-                  >
-                    {availableLanguages.map(({ code, flag, label }) => (
-                      <option key={code} value={code}>
-                        {flag} {label}
-                      </option>
-                    ))}
-                  </select>
+            <Flex gap="3" align="center">
+              {/* Avatar with Dropdown */}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
                   <button
-                    onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className={cn(
+                      'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                      'h-9 w-9 text-xs cursor-pointer',
+                      !photoFailed && 'bg-transparent'
+                    )}
+                    aria-label="User menu"
                   >
-                    {t.logout}
+                    {!photoFailed ? (
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={`/api/users/${session.user.id}/photo`}
+                          alt={session.user.name ?? 'Profile photo'}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="36px"
+                          onError={() => setPhotoFailed(true)}
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        className={cn(
+                          'grid h-full w-full place-items-center text-white',
+                          {
+                            'bg-rose-500': avatarColor(session.user.id) === 'tomato',
+                            'bg-amber-500': avatarColor(session.user.id) === 'orange',
+                            'bg-yellow-500': avatarColor(session.user.id) === 'amber',
+                            'bg-emerald-500': avatarColor(session.user.id) === 'grass',
+                            'bg-sky-500': avatarColor(session.user.id) === 'sky',
+                            'bg-violet-500': avatarColor(session.user.id) === 'violet',
+                            'bg-pink-500': avatarColor(session.user.id) === 'pink',
+                            'bg-purple-500': avatarColor(session.user.id) === 'plum',
+                          }
+                        )}
+                      >
+                        {initials(session.user.name)}
+                      </span>
+                    )}
                   </button>
-                </div>
-              </div>
-            </div>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content
+                  className="min-w-48 rounded-md border bg-card shadow-lg z-50"
+                  align="end"
+                >
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      href="/profile"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black cursor-pointer"
+                    >
+                      {t.profile}
+                    </Link>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      href="/profile/children"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black border-t cursor-pointer"
+                    >
+                      {actions.myChildren}
+                    </Link>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item asChild>
+                    <select
+                      value={lang}
+                      onChange={(e) => setLang(e.target.value as Lang)}
+                      className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted cursor-pointer"
+                    >
+                      {availableLanguages.map(({ code, flag, label }) => (
+                        <option key={code} value={code}>
+                          {flag} {label}
+                        </option>
+                      ))}
+                    </select>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="border-t" />
+                  <DropdownMenu.Item
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm text-black cursor-pointer flex items-center gap-2"
+                  >
+                    <ExitIcon width={16} height={16} />
+                    {t.logout}
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Flex>
           ) : (
-            <>
+            <Flex gap="2" align="center">
               <Link href="/login" className={linkClass}>
                 {t.login}
               </Link>
@@ -262,186 +301,210 @@ export default function Navbar() {
               >
                 {t.register}
               </Link>
-            </>
+            </Flex>
           )}
-        </div>
-      </div>
+        </Flex>
 
-      {menuOpen && (
-        <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
-          {session && !isCounter && (
-            <Link
-              href={activitiesHref}
-              className={linkClass}
-              onClick={() => setMenuOpen(false)}
-            >
-              {isMember ? t.myActivities : t.activities}
-            </Link>
-          )}
-          {session && (
-            <Link
-              href="/chat"
-              className={`${linkClass} inline-flex items-center gap-2`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
-            </Link>
-          )}
-          {isAdmin && (
-            <>
+        {/* Mobile Menu Trigger */}
+        <RadixButton
+          variant="ghost"
+          size="1"
+          className="md:hidden text-white opacity-80 hover:opacity-100"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <HamburgerMenuIcon width={20} height={20} />
+        </RadixButton>
+      </Flex>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <Box className="md:hidden border-t border-white/20 mt-3 pt-3">
+          <Flex direction="column" gap="0">
+            {session && !isCounter && (
               <Link
-                href="/admin/users"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
+                href={activitiesHref}
+                className={mobileNavLinkClass}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                {t.users}
+                {isMember ? t.myActivities : t.activities}
               </Link>
+            )}
+            {session && (
               <Link
-                href="/admin/forms"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
+                href="/chat"
+                className={`${mobileNavLinkClass} inline-flex items-center gap-2`}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                {t.forms}
+                <span>{t.chat}</span>
+                {hasUnreadMessages && renderUnreadIcon()}
               </Link>
-              {isSuperAdmin && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium opacity-90">
-                    Administrador
-                  </span>
-                  <Link
-                    href="/admin/notifications"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Notificaciones
-                  </Link>
-                  <Link
-                    href="/admin/audit-log"
-                    className={linkClass}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Registro de auditoría
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
-          {isAccounting && (
-            <Link
-              href="/accounting"
-              className={linkClass}
-              onClick={() => setMenuOpen(false)}
-            >
-              {t.accounting}
-            </Link>
-          )}
-          <Link
-            href="/contact"
-            className={linkClass}
-            onClick={() => setMenuOpen(false)}
-          >
-            {t.contact}
-          </Link>
-          {session ? (
-            <>
-              <div className="flex items-center gap-3 py-2">
-                <div
-                  className={cn(
-                    'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
-                    'h-9 w-9 text-xs',
-                    !photoFailed && 'bg-transparent'
-                  )}
+            )}
+            {isAdmin && (
+              <>
+                <Link
+                  href="/admin/users"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  {!photoFailed ? (
-                    <div className="relative h-full w-full">
-                      <Image
-                        src={`/api/users/${session.user.id}/photo`}
-                        alt={session.user.name ?? 'Profile photo'}
-                        fill
-                        unoptimized
-                        className="object-cover"
-                        sizes="36px"
-                        onError={() => setPhotoFailed(true)}
-                      />
-                    </div>
-                  ) : (
-                    <span
-                      className={cn(
-                        'grid h-full w-full place-items-center text-white',
-                        avatarColor(session.user.id)
-                      )}
-                    >
-                      {initials(session.user.name)}
+                  {t.users}
+                </Link>
+                <Link
+                  href="/admin/forms"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.forms}
+                </Link>
+                {isSuperAdmin && (
+                  <Box className="flex flex-col gap-2 px-4 py-2">
+                    <span className="text-sm font-medium opacity-90">
+                      Administrador
                     </span>
-                  )}
-                </div>
-                <span className="text-sm opacity-80">
-                  {session.user.name || 'Usuario'}
-                </span>
-              </div>
+                    <Link
+                      href="/admin/notifications"
+                      className={linkClass}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Notificaciones
+                    </Link>
+                    <Link
+                      href="/admin/audit-log"
+                      className={linkClass}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Registro de auditoría
+                    </Link>
+                  </Box>
+                )}
+              </>
+            )}
+            {isAccounting && (
               <Link
-                href="/profile"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
+                href="/accounting"
+                className={mobileNavLinkClass}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                {t.profile}
+                {t.accounting}
               </Link>
-              <Link
-                href="/profile/children"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
-              >
-                {actions.myChildren}
-              </Link>
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
-              >
-                {availableLanguages.map(({ code, flag, label }) => (
-                  <option key={code} value={code}>
-                    {flag} {label}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className={`${linkClass} text-left`}
-              >
-                {t.logout}
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.login}
-              </Link>
-              <Link
-                href="/register"
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.register}
-              </Link>
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
-              >
-                {availableLanguages.map(({ code, flag, label }) => (
-                  <option key={code} value={code}>
-                    {flag} {label}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-        </div>
+            )}
+            <Link
+              href="/contact"
+              className={mobileNavLinkClass}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t.contact}
+            </Link>
+            {session ? (
+              <>
+                <Flex gap="3" align="center" className="px-4 py-2">
+                  <div
+                    className={cn(
+                      'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
+                      'h-9 w-9 text-xs',
+                      !photoFailed && 'bg-transparent'
+                    )}
+                  >
+                    {!photoFailed ? (
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={`/api/users/${session.user.id}/photo`}
+                          alt={session.user.name ?? 'Profile photo'}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="36px"
+                          onError={() => setPhotoFailed(true)}
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        className={cn(
+                          'grid h-full w-full place-items-center text-white',
+                          {
+                            'bg-rose-500': avatarColor(session.user.id) === 'tomato',
+                            'bg-amber-500': avatarColor(session.user.id) === 'orange',
+                            'bg-yellow-500': avatarColor(session.user.id) === 'amber',
+                            'bg-emerald-500': avatarColor(session.user.id) === 'grass',
+                            'bg-sky-500': avatarColor(session.user.id) === 'sky',
+                            'bg-violet-500': avatarColor(session.user.id) === 'violet',
+                            'bg-pink-500': avatarColor(session.user.id) === 'pink',
+                            'bg-purple-500': avatarColor(session.user.id) === 'plum',
+                          }
+                        )}
+                      >
+                        {initials(session.user.name)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm opacity-80">
+                    {session.user.name || 'Usuario'}
+                  </span>
+                </Flex>
+                <Link
+                  href="/profile"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.profile}
+                </Link>
+                <Link
+                  href="/profile/children"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {actions.myChildren}
+                </Link>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as Lang)}
+                  className="bg-transparent text-white opacity-80 text-sm w-fit mx-4 my-2 [&>option]:bg-slate-800 [&>option]:text-white"
+                >
+                  {availableLanguages.map(({ code, flag, label }) => (
+                    <option key={code} value={code}>
+                      {flag} {label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className={`${mobileNavLinkClass} text-left flex items-center gap-2`}
+                >
+                  <ExitIcon width={16} height={16} />
+                  {t.logout}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.login}
+                </Link>
+                <Link
+                  href="/register"
+                  className={mobileNavLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.register}
+                </Link>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as Lang)}
+                  className="bg-transparent text-white opacity-80 text-sm w-fit mx-4 my-2 [&>option]:bg-slate-800 [&>option]:text-white"
+                >
+                  {availableLanguages.map(({ code, flag, label }) => (
+                    <option key={code} value={code}>
+                      {flag} {label}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+          </Flex>
+        </Box>
       )}
     </nav>
   );

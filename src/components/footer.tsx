@@ -1,14 +1,19 @@
 'use client';
 
-import { Share2, Play } from 'lucide-react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Share2Icon, PlayIcon } from '@radix-ui/react-icons';
 
 export default function Footer() {
   return (
-    <footer className="px-4 py-8 text-white bg-slate-800">
-      <div className="mx-auto max-w-4xl">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <p className="text-lg font-semibold">Club Hualas Patagónico</p>
-          <div className="flex flex-wrap justify-center gap-6">
+    <footer
+      className="px-4 py-8 text-white bg-slate-800"
+    >
+      <Box className="mx-auto max-w-4xl">
+        <Flex direction="column" align="center" gap="4" className="text-center">
+          <Text size="5" weight="bold">
+            Club Hualas Patagónico
+          </Text>
+          <Flex gap="6" justify="center" wrap="wrap">
             <a
               href="https://www.instagram.com/hualas_patagonico/"
               target="_blank"
@@ -16,7 +21,7 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="Instagram"
             >
-              <Share2 className="h-5 w-5" />
+              <Share2Icon width={20} height={20} />
               <span className="text-sm">@hualas_patagonico</span>
             </a>
             <a
@@ -26,15 +31,15 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="YouTube"
             >
-              <Play className="h-5 w-5" />
+              <PlayIcon width={20} height={20} />
               <span className="text-sm">@escuelademontanahualas</span>
             </a>
-          </div>
-          <p className="text-sm opacity-60">
+          </Flex>
+          <Text size="2" className="opacity-60">
             San Martín de los Andes, Neuquén, Argentina 🇦🇷
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Flex>
+      </Box>
     </footer>
   );
 }
