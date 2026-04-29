@@ -165,7 +165,6 @@ export default function AddChildForm({
             type="file"
             accept="image/*"
             capture="environment"
-            required={documentType === 'DNI'}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -180,7 +179,6 @@ export default function AddChildForm({
             type="file"
             accept="image/*"
             capture="environment"
-            required={documentType === 'DNI'}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
