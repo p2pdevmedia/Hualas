@@ -292,13 +292,19 @@ export default function Navbar() {
                     {actions.myChildren}
                   </Link>
                   <Link
-                    href="/profile/payments"
+                    href="/profile/cart"
                     className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
                   >
                     <span className="inline-flex items-center gap-2">
-                      <span>Pagos</span>
+                      <span>Carrito</span>
                       {cartItemsCount > 0 && renderCartNotificationIcon()}
                     </span>
+                  </Link>
+                  <Link
+                    href="/profile/payments"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                  >
+                    Historial de pagos
                   </Link>
                   <select
                     value={lang}
@@ -475,12 +481,19 @@ export default function Navbar() {
                 {actions.myChildren}
               </Link>
               <Link
-                href="/profile/payments"
+                href="/profile/cart"
                 className={`${linkClass} inline-flex items-center gap-2`}
                 onClick={() => setMenuOpen(false)}
               >
-                <span>Pagos</span>
+                <span>Carrito</span>
                 {cartItemsCount > 0 && renderCartNotificationIcon()}
+              </Link>
+              <Link
+                href="/profile/payments"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                Historial de pagos
               </Link>
               <select
                 value={lang}

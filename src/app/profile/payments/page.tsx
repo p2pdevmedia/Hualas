@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import CartStatus from './cart-status';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -39,18 +38,14 @@ export default async function ProfilePaymentsPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Pagos</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Historial de pagos</h1>
         <p className="text-sm text-muted-foreground">
-          Revisá tu carrito actual y el historial de pagos aprobados.
+          Revisá tus pagos aprobados de actividades.
         </p>
       </header>
 
-      <section className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-        <CartStatus />
-      </section>
-
       <section className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold">Historial de pagos</h2>
+        <h2 className="text-lg font-semibold">Pagos aprobados</h2>
 
         {payments.length === 0 ? (
           <p className="text-sm text-muted-foreground">
