@@ -33,6 +33,7 @@ export default async function ProfilePage() {
       bloodGroup: true,
       primaryDoctor: true,
       doctorPhone: true,
+      doctorCertificate: true,
     },
   });
   if (!user) {

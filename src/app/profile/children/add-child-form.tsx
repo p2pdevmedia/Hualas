@@ -31,6 +31,7 @@ export default function AddChildForm({
   const [bloodGroup, setBloodGroup] = useState('');
   const [primaryDoctor, setPrimaryDoctor] = useState('');
   const [doctorPhone, setDoctorPhone] = useState('');
+  const [doctorCertificate, setDoctorCertificate] = useState('');
   const [observations, setObservations] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -110,6 +111,7 @@ export default function AddChildForm({
           bloodGroup,
           primaryDoctor,
           doctorPhone,
+          doctorCertificate,
           observations,
         }),
       });
@@ -297,6 +299,19 @@ export default function AddChildForm({
           onChange={(e) => setDoctorPhone(e.target.value)}
           placeholder="Teléfono médico"
         />
+        <label className="text-sm text-muted-foreground space-y-1">
+          <span>Certificado del médico (imagen)</span>
+          <input
+            className={inputClass}
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setDoctorCertificate(await toDataUrl(file));
+            }}
+          />
+        </label>
         <textarea
           className={`${inputClass} min-h-[72px] resize-y`}
           value={observations}

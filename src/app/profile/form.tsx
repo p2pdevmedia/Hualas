@@ -24,6 +24,7 @@ type User = {
   bloodGroup: string | null;
   primaryDoctor: string | null;
   doctorPhone: string | null;
+  doctorCertificate: string | null;
 };
 
 export default function ProfileForm({ user }: { user: User }) {
@@ -43,12 +44,43 @@ export default function ProfileForm({ user }: { user: User }) {
   const [bloodGroup, setBloodGroup] = useState(user.bloodGroup ?? '');
   const [primaryDoctor, setPrimaryDoctor] = useState(user.primaryDoctor ?? '');
   const [doctorPhone, setDoctorPhone] = useState(user.doctorPhone ?? '');
+  const [doctorCertificate, setDoctorCertificate] = useState(user.doctorCertificate ?? '');
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
+
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 1280;
+        const scale = Math.min(
+          maxSize / image.width,
+          maxSize / image.height,
+          1
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(image.src);
+          reject(new Error('No se pudo procesar la imagen'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(image.src);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(image.src);
+        reject(new Error('No se pudo leer la imagen'));
+      };
+      image.src = URL.createObjectURL(file);
+    });
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
@@ -78,6 +110,7 @@ export default function ProfileForm({ user }: { user: User }) {
           bloodGroup,
           primaryDoctor,
           doctorPhone,
+          doctorCertificate,
           email,
           phone,
           ...(password ? { password } : {}),
@@ -209,6 +242,19 @@ export default function ProfileForm({ user }: { user: User }) {
           placeholder="Teléfono médico"
         />
       </div>
+      <label className="text-sm text-muted-foreground space-y-1">
+        <span>Certificado del médico (imagen)</span>
+        <input
+          className={inputClass}
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setDoctorCertificate(await toDataUrl(file));
+          }}
+        />
+      </label>
 
       <input
         className={inputClass}

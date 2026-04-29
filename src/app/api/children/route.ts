@@ -32,6 +32,7 @@ export async function GET() {
       bloodGroup: true,
       primaryDoctor: true,
       doctorPhone: true,
+      doctorCertificate: true,
       observations: true,
     },
   });
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       bloodGroup: data.bloodGroup,
       primaryDoctor: data.primaryDoctor,
       doctorPhone: data.doctorPhone,
+      doctorCertificate: data.doctorCertificate,
       observations: data.observations,
     },
     select: {
@@ -89,6 +91,7 @@ export async function POST(req: Request) {
       bloodGroup: true,
       primaryDoctor: true,
       doctorPhone: true,
+      doctorCertificate: true,
       observations: true,
     },
   });

@@ -57,6 +57,7 @@ export async function PATCH(req: Request) {
   if (data.bloodGroup !== undefined) updateData.bloodGroup = data.bloodGroup;
   if (data.primaryDoctor !== undefined) updateData.primaryDoctor = data.primaryDoctor;
   if (data.doctorPhone !== undefined) updateData.doctorPhone = data.doctorPhone;
+  if (data.doctorCertificate !== undefined) updateData.doctorCertificate = data.doctorCertificate;
   if (data.email !== undefined) updateData.email = data.email;
   if (data.password !== undefined) {
     updateData.password = await hash(data.password, 12);
@@ -78,6 +79,7 @@ export async function PATCH(req: Request) {
       phone: true,
       nationality: true,
       maritalStatus: true,
+      doctorCertificate: true,
     },
   });
 

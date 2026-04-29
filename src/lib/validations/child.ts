@@ -22,5 +22,6 @@ export const childCreateSchema = z.object({
   bloodGroup: z.string().optional(),
   primaryDoctor: z.string().optional(),
   doctorPhone: z.string().optional(),
+  doctorCertificate: z.string().optional(),
   observations: z.string().optional(),
 });

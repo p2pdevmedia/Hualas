@@ -26,6 +26,7 @@ model User {
   bloodGroup            String?
   primaryDoctor         String?
   doctorPhone           String?
+  doctorCertificate     String?
   profilePhoto          String?
   nationality           String?
   maritalStatus         String?
@@ -265,6 +266,7 @@ model Child {
   bloodGroup           String?
   primaryDoctor        String?
   doctorPhone          String?
+  doctorCertificate    String?
   observations         String?
   createdAt            DateTime              @default(now())
   activityParticipants ActivityParticipant[]
