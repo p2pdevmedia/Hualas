@@ -22,7 +22,7 @@ export default async function CreatePickupNoticePage() {
     },
   });
 
-  const users = await prisma.user.findMany({
+  const rawUsers = await prisma.user.findMany({
     where: {
       OR: [{ role: 'MEMBER' }, { role: 'PROFESSOR' }],
     },
@@ -32,6 +32,11 @@ export default async function CreatePickupNoticePage() {
     },
   });
 
+  const users = rawUsers.map((u) => ({
+    id: u.id,
+    name: u.name || '',
+  }));
+
   // Get future activity days where user's children are enrolled
   const activityDays = await prisma.activityDay.findMany({
     where: {
@@ -39,7 +44,7 @@ export default async function CreatePickupNoticePage() {
         gt: new Date(),
       },
       activity: {
-        activityParticipants: {
+        participants: {
           some: {
             childId: {
               in: children.map((c) => c.id),

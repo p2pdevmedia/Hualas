@@ -43,7 +43,7 @@ export default async function EditPickupNoticePage({
     },
   });
 
-  const users = await prisma.user.findMany({
+  const rawUsers = await prisma.user.findMany({
     where: {
       OR: [{ role: 'MEMBER' }, { role: 'PROFESSOR' }],
     },
@@ -52,6 +52,11 @@ export default async function EditPickupNoticePage({
       name: true,
     },
   });
+
+  const users = rawUsers.map((u) => ({
+    id: u.id,
+    name: u.name || '',
+  }));
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
