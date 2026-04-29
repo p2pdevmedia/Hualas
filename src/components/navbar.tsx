@@ -212,13 +212,28 @@ export default function Navbar() {
             </Link>
           )}
           {session && (
-            <Link
-              href="/chat"
-              className={`${linkClass} inline-flex items-center gap-2`}
-            >
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
-            </Link>
+            <div className="relative group">
+              <button className={`${linkClass} inline-flex items-center gap-2`}>
+                <span>Comunicación</span>
+                {hasUnreadMessages && renderUnreadIcon()}
+              </button>
+              <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
+                <Link
+                  href="/chat"
+                  className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                >
+                  {t.chat}
+                </Link>
+                {isMember && (
+                  <Link
+                    href="/profile/pickup-notices"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                  >
+                    Avisos de Retiro
+                  </Link>
+                )}
+              </div>
+            </div>
           )}
           {isAdmin && (
             <>
@@ -381,14 +396,25 @@ export default function Navbar() {
             </Link>
           )}
           {session && (
-            <Link
-              href="/chat"
-              className={`${linkClass} inline-flex items-center gap-2`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
-            </Link>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium opacity-90">Comunicación</span>
+              <Link
+                href="/chat"
+                className={linkClass}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.chat} {hasUnreadMessages && renderUnreadIcon()}
+              </Link>
+              {isMember && (
+                <Link
+                  href="/profile/pickup-notices"
+                  className={linkClass}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Avisos de Retiro
+                </Link>
+              )}
+            </div>
           )}
           {isAdmin && (
             <>
