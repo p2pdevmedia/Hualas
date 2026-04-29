@@ -7,6 +7,7 @@ import { isAccountingRole } from '@/lib/accounting';
 
 const links = [
   { href: '/accounting', label: 'Resumen' },
+  { href: '/accounting/social-fee', label: 'Cuota social' },
   { href: '/accounting/movements', label: 'Movimientos' },
   { href: '/accounting/payments', label: 'Pagos MP' },
   { href: '/accounting/reports', label: 'Reportes' },

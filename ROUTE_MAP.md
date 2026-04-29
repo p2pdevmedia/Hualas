@@ -71,6 +71,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/accounting/page.tsx`
   - Layout guard: `src/app/accounting/layout.tsx`
 
+- `/accounting/social-fee` → Social fee management
+  - File: `src/app/accounting/social-fee/page.tsx`
+  - Related client form: `src/app/accounting/social-fee/social-fee-settings-form.tsx`
+
 - `/accounting/movements` → Manual movements list
   - File: `src/app/accounting/movements/page.tsx`
   - Related component: `src/app/accounting/movements/movements-table.tsx`
