@@ -56,7 +56,22 @@ export async function POST(
       );
     }
 
-    // Check for duplicate notice
+    // Verify the child is enrolled in this activity
+    const childEnrolled = await prisma.activityParticipant.findFirst({
+      where: {
+        activityId: activityDay.activityId,
+        childId: data.childId,
+      },
+    });
+
+    if (!childEnrolled) {
+      return NextResponse.json(
+        { error: "Child is not enrolled in this activity" },
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicate notice (including soft-deleted)
     const existingNotice = await prisma.pickupNotice.findUnique({
       where: {
         activityDayId_childId: {
@@ -66,11 +81,30 @@ export async function POST(
       },
     });
 
-    if (existingNotice && !existingNotice.deletedAt) {
-      return NextResponse.json(
-        { error: "A notice already exists for this child on this day" },
-        { status: 400 }
-      );
+    if (existingNotice) {
+      if (!existingNotice.deletedAt) {
+        // Active notice already exists
+        return NextResponse.json(
+          { error: "A notice already exists for this child on this day" },
+          { status: 400 }
+        );
+      } else {
+        // Restore the soft-deleted notice instead of creating new
+        const restoredNotice = await prisma.pickupNotice.update({
+          where: { id: existingNotice.id },
+          data: {
+            alternatePersonUserId: data.alternatePersonUserId || null,
+            alternatePersonName: data.alternatePersonName || null,
+            description: data.description,
+            deletedAt: null,
+            updatedAt: new Date(),
+          },
+          include: {
+            acknowledgments: true,
+          },
+        });
+        return NextResponse.json(restoredNotice, { status: 201 });
+      }
     }
 
     // Create the notice
