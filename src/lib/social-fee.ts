@@ -6,6 +6,11 @@ type ParticipantInput = {
   childId?: string | null;
 };
 
+export type SocialFeeParticipant = {
+  userId: string;
+  childId: string | null;
+};
+
 function getCurrentPeriod() {
   const now = new Date();
   return {
@@ -23,7 +28,10 @@ export async function getSocialFeeAmount() {
   return concept?.defaultAmount ?? 0;
 }
 
-export async function hasSocialFeeForCurrentMonth({ userId, childId }: ParticipantInput) {
+export async function hasSocialFeeForCurrentMonth({
+  userId,
+  childId,
+}: ParticipantInput) {
   const { month, year } = getCurrentPeriod();
 
   const existing = await prisma.socialFeePayment.findFirst({
@@ -37,6 +45,57 @@ export async function hasSocialFeeForCurrentMonth({ userId, childId }: Participa
   });
 
   return Boolean(existing);
+}
+
+export function normalizeSocialFeeParticipant({
+  userId,
+  childId,
+}: ParticipantInput): SocialFeeParticipant {
+  return {
+    userId,
+    childId: childId ?? null,
+  };
+}
+
+export function serializeSocialFeeParticipants(
+  participants: SocialFeeParticipant[]
+) {
+  return JSON.stringify(participants);
+}
+
+export function parseSocialFeeParticipants(
+  value: unknown
+): SocialFeeParticipant[] {
+  if (typeof value !== 'string' || !value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((entry) => {
+        if (
+          !entry ||
+          typeof entry !== 'object' ||
+          typeof (entry as { userId?: unknown }).userId !== 'string'
+        ) {
+          return null;
+        }
+
+        const childId = (entry as { childId?: unknown }).childId;
+        return {
+          userId: (entry as { userId: string }).userId,
+          childId: typeof childId === 'string' ? childId : null,
+        };
+      })
+      .filter((entry): entry is SocialFeeParticipant => Boolean(entry));
+  } catch {
+    return [];
+  }
 }
 
 export async function registerSocialFeePayment({

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { getServerSession } from 'next-auth';
@@ -5,131 +6,170 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
-import { registerSocialFeePayment } from '@/lib/social-fee';
+import {
+  parseSocialFeeParticipants,
+  registerSocialFeePayment,
+  type SocialFeeParticipant,
+} from '@/lib/social-fee';
 
 export async function POST(req: NextRequest) {
-  let body: any = null;
+  let body: Prisma.InputJsonValue | null = null;
   try {
     body = await req.json();
   } catch {
     body = null;
   }
+
   const topic =
-    body?.type ||
+    (body as { type?: string } | null)?.type ||
     req.nextUrl.searchParams.get('type') ||
     req.nextUrl.searchParams.get('topic');
   const id =
-    body?.data?.id ||
+    (body as { data?: { id?: string } } | null)?.data?.id ||
     req.nextUrl.searchParams.get('data.id') ||
     req.nextUrl.searchParams.get('id');
 
   await prisma.mercadoPagoNotification.create({
     data: {
       topic: topic ?? undefined,
-      data: body,
+      data: body === null ? Prisma.JsonNull : body,
     },
   });
 
-  if (topic === 'payment' && id) {
-    const { accessToken } = getMercadoPagoCredentials();
-    if (!accessToken) {
+  if (topic !== 'payment' || !id) {
+    return NextResponse.json({ received: true });
+  }
+
+  const { accessToken } = getMercadoPagoCredentials();
+  if (!accessToken) {
+    return NextResponse.json({ received: true });
+  }
+
+  const client = new MercadoPagoConfig({
+    accessToken,
+  });
+
+  try {
+    const payment = await new Payment(client).get({ id });
+
+    if (payment.status !== 'approved' || !payment.external_reference) {
       return NextResponse.json({ received: true });
     }
 
-    const client = new MercadoPagoConfig({
-      accessToken,
-    });
+    const references: string[] = payment.external_reference.startsWith('cart|')
+      ? payment.external_reference
+          .replace('cart|', '')
+          .split(',')
+          .filter(Boolean)
+      : [payment.external_reference];
 
-    try {
-      const payment = await new Payment(client).get({ id });
-
-      if (payment.status === 'approved' && payment.external_reference) {
-        const references = payment.external_reference.startsWith('cart|')
-          ? payment.external_reference.replace('cart|', '').split(',').filter(Boolean)
-          : [payment.external_reference];
-
-        for (const reference of references) {
-          const [activityId, userId, childId] = reference.split(':');
-          const activity = await prisma.activity.findUnique({
-          where: { id: activityId },
-          select: {
-            capacity: true,
-            participants: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        });
-        if (!activity) {
-          return NextResponse.json({ received: true });
-        }
-        const participantChildId = childId || null;
-        const participantKey = getActivityParticipantKey(
-          activityId,
-          userId,
-          participantChildId
-        );
-        const existingParticipant = await prisma.activityParticipant.findUnique(
-          {
-            where: {
-              participantKey,
-            },
+    for (const reference of references) {
+      const [activityId, userId, childId] = reference.split(':');
+      const activity = await prisma.activity.findUnique({
+        where: { id: activityId },
+        select: {
+          capacity: true,
+          participants: {
             select: {
               id: true,
             },
-          }
-        );
-        if (
-          activity.capacity != null &&
-          !existingParticipant &&
-          activity.participants.length >= activity.capacity
-        ) {
-          console.warn(
-            `[mercadopago] Activity ${activityId} reached capacity, skipping participant upsert`
-          );
-          return NextResponse.json({ received: true });
-        }
-        const receipt = payment.id?.toString();
-        const date =
-          payment.date_approved || payment.date_created || new Date();
+          },
+        },
+      });
 
-        const participantData = {
+      if (!activity) {
+        continue;
+      }
+
+      const participantChildId = childId || null;
+      const participantKey = getActivityParticipantKey(
+        activityId,
+        userId,
+        participantChildId
+      );
+      const existingParticipant = await prisma.activityParticipant.findUnique({
+        where: {
           participantKey,
-          receipt,
-          receiptDate: new Date(date),
-        };
-          await prisma.activityParticipant.upsert({
-            where: {
-              participantKey,
-            },
-            create: {
-              activityId,
-              userId,
-              childId: participantChildId,
-              ...participantData,
-            },
-            update: participantData,
-          });
+        },
+        select: {
+          id: true,
+        },
+      });
 
-          const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
-          const shouldChargeSocialFee = Boolean(payment.metadata?.shouldChargeSocialFee);
+      if (
+        activity.capacity != null &&
+        !existingParticipant &&
+        activity.participants.length >= activity.capacity
+      ) {
+        console.warn(
+          `[mercadopago] Activity ${activityId} reached capacity, skipping participant upsert`
+        );
+        continue;
+      }
 
-          if (shouldChargeSocialFee && socialFeeAmount > 0) {
-            await registerSocialFeePayment({
-              userId,
-              childId: participantChildId,
-              amount: socialFeeAmount,
-              mercadoPagoPaymentId: payment.id?.toString() ?? id.toString(),
-            });
-          }
-        }
+      const receipt = payment.id?.toString();
+      const date = payment.date_approved || payment.date_created || new Date();
+      const participantData = {
+        participantKey,
+        receipt,
+        receiptDate: new Date(date),
+      };
+
+      await prisma.activityParticipant.upsert({
+        where: {
+          participantKey,
+        },
+        create: {
+          activityId,
+          userId,
+          childId: participantChildId,
+          ...participantData,
+        },
+        update: participantData,
+      });
+    }
+
+    const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
+    const participants = parseSocialFeeParticipants(
+      payment.metadata?.socialFeeParticipants
+    );
+    const legacyShouldChargeSocialFee = Boolean(
+      payment.metadata?.shouldChargeSocialFee
+    );
+
+    const participantsToRegister: SocialFeeParticipant[] =
+      participants.length > 0
+        ? participants
+        : legacyShouldChargeSocialFee
+          ? references.map((reference): SocialFeeParticipant => {
+              const [, userId, childId] = reference.split(':');
+              return {
+                userId,
+                childId: childId || null,
+              };
+            })
+          : [];
+
+    if (socialFeeAmount > 0 && participantsToRegister.length > 0) {
+      const uniqueParticipants = new Map(
+        participantsToRegister.map((participant) => [
+          `${participant.userId}:${participant.childId ?? 'self'}`,
+          participant,
+        ])
+      );
+
+      for (const participant of uniqueParticipants.values()) {
+        await registerSocialFeePayment({
+          userId: participant.userId,
+          childId: participant.childId,
+          amount: socialFeeAmount,
+          mercadoPagoPaymentId: payment.id?.toString() ?? id.toString(),
+        });
       }
-    } catch (error: any) {
-      // ignore missing payments, rethrow other errors
-      if (error?.status !== 404) {
-        throw error;
-      }
+    }
+  } catch (error: any) {
+    if (error?.status !== 404) {
+      throw error;
     }
   }
 
@@ -149,5 +189,6 @@ export async function GET() {
   const notifications = await prisma.mercadoPagoNotification.findMany({
     orderBy: { createdAt: 'desc' },
   });
+
   return NextResponse.json(notifications);
 }

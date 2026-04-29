@@ -7,7 +7,12 @@ import {
   getMercadoPagoCheckoutSettings,
   getMercadoPagoCredentials,
 } from '@/lib/mercadopago';
-import { getSocialFeeAmount, hasSocialFeeForCurrentMonth } from '@/lib/social-fee';
+import {
+  getSocialFeeAmount,
+  hasSocialFeeForCurrentMonth,
+  normalizeSocialFeeParticipant,
+  serializeSocialFeeParticipants,
+} from '@/lib/social-fee';
 
 function getAppUrl(req: Request) {
   const forwardedProto = req.headers.get('x-forwarded-proto');
@@ -81,11 +86,15 @@ export async function GET(
 
   const unitPrice = Number(activity.price);
 
-  const shouldChargeSocialFee = !(await hasSocialFeeForCurrentMonth({
+  const participant = normalizeSocialFeeParticipant({
     userId: (session.user as any).id,
     childId: childId ?? null,
-  }));
-  const socialFeeAmount = shouldChargeSocialFee ? await getSocialFeeAmount() : 0;
+  });
+  const shouldChargeSocialFee =
+    !(await hasSocialFeeForCurrentMonth(participant));
+  const socialFeeAmount = shouldChargeSocialFee
+    ? await getSocialFeeAmount()
+    : 0;
   if (!unitPrice || unitPrice <= 0) {
     return NextResponse.json(
       { error: 'El precio de la actividad no es válido.' },
@@ -173,11 +182,14 @@ export async function GET(
         external_reference: externalReference,
         metadata: {
           activityId: activity.id,
-          userId: (session.user as any).id,
-          childId: childId || null,
+          userId: participant.userId,
+          childId: participant.childId,
           environment,
           socialFeeAmount,
           shouldChargeSocialFee,
+          socialFeeParticipants: serializeSocialFeeParticipants(
+            shouldChargeSocialFee ? [participant] : []
+          ),
         },
       },
     });

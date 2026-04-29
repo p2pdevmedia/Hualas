@@ -5,7 +5,10 @@ import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
-import { registerSocialFeePayment } from '@/lib/social-fee';
+import {
+  parseSocialFeeParticipants,
+  registerSocialFeePayment,
+} from '@/lib/social-fee';
 
 export async function POST(
   req: Request,
@@ -92,15 +95,26 @@ export async function POST(
     });
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
-    const shouldChargeSocialFee = Boolean(payment.metadata?.shouldChargeSocialFee);
+    const participants = parseSocialFeeParticipants(
+      payment.metadata?.socialFeeParticipants
+    );
 
-    if (shouldChargeSocialFee && socialFeeAmount > 0) {
-      await registerSocialFeePayment({
-        userId,
-        childId: participantChildId,
-        amount: socialFeeAmount,
-        mercadoPagoPaymentId: payment.id?.toString() ?? paymentId,
-      });
+    if (participants.length > 0 && socialFeeAmount > 0) {
+      const uniqueParticipants = new Map(
+        participants.map((participant) => [
+          `${participant.userId}:${participant.childId ?? 'self'}`,
+          participant,
+        ])
+      );
+
+      for (const participant of uniqueParticipants.values()) {
+        await registerSocialFeePayment({
+          userId: participant.userId,
+          childId: participant.childId,
+          amount: socialFeeAmount,
+          mercadoPagoPaymentId: payment.id?.toString() ?? paymentId,
+        });
+      }
     }
 
     return NextResponse.json({ success: true });
