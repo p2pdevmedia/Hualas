@@ -82,6 +82,9 @@ export default function ActivityDaysPanel({
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [expandedLists, setExpandedLists] = useState<
+    Record<string, { going: boolean; notGoing: boolean }>
+  >({});
 
   async function updateAttendance(
     dayId: string,
@@ -113,6 +116,16 @@ export default function ActivityDaysPanel({
     } finally {
       setSavingKey(null);
     }
+  }
+
+  function toggleExpanded(dayId: string, status: 'going' | 'notGoing') {
+    setExpandedLists((prev) => ({
+      ...prev,
+      [dayId]: {
+        ...prev[dayId],
+        [status]: !prev[dayId]?.[status],
+      },
+    }));
   }
 
   return (
@@ -220,9 +233,25 @@ export default function ActivityDaysPanel({
                     )}
                   </div>
                   <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground sm:items-end">
-                    <span>
-                      {goingCount} confirmados · {notGoingCount} no asistirán
-                    </span>
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(day.id, 'going')}
+                        className="text-link hover:underline underline-offset-4 font-medium transition-colors"
+                      >
+                        {goingCount} confirmados{' '}
+                        {expandedLists[day.id]?.going ? '▼' : '▶'}
+                      </button>
+                      <span>{'·'}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(day.id, 'notGoing')}
+                        className="text-link hover:underline underline-offset-4 font-medium transition-colors"
+                      >
+                        {notGoingCount} no asistirán{' '}
+                        {expandedLists[day.id]?.notGoing ? '▼' : '▶'}
+                      </button>
+                    </div>
                     {day.canEdit && (
                       <button
                         type="button"
@@ -273,6 +302,30 @@ export default function ActivityDaysPanel({
                       onSaved={() => setEditingDayId(null)}
                       onCancel={() => setEditingDayId(null)}
                     />
+                  </div>
+                )}
+
+                {(expandedLists[day.id]?.going ||
+                  expandedLists[day.id]?.notGoing) && (
+                  <div className="mt-4 space-y-3 border-t pt-4">
+                    {expandedLists[day.id]?.going && (
+                      <AttendanceList
+                        label="Confirmados"
+                        participants={day.attendanceList.filter(
+                          (a) => a.status === 'GOING'
+                        )}
+                        isExpanded={true}
+                      />
+                    )}
+                    {expandedLists[day.id]?.notGoing && (
+                      <AttendanceList
+                        label="No asistirán"
+                        participants={day.attendanceList.filter(
+                          (a) => a.status === 'NOT_GOING'
+                        )}
+                        isExpanded={true}
+                      />
+                    )}
                   </div>
                 )}
 
