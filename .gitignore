@@ -5,3 +5,4 @@ tsconfig.tsbuildinfo
 package-lock.json
 .codex
 .claude-flow
+.worktrees
