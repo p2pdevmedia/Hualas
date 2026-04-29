@@ -45,6 +45,23 @@ function getParticipantSubtitle(participant: ActivityParticipantDetail) {
   return participant.user.email;
 }
 
+function transformAttendanceList(
+  day: typeof days[number],
+  participantsMap: Map<string, ActivityParticipantDetail>
+) {
+  return day.attendances.map((attendance) => {
+    const participant = participantsMap.get(attendance.activityParticipantId);
+    return {
+      activityParticipantId: attendance.activityParticipantId,
+      status: attendance.status,
+      participantName: participant
+        ? getParticipantName(participant)
+        : 'Unknown',
+      registeredUserId: participant?.user.id || '',
+    };
+  });
+}
+
 export default async function ActivityPage({ params }: ActivityPageProps) {
   const session = await getServerSession(authOptions);
   const isAdmin =
@@ -197,6 +214,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         return [];
       }),
   ]);
+
+  // Create a map of participants for quick lookup
+  const participantsMap = new Map(participants.map((p) => [p.id, p]));
+
+  // Transform days data to include attendanceList
+  const daysWithAttendance = days.map((day) => ({
+    ...day,
+    attendanceList: transformAttendanceList(day, participantsMap),
+  }));
 
   const frequencyLabels: Record<string, string> = {
     DAILY: 'Diaria',
@@ -501,7 +527,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           groups={activityGroupOptions}
           defaultProfessorIds={activityProfessorIds}
           registrations={registrations}
-          days={days
+          days={daysWithAttendance
             .filter((day: any) => {
               if (isAdmin) return true;
               if (isProfessor) {
@@ -536,6 +562,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 ? attendance.confirmedAt.toISOString()
                 : null,
             })),
+            attendanceList: day.attendanceList,
           }))}
         />
 
