@@ -291,7 +291,14 @@ export default function Navbar() {
                     href="/profile/payments"
                     className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
                   >
-                    Pagos
+                    <span className="inline-flex items-center gap-2">
+                      <span>Pagos</span>
+                      {cartItemsCount > 0 && (
+                        <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold">
+                          {cartItemsCount}
+                        </span>
+                      )}
+                    </span>
                   </Link>
                   <select
                     value={lang}
@@ -473,10 +480,15 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/profile/payments"
-                className={linkClass}
+                className={`${linkClass} inline-flex items-center gap-2`}
                 onClick={() => setMenuOpen(false)}
               >
-                Pagos
+                <span>Pagos</span>
+                {cartItemsCount > 0 && (
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                    {cartItemsCount}
+                  </span>
+                )}
               </Link>
               <select
                 value={lang}

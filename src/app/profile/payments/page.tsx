@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import CartStatus from './cart-status';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -45,20 +46,7 @@ export default async function ProfilePaymentsPage() {
       </header>
 
       <section className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Carrito</h2>
-            <p className="text-sm text-muted-foreground">
-              Actividades pendientes para pagar.
-            </p>
-          </div>
-          <Link
-            href="/activities/cart"
-            className="rounded-md border px-3 py-2 text-sm hover:bg-muted"
-          >
-            Ver carrito
-          </Link>
-        </div>
+        <CartStatus />
       </section>
 
       <section className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
