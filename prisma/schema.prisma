@@ -50,6 +50,7 @@ model User {
   memberMonthlyCharges    MemberMonthlyCharge[] @relation("MemberMonthlyCharges")
   ordersAsResponsible     Order[]            @relation("OrderResponsible")
   orderItems              OrderItem[]        @relation("OrderItemMember")
+  socialFeePayments       SocialFeePayment[]
 }
 
 
@@ -267,7 +268,26 @@ model Child {
   observations         String?
   createdAt            DateTime              @default(now())
   activityParticipants ActivityParticipant[]
+  socialFeePayments   SocialFeePayment[]
 }
+
+model SocialFeePayment {
+  id                   String   @id @default(cuid())
+  userId               String
+  childId              String?
+  periodMonth          Int
+  periodYear           Int
+  amount               Int
+  mercadoPagoPaymentId String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child                Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, childId, periodMonth, periodYear])
+  @@index([periodYear, periodMonth])
+}
+
 
 model AccountingMovement {
   id            String       @id @default(cuid())

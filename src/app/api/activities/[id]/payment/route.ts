@@ -5,6 +5,7 @@ import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
+import { registerSocialFeePayment } from '@/lib/social-fee';
 
 export async function POST(
   req: Request,
@@ -89,6 +90,18 @@ export async function POST(
         receiptDate,
       },
     });
+
+    const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
+    const shouldChargeSocialFee = Boolean(payment.metadata?.shouldChargeSocialFee);
+
+    if (shouldChargeSocialFee && socialFeeAmount > 0) {
+      await registerSocialFeePayment({
+        userId,
+        childId: participantChildId,
+        amount: socialFeeAmount,
+        mercadoPagoPaymentId: payment.id?.toString() ?? paymentId,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

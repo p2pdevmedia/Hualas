@@ -1,7 +1,5 @@
 'use client';
 
-import { Instagram, Youtube } from 'lucide-react';
-
 export default function Footer() {
   return (
     <footer className="px-4 py-8 text-white bg-slate-800">
@@ -16,7 +14,20 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="Instagram"
             >
-              <Instagram className="h-5 w-5" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4.1" />
+                <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+              </svg>
               <span className="text-sm">@hualas_patagonico</span>
             </a>
             <a
@@ -26,7 +37,14 @@ export default function Footer() {
               className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100"
               aria-label="YouTube"
             >
-              <Youtube className="h-5 w-5" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="currentColor"
+              >
+                <path d="M21.8 8.2c-.2-.8-.8-1.4-1.6-1.6C18.6 6.2 12 6.2 12 6.2s-6.6 0-8.2.4c-.8.2-1.4.8-1.6 1.6-.4 1.6-.4 3.9-.4 3.9s0 2.3.4 3.9c.2.8.8 1.4 1.6 1.6 1.6.4 8.2.4 8.2.4s6.6 0 8.2-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-3.9.4-3.9s0-2.3-.4-3.9ZM10.1 15.1v-6l5.2 3-5.2 3Z" />
+              </svg>
               <span className="text-sm">@escuelademontanahualas</span>
             </a>
           </div>

@@ -7,6 +7,7 @@ import {
   getMercadoPagoCheckoutSettings,
   getMercadoPagoCredentials,
 } from '@/lib/mercadopago';
+import { getSocialFeeAmount, hasSocialFeeForCurrentMonth } from '@/lib/social-fee';
 
 function getAppUrl(req: Request) {
   const forwardedProto = req.headers.get('x-forwarded-proto');
@@ -79,6 +80,12 @@ export async function GET(
   }
 
   const unitPrice = Number(activity.price);
+
+  const shouldChargeSocialFee = !(await hasSocialFeeForCurrentMonth({
+    userId: (session.user as any).id,
+    childId: childId ?? null,
+  }));
+  const socialFeeAmount = shouldChargeSocialFee ? await getSocialFeeAmount() : 0;
   if (!unitPrice || unitPrice <= 0) {
     return NextResponse.json(
       { error: 'El precio de la actividad no es válido.' },
@@ -108,6 +115,29 @@ export async function GET(
       `${appUrl}/api/mercadopago/notifications`;
 
     const preference = new Preference(client);
+    const items = [
+      {
+        id: activity.id,
+        title: activity.name,
+        description: activity.description || activity.name,
+        quantity: 1,
+        unit_price: unitPrice,
+        currency_id: 'ARS',
+        category_id: 'services',
+      },
+    ];
+
+    if (socialFeeAmount > 0) {
+      items.push({
+        id: `social-fee:${new Date().getUTCFullYear()}-${new Date().getUTCMonth() + 1}`,
+        title: 'Cuota social mensual',
+        description: 'Cuota social mensual, individual y obligatoria.',
+        quantity: 1,
+        unit_price: socialFeeAmount,
+        currency_id: 'ARS',
+        category_id: 'services',
+      });
+    }
     const preferenceExpiresAt = new Date(
       Date.now() + checkoutSettings.expiresInMinutes * 60 * 1000
     );
@@ -119,17 +149,7 @@ export async function GET(
           last_name: lastName,
           email: session.user?.email || undefined,
         },
-        items: [
-          {
-            id: activity.id,
-            title: activity.name,
-            description: activity.description || activity.name,
-            quantity: 1,
-            unit_price: unitPrice,
-            currency_id: 'ARS',
-            category_id: 'services',
-          },
-        ],
+        items,
         back_urls: {
           success: successUrl,
           failure: base,
@@ -156,6 +176,8 @@ export async function GET(
           userId: (session.user as any).id,
           childId: childId || null,
           environment,
+          socialFeeAmount,
+          shouldChargeSocialFee,
         },
       },
     });
