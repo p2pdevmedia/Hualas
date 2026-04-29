@@ -217,12 +217,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     ? Math.max(capacity - enrolledCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
-  const canManageGroups =
-    isAdmin ||
-    activityProfessorIds.includes(session?.user.id ?? '');
-  const canManageDays =
-    isAdmin ||
-    activityProfessorIds.includes(session?.user.id ?? '');
+  const canManageGroups = isAdmin;
+  const canManageDays = isAdmin;
 
   let registrations: Array<{
     id: string;
@@ -505,7 +501,18 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           groups={activityGroupOptions}
           defaultProfessorIds={activityProfessorIds}
           registrations={registrations}
-          days={days.map((day: any) => ({
+          days={days
+            .filter((day: any) => {
+              if (isAdmin) return true;
+              if (isProfessor) {
+                return day.professors.some(
+                  (assignment: { userId: string }) =>
+                    assignment.userId === session?.user.id
+                );
+              }
+              return true;
+            })
+            .map((day: any) => ({
             id: day.id,
             date: day.date.toISOString(),
             schedule: day.schedule,
@@ -515,13 +522,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             longitude: day.longitude,
             activityGroupId: day.activityGroupId,
             activityGroup: day.activityGroup,
-            canEdit:
-              isAdmin ||
-              activityProfessorIds.includes(session?.user.id ?? '') ||
-              day.professors.some(
-                (assignment: { userId: string }) =>
-                  assignment.userId === session?.user.id
-              ),
+            canEdit: isAdmin,
             assignedProfessors: day.professors.map((assignment: any) => ({
               id: assignment.user.id,
               name: assignment.user.name,
