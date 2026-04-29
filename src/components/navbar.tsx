@@ -169,8 +169,8 @@ export default function Navbar() {
     <nav className={cn(
       'sticky top-0 z-40 px-4 py-3 shadow-md transition-all duration-200',
       isScrolled
-        ? 'bg-white text-foreground'
-        : 'bg-[#393f45] text-white'
+        ? 'bg-[#393f45] text-white'
+        : 'bg-white text-foreground'
     )}>
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
@@ -524,8 +524,8 @@ export default function Navbar() {
                 className={cn(
                   'bg-transparent opacity-80 text-sm w-fit',
                   isScrolled
-                    ? 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
-                    : 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                    ? 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                    : 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
                 )}
               >
                 {availableLanguages.map(({ code, flag, label }) => (
@@ -563,8 +563,8 @@ export default function Navbar() {
                 className={cn(
                   'bg-transparent opacity-80 text-sm w-fit',
                   isScrolled
-                    ? 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
-                    : 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                    ? 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                    : 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
                 )}
               >
                 {availableLanguages.map(({ code, flag, label }) => (
