@@ -95,9 +95,7 @@ export default async function PickupNoticesPage() {
               </div>
               <div className="mt-4 flex gap-2">
                 <Link href={`/profile/pickup-notices/${notice.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    Editar
-                  </Button>
+                  <Button variant="outline">Editar</Button>
                 </Link>
               </div>
             </div>
