@@ -4,9 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivityDayForm from './activity-day-form';
-import AttendanceList, {
-  type ParticipantForAttendance,
-} from './attendance-list';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
 
@@ -49,7 +46,6 @@ type ActivityDay = {
     status: AttendanceStatus;
     confirmedAt: string | null;
   }>;
-  attendanceList: ParticipantForAttendance[];
 };
 
 interface ActivityDaysPanelProps {
