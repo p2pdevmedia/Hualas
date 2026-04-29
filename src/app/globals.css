@@ -11,12 +11,12 @@
     --foreground: 89 18% 11%; /* #1C2117 ink */
     --card: 45 67% 99%; /* #FDFCF9 white */
     --card-foreground: 89 18% 11%;
-    --primary: 122 20% 30%; /* #3D5A3E verde */
+    --primary: 168 47% 51%; /* #49BDA6 teal club color */
     --primary-foreground: 0 0% 98%;
     --muted: 100 15% 91%; /* #E8EDE6 mist */
     --muted-foreground: 60 5% 52%; /* #8A8A7F stone */
-    --border: 100 12% 86%;
-    --accent: 187 20% 57%; /* #7BA3A8 glacier */
+    --border: 168 35% 75%; /* teal-based delicate borders */
+    --accent: 168 47% 51%; /* #49BDA6 teal club color */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 70% 48%;
     --destructive-foreground: 0 0% 98%;

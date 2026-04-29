@@ -34,7 +34,7 @@ export default async function Home() {
         style={{
           height: '340px',
           background:
-            'linear-gradient(135deg, #1C2117 0%, #3D5A3E 60%, #2a4a2c 100%)',
+            'linear-gradient(135deg, #1C2117 0%, #49BDA6 60%, #2f8372 100%)',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -142,7 +142,7 @@ export default async function Home() {
                             }
                           : {
                               background:
-                                'linear-gradient(135deg, #2a4a2c, #3D5A3E)',
+                                'linear-gradient(135deg, #2f8372, #49BDA6)',
                             }
                       }
                     >

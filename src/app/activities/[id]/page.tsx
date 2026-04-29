@@ -318,7 +318,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         <div
           className="w-full h-52"
           style={{
-            background: 'linear-gradient(135deg, #1C2117 0%, #3D5A3E 100%)',
+            background: 'linear-gradient(135deg, #1C2117 0%, #49BDA6 100%)',
           }}
         />
       )}
