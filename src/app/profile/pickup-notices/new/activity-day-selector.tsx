@@ -34,13 +34,13 @@ interface User {
 
 interface ActivityDaySelectorProps {
   activityDays: ActivityDay[];
-  children: Child[];
+  childrenList: Child[];
   users: User[];
 }
 
 export default function ActivityDaySelector({
   activityDays,
-  children,
+  childrenList,
   users,
 }: ActivityDaySelectorProps) {
   const [selectedDayId, setSelectedDayId] = useState<string>('');
@@ -82,7 +82,7 @@ export default function ActivityDaySelector({
 
           <PickupNoticeForm
             activityDayId={selectedDay.id}
-            children={children}
+            childrenList={childrenList}
             users={users}
             onSuccess={() => {
               window.location.href = '/profile/pickup-notices';

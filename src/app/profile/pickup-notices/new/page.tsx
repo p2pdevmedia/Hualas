@@ -24,10 +24,7 @@ export default async function CreatePickupNoticePage() {
 
   const users = await prisma.user.findMany({
     where: {
-      OR: [
-        { role: 'MEMBER' },
-        { role: 'PROFESSOR' },
-      ],
+      OR: [{ role: 'MEMBER' }, { role: 'PROFESSOR' }],
     },
     select: {
       id: true,
@@ -108,7 +105,7 @@ export default async function CreatePickupNoticePage() {
 
       <ActivityDaySelector
         activityDays={activityDays}
-        children={children}
+        childrenList={children}
         users={users}
       />
     </div>

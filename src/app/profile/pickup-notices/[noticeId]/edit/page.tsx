@@ -45,10 +45,7 @@ export default async function EditPickupNoticePage({
 
   const users = await prisma.user.findMany({
     where: {
-      OR: [
-        { role: 'MEMBER' },
-        { role: 'PROFESSOR' },
-      ],
+      OR: [{ role: 'MEMBER' }, { role: 'PROFESSOR' }],
     },
     select: {
       id: true,
@@ -74,7 +71,7 @@ export default async function EditPickupNoticePage({
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <PickupNoticeForm
           activityDayId={notice.activityDayId}
-          children={children}
+          childrenList={children}
           users={users}
           existingNotice={{
             id: notice.id,

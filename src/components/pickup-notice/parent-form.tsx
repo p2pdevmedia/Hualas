@@ -26,7 +26,7 @@ interface User {
 
 interface PickupNoticeFormProps {
   activityDayId: string;
-  children: Child[];
+  childrenList: Child[];
   users: User[];
   existingNotice?: {
     id: string;
@@ -40,7 +40,7 @@ interface PickupNoticeFormProps {
 
 export function PickupNoticeForm({
   activityDayId,
-  children,
+  childrenList,
   users,
   existingNotice,
   onSuccess,
@@ -157,7 +157,7 @@ export function PickupNoticeForm({
             <SelectValue placeholder="Select a child" />
           </SelectTrigger>
           <SelectContent>
-            {children.map((child) => (
+            {childrenList.map((child) => (
               <SelectItem key={child.id} value={child.id}>
                 {child.name}
               </SelectItem>
