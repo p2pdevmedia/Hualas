@@ -28,7 +28,7 @@ export default async function ChildrenPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Mis Hijos</h1>
         <Link
-          href="/profile"
+          href="/profile/children/new"
           className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
         >
           Agregar hijo
@@ -41,7 +41,7 @@ export default async function ChildrenPage() {
             No tienes hijos registrados.
           </p>
           <Link
-            href="/profile"
+            href="/profile/children/new"
             className="inline-flex mt-4 h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
           >
             Agregar hijo

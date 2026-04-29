@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ProfileForm from './form';
 import ProfilePhotoUpload from './profile-photo-upload';
-import ChildrenManager from './children';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -68,7 +67,6 @@ export default async function ProfilePage() {
           }}
         />
       </div>
-      <ChildrenManager userAddress={user.address ?? ''} />
     </div>
   );
 }
