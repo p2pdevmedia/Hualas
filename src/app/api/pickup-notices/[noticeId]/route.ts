@@ -122,7 +122,7 @@ export async function DELETE(
       },
     });
 
-    return NextResponse.json(null, { status: 204 });
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting pickup notice:", error);
     return NextResponse.json(
