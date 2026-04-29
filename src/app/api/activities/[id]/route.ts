@@ -57,3 +57,41 @@ export async function PUT(
   });
   return NextResponse.json(activity);
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+    include: { participants: true },
+  });
+
+  if (!activity) {
+    return NextResponse.json(
+      { error: 'Actividad no encontrada' },
+      { status: 404 }
+    );
+  }
+
+  if (activity.participants.length > 0) {
+    return NextResponse.json(
+      { error: 'No se puede borrar una actividad con inscritos' },
+      { status: 400 }
+    );
+  }
+
+  await prisma.activity.delete({
+    where: { id: params.id },
+  });
+
+  return NextResponse.json({ success: true });
+}

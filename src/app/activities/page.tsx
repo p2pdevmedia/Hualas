@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivitiesHeading from '@/components/activities-heading';
+import DeleteActivityButton from './delete-activity-button';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -94,6 +95,11 @@ export default async function ActivitiesPage() {
                 >
                   Editar
                 </Link>
+                <DeleteActivityButton
+                  activityId={activity.id}
+                  activityName={activity.name}
+                  hasParticipants={activity.participants.length > 0}
+                />
               </div>
             </li>
           ))}
