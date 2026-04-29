@@ -37,6 +37,13 @@ export async function GET(
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
+  if ((session.user as any).role !== 'MEMBER') {
+    return NextResponse.json(
+      { error: 'Solo los miembros pueden inscribirse en actividades.' },
+      { status: 403 }
+    );
+  }
+
   const { accessToken, environment } = getMercadoPagoCredentials();
   const checkoutSettings = getMercadoPagoCheckoutSettings();
 

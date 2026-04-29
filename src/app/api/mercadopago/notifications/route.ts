@@ -65,6 +65,19 @@ export async function POST(req: NextRequest) {
 
     for (const reference of references) {
       const [activityId, userId, childId] = reference.split(':');
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+
+      if (!user || user.role !== 'MEMBER') {
+        console.warn(
+          `[mercadopago] User ${userId} is not MEMBER (role: ${user?.role}), skipping activity participant creation`
+        );
+        continue;
+      }
+
       const activity = await prisma.activity.findUnique({
         where: { id: activityId },
         select: {
