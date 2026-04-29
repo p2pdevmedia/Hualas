@@ -46,7 +46,13 @@ function getParticipantSubtitle(participant: ActivityParticipantDetail) {
 }
 
 function transformAttendanceList(
-  day: typeof days[number],
+  day: {
+    attendances: Array<{
+      activityParticipantId: string;
+      status: string;
+      confirmedAt: Date | null;
+    }>;
+  },
   participantsMap: Map<string, ActivityParticipantDetail>
 ) {
   return day.attendances.map((attendance) => {
