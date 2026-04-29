@@ -1,71 +1,64 @@
-import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import Link from 'next/link';
-
-export const metadata = {
-  title: 'Avisos de Retiro',
-};
+import { Button } from '@/components/ui/button';
 
 export default async function PickupNoticesPage() {
   const session = await getServerSession(authOptions);
-
   if (!session?.user?.id) {
     redirect('/login');
   }
 
-  // Get all pickup notices created by this user
   const notices = await prisma.pickupNotice.findMany({
     where: {
-      createdBy: {
-        id: session.user.id,
-      },
+      createdById: (session.user as any).id,
       deletedAt: null,
     },
     include: {
-      child: true,
       activityDay: {
         include: {
           activity: true,
         },
       },
-      alternatePersonUser: true,
-      acknowledgments: {
-        include: {
-          acknowledgedBy: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+      child: true,
+      alternatePersonUser: {
+        select: {
+          name: true,
         },
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      activityDay: {
+        date: 'asc',
+      },
     },
   });
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Avisos de Retiro</h1>
-        <p className="text-gray-600">
-          Gestiona los avisos de quién recogerá a tu hijo en las actividades
-        </p>
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight">Avisos de retiro</h1>
+            <p className="text-sm text-muted-foreground">
+              Notifica a los profesores que otra persona retirará a tu hijo
+            </p>
+          </div>
+          <Link href="/profile/pickup-notices/new">
+            <Button>Crear aviso</Button>
+          </Link>
+        </div>
       </div>
 
       {notices.length === 0 ? (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-          <p className="text-gray-600 mb-4">
-            No tienes avisos de retiro. Los avisos se crean desde la página de detalles de la actividad.
+        <div className="rounded-xl border border-dashed bg-muted/30 p-8 text-center">
+          <p className="text-muted-foreground mb-4">
+            No tenés avisos de retiro creados
           </p>
-          <Link
-            href="/my-activities"
-            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
-          >
-            Ir a Mis Actividades
+          <Link href="/profile/pickup-notices/new">
+            <Button>Crear tu primer aviso</Button>
           </Link>
         </div>
       ) : (
@@ -73,68 +66,38 @@ export default async function PickupNoticesPage() {
           {notices.map((notice) => (
             <div
               key={notice.id}
-              className="border rounded-lg p-4 bg-white shadow-sm space-y-3"
+              className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="flex justify-between items-start">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold text-lg">{notice.child.name}</h3>
-                  <p className="text-sm text-gray-600">
-                    {notice.activityDay.activity.name} - {new Date(notice.activityDay.date).toLocaleDateString()}
-                  </p>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {notice.activityDay.activity.name}
+                  </h3>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p>
+                      Fecha: {new Date(notice.activityDay.date).toLocaleDateString('es-AR')}
+                    </p>
+                    <p>Hora: {notice.activityDay.schedule}</p>
+                    <p>Hijo: {notice.child.name}</p>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">
-                  Creado: {new Date(notice.createdAt).toLocaleDateString()}
+                <div>
+                  <h4 className="font-medium mb-2">Retira:</h4>
+                  <p className="text-sm">
+                    {notice.alternatePersonUser?.name || notice.alternatePersonName}
+                  </p>
+                  {notice.description && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Nota: {notice.description}
+                    </p>
+                  )}
                 </div>
               </div>
-
-              <div className="bg-blue-50 p-3 rounded">
-                <p className="text-sm font-medium mb-1">Quién recogerá:</p>
-                <p className="font-semibold">
-                  {notice.alternatePersonUser?.name ||
-                    notice.alternatePersonName ||
-                    'No especificado'}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mb-1">Descripción:</p>
-                <p className="text-sm text-gray-700">{notice.description}</p>
-              </div>
-
-              <div className="border-t pt-3">
-                <p className="text-sm font-medium mb-2">
-                  Confirmaciones de profesores ({notice.acknowledgments.length})
-                </p>
-                {notice.acknowledgments.length === 0 ? (
-                  <p className="text-xs text-gray-500">
-                    Aún no hay confirmaciones de profesores
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {notice.acknowledgments.map((ack) => (
-                      <li
-                        key={ack.id}
-                        className="bg-green-50 p-2 rounded text-sm"
-                      >
-                        <p className="font-medium">{ack.acknowledgedBy.name}</p>
-                        {ack.notes && (
-                          <p className="text-gray-700">{ack.notes}</p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          {new Date(ack.confirmedAt).toLocaleString()}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <Link
-                  href={`/activities/${notice.activityDay.activityId}`}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Ver Actividad
+              <div className="mt-4 flex gap-2">
+                <Link href={`/profile/pickup-notices/${notice.id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    Editar
+                  </Button>
                 </Link>
               </div>
             </div>

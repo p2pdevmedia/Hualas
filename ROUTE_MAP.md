@@ -62,6 +62,17 @@ Agents should check this before searching the codebase.
     - `src/app/profile/profile-photo-upload.tsx`
     - `src/app/profile/children.tsx`
 
+- `/profile/pickup-notices` → Pickup notices list
+  - File: `src/app/profile/pickup-notices/page.tsx`
+  - Displays user's active pickup notices
+
+- `/profile/pickup-notices/new` → Create pickup notice
+  - File: `src/app/profile/pickup-notices/new/page.tsx`
+  - Related component: `src/app/profile/pickup-notices/new/activity-day-selector.tsx`
+
+- `/profile/pickup-notices/[noticeId]/edit` → Edit pickup notice
+  - File: `src/app/profile/pickup-notices/[noticeId]/edit/page.tsx`
+
 - `/chat` → Internal chat
   - File: `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`

@@ -1,9 +1,11 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ProfileForm from './form';
 import ProfilePhotoUpload from './profile-photo-upload';
+import { Button } from '@/components/ui/button';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -67,6 +69,19 @@ export default async function ProfilePage() {
               : null,
           }}
         />
+      </div>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold">Avisos de retiro</h2>
+            <p className="text-sm text-muted-foreground">
+              Notifica a los profesores que otra persona retirará a tu hijo
+            </p>
+          </div>
+          <Link href="/profile/pickup-notices">
+            <Button>Ver avisos</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
