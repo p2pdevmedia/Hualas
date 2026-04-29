@@ -7,7 +7,7 @@ export const childCreateSchema = z.object({
   documentNumber: z.string().optional(),
   documentFrontPhoto: z.string().optional(),
   documentBackPhoto: z.string().optional(),
-  birthDate: z.string().optional(),
+  birthDate: z.string().nullable().optional(),
   address: z.string().optional(),
   gender: z
     .enum(['FEMALE', 'MALE', 'NON_BINARY', 'UNDISCLOSED', 'OTHER'])
