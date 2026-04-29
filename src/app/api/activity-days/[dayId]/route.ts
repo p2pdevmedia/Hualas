@@ -9,7 +9,10 @@ export async function PUT(
   { params }: { params: { dayId: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -18,38 +21,11 @@ export async function PUT(
     select: {
       id: true,
       activityId: true,
-      professors: {
-        select: {
-          userId: true,
-        },
-      },
-      activity: {
-        select: {
-          professors: {
-            select: {
-              userId: true,
-            },
-          },
-        },
-      },
     },
   });
 
   if (!day) {
     return NextResponse.json({ error: 'Día no encontrado' }, { status: 404 });
-  }
-
-  const isAdmin =
-    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-  const isActivityProfessor = day.activity.professors.some(
-    (assignment) => assignment.userId === session.user.id
-  );
-  const isDayProfessor = day.professors.some(
-    (assignment) => assignment.userId === session.user.id
-  );
-
-  if (!isAdmin && !isActivityProfessor && !isDayProfessor) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const data = activityDayUpdateSchema.parse(await req.json());

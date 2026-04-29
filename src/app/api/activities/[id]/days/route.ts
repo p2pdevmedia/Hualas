@@ -9,7 +9,10 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -17,11 +20,6 @@ export async function POST(
     where: { id: params.id },
     select: {
       id: true,
-      professors: {
-        select: {
-          userId: true,
-        },
-      },
     },
   });
 
@@ -30,16 +28,6 @@ export async function POST(
       { error: 'Actividad no encontrada' },
       { status: 404 }
     );
-  }
-
-  const isAdmin =
-    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-  const isAssignedProfessor = activity.professors.some(
-    (assignment) => assignment.userId === session.user.id
-  );
-
-  if (!isAdmin && !isAssignedProfessor) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const data = activityDayCreateSchema.parse(await req.json());

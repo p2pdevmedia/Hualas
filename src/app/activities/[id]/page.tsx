@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
@@ -48,9 +49,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const session = await getServerSession(authOptions);
   const isAdmin =
     session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
+  const isProfessor = session?.user.role === 'PROFESSOR';
 
   const activity = await prisma.activity.findUnique({
     where: { id: params.id },
+    include: {
+      professors: {
+        select: { userId: true },
+      },
+    },
   });
 
   if (!activity) {
@@ -59,6 +66,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         Actividad no encontrada
       </main>
     );
+  }
+
+  if (
+    isProfessor &&
+    !activity.professors.some(
+      (prof) => prof.userId === session?.user.id
+    )
+  ) {
+    redirect('/');
   }
 
   const [participants, activityProfessors, professorOptions, activityGroups, days] =
