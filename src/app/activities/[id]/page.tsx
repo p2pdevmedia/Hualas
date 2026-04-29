@@ -401,7 +401,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             {isAdmin && (
               <Link
                 href={`/activities/${activity.id}/edit`}
-                className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4 font-body"
+                className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4 font-body"
               >
                 Editar actividad
               </Link>

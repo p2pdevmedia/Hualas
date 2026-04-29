@@ -38,7 +38,7 @@ export default function UsersList({
   });
 
   const linkClass =
-    'text-sm text-primary hover:text-primary/80 hover:underline underline-offset-4';
+    'text-sm text-link hover:text-link/80 hover:underline underline-offset-4';
   const menuItemClass =
     'block w-full rounded px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors';
 

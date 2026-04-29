@@ -209,7 +209,7 @@ export default function ActivityDaysPanel({
                         href={mapHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-1 inline-block text-xs text-primary hover:underline underline-offset-4"
+                        className="mt-1 inline-block text-xs text-link hover:underline underline-offset-4"
                       >
                         Abrir en OpenStreetMap
                       </a>
@@ -225,7 +225,7 @@ export default function ActivityDaysPanel({
                         onClick={() =>
                           setEditingDayId(isEditing ? null : day.id)
                         }
-                        className="text-primary hover:underline underline-offset-4"
+                        className="text-link hover:underline underline-offset-4"
                       >
                         {isEditing ? 'Cerrar edición' : 'Editar sesión'}
                       </button>

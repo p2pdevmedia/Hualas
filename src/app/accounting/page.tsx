@@ -182,7 +182,7 @@ export default async function AccountingDashboardPage() {
                             href={movement.receiptImage}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                            className="inline-flex items-center gap-1 text-link hover:underline"
                           >
                             <ReceiptText className="h-4 w-4" />
                             Ver

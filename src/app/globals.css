@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Design tokens — Club Hualas Patagónico */
-    --background: 37 40% 93%; /* #F5F0E8 cream */
+    --background: 0 0% 100%; /* #FFFFFF white */
     --foreground: 89 18% 11%; /* #1C2117 ink */
     --card: 45 67% 99%; /* #FDFCF9 white */
     --card-foreground: 89 18% 11%;
@@ -18,6 +18,7 @@
     --border: 168 35% 75%; /* teal-based delicate borders */
     --accent: 168 47% 51%; /* #49BDA6 teal club color */
     --accent-foreground: 0 0% 98%;
+    --link: 39 100% 50%; /* #ff9900 orange */
     --destructive: 0 70% 48%;
     --destructive-foreground: 0 0% 98%;
     --success: 160 55% 34%;

@@ -37,7 +37,7 @@ export default function ContactPage() {
                   href="https://www.instagram.com/hualas_patagonico"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:text-primary/80 underline underline-offset-4"
+                  className="text-link hover:text-link/80 underline underline-offset-4"
                 >
                   @hualas_patagonico
                 </a>
@@ -49,7 +49,7 @@ export default function ContactPage() {
                 <p className="font-medium">Email general</p>
                 <a
                   href="mailto:Info@clubhualas.com.ar"
-                  className="text-primary hover:text-primary/80 underline underline-offset-4"
+                  className="text-link hover:text-link/80 underline underline-offset-4"
                 >
                   Info@clubhualas.com.ar
                 </a>
@@ -61,7 +61,7 @@ export default function ContactPage() {
                 <p className="font-medium">Tesorería</p>
                 <a
                   href="mailto:tesoreria@clubhualas.com.ar"
-                  className="text-primary hover:text-primary/80 underline underline-offset-4"
+                  className="text-link hover:text-link/80 underline underline-offset-4"
                 >
                   tesoreria@clubhualas.com.ar
                 </a>

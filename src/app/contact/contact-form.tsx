@@ -38,7 +38,7 @@ export default function ContactForm() {
         </p>
         <button
           onClick={() => setStatus('idle')}
-          className="text-sm text-primary underline underline-offset-4 font-body mt-2"
+          className="text-sm text-link underline underline-offset-4 font-body mt-2"
         >
           Enviar otro mensaje
         </button>

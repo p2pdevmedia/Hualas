@@ -37,7 +37,7 @@ export default async function EditChildPage({
         </div>
         <Link
           href={`/profile/children/${params.childId}`}
-          className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+          className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
         >
           ← Volver
         </Link>

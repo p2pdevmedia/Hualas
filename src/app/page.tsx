@@ -114,7 +114,7 @@ export default async function Home() {
             </h2>
             <Link
               href="/activities"
-              className="text-sm text-primary hover:text-primary/80 underline underline-offset-4 font-body"
+              className="text-sm text-link hover:text-link/80 underline underline-offset-4 font-body"
             >
               Ver todas
             </Link>

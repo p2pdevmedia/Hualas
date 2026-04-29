@@ -20,7 +20,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
   };
 
   const linkClass =
-    'text-sm text-primary hover:text-primary/80 hover:underline underline-offset-4';
+    'text-sm text-link hover:text-link/80 hover:underline underline-offset-4';
 
   if (forms.length === 0) {
     return (

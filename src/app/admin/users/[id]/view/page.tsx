@@ -252,7 +252,7 @@ export default async function ViewUserPage({
                 {ap.receipt && (
                   <a
                     href={ap.receipt}
-                    className="text-primary hover:text-primary/80 text-xs underline underline-offset-4"
+                    className="text-link hover:text-link/80 text-xs underline underline-offset-4"
                   >
                     Comprobante
                   </a>
@@ -299,7 +299,7 @@ export default async function ViewUserPage({
 
       <Link
         href="/admin/users"
-        className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+        className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
       >
         ← Volver a usuarios
       </Link>

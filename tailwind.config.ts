@@ -24,6 +24,7 @@ const config: Config = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
+        link: 'hsl(var(--link))',
         border: 'hsl(var(--border))',
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
