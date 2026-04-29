@@ -59,6 +59,16 @@ export default function Navbar() {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [cartItemsCount, setCartItemsCount] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     setPhotoFailed(false);
@@ -156,7 +166,12 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="px-4 py-3 text-white shadow-md bg-[#393f45]">
+    <nav className={cn(
+      'sticky top-0 z-40 px-4 py-3 shadow-md transition-all duration-200',
+      isScrolled
+        ? 'bg-white text-foreground'
+        : 'bg-[#393f45] text-white'
+    )}>
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <Image
@@ -506,7 +521,12 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-[#393f45] [&>option]:text-white"
+                className={cn(
+                  'bg-transparent opacity-80 text-sm w-fit',
+                  isScrolled
+                    ? 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
+                    : 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                )}
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
@@ -540,7 +560,12 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-[#393f45] [&>option]:text-white"
+                className={cn(
+                  'bg-transparent opacity-80 text-sm w-fit',
+                  isScrolled
+                    ? 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
+                    : 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
+                )}
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
