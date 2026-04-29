@@ -47,18 +47,51 @@ export async function registerSocialFeePayment({
 }: ParticipantInput & { amount: number; mercadoPagoPaymentId: string }) {
   const { month, year } = getCurrentPeriod();
 
+  if (childId == null) {
+    const existing = await prisma.socialFeePayment.findFirst({
+      where: {
+        periodMonth: month,
+        periodYear: year,
+        userId,
+        childId: null,
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return prisma.socialFeePayment.update({
+        where: { id: existing.id },
+        data: {
+          amount,
+          mercadoPagoPaymentId,
+        },
+      });
+    }
+
+    return prisma.socialFeePayment.create({
+      data: {
+        userId,
+        childId: null,
+        periodMonth: month,
+        periodYear: year,
+        amount,
+        mercadoPagoPaymentId,
+      },
+    });
+  }
+
   return prisma.socialFeePayment.upsert({
     where: {
       userId_childId_periodMonth_periodYear: {
         userId,
-        childId: childId ?? null,
+        childId,
         periodMonth: month,
         periodYear: year,
       },
     },
     create: {
       userId,
-      childId: childId ?? null,
+      childId,
       periodMonth: month,
       periodYear: year,
       amount,
