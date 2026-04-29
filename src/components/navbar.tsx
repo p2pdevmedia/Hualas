@@ -242,6 +242,9 @@ export default function Navbar() {
           <Link href="/contact" className={linkClass}>
             {t.contact}
           </Link>
+          <Link href="/faq" className={linkClass}>
+            FAQ
+          </Link>
           {session ? (
             <div className="flex items-center gap-3">
               <div
@@ -426,6 +429,13 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
           >
             {t.contact}
+          </Link>
+          <Link
+            href="/faq"
+            className={linkClass}
+            onClick={() => setMenuOpen(false)}
+          >
+            FAQ
           </Link>
           {session ? (
             <>

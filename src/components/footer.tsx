@@ -1,11 +1,31 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Footer() {
   return (
     <footer className="px-4 py-8 text-white bg-slate-800">
       <div className="mx-auto max-w-4xl">
-        <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex flex-col items-center gap-8 text-center">
           <p className="text-lg font-semibold">Club Hualas Patagónico</p>
+
+          {/* Links */}
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">
+              Inicio
+            </Link>
+            <Link href="/activities" className="opacity-80 hover:opacity-100 transition-opacity">
+              Actividades
+            </Link>
+            <Link href="/contact" className="opacity-80 hover:opacity-100 transition-opacity">
+              Contacto
+            </Link>
+            <Link href="/faq" className="opacity-80 hover:opacity-100 transition-opacity">
+              Preguntas Frecuentes
+            </Link>
+          </div>
+
+          {/* Social Media */}
           <div className="flex flex-wrap justify-center gap-6">
             <a
               href="https://www.instagram.com/hualas_patagonico/"

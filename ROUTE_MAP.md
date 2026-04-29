@@ -17,6 +17,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/contact/page.tsx`
   - Related component: `src/app/contact/contact-form.tsx`
 
+- `/faq` → Frequently Asked Questions
+  - File: `src/app/faq/page.tsx`
+  - Explains application flow, user roles, activities, and social fees
+
 ### Auth
 
 - `/login` → Login page
