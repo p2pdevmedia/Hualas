@@ -64,8 +64,6 @@ export default function Navbar() {
     setPhotoFailed(false);
   }, [session?.user?.id]);
 
-
-
   useEffect(() => {
     if (!session || !isMember) {
       setCartItemsCount(0);
@@ -292,7 +290,7 @@ export default function Navbar() {
                     {actions.myChildren}
                   </Link>
                   <Link
-                    href="/profile/cart"
+                    href="/activities/cart"
                     className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
                   >
                     <span className="inline-flex items-center gap-2">
@@ -481,7 +479,7 @@ export default function Navbar() {
                 {actions.myChildren}
               </Link>
               <Link
-                href="/profile/cart"
+                href="/activities/cart"
                 className={`${linkClass} inline-flex items-center gap-2`}
                 onClick={() => setMenuOpen(false)}
               >
