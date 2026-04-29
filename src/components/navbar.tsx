@@ -149,6 +149,14 @@ export default function Navbar() {
     />
   );
 
+  const renderCartNotificationIcon = () => (
+    <span
+      className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-400"
+      aria-label="Tenés actividades en el carrito"
+      title="Tenés actividades en el carrito"
+    />
+  );
+
   return (
     <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
@@ -187,11 +195,7 @@ export default function Navbar() {
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span>Carrito</span>
-              {cartItemsCount > 0 && (
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-                  {cartItemsCount}
-                </span>
-              )}
+              {cartItemsCount > 0 && renderCartNotificationIcon()}
             </Link>
           )}
           {session && (
@@ -293,11 +297,7 @@ export default function Navbar() {
                   >
                     <span className="inline-flex items-center gap-2">
                       <span>Pagos</span>
-                      {cartItemsCount > 0 && (
-                        <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold">
-                          {cartItemsCount}
-                        </span>
-                      )}
+                      {cartItemsCount > 0 && renderCartNotificationIcon()}
                     </span>
                   </Link>
                   <select
@@ -355,11 +355,7 @@ export default function Navbar() {
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span>Carrito</span>
-              {cartItemsCount > 0 && (
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-                  {cartItemsCount}
-                </span>
-              )}
+              {cartItemsCount > 0 && renderCartNotificationIcon()}
             </Link>
           )}
           {session && (
@@ -484,11 +480,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 <span>Pagos</span>
-                {cartItemsCount > 0 && (
-                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-                    {cartItemsCount}
-                  </span>
-                )}
+                {cartItemsCount > 0 && renderCartNotificationIcon()}
               </Link>
               <select
                 value={lang}
