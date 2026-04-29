@@ -156,7 +156,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="px-4 py-3 text-white shadow-md bg-slate-800">
+    <nav className="px-4 py-3 text-white shadow-md bg-[#393f45]">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <Image
@@ -506,7 +506,7 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-[#393f45] [&>option]:text-white"
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
@@ -540,7 +540,7 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-slate-800 [&>option]:text-white"
+                className="bg-transparent text-white opacity-80 text-sm w-fit [&>option]:bg-[#393f45] [&>option]:text-white"
               >
                 {availableLanguages.map(({ code, flag, label }) => (
                   <option key={code} value={code}>
