@@ -164,6 +164,9 @@ Agents should check this before searching the codebase.
   - File: `src/app/api/activities/[id]/checkout/route.ts`
   - Mercado Pago helper: `src/lib/mercadopago.ts`
 
+- `POST /api/activities/cart/quote` → cart pricing quote for UI preview
+  - File: `src/app/api/activities/cart/quote/route.ts`
+
 - `POST /api/activities/[id]/days` → create activity day
   - File: `src/app/api/activities/[id]/days/route.ts`
   - Validation: `src/lib/validations/activity.ts`
