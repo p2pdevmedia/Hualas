@@ -105,24 +105,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     prisma.activityParticipant
       .findMany({
         where: { activityId: activity.id },
-        include: isAdmin
-          ? {
-              user: true,
-              child: true,
-              groupMembership: {
-                select: {
-                  activityGroupId: true,
-                },
-              },
-            }
-          : {
-              child: true,
-              groupMembership: {
-                select: {
-                  activityGroupId: true,
-                },
-              },
+        include: {
+          user: true,
+          child: true,
+          groupMembership: {
+            select: {
+              activityGroupId: true,
             },
+          },
+        },
       })
       .catch((error) => {
         console.error('[activity-page] participants query failed', error);
