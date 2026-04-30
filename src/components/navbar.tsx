@@ -183,10 +183,10 @@ export default function Navbar() {
 
   return (
     <nav className={cn(
-      'sticky top-0 z-40 px-4 py-3 shadow-md transition-all duration-200',
+      'sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-xl transition-all duration-300 supports-[backdrop-filter]:backdrop-blur-xl',
       isScrolled
-        ? 'bg-[#393f45] text-white'
-        : 'bg-white text-foreground'
+        ? 'border-white/10 bg-[#393f45]/85 text-white shadow-lg shadow-black/10'
+        : 'border-border/60 bg-white/80 text-foreground shadow-sm'
     )}>
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 transition-colors duration-200 hover:text-primary">
