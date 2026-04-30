@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -43,6 +44,7 @@ function initials(name: string | null | undefined) {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
@@ -149,6 +151,20 @@ export default function Navbar() {
   const linkClass =
     'opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 text-sm font-medium';
 
+  const isActiveRoute = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const navLinkClass = (href: string) =>
+    cn(
+      linkClass,
+      'relative w-fit after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:rounded-full after:bg-primary after:transition-transform after:duration-200',
+      isActiveRoute(href)
+        ? 'text-primary opacity-100 after:scale-x-100'
+        : 'after:scale-x-0 hover:after:scale-x-100'
+    );
+
   const renderUnreadIcon = () => (
     <span
       className="inline-flex h-2.5 w-2.5 rounded-full bg-red-500"
@@ -197,14 +213,14 @@ export default function Navbar() {
 
         <div className="hidden md:flex md:items-center md:gap-6">
           {session && !isCounter && (
-            <Link href={activitiesHref} className={linkClass}>
+            <Link href={activitiesHref} className={navLinkClass(activitiesHref)}>
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
           {isMember && (
             <Link
               href="/activities/cart"
-              className={`${linkClass} inline-flex items-center gap-2`}
+              className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span>Carrito</span>
@@ -237,10 +253,10 @@ export default function Navbar() {
           )}
           {isAdmin && (
             <>
-              <Link href="/admin/users" className={linkClass}>
+              <Link href="/admin/users" className={navLinkClass('/admin/users')}>
                 {t.users}
               </Link>
-              <Link href="/admin/forms" className={linkClass}>
+              <Link href="/admin/forms" className={navLinkClass('/admin/forms')}>
                 {t.forms}
               </Link>
               {isSuperAdmin && (
@@ -265,14 +281,14 @@ export default function Navbar() {
             </>
           )}
           {isAccounting && (
-            <Link href="/accounting" className={linkClass}>
+            <Link href="/accounting" className={navLinkClass('/accounting')}>
               {t.accounting}
             </Link>
           )}
-          <Link href="/contact" className={linkClass}>
+          <Link href="/contact" className={navLinkClass('/contact')}>
             {t.contact}
           </Link>
-          <Link href="/faq" className={linkClass}>
+          <Link href="/faq" className={navLinkClass('/faq')}>
             FAQ
           </Link>
           {session ? (
@@ -359,7 +375,7 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login" className={linkClass}>
+              <Link href="/login" className={navLinkClass('/login')}>
                 {t.login}
               </Link>
               <Link
@@ -378,7 +394,7 @@ export default function Navbar() {
           {session && !isCounter && (
             <Link
               href={activitiesHref}
-              className={linkClass}
+              className={navLinkClass(activitiesHref)}
               onClick={() => setMenuOpen(false)}
             >
               {isMember ? t.myActivities : t.activities}
@@ -387,7 +403,7 @@ export default function Navbar() {
           {isMember && (
             <Link
               href="/activities/cart"
-              className={`${linkClass} inline-flex items-center gap-2`}
+              className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
               onClick={() => setMenuOpen(false)}
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
@@ -400,7 +416,7 @@ export default function Navbar() {
               <span className="text-sm font-medium opacity-90">Comunicación</span>
               <Link
                 href="/chat"
-                className={linkClass}
+                className={navLinkClass('/chat')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.chat} {hasUnreadMessages && renderUnreadIcon()}
@@ -408,7 +424,7 @@ export default function Navbar() {
               {isMember && (
                 <Link
                   href="/profile/pickup-notices"
-                  className={linkClass}
+                  className={navLinkClass('/profile/pickup-notices')}
                   onClick={() => setMenuOpen(false)}
                 >
                   Avisos de Retiro
@@ -420,14 +436,14 @@ export default function Navbar() {
             <>
               <Link
                 href="/admin/users"
-                className={linkClass}
+                className={navLinkClass('/admin/users')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.users}
               </Link>
               <Link
                 href="/admin/forms"
-                className={linkClass}
+                className={navLinkClass('/admin/forms')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.forms}
@@ -439,14 +455,14 @@ export default function Navbar() {
                   </span>
                   <Link
                     href="/admin/notifications"
-                    className={linkClass}
+                    className={navLinkClass('/admin/notifications')}
                     onClick={() => setMenuOpen(false)}
                   >
                     Notificaciones
                   </Link>
                   <Link
                     href="/admin/audit-log"
-                    className={linkClass}
+                    className={navLinkClass('/admin/audit-log')}
                     onClick={() => setMenuOpen(false)}
                   >
                     Registro de auditoría
@@ -458,7 +474,7 @@ export default function Navbar() {
           {isAccounting && (
             <Link
               href="/accounting"
-              className={linkClass}
+              className={navLinkClass('/accounting')}
               onClick={() => setMenuOpen(false)}
             >
               {t.accounting}
@@ -466,14 +482,14 @@ export default function Navbar() {
           )}
           <Link
             href="/contact"
-            className={linkClass}
+            className={navLinkClass('/contact')}
             onClick={() => setMenuOpen(false)}
           >
             {t.contact}
           </Link>
           <Link
             href="/faq"
-            className={linkClass}
+            className={navLinkClass('/faq')}
             onClick={() => setMenuOpen(false)}
           >
             FAQ
@@ -517,21 +533,21 @@ export default function Navbar() {
               </div>
               <Link
                 href="/profile"
-                className={linkClass}
+                className={navLinkClass('/profile')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.profile}
               </Link>
               <Link
                 href="/profile/children"
-                className={linkClass}
+                className={navLinkClass('/profile/children')}
                 onClick={() => setMenuOpen(false)}
               >
                 {actions.myChildren}
               </Link>
               <Link
                 href="/activities/cart"
-                className={`${linkClass} inline-flex items-center gap-2`}
+                className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
                 onClick={() => setMenuOpen(false)}
               >
                 <span>Carrito</span>
@@ -539,7 +555,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/profile/payments"
-                className={linkClass}
+                className={navLinkClass('/profile/payments')}
                 onClick={() => setMenuOpen(false)}
               >
                 Historial de pagos
@@ -571,14 +587,14 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className={linkClass}
+                className={navLinkClass('/login')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.login}
               </Link>
               <Link
                 href="/register"
-                className={linkClass}
+                className={navLinkClass('/register')}
                 onClick={() => setMenuOpen(false)}
               >
                 {t.register}
