@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import PaymentMethodSelector, {
@@ -36,6 +36,12 @@ type AvailableActivity = {
   price: number;
 };
 
+type ChildOption = {
+  id: string;
+  name: string;
+  lastName: string;
+};
+
 function formatMoney(amount: number) {
   return `$${Number(amount).toLocaleString('es-AR')}`;
 }
@@ -51,6 +57,8 @@ export default function ActivitiesCartPage() {
   const [error, setError] = useState<string | null>(null);
   const [availableActivities, setAvailableActivities] = useState<AvailableActivity[]>([]);
   const [availableLoading, setAvailableLoading] = useState(false);
+  const [children, setChildren] = useState<ChildOption[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<'self' | string>('self');
 
   useEffect(() => {
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -163,6 +171,43 @@ export default function ActivitiesCartPage() {
     return () => controller.abort();
   }, [hydrated, items]);
 
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch('/api/children', { signal: controller.signal });
+        if (!response.ok) {
+          setChildren([]);
+          return;
+        }
+
+        const data = (await response.json().catch(() => [])) as ChildOption[];
+        setChildren(Array.isArray(data) ? data : []);
+      } catch (fetchError) {
+        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
+          setChildren([]);
+        }
+      }
+    };
+
+    fetchChildren();
+    return () => controller.abort();
+  }, []);
+
+  const targetOptions = useMemo(() => {
+    const childOptions = children.map((child) => ({
+      value: child.id,
+      label: `${child.name} ${child.lastName}`.trim(),
+    }));
+
+    return [{ value: 'self', label: 'Para mí' }, ...childOptions];
+  }, [children]);
+
+  const selectedTargetLabel =
+    targetOptions.find((option) => option.value === selectedTarget)?.label ?? 'Para mí';
+
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
     window.localStorage.setItem(
@@ -203,8 +248,6 @@ export default function ActivitiesCartPage() {
   };
 
   const canCheckout = !!quote && !quoteLoading && !submitting;
-  const defaultTarget = items[0]?.target ?? 'self';
-  const defaultTargetLabel = items[0]?.targetLabel ?? 'Para mí';
   const manualItems = items.map((item) => ({
     activityId: item.activityId,
     target: item.target === 'self' ? 'self' : item.target,
@@ -258,6 +301,20 @@ export default function ActivitiesCartPage() {
             <p className="text-sm text-muted-foreground">
               Podés agregar otras actividades antes de finalizar el pago.
             </p>
+            <label className="space-y-1 block">
+              <span className="text-sm font-medium">Inscribir a</span>
+              <select
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                value={selectedTarget}
+                onChange={(event) => setSelectedTarget(event.target.value)}
+              >
+                {targetOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             {availableLoading ? (
               <p className="text-sm text-muted-foreground">Buscando actividades disponibles...</p>
             ) : availableActivities.length === 0 ? (
@@ -284,8 +341,8 @@ export default function ActivitiesCartPage() {
                               activityId: activity.id,
                               activityName: activity.name,
                               price: activity.price,
-                              target: defaultTarget,
-                              targetLabel: defaultTargetLabel,
+                              target: selectedTarget,
+                              targetLabel: selectedTargetLabel,
                             },
                           ])
                         }
