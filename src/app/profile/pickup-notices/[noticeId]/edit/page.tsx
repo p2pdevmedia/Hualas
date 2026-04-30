@@ -17,6 +17,15 @@ export default async function EditPickupNoticePage({
     redirect('/login');
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+    select: { role: true },
+  });
+
+  if (user?.role !== 'MEMBER') {
+    redirect('/profile/pickup-notices');
+  }
+
   const notice = await prisma.pickupNotice.findUnique({
     where: { id: noticeId },
     include: {

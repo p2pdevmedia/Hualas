@@ -12,6 +12,15 @@ export default async function CreatePickupNoticePage() {
     redirect('/login');
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+    select: { role: true },
+  });
+
+  if (user?.role !== 'MEMBER') {
+    redirect('/profile/pickup-notices');
+  }
+
   const children = await prisma.child.findMany({
     where: {
       userId: (session.user as any).id,

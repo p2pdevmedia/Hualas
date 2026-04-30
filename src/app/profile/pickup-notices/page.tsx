@@ -17,11 +17,12 @@ export default async function PickupNoticesPage() {
   });
 
   const isProfessor = user?.role === 'PROFESSOR' || user?.role === 'ADMIN';
+  const isMember = user?.role === 'MEMBER';
 
   let where: any = { deletedAt: null };
 
-  if (!isProfessor) {
-    // For parents: show own notices + notices for their children
+  if (isMember) {
+    // For members: show own notices + notices for their children
     const userChildren = await prisma.child.findMany({
       where: { userId: (session.user as any).id },
       select: { id: true },
@@ -85,7 +86,7 @@ export default async function PickupNoticesPage() {
                 : 'Notifica a los profesores que otra persona retirará a tu hijo'}
             </p>
           </div>
-          {!isProfessor && (
+          {isMember && (
             <Link href="/profile/pickup-notices/new">
               <Button>Crear aviso</Button>
             </Link>
@@ -98,7 +99,7 @@ export default async function PickupNoticesPage() {
           <p className="text-muted-foreground mb-4">
             {isProfessor ? 'No hay avisos de retiro' : 'No tenés avisos de retiro creados'}
           </p>
-          {!isProfessor && (
+          {isMember && (
             <Link href="/profile/pickup-notices/new">
               <Button>Crear tu primer aviso</Button>
             </Link>
@@ -183,7 +184,7 @@ export default async function PickupNoticesPage() {
                   </div>
                 </div>
               )}
-              {!isProfessor && isOwnNotice && (
+              {isMember && isOwnNotice && (
                 <div className="mt-4 flex gap-2">
                   <Link href={`/profile/pickup-notices/${notice.id}/edit`}>
                     <Button variant="outline">Editar</Button>
