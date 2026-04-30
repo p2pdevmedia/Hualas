@@ -29,6 +29,25 @@ type GroupOption = {
   name: string;
 };
 
+type PickupNotice = {
+  id: string;
+  description: string;
+  alternatePersonName: string | null;
+  child: {
+    id: string;
+    name: string;
+    user: {
+      name: string | null;
+    };
+  };
+  createdBy: {
+    name: string | null;
+  };
+  alternatePersonUser: {
+    name: string | null;
+  } | null;
+};
+
 type ActivityDay = {
   id: string;
   date: string;
@@ -50,6 +69,7 @@ type ActivityDay = {
     confirmedAt: string | null;
   }>;
   attendanceList: ParticipantForAttendance[];
+  pickupNotices: PickupNotice[];
 };
 
 interface ActivityDaysPanelProps {
@@ -410,6 +430,49 @@ export default function ActivityDaysPanel({
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {day.pickupNotices && day.pickupNotices.length > 0 && (
+                  <div className="mt-4 space-y-3 border-t pt-4">
+                    <p className="text-sm font-semibold">
+                      Avisos de retiro ({day.pickupNotices.length})
+                    </p>
+                    <div className="space-y-3">
+                      {day.pickupNotices.map((notice) => (
+                        <div
+                          key={notice.id}
+                          className="rounded-md border bg-card p-3"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {notice.child.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Familia: {notice.child.user.name}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium">Retira:</span>{' '}
+                                {notice.alternatePersonUser?.name ||
+                                  notice.alternatePersonName ||
+                                  'Sin especificar'}
+                              </p>
+                              {notice.description && (
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">Nota:</span>{' '}
+                                  {notice.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

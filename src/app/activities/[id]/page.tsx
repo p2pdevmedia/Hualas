@@ -100,7 +100,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     redirect('/');
   }
 
-  const [participants, activityProfessors, professorOptions, activityGroups, days] =
+  const [participants, activityProfessors, professorOptions, activityGroups, days, pickupNoticesByDay] =
     await Promise.all([
     prisma.activityParticipant
       .findMany({
@@ -210,15 +210,55 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         console.error('[activity-page] days query failed', error);
         return [];
       }),
+    prisma.activityDay
+      .findMany({
+        where: { activityId: activity.id },
+        include: {
+          pickupNotices: {
+            where: { deletedAt: null },
+            include: {
+              child: {
+                include: {
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              createdBy: {
+                select: {
+                  name: true,
+                },
+              },
+              alternatePersonUser: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        console.error('[activity-page] pickup notices query failed', error);
+        return [];
+      }),
   ]);
 
   // Create a map of participants for quick lookup
   const participantsMap = new Map(participants.map((p) => [p.id, p]));
 
-  // Transform days data to include attendanceList
+  // Create a map of pickup notices by dayId
+  const pickupNoticesMap = new Map(
+    pickupNoticesByDay.map((day: any) => [day.id, day.pickupNotices])
+  );
+
+  // Transform days data to include attendanceList and pickupNotices
   const daysWithAttendance = days.map((day) => ({
     ...day,
     attendanceList: transformAttendanceList(day, participantsMap),
+    pickupNotices: pickupNoticesMap.get(day.id) || [],
   }));
 
   const frequencyLabels: Record<string, string> = {
