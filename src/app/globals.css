@@ -23,9 +23,10 @@
     --destructive-foreground: 0 0% 98%;
     --success: 160 55% 34%;
     --radius: 0.5rem;
-    --font-heading: Georgia, 'Times New Roman', serif;
-    --font-body:
-      system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Typography */
+    --font-heading: var(--font-chivo), system-ui, sans-serif;
+    --font-body: var(--font-chivo), system-ui, sans-serif;
   }
 
   * {
