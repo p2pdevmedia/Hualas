@@ -7,9 +7,11 @@ export const MANUAL_PAYMENT_ACCEPTED_MIME_TYPES = [
 
 export const MANUAL_PAYMENT_INSTRUCTIONS = [
   'Transferencia bancaria manual',
-  'Transferir a: Banco Hipotecario',
-  'Cuenta: 1234567890',
-  'CUIT: 20-12345678-9',
+  'Banco: Banco Provincia Del Neuquén (BPN)',
+  'CBU: 0970005510009746770016',
+  'Alias: clubhualas',
+  'Cuenta: Cuenta Corriente 5-974677/1',
+  'CUIT/CUIL: 30717495353',
   'Concepto: Club Hualas - nombre de la actividad',
 ].join('\n');
 
