@@ -10,6 +10,7 @@ const links = [
   { href: '/accounting/social-fee', label: 'Cuota social' },
   { href: '/accounting/movements', label: 'Movimientos' },
   { href: '/accounting/payments', label: 'Pagos MP' },
+  { href: '/accounting/manual-payments', label: 'Pagos manuales' },
   { href: '/accounting/reports', label: 'Reportes' },
 ] as const;
 
@@ -34,8 +35,8 @@ export default async function AccountingLayout({
             Gestión financiera del club
           </h1>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Registra movimientos manuales, revisa pagos de Mercado Pago y genera
-            reportes del período.
+            Registra movimientos manuales, revisa pagos de Mercado Pago y
+            transferencias bancarias, y genera reportes del período.
           </p>
         </div>
 

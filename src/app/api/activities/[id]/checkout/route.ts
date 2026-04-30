@@ -13,6 +13,36 @@ import {
   normalizeSocialFeeParticipant,
   serializeSocialFeeParticipants,
 } from '@/lib/social-fee';
+import { buildCartQuote } from '@/lib/cart-checkout';
+import { createManualPaymentCheckout } from '@/lib/services/manual-payment-service';
+
+type CheckoutItem = {
+  activityId: string;
+  target?: string;
+  targetLabel?: string;
+};
+
+function isManualPaymentMethod(value: unknown) {
+  return typeof value === 'string' && value === 'MANUAL_TRANSFER';
+}
+
+async function buildSingleActivityQuote(
+  userId: string,
+  activityId: string,
+  childId?: string | null
+) {
+  const target = childId ?? 'self';
+  return buildCartQuote({
+    userId,
+    items: [
+      {
+        activityId,
+        target,
+        targetLabel: target === 'self' ? 'Para mí' : 'Menor',
+      } satisfies CheckoutItem,
+    ],
+  });
+}
 
 function getAppUrl(req: Request) {
   const forwardedProto = req.headers.get('x-forwarded-proto');
@@ -226,6 +256,106 @@ export async function GET(
         detail: String(error?.cause ?? error?.message ?? error),
       },
       { status: 502 }
+    );
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const contentType = req.headers.get('content-type') ?? '';
+  const isFormData = contentType.includes('multipart/form-data');
+
+  let childId: string | null = null;
+  let paymentMethod: unknown;
+  let proofFile: File | null = null;
+
+  if (isFormData) {
+    const formData = await req.formData();
+    paymentMethod = formData.get('paymentMethod');
+    const childValue = formData.get('childId');
+    if (typeof childValue === 'string' && childValue.trim()) {
+      childId = childValue.trim();
+    }
+    const proofValue = formData.get('proof');
+    proofFile = proofValue instanceof File ? proofValue : null;
+  } else {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+
+    paymentMethod = (body as { paymentMethod?: unknown } | null)?.paymentMethod;
+    const rawChildId = (body as { childId?: unknown } | null)?.childId;
+    childId =
+      typeof rawChildId === 'string' && rawChildId.trim()
+        ? rawChildId.trim()
+        : null;
+  }
+
+  if (!isManualPaymentMethod(paymentMethod)) {
+    return NextResponse.json(
+      { error: 'Unsupported payment method' },
+      { status: 400 }
+    );
+  }
+
+  if (!proofFile) {
+    return NextResponse.json(
+      { error: 'No se recibió el comprobante.' },
+      { status: 400 }
+    );
+  }
+
+  const quote = await buildSingleActivityQuote(
+    (session.user as { id: string }).id,
+    params.id,
+    childId
+  );
+
+  try {
+    const result = await createManualPaymentCheckout({
+      user: {
+        id: (
+          session.user as {
+            id: string;
+            email?: string | null;
+            name?: string | null;
+          }
+        ).id,
+        email: session.user?.email ?? null,
+        name: session.user?.name ?? null,
+      },
+      quote,
+      proofFile,
+    });
+
+    if ('error' in result) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.status }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      paymentId: result.payment.id,
+      orderId: result.payment.orderId,
+      redirectUrl: '/profile/payments?manual-payment=submitted',
+    });
+  } catch (error) {
+    console.error('[checkout] Manual payment error:', error);
+    return NextResponse.json(
+      { error: 'No se pudo registrar el pago manual.' },
+      { status: 500 }
     );
   }
 }

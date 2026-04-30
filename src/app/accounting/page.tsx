@@ -32,7 +32,12 @@ export default async function AccountingDashboardPage() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const [monthMovements, recentMovements, monthPayments] = await Promise.all([
+  const [
+    monthMovements,
+    recentMovements,
+    monthPayments,
+    pendingManualPayments,
+  ] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: {
         date: {
@@ -63,6 +68,12 @@ export default async function AccountingDashboardPage() {
         activity: { select: { name: true, price: true } },
         user: { select: { name: true, lastName: true } },
         child: { select: { name: true, lastName: true } },
+      },
+    }),
+    prisma.payment.count({
+      where: {
+        provider: 'MANUAL_TRANSFER',
+        status: 'PENDING',
       },
     }),
   ]);
@@ -102,6 +113,11 @@ export default async function AccountingDashboardPage() {
             label: 'Cobrado por MP',
             value: formatAmount(totalMp),
             helper: 'Pagos aprobados del mes',
+          },
+          {
+            label: 'Manuales pendientes',
+            value: String(pendingManualPayments),
+            helper: 'Transferencias esperando revisión',
           },
         ].map((card) => (
           <article

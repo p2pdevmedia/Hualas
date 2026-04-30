@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
+import PaymentMethodSelector, {
+  type PaymentMethod,
+} from '@/components/checkout/payment-method-selector';
+import ManualPaymentForm from '@/components/checkout/manual-payment-form';
 
 type QuoteResponse = {
   activityLines: Array<{
@@ -35,6 +39,8 @@ export default function ActivitiesCartPage() {
   const [hydrated, setHydrated] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -149,6 +155,11 @@ export default function ActivitiesCartPage() {
   };
 
   const canCheckout = !!quote && !quoteLoading && !submitting;
+  const manualItems = items.map((item) => ({
+    activityId: item.activityId,
+    target: item.target === 'self' ? 'self' : item.target,
+    targetLabel: item.targetLabel,
+  }));
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 space-y-6">
@@ -260,6 +271,23 @@ export default function ActivitiesCartPage() {
             </div>
           </section>
 
+          <section className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
+            <PaymentMethodSelector
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              disabled={quoteLoading || !quote}
+            />
+          </section>
+
+          {paymentMethod === 'MANUAL_TRANSFER' && quote ? (
+            <ManualPaymentForm
+              endpoint="/api/activities/cart/checkout"
+              items={manualItems}
+              totalAmount={quote.totalAmount}
+              activitySummary={`Vas a subir un comprobante para ${items.length} actividad${items.length === 1 ? '' : 'es'}.`}
+            />
+          ) : null}
+
           <div className="border-t pt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-lg font-semibold">
@@ -270,9 +298,15 @@ export default function ActivitiesCartPage() {
                 El importe visible coincide con el checkout de Mercado Pago.
               </p>
             </div>
-            <Button onClick={handleCheckout} disabled={!canCheckout}>
-              {submitting ? 'Procesando...' : 'Pagar carrito'}
-            </Button>
+            {paymentMethod === 'MERCADO_PAGO' ? (
+              <Button onClick={handleCheckout} disabled={!canCheckout}>
+                {submitting ? 'Procesando...' : 'Pagar carrito'}
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                El envío del comprobante se hace arriba.
+              </p>
+            )}
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

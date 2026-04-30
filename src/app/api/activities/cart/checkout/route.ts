@@ -11,12 +11,17 @@ import {
   buildCartQuoteErrorResponse,
   toMercadoPagoItems,
 } from '@/lib/cart-checkout';
+import { createManualPaymentCheckout } from '@/lib/services/manual-payment-service';
 
 type CartItem = {
   activityId: string;
   target?: string;
   targetLabel?: string;
 };
+
+function isManualPaymentMethod(value: unknown) {
+  return typeof value === 'string' && value === 'MANUAL_TRANSFER';
+}
 
 function getAppUrl(req: Request) {
   const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
@@ -31,16 +36,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let payload: unknown;
-  try {
-    payload = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
-  }
+  const contentType = req.headers.get('content-type') ?? '';
+  const isFormData = contentType.includes('multipart/form-data');
 
-  const items = Array.isArray((payload as { items?: unknown } | null)?.items)
-    ? ((payload as { items: CartItem[] }).items ?? [])
-    : [];
+  let items: CartItem[] = [];
+  let paymentMethod: unknown;
+  let proofFile: File | null = null;
+
+  if (isFormData) {
+    const formData = await req.formData();
+    paymentMethod = formData.get('paymentMethod');
+    const rawItems = formData.get('items');
+    proofFile =
+      formData.get('proof') instanceof File
+        ? (formData.get('proof') as File)
+        : null;
+
+    if (typeof rawItems === 'string') {
+      try {
+        const parsed = JSON.parse(rawItems);
+        items = Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+      } catch {
+        return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+      }
+    }
+  } else {
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+
+    paymentMethod = (payload as { paymentMethod?: unknown } | null)
+      ?.paymentMethod;
+    items = Array.isArray((payload as { items?: unknown } | null)?.items)
+      ? ((payload as { items: CartItem[] }).items ?? [])
+      : [];
+  }
 
   let quote;
   try {
@@ -57,6 +90,55 @@ export async function POST(req: Request) {
       );
     }
     throw error;
+  }
+
+  if (isManualPaymentMethod(paymentMethod)) {
+    if (!proofFile) {
+      return NextResponse.json(
+        { error: 'No se recibió el comprobante.' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const result = await createManualPaymentCheckout({
+        user: {
+          id: (
+            session.user as {
+              id: string;
+              email?: string | null;
+              name?: string | null;
+            }
+          ).id,
+          email: session.user?.email ?? null,
+          name: session.user?.name ?? null,
+        },
+        quote,
+        proofFile,
+      });
+
+      if ('error' in result) {
+        return NextResponse.json(
+          { error: result.error },
+          { status: result.status }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        paymentId: result.payment.id,
+        orderId: result.payment.orderId,
+        redirectUrl: '/profile/payments?manual-payment=submitted',
+      });
+    } catch (error) {
+      console.error('[checkout] Manual payment error:', error);
+      return NextResponse.json(
+        {
+          error: 'No se pudo registrar el pago manual.',
+        },
+        { status: 500 }
+      );
+    }
   }
 
   const { accessToken, environment } = getMercadoPagoCredentials();
