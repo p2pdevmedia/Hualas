@@ -188,7 +188,7 @@ export default function Navbar() {
         ? 'border-white/10 bg-[#393f45]/85 text-white shadow-lg shadow-black/10'
         : 'border-border/60 bg-white/80 text-foreground shadow-sm'
     )}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <div className="flex max-w-full items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5 transition-colors duration-200 hover:text-primary">
           <Image
             src={logoUrl}
