@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { isCounterRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
+import ActivityCalendar, { type CalendarActivityDay } from './activity-calendar';
 
 const frequencyLabels: Record<
   'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME',
@@ -74,6 +75,44 @@ export default async function MyActivitiesPage() {
     professorAssignments = [];
   }
 
+  const activityIds = [
+    ...new Set([
+      ...participations.map(p => p.activity.id),
+      ...professorAssignments.map(a => a.activity.id),
+    ]),
+  ];
+
+  let calendarDays: CalendarActivityDay[] = [];
+  if (activityIds.length > 0) {
+    try {
+      const sixMonthsLater = new Date();
+      sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+      const raw = await prisma.activityDay.findMany({
+        where: {
+          activityId: { in: activityIds },
+          date: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lte: sixMonthsLater,
+          },
+        },
+        include: {
+          activity: { select: { id: true, name: true } },
+        },
+        orderBy: { date: 'asc' },
+      });
+      calendarDays = raw.map(d => ({
+        id: d.id,
+        date: d.date.toISOString().slice(0, 10),
+        activityId: d.activity.id,
+        activityName: d.activity.name,
+        schedule: d.schedule,
+        geoLocation: d.geoLocation,
+      }));
+    } catch {
+      calendarDays = [];
+    }
+  }
+
   const grouped = new Map<
     string,
     {
@@ -117,7 +156,7 @@ export default async function MyActivitiesPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">
           Mis actividades
@@ -128,42 +167,48 @@ export default async function MyActivitiesPage() {
         </p>
       </div>
 
-      {items.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">
-          <p>Todavía no tenés actividades asociadas.</p>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {items.map(({ activity, labels }) => (
-            <li
-              key={activity.id}
-              className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <Link
-                  href={`/activities/${activity.id}`}
-                  className="text-base font-semibold transition-colors hover:text-primary"
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px] items-start">
+        <div>
+          {items.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <p>Todavía no tenés actividades asociadas.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {items.map(({ activity, labels }) => (
+                <li
+                  key={activity.id}
+                  className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {activity.name}
-                </Link>
-                <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                  <span>
-                    {
-                      frequencyLabels[
-                        activity.frequency as keyof typeof frequencyLabels
-                      ]
-                    }
-                  </span>
-                  <span>·</span>
-                  <span>${activity.price}</span>
-                  <span>·</span>
-                  <span>{labels.join(' · ')}</span>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                  <div>
+                    <Link
+                      href={`/activities/${activity.id}`}
+                      className="text-base font-semibold transition-colors hover:text-primary"
+                    >
+                      {activity.name}
+                    </Link>
+                    <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      <span>
+                        {
+                          frequencyLabels[
+                            activity.frequency as keyof typeof frequencyLabels
+                          ]
+                        }
+                      </span>
+                      <span>·</span>
+                      <span>${activity.price}</span>
+                      <span>·</span>
+                      <span>{labels.join(' · ')}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <ActivityCalendar activityDays={calendarDays} />
+      </div>
     </main>
   );
 }
