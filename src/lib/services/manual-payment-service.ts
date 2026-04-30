@@ -83,26 +83,36 @@ function sanitizeFileName(name: string) {
 }
 
 async function getBillableConceptIds() {
-  const concepts = await prisma.billableConcept.findMany({
-    where: {
-      code: {
-        in: [BillableConceptCode.ACTIVITY_FEE, BillableConceptCode.SOCIAL_FEE],
+  const [activityFeeConcept, socialFeeConcept] = await prisma.$transaction([
+    prisma.billableConcept.upsert({
+      where: { code: BillableConceptCode.ACTIVITY_FEE },
+      create: {
+        code: BillableConceptCode.ACTIVITY_FEE,
+        name: 'Cuota de actividad',
+        active: true,
       },
-    },
-    select: { id: true, code: true },
-  });
-
-  const byCode = new Map(concepts.map((concept) => [concept.code, concept.id]));
-  const activityFeeConceptId = byCode.get(BillableConceptCode.ACTIVITY_FEE);
-  const socialFeeConceptId = byCode.get(BillableConceptCode.SOCIAL_FEE);
-
-  if (!activityFeeConceptId || !socialFeeConceptId) {
-    throw new Error('Billable concepts are not configured.');
-  }
+      update: {
+        active: true,
+      },
+      select: { id: true },
+    }),
+    prisma.billableConcept.upsert({
+      where: { code: BillableConceptCode.SOCIAL_FEE },
+      create: {
+        code: BillableConceptCode.SOCIAL_FEE,
+        name: 'Cuota social',
+        active: true,
+      },
+      update: {
+        active: true,
+      },
+      select: { id: true },
+    }),
+  ]);
 
   return {
-    activityFeeConceptId,
-    socialFeeConceptId,
+    activityFeeConceptId: activityFeeConcept.id,
+    socialFeeConceptId: socialFeeConcept.id,
   };
 }
 
