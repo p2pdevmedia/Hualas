@@ -29,6 +29,13 @@ type QuoteResponse = {
   socialFeeAmount: number;
 };
 
+type AvailableActivity = {
+  id: string;
+  name: string;
+  date: string;
+  price: number;
+};
+
 function formatMoney(amount: number) {
   return `$${Number(amount).toLocaleString('es-AR')}`;
 }
@@ -42,6 +49,8 @@ export default function ActivitiesCartPage() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
+  const [availableActivities, setAvailableActivities] = useState<AvailableActivity[]>([]);
+  const [availableLoading, setAvailableLoading] = useState(false);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -115,6 +124,45 @@ export default function ActivitiesCartPage() {
     return () => controller.abort();
   }, [hydrated, items]);
 
+  useEffect(() => {
+    if (!hydrated || items.length === 0) {
+      setAvailableActivities([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchAvailable = async () => {
+      setAvailableLoading(true);
+      try {
+        const response = await fetch('/api/activities/cart/available', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+          signal: controller.signal,
+        });
+
+        const data = (await response.json().catch(() => ({}))) as {
+          activities?: AvailableActivity[];
+        };
+        if (!response.ok) {
+          setAvailableActivities([]);
+          return;
+        }
+
+        setAvailableActivities(Array.isArray(data.activities) ? data.activities : []);
+      } catch (fetchError) {
+        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
+          setAvailableActivities([]);
+        }
+      } finally {
+        setAvailableLoading(false);
+      }
+    };
+
+    fetchAvailable();
+    return () => controller.abort();
+  }, [hydrated, items]);
+
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
     window.localStorage.setItem(
@@ -155,6 +203,8 @@ export default function ActivitiesCartPage() {
   };
 
   const canCheckout = !!quote && !quoteLoading && !submitting;
+  const defaultTarget = items[0]?.target ?? 'self';
+  const defaultTargetLabel = items[0]?.targetLabel ?? 'Para mí';
   const manualItems = items.map((item) => ({
     activityId: item.activityId,
     target: item.target === 'self' ? 'self' : item.target,
@@ -203,6 +253,52 @@ export default function ActivitiesCartPage() {
             ))}
           </section>
 
+          <section className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
+            <h2 className="text-lg font-semibold">Sumar actividades</h2>
+            <p className="text-sm text-muted-foreground">
+              Podés agregar otras actividades antes de finalizar el pago.
+            </p>
+            {availableLoading ? (
+              <p className="text-sm text-muted-foreground">Buscando actividades disponibles...</p>
+            ) : availableActivities.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay actividades adicionales disponibles.</p>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {availableActivities.map((activity) => (
+                  <article key={activity.id} className="rounded-md border p-4 space-y-2">
+                    <p className="font-medium">{activity.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(activity.date).toLocaleString('es-AR', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold">{formatMoney(activity.price)}</span>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          persist([
+                            ...items,
+                            {
+                              activityId: activity.id,
+                              activityName: activity.name,
+                              price: activity.price,
+                              target: defaultTarget,
+                              targetLabel: defaultTargetLabel,
+                            },
+                          ])
+                        }
+                      >
+                        Agregar
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
           <section className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm md:grid-cols-2">
             <div className="space-y-3">
               <h2 className="text-lg font-semibold">Resumen</h2>
@@ -212,6 +308,14 @@ export default function ActivitiesCartPage() {
                 </p>
               ) : quote ? (
                 <div className="space-y-2 text-sm">
+                  <div className="space-y-1">
+                    {quote.activityLines.map((line, index) => (
+                      <div key={`${line.id}-${index}`} className="flex items-center justify-between gap-4">
+                        <span>{line.name} · {line.targetLabel}</span>
+                        <span className="font-medium">{formatMoney(line.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
                   <div className="flex items-center justify-between gap-4">
                     <span>Subtotal actividades</span>
                     <span className="font-medium">

@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { getActivityParticipantKey } from '@/lib/activity-participants';
 import {
   getSocialFeeAmount,
   hasSocialFeeForCurrentMonth,
@@ -64,6 +65,17 @@ export async function buildCartQuote({
   }
 
   const uniqueIds = [...new Set(items.map((item) => item.activityId))];
+  const seenSelections = new Set<string>();
+  for (const item of items) {
+    const selectionKey = `${item.activityId}:${normalizeTarget(item.target) ?? 'self'}`;
+    if (seenSelections.has(selectionKey)) {
+      throw new CartQuoteError(
+        409,
+        'No podés agregar la misma actividad más de una vez para la misma inscripción.'
+      );
+    }
+    seenSelections.add(selectionKey);
+  }
   const activities = await prisma.activity.findMany({
     where: { id: { in: uniqueIds } },
     include: { participants: { select: { id: true } } },
@@ -119,6 +131,29 @@ export async function buildCartQuote({
         'Uno de los hijos seleccionados no pertenece al usuario.'
       );
     }
+  }
+
+  const participantKeys = items.map((item) =>
+    getActivityParticipantKey(item.activityId, userId, normalizeTarget(item.target))
+  );
+  const existingParticipants = await prisma.activityParticipant.findMany({
+    where: {
+      participantKey: { in: participantKeys },
+    },
+    select: {
+      participantKey: true,
+      activity: { select: { name: true } },
+    },
+  });
+
+  if (existingParticipants.length > 0) {
+    const repeatedActivityName = existingParticipants[0]?.activity.name;
+    throw new CartQuoteError(
+      409,
+      repeatedActivityName
+        ? `Ya existe una inscripción para ${repeatedActivityName}.`
+        : 'Ya existe una inscripción para una de las actividades seleccionadas.'
+    );
   }
 
   const activityLines = items.map((item) => {
