@@ -54,7 +54,7 @@ export function PickupNoticeForm({
   );
 
   const [formData, setFormData] = useState({
-    childId: existingNotice?.childId || "",
+    childId: existingNotice?.childId || (childrenList.length === 1 ? childrenList[0].id : ""),
     alternatePersonUserId: existingNotice?.alternatePersonUserId || "",
     alternatePersonName: existingNotice?.alternatePersonName || "",
     description: existingNotice?.description || "",
