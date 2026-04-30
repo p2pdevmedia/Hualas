@@ -48,6 +48,7 @@ export function PickupNoticeForm({
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [usePersonField, setUsePersonField] = useState(
     !!existingNotice?.alternatePersonName
   );
@@ -61,6 +62,36 @@ export function PickupNoticeForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.childId) {
+      newErrors.childId = "Please select a child";
+    }
+
+    if (!formData.description) {
+      newErrors.description = "Description is required";
+    }
+
+    if (usePersonField && !formData.alternatePersonName) {
+      newErrors.alternatePersonName = "Please enter a name";
+    }
+
+    if (!usePersonField && !formData.alternatePersonUserId) {
+      newErrors.alternatePersonUserId = "Please select a contact";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
 
     try {
@@ -145,7 +176,7 @@ export function PickupNoticeForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-2">Child</label>
+        <label className="block text-sm font-medium mb-2">Child *</label>
         <Select
           value={formData.childId}
           onValueChange={(value) =>
@@ -153,7 +184,7 @@ export function PickupNoticeForm({
           }
           disabled={!!existingNotice}
         >
-          <SelectTrigger>
+          <SelectTrigger className={errors.childId ? "border-red-500" : ""}>
             <SelectValue placeholder="Select a child" />
           </SelectTrigger>
           <SelectContent>
@@ -164,6 +195,9 @@ export function PickupNoticeForm({
             ))}
           </SelectContent>
         </Select>
+        {errors.childId && (
+          <p className="text-sm text-red-500 mt-1">{errors.childId}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -193,7 +227,7 @@ export function PickupNoticeForm({
       {!usePersonField ? (
         <div>
           <label className="block text-sm font-medium mb-2">
-            Contact (optional)
+            Contact *
           </label>
           <Select
             value={formData.alternatePersonUserId}
@@ -201,7 +235,7 @@ export function PickupNoticeForm({
               setFormData({ ...formData, alternatePersonUserId: value })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className={errors.alternatePersonUserId ? "border-red-500" : ""}>
               <SelectValue placeholder="Select a contact" />
             </SelectTrigger>
             <SelectContent>
@@ -212,10 +246,13 @@ export function PickupNoticeForm({
               ))}
             </SelectContent>
           </Select>
+          {errors.alternatePersonUserId && (
+            <p className="text-sm text-red-500 mt-1">{errors.alternatePersonUserId}</p>
+          )}
         </div>
       ) : (
         <div>
-          <label className="block text-sm font-medium mb-2">Name</label>
+          <label className="block text-sm font-medium mb-2">Name *</label>
           <Input
             value={formData.alternatePersonName}
             onChange={(e) =>
@@ -225,25 +262,34 @@ export function PickupNoticeForm({
               })
             }
             placeholder="e.g., Tía María, family friend"
-            required={usePersonField}
+            className={errors.alternatePersonName ? "border-red-500" : ""}
           />
+          {errors.alternatePersonName && (
+            <p className="text-sm text-red-500 mt-1">{errors.alternatePersonName}</p>
+          )}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium mb-2">Description</label>
+        <label className="block text-sm font-medium mb-2">Description *</label>
         <Textarea
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
           }
           placeholder="Why they're picking up, any special notes..."
-          required
+          className={errors.description ? "border-red-500" : ""}
         />
+        {errors.description && (
+          <p className="text-sm text-red-500 mt-1">{errors.description}</p>
+        )}
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading || !formData.childId}
+        >
           {loading ? "Saving..." : "Save Notice"}
         </Button>
         {existingNotice && (
