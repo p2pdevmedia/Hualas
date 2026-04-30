@@ -600,6 +600,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 : null,
             })),
             attendanceList: day.attendanceList,
+            pickupNotices: day.pickupNotices || [],
           }))}
         />
 
