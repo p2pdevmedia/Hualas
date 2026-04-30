@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import { ArrowLeft, Send, Bell } from 'lucide-react';
+import { ArrowLeft, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const POLL_THREAD_MS = 3000;
@@ -244,23 +243,8 @@ export default function ChatClient() {
             recipient ? 'hidden' : 'flex'
           )}
         >
-          <div className="border-b px-4 py-3">
-            <h1 className="text-xl font-bold tracking-tight mb-3">Comunicación</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setRecipient('')}
-                className="flex-1 rounded-md bg-primary text-primary-foreground px-3 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Mensajes
-              </button>
-              <Link
-                href="/profile/pickup-notices"
-                className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2"
-              >
-                <Bell className="h-4 w-4" />
-                Avisos
-              </Link>
-            </div>
+          <div className="border-b px-4 py-4">
+            <h1 className="text-xl font-bold tracking-tight">Mensajes</h1>
           </div>
           <div className="flex-1 overflow-y-auto">
             {contacts.length === 0 ? (

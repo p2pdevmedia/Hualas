@@ -224,7 +224,7 @@ export default function Navbar() {
                 >
                   {t.chat}
                 </Link>
-                {isMember && (
+                {(isMember || isAdmin) && (
                   <Link
                     href="/profile/pickup-notices"
                     className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
