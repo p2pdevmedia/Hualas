@@ -147,7 +147,7 @@ export default function Navbar() {
   const logoUrl = defaultLogo;
 
   const linkClass =
-    'opacity-80 hover:opacity-100 transition-opacity text-sm font-medium';
+    'opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 text-sm font-medium';
 
   const renderUnreadIcon = () => (
     <span
@@ -173,7 +173,7 @@ export default function Navbar() {
         : 'bg-white text-foreground'
     )}>
       <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5 transition-colors duration-200 hover:text-primary">
           <Image
             src={logoUrl}
             alt="Hualas Club logo"
@@ -188,7 +188,7 @@ export default function Navbar() {
         </Link>
 
         <button
-          className="rounded-md p-1.5 opacity-80 hover:opacity-100 md:hidden"
+          className="rounded-md p-1.5 opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 md:hidden"
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label="Toggle menu"
         >
@@ -220,14 +220,14 @@ export default function Navbar() {
               <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
                 <Link
                   href="/chat"
-                  className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                  className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                 >
                   {t.chat}
                 </Link>
                 {(isMember || isAdmin) && (
                   <Link
                     href="/profile/pickup-notices"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                   >
                     Avisos de Retiro
                   </Link>
@@ -249,13 +249,13 @@ export default function Navbar() {
                   <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
                     <Link
                       href="/admin/notifications"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                     >
                       Notificaciones
                     </Link>
                     <Link
                       href="/admin/audit-log"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                     >
                       Registro de auditoría
                     </Link>
@@ -312,19 +312,19 @@ export default function Navbar() {
                 <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
                   <Link
                     href="/profile"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                   >
                     {t.profile}
                   </Link>
                   <Link
                     href="/profile/children"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                   >
                     {actions.myChildren}
                   </Link>
                   <Link
                     href="/activities/cart"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                   >
                     <span className="inline-flex items-center gap-2">
                       <span>Carrito</span>
@@ -333,14 +333,14 @@ export default function Navbar() {
                   </Link>
                   <Link
                     href="/profile/payments"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                   >
                     Historial de pagos
                   </Link>
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value as Lang)}
-                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted cursor-pointer"
+                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted hover:text-primary transition-colors cursor-pointer"
                   >
                     {availableLanguages.map(({ code, flag, label }) => (
                       <option key={code} value={code}>
@@ -350,7 +350,7 @@ export default function Navbar() {
                   </select>
                   <button
                     onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="w-full text-left px-4 py-2 hover:bg-muted text-sm border-t text-black"
+                    className="w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                   >
                     {t.logout}
                   </button>
@@ -364,7 +364,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/register"
-                className="rounded-md bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25 transition-colors"
+                className="rounded-md bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25 hover:text-primary transition-all duration-200"
               >
                 {t.register}
               </Link>
@@ -548,7 +548,7 @@ export default function Navbar() {
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
                 className={cn(
-                  'bg-transparent opacity-80 text-sm w-fit',
+                  'bg-transparent opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 text-sm w-fit',
                   isScrolled
                     ? 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
                     : 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
@@ -587,7 +587,7 @@ export default function Navbar() {
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
                 className={cn(
-                  'bg-transparent opacity-80 text-sm w-fit',
+                  'bg-transparent opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 text-sm w-fit',
                   isScrolled
                     ? 'text-white [&>option]:bg-[#393f45] [&>option]:text-white'
                     : 'text-foreground [&>option]:bg-white [&>option]:text-foreground'
