@@ -318,6 +318,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     }));
   }
 
+  const isParticipantInActivity = registrations.length > 0;
+  const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
+
   if (canManageGroups) {
     const participantsForGroups = await prisma.activityParticipant.findMany({
       where: { activityId: activity.id },
@@ -557,7 +560,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           />
         )}
 
-        <ActivityDaysPanel
+        {canSeeSessions && <ActivityDaysPanel
           activityId={activity.id}
           canManageDays={canManageDays}
           professors={professorOptions}
@@ -602,7 +605,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             attendanceList: day.attendanceList,
             pickupNotices: day.pickupNotices || [],
           }))}
-        />
+        />}
 
         {isAdmin && (
           <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
