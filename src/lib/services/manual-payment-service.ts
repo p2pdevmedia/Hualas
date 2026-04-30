@@ -270,7 +270,7 @@ export async function createManualPaymentCheckout(input: {
     input.proofFile.name || 'proof.pdf'
   );
   const uploadedFile = await put(uploadPath, input.proofFile, {
-    access: 'public',
+    access: 'private',
     contentType: input.proofFile.type,
   });
 
