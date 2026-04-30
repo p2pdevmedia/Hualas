@@ -21,6 +21,7 @@ type Movement = {
   description: string;
   receiptNumber: string | null;
   receiptImage: string | null;
+  receiptImageUrl: string | null;
   createdBy: string;
 };
 
@@ -172,9 +173,9 @@ export default function MovementsTable({
                     {formatAmount(movement.amount)}
                   </td>
                   <td className="px-4 py-3">
-                    {movement.receiptImage ? (
+                    {movement.receiptImageUrl ? (
                       <a
-                        href={movement.receiptImage}
+                        href={movement.receiptImageUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-link hover:underline"

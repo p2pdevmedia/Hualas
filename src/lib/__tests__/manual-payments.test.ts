@@ -5,6 +5,10 @@ import {
   paymentStatusLabel,
   validateManualPaymentFile,
 } from '../manual-payments';
+import {
+  buildAccountingMovementReceiptUrl,
+  buildManualPaymentReceiptUrl,
+} from '../blob-urls';
 
 describe('manual payment helpers', () => {
   it('validates accepted proof files', () => {
@@ -67,5 +71,14 @@ describe('manual payment helpers', () => {
     expect(paymentStatusLabel('PENDING')).toBe('Pendiente');
     expect(paymentStatusLabel('APPROVED')).toBe('Aprobado');
     expect(paymentStatusLabel('REJECTED')).toBe('Rechazado');
+  });
+
+  it('builds proxy urls for private blob receipts', () => {
+    expect(buildManualPaymentReceiptUrl('payment-123')).toBe(
+      '/api/accounting/manual-payments/payment-123/receipt'
+    );
+    expect(buildAccountingMovementReceiptUrl('movement-456')).toBe(
+      '/api/accounting/movements/movement-456/receipt'
+    );
   });
 });

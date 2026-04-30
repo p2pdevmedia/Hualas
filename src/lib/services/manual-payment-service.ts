@@ -14,6 +14,7 @@ import {
   type ManualPaymentReviewEntry,
 } from '@/lib/manual-payments';
 import type { CartQuote } from '@/lib/cart-checkout';
+import { buildManualPaymentReceiptUrl } from '@/lib/blob-urls';
 
 type CurrentUser = {
   id: string;
@@ -147,7 +148,7 @@ function mapPaymentToReview(payment: {
     updatedAt: payment.updatedAt,
     payerName: payment.payerName,
     payerEmail: payment.payerEmail,
-    receiptUrl: payment.receiptUrl,
+    receiptUrl: buildManualPaymentReceiptUrl(payment.id),
     accountantComments: rawData.accountantComments ?? null,
     previousRejections: rawData.previousRejections ?? 0,
     proofContentType: rawData.proofContentType ?? null,

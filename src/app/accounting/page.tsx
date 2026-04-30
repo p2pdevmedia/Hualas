@@ -13,6 +13,7 @@ import {
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import { ReceiptText, ArrowRight } from 'lucide-react';
+import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -195,7 +196,9 @@ export default async function AccountingDashboardPage() {
                       <td className="py-3 pr-4">
                         {movement.receiptImage ? (
                           <a
-                            href={movement.receiptImage}
+                            href={buildAccountingMovementReceiptUrl(
+                              movement.id
+                            )}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-link hover:underline"

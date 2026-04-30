@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
+import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
 import MovementForm from '../../movement-form';
 
 export default async function EditMovementPage({
@@ -37,7 +38,9 @@ export default async function EditMovementPage({
           category: movement.category,
           description: movement.description,
           receiptNumber: movement.receiptNumber,
-          receiptImage: movement.receiptImage,
+          receiptImage: movement.receiptImage
+            ? buildAccountingMovementReceiptUrl(movement.id)
+            : null,
         }}
       />
     </div>

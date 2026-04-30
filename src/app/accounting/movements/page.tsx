@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { isAccountingRole } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import MovementsTable from './movements-table';
+import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
 
 type SearchParams = {
   type?: string;
@@ -74,6 +75,9 @@ export default async function MovementsPage({
           description: movement.description,
           receiptNumber: movement.receiptNumber,
           receiptImage: movement.receiptImage,
+          receiptImageUrl: movement.receiptImage
+            ? buildAccountingMovementReceiptUrl(movement.id)
+            : null,
           createdBy:
             `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
         }))}

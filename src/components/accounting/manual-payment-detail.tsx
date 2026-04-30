@@ -67,9 +67,7 @@ export default function ManualPaymentDetail({
   const status = formatManualPaymentStatus(payment.status);
   const proofIsPdf =
     payment.proofContentType === 'application/pdf' ||
-    payment.proofFileName?.toLowerCase().endsWith('.pdf') ||
-    payment.receiptUrl?.toLowerCase().endsWith('.pdf') ||
-    false;
+    payment.proofFileName?.toLowerCase().endsWith('.pdf');
 
   return (
     <section className="space-y-5 rounded-2xl border bg-card p-5 shadow-sm">
