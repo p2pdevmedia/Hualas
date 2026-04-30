@@ -18,11 +18,28 @@ export default async function PickupNoticesPage() {
 
   const isProfessor = user?.role === 'PROFESSOR' || user?.role === 'ADMIN';
 
-  const notices = await prisma.pickupNotice.findMany({
-    where: {
-      ...(isProfessor ? {} : { createdById: (session.user as any).id }),
+  let where: any = { deletedAt: null };
+
+  if (!isProfessor) {
+    // For parents: show own notices + notices for their children
+    const userChildren = await prisma.child.findMany({
+      where: { userId: (session.user as any).id },
+      select: { id: true },
+    });
+
+    const childIds = userChildren.map((c) => c.id);
+
+    where = {
       deletedAt: null,
-    },
+      OR: [
+        { createdById: (session.user as any).id },
+        { childId: { in: childIds } },
+      ],
+    };
+  }
+
+  const notices = await prisma.pickupNotice.findMany({
+    where,
     include: {
       activityDay: {
         include: {
@@ -89,11 +106,20 @@ export default async function PickupNoticesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {notices.map((notice) => (
+          {notices.map((notice) => {
+            const isOwnNotice = isProfessor || notice.createdById === (session.user as any).id;
+            return (
             <div
               key={notice.id}
-              className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+              className={`rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow ${
+                !isOwnNotice ? 'border-blue-200 bg-blue-50' : ''
+              }`}
             >
+              {!isOwnNotice && !isProfessor && (
+                <div className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                  Aviso de otro padre
+                </div>
+              )}
               {isProfessor ? (
                 // Professor view: show family info
                 <div className="space-y-4">
@@ -125,7 +151,7 @@ export default async function PickupNoticesPage() {
                   </div>
                 </div>
               ) : (
-                // Parent view: original layout
+                // Parent view
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="font-semibold text-lg mb-2">
@@ -137,6 +163,11 @@ export default async function PickupNoticesPage() {
                       </p>
                       <p>Hora: {notice.activityDay.schedule}</p>
                       <p>Hijo: {notice.child.name}</p>
+                      {!isOwnNotice && (
+                        <p className="mt-2 text-blue-700 font-medium">
+                          Creado por: {notice.createdBy.name}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -152,7 +183,7 @@ export default async function PickupNoticesPage() {
                   </div>
                 </div>
               )}
-              {!isProfessor && (
+              {!isProfessor && isOwnNotice && (
                 <div className="mt-4 flex gap-2">
                   <Link href={`/profile/pickup-notices/${notice.id}/edit`}>
                     <Button variant="outline">Editar</Button>
@@ -160,7 +191,8 @@ export default async function PickupNoticesPage() {
                 </div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>
