@@ -107,7 +107,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
       <div className="grid grid-cols-7 divide-x divide-y divide-border">
         {cells.map((dayNum, i) => {
           if (dayNum === null) {
-            return <div key={i} className="h-20 bg-muted/20" />;
+            return <div key={i} className="h-28 bg-muted/20" />;
           }
 
           const key = cellKey(dayNum);
@@ -131,7 +131,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
               onClick={() => hasActivity && setSelectedKey(isSelected ? null : key)}
               disabled={!hasActivity}
               className={[
-                'relative h-20 flex flex-col items-center pt-1.5 gap-0.5 transition-colors text-left',
+                'relative h-28 flex flex-col items-center pt-1.5 gap-1 transition-colors text-left',
                 isSelected ? 'bg-primary/10' : '',
                 hasActivity && !isSelected ? 'hover:bg-muted/60 cursor-pointer' : '',
                 !hasActivity ? 'cursor-default' : '',
@@ -158,9 +158,9 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
                       key={idx}
                       src={`/icons/${icon}`}
                       alt=""
-                      width={28}
-                      height={28}
-                      className="h-7 w-7 object-contain"
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 object-contain"
                     />
                   ))}
                 </div>
@@ -196,9 +196,9 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
                 <Image
                   src={`/icons/${d.sportIcon}`}
                   alt=""
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 shrink-0 object-contain"
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 shrink-0 object-contain"
                 />
               ) : (
                 <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
