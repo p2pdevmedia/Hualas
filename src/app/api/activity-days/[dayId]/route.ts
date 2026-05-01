@@ -71,6 +71,7 @@ export async function PUT(
       latitude: data.latitude,
       longitude: data.longitude,
       activityGroupId,
+      sportIcon: data.sportIcon ?? null,
       professors: {
         deleteMany: {},
         create: professorIds.map((userId) => ({

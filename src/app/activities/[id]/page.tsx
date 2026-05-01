@@ -587,6 +587,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             latitude: day.latitude,
             longitude: day.longitude,
             activityGroupId: day.activityGroupId,
+            sportIcon: day.sportIcon,
             activityGroup: day.activityGroup,
             canEdit: isAdmin,
             assignedProfessors: day.professors.map((assignment: any) => ({

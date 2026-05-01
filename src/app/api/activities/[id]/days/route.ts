@@ -74,6 +74,7 @@ export async function POST(
       latitude: data.latitude,
       longitude: data.longitude,
       activityGroupId,
+      sportIcon: data.sportIcon ?? null,
       professors: {
         create: professorIds.map((userId) => ({
           user: { connect: { id: userId } },

@@ -57,6 +57,7 @@ type ActivityDay = {
   latitude: number | null;
   longitude: number | null;
   activityGroupId: string | null;
+  sportIcon: string | null;
   activityGroup: {
     id: string;
     name: string;
@@ -318,6 +319,7 @@ export default function ActivityDaysPanel({
                           (professor) => professor.id
                         ),
                         activityGroupId: day.activityGroupId,
+                        sportIcon: day.sportIcon,
                       }}
                       onSaved={() => setEditingDayId(null)}
                       onCancel={() => setEditingDayId(null)}
