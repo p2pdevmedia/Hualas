@@ -132,6 +132,8 @@ model Activity {
   id           String                @id @default(cuid())
   name         String
   date         DateTime
+  endDate      DateTime
+  activityType ActivityType          @default(TEMPORARY)
   frequency    ActivityFrequency     @default(ONE_TIME)
   image        String?
   description  String?
@@ -580,6 +582,11 @@ enum ActivityFrequency {
   WEEKLY
   MONTHLY
   ONE_TIME
+}
+
+enum ActivityType {
+  TEMPORARY
+  ANNUAL
 }
 
 enum Gender {

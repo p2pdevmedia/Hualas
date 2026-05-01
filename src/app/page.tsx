@@ -1,28 +1,33 @@
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 
 export default async function Home() {
-  type ActivityWithParticipants = Prisma.ActivityGetPayload<{
-    include: { participants: true };
-  }>;
+  let activities: Awaited<
+    ReturnType<typeof listActivitiesWithParticipantCount>
+  > = [];
 
-  let activities: ActivityWithParticipants[] = [];
+  function formatDateRange(startDate: Date, endDate: Date) {
+    const start = startDate.toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'long',
+    });
+    const end = endDate.toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'long',
+    });
+
+    return start === end ? start : `${start} al ${end}`;
+  }
+
+  const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
+    TEMPORARY: 'Temporal',
+    ANNUAL: 'Anual',
+  };
 
   try {
-    activities = await prisma.activity.findMany({
-      include: { participants: true },
-      orderBy: { date: 'asc' },
-    });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === 'P2021'
-    ) {
-      activities = [];
-    } else {
-      throw e;
-    }
+    activities = await listActivitiesWithParticipantCount();
+  } catch {
+    activities = [];
   }
 
   return (
@@ -65,33 +70,27 @@ export default async function Home() {
                             }
                       }
                     >
-                      {activity.frequency &&
-                        activity.frequency !== 'ONE_TIME' && (
-                          <div className="p-3">
-                            <span
-                              className="text-xs rounded-full px-2 py-0.5 font-body"
-                              style={{
-                                background: 'rgba(123,163,168,0.2)',
-                                border: '1px solid rgba(123,163,168,0.4)',
-                                color: '#5a8c91',
-                              }}
-                            >
-                              {activity.frequency === 'WEEKLY'
-                                ? 'Semanal'
-                                : activity.frequency === 'MONTHLY'
-                                  ? 'Mensual'
-                                  : 'Diaria'}
-                            </span>
-                          </div>
-                        )}
+                      <div className="p-3">
+                        <span
+                          className="text-xs rounded-full px-2 py-0.5 font-body"
+                          style={{
+                            background: 'rgba(123,163,168,0.2)',
+                            border: '1px solid rgba(123,163,168,0.4)',
+                            color: '#5a8c91',
+                          }}
+                        >
+                          {
+                            activityTypeLabels[
+                              activity.activityType as keyof typeof activityTypeLabels
+                            ]
+                          }
+                        </span>
+                      </div>
                     </div>
                     <div className="p-4">
-                      {activity.date && (
+                      {activity.date && activity.endDate && (
                         <p className="text-xs text-muted-foreground mb-1 font-body uppercase tracking-wide">
-                          {activity.date.toLocaleDateString('es-AR', {
-                            day: 'numeric',
-                            month: 'long',
-                          })}
+                          {formatDateRange(activity.date, activity.endDate)}
                         </p>
                       )}
                       <div className="font-heading text-lg font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
@@ -99,8 +98,8 @@ export default async function Home() {
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground font-body">
                         {activity.capacity
-                          ? `${Math.max(activity.capacity - activity.participants.length, 0)} cupos disponibles`
-                          : `${activity.participants.length} inscriptos`}
+                          ? `${Math.max(activity.capacity - activity.participantCount, 0)} cupos disponibles`
+                          : `${activity.participantCount} inscriptos`}
                         {' · $'}
                         {activity.price}
                       </div>

@@ -23,7 +23,8 @@ interface EditActivityFormProps {
     id: string;
     name: string;
     date: string;
-    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
+    endDate: string;
+    activityType: 'TEMPORARY' | 'ANNUAL';
     description?: string | null;
     price: number;
     capacity?: number | null;
@@ -40,9 +41,10 @@ export default function EditActivityForm({
 }: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
-  const [frequency, setFrequency] = useState<
-    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
-  >(activity.frequency);
+  const [endDate, setEndDate] = useState(activity.endDate);
+  const [activityType, setActivityType] = useState<'TEMPORARY' | 'ANNUAL'>(
+    activity.activityType
+  );
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
   const [capacity, setCapacity] = useState(activity.capacity?.toString() ?? '');
@@ -50,7 +52,8 @@ export default function EditActivityForm({
     activity.professorIds
   );
 
-  const [existingGroups, setExistingGroups] = useState<ExistingGroup[]>(initialGroups);
+  const [existingGroups, setExistingGroups] =
+    useState<ExistingGroup[]>(initialGroups);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [groupError, setGroupError] = useState('');
@@ -83,7 +86,9 @@ export default function EditActivityForm({
       setNewGroupName('');
       setNewGroupDesc('');
     } catch (err) {
-      setGroupError(err instanceof Error ? err.message : 'Error al crear el grupo');
+      setGroupError(
+        err instanceof Error ? err.message : 'Error al crear el grupo'
+      );
     } finally {
       setCreatingGroup(false);
     }
@@ -99,7 +104,9 @@ export default function EditActivityForm({
       if (!res.ok) throw new Error('No se pudo eliminar el grupo');
       setExistingGroups((current) => current.filter((g) => g.id !== groupId));
     } catch (err) {
-      setGroupError(err instanceof Error ? err.message : 'Error al eliminar el grupo');
+      setGroupError(
+        err instanceof Error ? err.message : 'Error al eliminar el grupo'
+      );
     } finally {
       setDeletingGroupId(null);
     }
@@ -116,8 +123,9 @@ export default function EditActivityForm({
         body: JSON.stringify({
           name,
           date,
+          endDate,
+          activityType,
           description: description || undefined,
-          frequency,
           price: Number(price),
           capacity: capacity ? Number(capacity) : undefined,
           professorIds,
@@ -144,26 +152,41 @@ export default function EditActivityForm({
         className={inputClass}
         required
       />
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className={inputClass}
-      />
-      <select
-        value={frequency}
-        onChange={(e) =>
-          setFrequency(
-            e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
-          )
-        }
-        className={inputClass}
-      >
-        <option value="ONE_TIME">Un solo pago</option>
-        <option value="DAILY">Diaria</option>
-        <option value="WEEKLY">Semanal</option>
-        <option value="MONTHLY">Mensual</option>
-      </select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Fecha de inicio</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Fecha de fin</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className={inputClass}
+            required
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Tipo de actividad</label>
+        <select
+          value={activityType}
+          onChange={(e) =>
+            setActivityType(e.target.value as 'TEMPORARY' | 'ANNUAL')
+          }
+          className={inputClass}
+        >
+          <option value="TEMPORARY">Temporal</option>
+          <option value="ANNUAL">Anual</option>
+        </select>
+      </div>
       <textarea
         placeholder="Descripción"
         value={description}
@@ -190,6 +213,12 @@ export default function EditActivityForm({
         value={professorIds}
         onChange={setProfessorIds}
       />
+      {activityType === 'ANNUAL' && (
+        <p className="text-xs text-muted-foreground">
+          Cambiar fechas o tipo no regenera automáticamente las sesiones ya
+          creadas para esta actividad.
+        </p>
+      )}
 
       <div className="space-y-3 rounded-lg border bg-background p-4">
         <p className="text-sm font-semibold">Grupos</p>
@@ -261,9 +290,7 @@ export default function EditActivityForm({
           </Button>
         </div>
 
-        {groupError && (
-          <p className="text-xs text-destructive">{groupError}</p>
-        )}
+        {groupError && <p className="text-xs text-destructive">{groupError}</p>}
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}

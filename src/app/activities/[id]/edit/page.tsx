@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
 import EditActivityForm from './form';
 import ActivityImageUpload from '../../activity-image-upload';
@@ -19,15 +20,12 @@ export default async function EditActivityPage({
   ) {
     redirect('/');
   }
-  const activity: any = await prisma.activity.findUnique({
-    where: { id: params.id },
-    include: { professors: true },
-  });
+  const activity = await getActivityBaseRecordById(params.id);
   if (!activity) {
     redirect('/activities');
   }
 
-  const [professors, groups] = await Promise.all([
+  const [professors, groups, activityProfessorAssignments] = await Promise.all([
     prisma.user.findMany({
       where: { role: 'PROFESSOR', isActive: true },
       select: {
@@ -43,6 +41,10 @@ export default async function EditActivityPage({
       orderBy: { createdAt: 'asc' },
       select: { id: true, name: true, description: true },
     }),
+    prisma.activityProfessor.findMany({
+      where: { activityId: params.id },
+      select: { userId: true },
+    }),
   ]);
 
   return (
@@ -53,12 +55,13 @@ export default async function EditActivityPage({
           id: activity.id,
           name: activity.name,
           date: activity.date.toISOString().split('T')[0],
-          frequency: activity.frequency,
+          endDate: activity.endDate.toISOString().split('T')[0],
+          activityType: activity.activityType,
           description: activity.description ?? '',
           price: activity.price,
           capacity: activity.capacity ?? null,
-          professorIds: activity.professors.map(
-            (assignment: { userId: string }) => assignment.userId
+          professorIds: activityProfessorAssignments.map(
+            (assignment) => assignment.userId
           ),
         }}
         professors={professors}

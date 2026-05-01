@@ -4,8 +4,8 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivitiesHeading from '@/components/activities-heading';
 import DeleteActivityButton from './delete-activity-button';
+import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 export default async function ActivitiesPage() {
   const session = await getServerSession(authOptions);
@@ -16,26 +16,26 @@ export default async function ActivitiesPage() {
     redirect('/');
   }
 
-  let activities: any[] = [];
+  let activities: Awaited<
+    ReturnType<typeof listActivitiesWithParticipantCount>
+  > = [];
 
   try {
-    activities = await prisma.activity.findMany({
-      include: { participants: true },
-      orderBy: { date: 'asc' },
-    });
+    activities = await listActivitiesWithParticipantCount();
   } catch (e: any) {
     activities = [];
   }
 
-  const frequencyLabels: Record<
-    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME',
-    string
-  > = {
-    DAILY: 'Diaria',
-    WEEKLY: 'Semanal',
-    MONTHLY: 'Mensual',
-    ONE_TIME: 'Un solo pago',
+  const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
+    TEMPORARY: 'Temporal',
+    ANNUAL: 'Anual',
   };
+
+  function formatDateRange(startDate: Date, endDate: Date) {
+    const start = startDate.toLocaleDateString('es-AR');
+    const end = endDate.toLocaleDateString('es-AR');
+    return start === end ? start : `${start} al ${end}`;
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
@@ -67,18 +67,22 @@ export default async function ActivitiesPage() {
                 <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
                   <span>
                     {
-                      frequencyLabels[
-                        activity.frequency as keyof typeof frequencyLabels
+                      activityTypeLabels[
+                        activity.activityType as keyof typeof activityTypeLabels
                       ]
                     }
+                  </span>
+                  <span>·</span>
+                  <span>
+                    {formatDateRange(activity.date, activity.endDate)}
                   </span>
                   <span>·</span>
                   <span>${activity.price}</span>
                   <span>·</span>
                   <span>
                     {activity.capacity
-                      ? `${Math.max(activity.capacity - activity.participants.length, 0)} cupos restantes`
-                      : `${activity.participants.length} suscriptos`}
+                      ? `${Math.max(activity.capacity - activity.participantCount, 0)} cupos restantes`
+                      : `${activity.participantCount} suscriptos`}
                   </span>
                 </div>
               </div>
@@ -98,7 +102,7 @@ export default async function ActivitiesPage() {
                 <DeleteActivityButton
                   activityId={activity.id}
                   activityName={activity.name}
-                  hasParticipants={activity.participants.length > 0}
+                  hasParticipants={activity.participantCount > 0}
                 />
               </div>
             </li>

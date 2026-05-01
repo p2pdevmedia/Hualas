@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import type { Prisma } from '@prisma/client';
+import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
@@ -74,14 +75,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
   const isProfessor = session?.user.role === 'PROFESSOR';
 
-  const activity = await prisma.activity.findUnique({
-    where: { id: params.id },
-    include: {
-      professors: {
-        select: { userId: true },
-      },
-    },
-  });
+  const activity = await getActivityBaseRecordById(params.id);
 
   if (!activity) {
     return (
@@ -89,13 +83,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         Actividad no encontrada
       </main>
     );
-  }
-
-  if (
-    isProfessor &&
-    !activity.professors.some((prof) => prof.userId === session?.user.id)
-  ) {
-    redirect('/');
   }
 
   const [
@@ -247,6 +234,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       }),
   ]);
 
+  if (
+    isProfessor &&
+    !activityProfessors.some((prof) => prof.userId === session?.user.id)
+  ) {
+    redirect('/');
+  }
+
   // Create a map of participants for quick lookup
   const participantsMap = new Map(participants.map((p) => [p.id, p]));
 
@@ -262,12 +256,24 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     pickupNotices: pickupNoticesMap.get(day.id) || [],
   }));
 
-  const frequencyLabels: Record<string, string> = {
-    DAILY: 'Diaria',
-    WEEKLY: 'Semanal',
-    MONTHLY: 'Mensual',
-    ONE_TIME: 'Un solo pago',
+  const activityTypeLabels: Record<string, string> = {
+    TEMPORARY: 'Temporal',
+    ANNUAL: 'Anual',
   };
+  const activityDateRange = `${activity.date.toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })}${
+    activity.date.toISOString().slice(0, 10) ===
+    activity.endDate.toISOString().slice(0, 10)
+      ? ''
+      : ` al ${activity.endDate.toLocaleDateString('es-AR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })}`
+  }`;
   const enrolledCount = participants.length;
   const activityProfessorIds = activityProfessors.map(
     (assignment: { userId: string }) => assignment.userId
@@ -386,9 +392,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  label: 'Frecuencia',
+                  label: 'Tipo',
                   value:
-                    frequencyLabels[activity.frequency] ?? activity.frequency,
+                    activityTypeLabels[activity.activityType] ??
+                    activity.activityType,
                 },
                 { label: 'Precio', value: `$${activity.price}` },
                 {
@@ -404,12 +411,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   value: professorLabels.join(', '),
                 },
                 activity.date && {
-                  label: 'Fecha',
-                  value: activity.date.toLocaleDateString('es-AR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  }),
+                  label: 'Período',
+                  value: activityDateRange,
                 },
               ]
                 .filter(Boolean)
@@ -501,11 +504,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 <p className="font-heading text-3xl font-semibold">
                   ${activity.price}
                 </p>
-                {activity.frequency !== 'ONE_TIME' && (
-                  <p className="text-xs text-muted-foreground font-body mt-0.5">
-                    / {frequencyLabels[activity.frequency]?.toLowerCase()}
-                  </p>
-                )}
                 {hasCapacity && (
                   <p
                     className={`text-xs font-body mt-1 ${

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { activityCreateSchema } from '@/lib/validations/activity';
+import { activityUpdateSchema } from '@/lib/validations/activity';
 
 export async function PUT(
   req: Request,
@@ -15,7 +15,7 @@ export async function PUT(
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const data = activityCreateSchema.parse(await req.json());
+  const data = activityUpdateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds ?? []));
   if (data.professorIds !== undefined && professorIds.length > 0) {
     const validProfessors = await prisma.user.findMany({
@@ -34,27 +34,51 @@ export async function PUT(
     }
   }
 
-  const activity = await prisma.activity.update({
-    where: { id: params.id },
-    data: {
-      name: data.name,
-      date: data.date,
-      frequency: data.frequency,
-      image: data.image,
-      description: data.description,
-      price: data.price,
-      capacity: data.capacity,
-      professors:
-        data.professorIds === undefined
-          ? undefined
-          : {
-              deleteMany: {},
-              create: professorIds.map((userId) => ({
-                user: { connect: { id: userId } },
-              })),
-            },
-    },
+  const activity = await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<Array<{ id: string }>>`
+      UPDATE "Activity"
+      SET
+        "name" = ${data.name},
+        "date" = ${data.date},
+        "endDate" = ${data.endDate},
+        "activityType" = CAST(${data.activityType} AS "ActivityType"),
+        "frequency" = CAST(${data.frequency} AS "ActivityFrequency"),
+        "image" = ${data.image ?? null},
+        "description" = ${data.description ?? null},
+        "price" = ${data.price},
+        "capacity" = ${data.capacity ?? null}
+      WHERE "id" = ${params.id}
+      RETURNING "id"
+    `;
+
+    const activityId = rows[0]?.id;
+    if (!activityId) {
+      return null;
+    }
+
+    await tx.activityProfessor.deleteMany({
+      where: { activityId },
+    });
+
+    if (professorIds.length > 0) {
+      await tx.activityProfessor.createMany({
+        data: professorIds.map((userId) => ({
+          activityId,
+          userId,
+        })),
+      });
+    }
+
+    return { id: activityId };
   });
+
+  if (!activity) {
+    return NextResponse.json(
+      { error: 'Actividad no encontrada' },
+      { status: 404 }
+    );
+  }
+
   return NextResponse.json(activity);
 }
 

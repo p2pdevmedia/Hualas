@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { buildAnnualActivityDays } from '@/lib/activities/annual-schedule';
 import { activityCreateSchema } from '@/lib/validations/activity';
 
 export async function POST(req: Request) {
@@ -31,24 +32,79 @@ export async function POST(req: Request) {
     }
   }
 
-  const activity = await prisma.activity.create({
-    data: {
-      name: data.name,
-      date: data.date,
-      frequency: data.frequency,
-      image: data.image,
-      description: data.description,
-      price: data.price,
-      capacity: data.capacity,
-      professors:
-        data.professorIds === undefined
-          ? undefined
-          : {
-              create: professorIds.map((userId) => ({
-                user: { connect: { id: userId } },
-              })),
-            },
-    },
+  const created = await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<Array<{ id: string }>>`
+      INSERT INTO "Activity" (
+        "name",
+        "date",
+        "endDate",
+        "activityType",
+        "frequency",
+        "image",
+        "description",
+        "price",
+        "capacity"
+      )
+      VALUES (
+        ${data.name},
+        ${data.date},
+        ${data.endDate},
+        CAST(${data.activityType} AS "ActivityType"),
+        CAST(${data.frequency} AS "ActivityFrequency"),
+        ${data.image ?? null},
+        ${data.description ?? null},
+        ${data.price},
+        ${data.capacity ?? null}
+      )
+      RETURNING "id"
+    `;
+
+    const activityId = rows[0]?.id;
+
+    if (!activityId) {
+      throw new Error('No se pudo crear la actividad');
+    }
+
+    if (professorIds.length > 0) {
+      await tx.activityProfessor.createMany({
+        data: professorIds.map((userId) => ({
+          activityId,
+          userId,
+        })),
+      });
+    }
+
+    if (data.activityType === 'ANNUAL') {
+      const annualDays = buildAnnualActivityDays(
+        data.date,
+        data.endDate,
+        data.annualSchedules
+      );
+
+      for (const day of annualDays) {
+        const activityDay = await tx.activityDay.create({
+          data: {
+            activityId,
+            createdById: session.user.id,
+            date: day.date,
+            schedule: day.schedule,
+            description: day.description,
+            geoLocation: day.geoLocation,
+            latitude: day.latitude,
+            longitude: day.longitude,
+          },
+        });
+
+        await tx.activityDayProfessor.createMany({
+          data: professorIds.map((userId) => ({
+            activityDayId: activityDay.id,
+            userId,
+          })),
+        });
+      }
+    }
+
+    return { id: activityId };
   });
-  return NextResponse.json(activity);
+  return NextResponse.json(created);
 }
