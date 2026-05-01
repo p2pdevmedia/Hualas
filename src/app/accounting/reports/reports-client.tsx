@@ -11,6 +11,7 @@ type ReportData = {
   totalIncome: number;
   totalExpense: number;
   netBalance: number;
+  totalManualPayments: number;
   totalMp: number;
   byCategory: Record<string, { income: number; expense: number }>;
   movements: Array<{
@@ -23,6 +24,14 @@ type ReportData = {
     receiptNumber: string | null;
     receiptImage: string | null;
   }>;
+  manualPayments: Array<{
+    id: string;
+    paidAt: string | null;
+    amount: number;
+    customerName: string;
+    activities: string[];
+    receiptUrl: string | null;
+  }>;
   mpPayments: Array<{
     id: string;
     receiptDate: string | null;
@@ -30,6 +39,16 @@ type ReportData = {
     activityName: string;
     amount: number;
     participantName: string;
+  }>;
+  entries: Array<{
+    id: string;
+    date: string;
+    source: 'Movimiento manual' | 'Pago manual' | 'Mercado Pago';
+    type: 'INCOME' | 'EXPENSE';
+    category: string;
+    description: string;
+    amount: number;
+    reference: string | null;
   }>;
 };
 
@@ -85,38 +104,24 @@ export default function ReportsClient() {
   const downloadCsv = () => {
     if (!data) return;
     const lines = [
-      ['Tipo', 'Fecha', 'Categoría', 'Descripción', 'Monto', 'Recibo'].join(
-        ','
-      ),
-      ...data.movements.map((movement) =>
-        [
-          movement.type,
-          movement.date,
-          movement.category,
-          movement.description,
-          movement.amount,
-          movement.receiptNumber ?? '',
-        ]
-          .map((field) => `"${String(field).replaceAll('"', '""')}"`)
-          .join(',')
-      ),
-      '',
       [
-        'Pagos MP',
+        'Origen',
+        'Tipo',
         'Fecha',
-        'Actividad',
-        'Participante',
+        'Categoría',
+        'Descripción',
         'Monto',
-        'Recibo',
+        'Referencia',
       ].join(','),
-      ...data.mpPayments.map((payment) =>
+      ...data.entries.map((entry) =>
         [
-          'MP',
-          payment.receiptDate ?? '',
-          payment.activityName,
-          payment.participantName,
-          payment.amount,
-          payment.receipt ?? '',
+          entry.source,
+          entry.type,
+          entry.date,
+          entry.category,
+          entry.description,
+          entry.amount,
+          entry.reference ?? '',
         ]
           .map((field) => `"${String(field).replaceAll('"', '""')}"`)
           .join(',')
@@ -145,12 +150,15 @@ export default function ReportsClient() {
 
     autoTable(doc, {
       startY: 32,
-      head: [['Ingresos', 'Egresos', 'Balance', 'Cobrado MP']],
+      head: [
+        ['Ingresos', 'Egresos', 'Balance', 'Pagos manuales', 'Cobrado MP'],
+      ],
       body: [
         [
           formatAmount(data.totalIncome),
           formatAmount(data.totalExpense),
           formatAmount(data.netBalance),
+          formatAmount(data.totalManualPayments),
           formatAmount(data.totalMp),
         ],
       ],
@@ -168,13 +176,15 @@ export default function ReportsClient() {
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
-      head: [['Movimientos', 'Monto', 'Tipo']],
-      body: data.movements
+      head: [['Origen', 'Fecha', 'Descripción', 'Monto', 'Referencia']],
+      body: data.entries
         .slice(0, 20)
-        .map((movement) => [
-          `${formatAccountingDate(movement.date)} - ${movement.description}`,
-          formatAmount(movement.amount),
-          movement.type,
+        .map((entry) => [
+          entry.source,
+          formatAccountingDate(entry.date),
+          `${entry.category} - ${entry.description}`,
+          formatAmount(entry.amount),
+          entry.reference ?? '',
         ]),
     });
 
@@ -245,11 +255,15 @@ export default function ReportsClient() {
 
       {data && (
         <>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {[
               { label: 'Ingresos', value: formatAmount(data.totalIncome) },
               { label: 'Egresos', value: formatAmount(data.totalExpense) },
               { label: 'Balance', value: formatAmount(data.netBalance) },
+              {
+                label: 'Pagos manuales',
+                value: formatAmount(data.totalManualPayments),
+              },
               { label: 'Cobrado MP', value: formatAmount(data.totalMp) },
             ].map((card) => (
               <article
@@ -269,6 +283,10 @@ export default function ReportsClient() {
               <h3 className="text-lg font-semibold tracking-tight">
                 Resumen por categoría
               </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Los pagos manuales y de Mercado Pago se consolidan en el total
+                de ingresos.
+              </p>
               <div className="mt-4 overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="border-b text-left text-muted-foreground">

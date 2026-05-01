@@ -37,6 +37,7 @@ export default async function AccountingDashboardPage() {
     monthMovements,
     recentMovements,
     monthPayments,
+    monthManualPayments,
     pendingManualPayments,
   ] = await Promise.all([
     prisma.accountingMovement.findMany({
@@ -71,6 +72,19 @@ export default async function AccountingDashboardPage() {
         child: { select: { name: true, lastName: true } },
       },
     }),
+    prisma.payment.aggregate({
+      where: {
+        provider: 'MANUAL_TRANSFER',
+        status: 'APPROVED',
+        paidAt: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
     prisma.payment.count({
       where: {
         provider: 'MANUAL_TRANSFER',
@@ -79,16 +93,19 @@ export default async function AccountingDashboardPage() {
     }),
   ]);
 
-  const totalIncome = monthMovements
+  const manualIncome = monthManualPayments._sum.amount ?? 0;
+  const totalMp = monthPayments.reduce(
+    (sum, payment) => sum + payment.activity.price * 100,
+    0
+  );
+  const totalMovementIncome = monthMovements
     .filter((movement) => movement.type === 'INCOME')
     .reduce((sum, movement) => sum + movement.amount, 0);
   const totalExpense = monthMovements
     .filter((movement) => movement.type === 'EXPENSE')
     .reduce((sum, movement) => sum + movement.amount, 0);
-  const totalMp = monthPayments.reduce(
-    (sum, payment) => sum + payment.activity.price * 100,
-    0
-  );
+  const totalIncome = totalMovementIncome + manualIncome + totalMp;
+  const netBalance = totalIncome - totalExpense;
   const recentPayments = monthPayments.slice(0, 5);
 
   return (
@@ -98,7 +115,7 @@ export default async function AccountingDashboardPage() {
           {
             label: 'Ingresos del mes',
             value: formatAmount(totalIncome),
-            helper: `${formatAccountingDate(monthStart)} - ${formatAccountingDate(monthEnd)}`,
+            helper: 'Incluye movimientos, pagos manuales y MP',
           },
           {
             label: 'Egresos del mes',
@@ -107,8 +124,13 @@ export default async function AccountingDashboardPage() {
           },
           {
             label: 'Balance neto',
-            value: formatAmount(totalIncome - totalExpense),
+            value: formatAmount(netBalance),
             helper: 'Ingresos menos egresos',
+          },
+          {
+            label: 'Pagos manuales',
+            value: formatAmount(manualIncome),
+            helper: 'Transferencias aprobadas del mes',
           },
           {
             label: 'Cobrado por MP',
