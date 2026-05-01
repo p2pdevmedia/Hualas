@@ -14,7 +14,10 @@ import {
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import { ReceiptText, ArrowRight } from 'lucide-react';
-import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
+import {
+  buildAccountingMovementReceiptUrl,
+  buildManualPaymentReceiptUrl,
+} from '@/lib/blob-urls';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -23,6 +26,17 @@ function startOfMonth(date: Date) {
 function endOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 }
+
+type RecentAccountingEntry = {
+  id: string;
+  date: Date;
+  origin: 'MOVEMENT' | 'MANUAL_PAYMENT';
+  type: 'INCOME' | 'EXPENSE';
+  category: string;
+  description: string;
+  amount: number;
+  receiptUrl: string | null;
+};
 
 export default async function AccountingDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -38,8 +52,9 @@ export default async function AccountingDashboardPage() {
     monthMovements,
     recentMovements,
     monthPayments,
-    monthManualPayments,
-    pendingManualPayments,
+    approvedManualPayments,
+    verifiedManualPaymentsCount,
+    pendingManualPaymentsCount,
   ] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: {
@@ -79,10 +94,23 @@ export default async function AccountingDashboardPage() {
         status: 'APPROVED',
       },
       select: {
+        id: true,
         amount: true,
+        payerName: true,
+        order: {
+          select: {
+            responsibleName: true,
+          },
+        },
         paidAt: true,
         updatedAt: true,
         createdAt: true,
+      },
+    }),
+    prisma.payment.count({
+      where: {
+        provider: 'MANUAL_TRANSFER',
+        status: 'APPROVED',
       },
     }),
     prisma.payment.count({
@@ -93,7 +121,7 @@ export default async function AccountingDashboardPage() {
     }),
   ]);
 
-  const manualIncome = monthManualPayments
+  const manualIncome = approvedManualPayments
     .filter((payment) => {
       const paymentDate = getAccountingPaymentDate(payment);
       return paymentDate
@@ -113,6 +141,45 @@ export default async function AccountingDashboardPage() {
     .reduce((sum, movement) => sum + movement.amount, 0);
   const totalIncome = totalMovementIncome + manualIncome + totalMp;
   const netBalance = totalIncome - totalExpense;
+  const recentMovementEntries: RecentAccountingEntry[] = recentMovements.map(
+    (movement) => ({
+      id: movement.id,
+      date: movement.date,
+      origin: 'MOVEMENT',
+      type: movement.type,
+      category: movement.category,
+      description: movement.description,
+      amount: movement.amount,
+      receiptUrl: movement.receiptImage
+        ? buildAccountingMovementReceiptUrl(movement.id)
+        : null,
+    })
+  );
+  const recentManualPaymentEntries: RecentAccountingEntry[] =
+    approvedManualPayments
+      .map((payment) => {
+        const paymentDate = getAccountingPaymentDate(payment);
+        if (!paymentDate) return null;
+
+        return {
+          id: payment.id,
+          date: paymentDate,
+          origin: 'MANUAL_PAYMENT' as const,
+          type: 'INCOME' as const,
+          category: 'Pagos manuales',
+          description:
+            payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
+          amount: payment.amount,
+          receiptUrl: buildManualPaymentReceiptUrl(payment.id),
+        };
+      })
+      .filter((entry): entry is RecentAccountingEntry => entry !== null);
+  const recentAccountingEntries: RecentAccountingEntry[] = [
+    ...recentMovementEntries,
+    ...recentManualPaymentEntries,
+  ]
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 10);
   const recentPayments = monthPayments.slice(0, 5);
 
   return (
@@ -136,8 +203,8 @@ export default async function AccountingDashboardPage() {
           },
           {
             label: 'Pagos manuales verificados',
-            value: formatAmount(manualIncome),
-            helper: 'Transferencias aprobadas o verificadas del mes',
+            value: String(verifiedManualPaymentsCount),
+            helper: 'Transferencias aprobadas',
           },
           {
             label: 'Cobrado por MP',
@@ -146,7 +213,7 @@ export default async function AccountingDashboardPage() {
           },
           {
             label: 'Manuales pendientes',
-            value: String(pendingManualPayments),
+            value: String(pendingManualPaymentsCount),
             helper: 'Transferencias esperando revisión',
           },
         ].map((card) => (
@@ -171,7 +238,7 @@ export default async function AccountingDashboardPage() {
                 Últimos movimientos
               </h2>
               <p className="text-sm text-muted-foreground">
-                Últimos 10 registros manuales.
+                Movimientos y pagos manuales aprobados más recientes.
               </p>
             </div>
             <Button asChild variant="outline">
@@ -187,6 +254,7 @@ export default async function AccountingDashboardPage() {
               <thead className="border-b text-left text-muted-foreground">
                 <tr>
                   <th className="py-2 pr-4 font-medium">Fecha</th>
+                  <th className="py-2 pr-4 font-medium">Origen</th>
                   <th className="py-2 pr-4 font-medium">Tipo</th>
                   <th className="py-2 pr-4 font-medium">Categoría</th>
                   <th className="py-2 pr-4 font-medium">Descripción</th>
@@ -195,39 +263,42 @@ export default async function AccountingDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {recentMovements.length === 0 ? (
+                {recentAccountingEntries.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-10 text-center text-muted-foreground"
                     >
                       No hay movimientos cargados.
                     </td>
                   </tr>
                 ) : (
-                  recentMovements.map((movement) => (
-                    <tr key={movement.id}>
+                  recentAccountingEntries.map((entry) => (
+                    <tr key={`${entry.origin}:${entry.id}`}>
                       <td className="py-3 pr-4">
-                        {formatAccountingDate(movement.date)}
+                        {formatAccountingDate(entry.date)}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {entry.origin === 'MOVEMENT'
+                          ? 'Movimiento'
+                          : 'Pago manual'}
                       </td>
                       <td className="py-3 pr-4">
                         <span
-                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${movementTypeClass(movement.type)}`}
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${movementTypeClass(entry.type)}`}
                         >
-                          {movementTypeLabel(movement.type)}
+                          {movementTypeLabel(entry.type)}
                         </span>
                       </td>
-                      <td className="py-3 pr-4">{movement.category}</td>
-                      <td className="py-3 pr-4">{movement.description}</td>
+                      <td className="py-3 pr-4">{entry.category}</td>
+                      <td className="py-3 pr-4">{entry.description}</td>
                       <td className="py-3 pr-4 font-medium">
-                        {formatAmount(movement.amount)}
+                        {formatAmount(entry.amount)}
                       </td>
                       <td className="py-3 pr-4">
-                        {movement.receiptImage ? (
+                        {entry.receiptUrl ? (
                           <a
-                            href={buildAccountingMovementReceiptUrl(
-                              movement.id
-                            )}
+                            href={entry.receiptUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-link hover:underline"
