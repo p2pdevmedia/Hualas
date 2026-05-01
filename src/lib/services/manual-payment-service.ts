@@ -312,10 +312,14 @@ export async function createManualPaymentCheckout(input: {
 
       for (const [index, item] of input.quote.activityLines.entries()) {
         const source = input.quote.validatedItems[index];
+        const isChildTarget =
+          source?.target && source.target !== 'self';
         await tx.orderItem.create({
           data: {
             orderId: order.id,
-            memberId: input.user.id,
+            // null for child registrations — PostgreSQL treats NULL != NULL in
+            // unique constraints, so multiple child items never conflict.
+            memberId: isChildTarget ? null : input.user.id,
             activityId: item.id,
             billableConceptId: activityFeeConceptId,
             description: item.name,
