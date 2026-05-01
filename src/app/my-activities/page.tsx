@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { isCounterRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
-import ActivityCalendar, { type CalendarActivityDay } from './activity-calendar';
+import ActivityCalendar, {
+  type CalendarActivityDay,
+} from './activity-calendar';
 
 type UpcomingSession = {
   id: string;
@@ -15,6 +17,13 @@ type UpcomingSession = {
   sportIcon: string | null;
   latitude: number | null;
   longitude: number | null;
+  activityGroupId: string | null;
+};
+
+type ActivityParticipantSummary = {
+  label: string;
+  isChild: boolean;
+  groupId: string | null;
 };
 
 export default async function MyActivitiesPage() {
@@ -32,6 +41,7 @@ export default async function MyActivitiesPage() {
     id: string;
     childId: string | null;
     child: { id: string; name: string; lastName: string | null } | null;
+    groupMembership: { activityGroupId: string | null } | null;
     activity: {
       id: string;
       name: string;
@@ -60,6 +70,11 @@ export default async function MyActivitiesPage() {
             select: { id: true, name: true, date: true, frequency: true },
           },
           child: { select: { id: true, name: true, lastName: true } },
+          groupMembership: {
+            select: {
+              activityGroupId: true,
+            },
+          },
         },
         orderBy: { activity: { date: 'asc' } },
       }),
@@ -80,8 +95,8 @@ export default async function MyActivitiesPage() {
 
   const activityIds = [
     ...new Set([
-      ...participations.map(p => p.activity.id),
-      ...professorAssignments.map(a => a.activity.id),
+      ...participations.map((p) => p.activity.id),
+      ...professorAssignments.map((a) => a.activity.id),
     ]),
   ];
 
@@ -110,7 +125,7 @@ export default async function MyActivitiesPage() {
         },
         orderBy: { date: 'asc' },
       });
-      calendarDays = raw.map(d => ({
+      calendarDays = raw.map((d) => ({
         id: d.id,
         date: d.date.toISOString().slice(0, 10),
         activityId: d.activity.id,
@@ -141,6 +156,7 @@ export default async function MyActivitiesPage() {
           sportIcon: true,
           latitude: true,
           longitude: true,
+          activityGroupId: true,
           activityId: true,
         },
         orderBy: { date: 'asc' },
@@ -156,11 +172,14 @@ export default async function MyActivitiesPage() {
             sportIcon: s.sportIcon,
             latitude: s.latitude,
             longitude: s.longitude,
+            activityGroupId: s.activityGroupId,
           });
           sessionsByActivity.set(s.activityId, list);
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const grouped = new Map<
@@ -168,7 +187,7 @@ export default async function MyActivitiesPage() {
     {
       activity: (typeof participations)[number]['activity'];
       labels: Set<string>;
-      participantNames: Set<string>;
+      participants: ActivityParticipantSummary[];
     }
   >();
 
@@ -180,12 +199,22 @@ export default async function MyActivitiesPage() {
     const entry = grouped.get(key);
     if (entry) {
       entry.labels.add(label);
-      entry.participantNames.add(label);
+      entry.participants.push({
+        label,
+        isChild: Boolean(p.child),
+        groupId: p.groupMembership?.activityGroupId ?? null,
+      });
     } else {
       grouped.set(key, {
         activity: p.activity,
         labels: new Set([label]),
-        participantNames: new Set([label]),
+        participants: [
+          {
+            label,
+            isChild: Boolean(p.child),
+            groupId: p.groupMembership?.activityGroupId ?? null,
+          },
+        ],
       });
     }
   }
@@ -199,7 +228,7 @@ export default async function MyActivitiesPage() {
       grouped.set(key, {
         activity: assignment.activity,
         labels: new Set(['Profesor']),
-        participantNames: new Set(),
+        participants: [],
       });
     }
   }
@@ -207,7 +236,7 @@ export default async function MyActivitiesPage() {
   const items = Array.from(grouped.values()).map((entry) => ({
     activity: entry.activity,
     labels: Array.from(entry.labels),
-    participantNames: Array.from(entry.participantNames),
+    participants: entry.participants,
     sessions: sessionsByActivity.get(entry.activity.id) ?? [],
   }));
 
@@ -227,113 +256,125 @@ export default async function MyActivitiesPage() {
 
       <div className="mt-6">
         {items.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">
-              <p>Todavía no tenés actividades asociadas.</p>
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {items.map(({ activity, labels, participantNames, sessions }) => (
-                <li
-                  key={activity.id}
-                  className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
-                >
-                  {/* Header: nombre + participantes */}
-                  <div>
-                    <Link
-                      href={`/activities/${activity.id}`}
-                      className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
-                    >
-                      {activity.name}
-                    </Link>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {labels.map((label) => (
-                        <span
-                          key={label}
-                          className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                    </div>
+          <div className="py-16 text-center text-muted-foreground">
+            <p>Todavía no tenés actividades asociadas.</p>
+          </div>
+        ) : (
+          <ul className="space-y-4">
+            {items.map(({ activity, labels, participants, sessions }) => (
+              <li
+                key={activity.id}
+                className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
+              >
+                {/* Header: nombre + participantes */}
+                <div>
+                  <Link
+                    href={`/activities/${activity.id}`}
+                    className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
+                  >
+                    {activity.name}
+                  </Link>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {labels.map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
+                      >
+                        {label}
+                      </span>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Próximas sesiones */}
-                  {sessions.length > 0 && (
-                    <div className="space-y-2 border-t pt-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Próximas sesiones
-                      </p>
-                      <ul className="space-y-2">
-                        {sessions.map((s) => {
-                          const mapHref =
-                            s.latitude != null && s.longitude != null
-                              ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
-                              : null;
-                          const dateLabel = new Date(
-                            s.date + 'T12:00:00'
-                          ).toLocaleDateString('es-AR', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                          });
-                          return (
-                            <li
-                              key={s.id}
-                              className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
-                            >
-                              {s.sportIcon ? (
-                                <Image
-                                  src={`/icons/${s.sportIcon}`}
-                                  alt=""
-                                  width={56}
-                                  height={56}
-                                  className="h-14 w-14 shrink-0 object-contain"
-                                />
-                              ) : (
-                                <span className="h-14 w-14 shrink-0" />
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <p className="text-sm font-medium leading-tight">
-                                    {dateLabel} · {s.schedule}
-                                  </p>
-                                  {participantNames.length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {participantNames.map((name) => (
-                                        <span
-                                          key={name}
-                                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                                        >
-                                          {name}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {s.geoLocation}
+                {/* Próximas sesiones */}
+                {sessions.length > 0 && (
+                  <div className="space-y-2 border-t pt-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Próximas sesiones
+                    </p>
+                    <ul className="space-y-2">
+                      {sessions.map((s) => {
+                        const sessionParticipantNames = Array.from(
+                          new Set(
+                            (s.activityGroupId
+                              ? participants.filter(
+                                  (participant) =>
+                                    participant.isChild &&
+                                    participant.groupId === s.activityGroupId
+                                )
+                              : participants
+                            ).map((participant) => participant.label)
+                          )
+                        );
+                        const mapHref =
+                          s.latitude != null && s.longitude != null
+                            ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
+                            : null;
+                        const dateLabel = new Date(
+                          s.date + 'T12:00:00'
+                        ).toLocaleDateString('es-AR', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                        });
+                        return (
+                          <li
+                            key={s.id}
+                            className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
+                          >
+                            {s.sportIcon ? (
+                              <Image
+                                src={`/icons/${s.sportIcon}`}
+                                alt=""
+                                width={56}
+                                height={56}
+                                className="h-14 w-14 shrink-0 object-contain"
+                              />
+                            ) : (
+                              <span className="h-14 w-14 shrink-0" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <p className="text-sm font-medium leading-tight">
+                                  {dateLabel} · {s.schedule}
                                 </p>
+                                {sessionParticipantNames.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {sessionParticipantNames.map((name) => (
+                                      <span
+                                        key={name}
+                                        className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                      >
+                                        {name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                              {mapHref && (
-                                <a
-                                  href={mapHref}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="shrink-0 text-xs text-link hover:underline underline-offset-4"
-                                >
-                                  Mapa
-                                </a>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+                              <p className="truncate text-xs text-muted-foreground">
+                                {s.geoLocation}
+                              </p>
+                            </div>
+                            {mapHref && (
+                              <a
+                                href={mapHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="shrink-0 text-xs text-link hover:underline underline-offset-4"
+                              >
+                                Mapa
+                              </a>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </main>
   );
