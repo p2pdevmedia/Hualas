@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityDayCreateSchema } from '@/lib/validations/activity';
+import { notifyActivityDayCreated } from '@/lib/notifications/notification-service';
 
 export async function POST(
   req: Request,
@@ -74,6 +75,7 @@ export async function POST(
       latitude: data.latitude,
       longitude: data.longitude,
       activityGroupId,
+      sportIcon: data.sportIcon ?? null,
       professors: {
         create: professorIds.map((userId) => ({
           user: { connect: { id: userId } },
@@ -81,6 +83,10 @@ export async function POST(
       },
     },
   });
+
+  notifyActivityDayCreated(activityDay.id).catch((err) =>
+    console.error('[notifications] notifyActivityDayCreated failed', err),
+  );
 
   return NextResponse.json(activityDay);
 }

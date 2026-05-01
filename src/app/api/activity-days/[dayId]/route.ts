@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityDayUpdateSchema } from '@/lib/validations/activity';
+import { notifyActivityDayUpdated } from '@/lib/notifications/notification-service';
 
 export async function PUT(
   req: Request,
@@ -21,6 +22,9 @@ export async function PUT(
     select: {
       id: true,
       activityId: true,
+      date: true,
+      schedule: true,
+      geoLocation: true,
     },
   });
 
@@ -71,6 +75,7 @@ export async function PUT(
       latitude: data.latitude,
       longitude: data.longitude,
       activityGroupId,
+      sportIcon: data.sportIcon ?? null,
       professors: {
         deleteMany: {},
         create: professorIds.map((userId) => ({
@@ -93,6 +98,15 @@ export async function PUT(
       },
     },
   });
+
+  const dateChanged = day.date.getTime() !== new Date(data.date).getTime();
+  const scheduleChanged = day.schedule !== data.schedule;
+  const geoChanged = day.geoLocation !== data.geoLocation;
+  if (dateChanged || scheduleChanged || geoChanged) {
+    notifyActivityDayUpdated(updatedDay.id).catch((err) =>
+      console.error('[notifications] notifyActivityDayUpdated failed', err),
+    );
+  }
 
   return NextResponse.json(updatedDay);
 }

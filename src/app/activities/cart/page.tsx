@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import PaymentMethodSelector, {
@@ -15,6 +15,10 @@ type QuoteResponse = {
     amount: number;
     targetLabel: string;
   }>;
+  discountLines: Array<{
+    amount: number;
+    label: string;
+  }>;
   socialFeeLines: Array<{
     participant: {
       userId: string;
@@ -24,9 +28,23 @@ type QuoteResponse = {
     label: string;
   }>;
   totalActivityAmount: number;
+  totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalAmount: number;
   socialFeeAmount: number;
+};
+
+type AvailableActivity = {
+  id: string;
+  name: string;
+  date: string;
+  price: number;
+};
+
+type ChildOption = {
+  id: string;
+  name: string;
+  lastName: string;
 };
 
 function formatMoney(amount: number) {
@@ -42,6 +60,12 @@ export default function ActivitiesCartPage() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
+  const [availableActivities, setAvailableActivities] = useState<
+    AvailableActivity[]
+  >([]);
+  const [availableLoading, setAvailableLoading] = useState(false);
+  const [children, setChildren] = useState<ChildOption[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<'self' | string>('self');
 
   useEffect(() => {
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -115,6 +139,86 @@ export default function ActivitiesCartPage() {
     return () => controller.abort();
   }, [hydrated, items]);
 
+  useEffect(() => {
+    if (!hydrated || items.length === 0) {
+      setAvailableActivities([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchAvailable = async () => {
+      setAvailableLoading(true);
+      try {
+        const response = await fetch('/api/activities/cart/available', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+          signal: controller.signal,
+        });
+
+        const data = (await response.json().catch(() => ({}))) as {
+          activities?: AvailableActivity[];
+        };
+        if (!response.ok) {
+          setAvailableActivities([]);
+          return;
+        }
+
+        setAvailableActivities(
+          Array.isArray(data.activities) ? data.activities : []
+        );
+      } catch (fetchError) {
+        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
+          setAvailableActivities([]);
+        }
+      } finally {
+        setAvailableLoading(false);
+      }
+    };
+
+    fetchAvailable();
+    return () => controller.abort();
+  }, [hydrated, items]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch('/api/children', {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          setChildren([]);
+          return;
+        }
+
+        const data = (await response.json().catch(() => [])) as ChildOption[];
+        setChildren(Array.isArray(data) ? data : []);
+      } catch (fetchError) {
+        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
+          setChildren([]);
+        }
+      }
+    };
+
+    fetchChildren();
+    return () => controller.abort();
+  }, []);
+
+  const targetOptions = useMemo(() => {
+    const childOptions = children.map((child) => ({
+      value: child.id,
+      label: `${child.name} ${child.lastName}`.trim(),
+    }));
+
+    return [{ value: 'self', label: 'Para mí' }, ...childOptions];
+  }, [children]);
+
+  const selectedTargetLabel =
+    targetOptions.find((option) => option.value === selectedTarget)?.label ??
+    'Para mí';
+
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
     window.localStorage.setItem(
@@ -166,7 +270,8 @@ export default function ActivitiesCartPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">Carrito de actividades</h1>
         <p className="text-sm text-muted-foreground">
-          El total incluye automáticamente la cuota social si corresponde.
+          El total incluye automáticamente la cuota social si corresponde y
+          aplica descuento familiar cuando hay dos hijos o más.
         </p>
       </header>
 
@@ -203,6 +308,75 @@ export default function ActivitiesCartPage() {
             ))}
           </section>
 
+          <section className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
+            <h2 className="text-lg font-semibold">Sumar actividades</h2>
+            <p className="text-sm text-muted-foreground">
+              Podés agregar otras actividades antes de finalizar el pago.
+            </p>
+            <label className="space-y-1 block">
+              <span className="text-sm font-medium">Inscribir a</span>
+              <select
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                value={selectedTarget}
+                onChange={(event) => setSelectedTarget(event.target.value)}
+              >
+                {targetOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {availableLoading ? (
+              <p className="text-sm text-muted-foreground">
+                Buscando actividades disponibles...
+              </p>
+            ) : availableActivities.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay actividades adicionales disponibles.
+              </p>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {availableActivities.map((activity) => (
+                  <article
+                    key={activity.id}
+                    className="rounded-md border p-4 space-y-2"
+                  >
+                    <p className="font-medium">{activity.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(activity.date).toLocaleString('es-AR', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold">
+                        {formatMoney(activity.price)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          persist([
+                            ...items,
+                            {
+                              activityId: activity.id,
+                              activityName: activity.name,
+                              price: activity.price,
+                              target: selectedTarget,
+                              targetLabel: selectedTargetLabel,
+                            },
+                          ])
+                        }
+                      >
+                        Agregar
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
           <section className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm md:grid-cols-2">
             <div className="space-y-3">
               <h2 className="text-lg font-semibold">Resumen</h2>
@@ -212,12 +386,38 @@ export default function ActivitiesCartPage() {
                 </p>
               ) : quote ? (
                 <div className="space-y-2 text-sm">
+                  <div className="space-y-1">
+                    {quote.activityLines.map((line, index) => (
+                      <div
+                        key={`${line.id}-${index}`}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <span>
+                          {line.name} · {line.targetLabel}
+                        </span>
+                        <span className="font-medium">
+                          {formatMoney(line.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                   <div className="flex items-center justify-between gap-4">
                     <span>Subtotal actividades</span>
                     <span className="font-medium">
                       {formatMoney(quote.totalActivityAmount)}
                     </span>
                   </div>
+                  {quote.discountLines.map((line, index) => (
+                    <div
+                      key={`${line.label}-${index}`}
+                      className="flex items-center justify-between gap-4 text-emerald-700"
+                    >
+                      <span>{line.label}</span>
+                      <span className="font-medium">
+                        -{formatMoney(line.amount)}
+                      </span>
+                    </div>
+                  ))}
                   <div className="flex items-center justify-between gap-4">
                     <span>Cuotas sociales</span>
                     <span className="font-medium">

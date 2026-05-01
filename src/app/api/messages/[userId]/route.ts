@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { notifyChatMessage } from '@/lib/notifications/notification-service';
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +15,7 @@ export async function GET(
 
   const otherUserId = params.userId;
 
+  const markedAt = new Date();
   await prisma.message.updateMany({
     where: {
       readAt: null,
@@ -24,9 +26,30 @@ export async function GET(
       },
     },
     data: {
-      readAt: new Date(),
+      readAt: markedAt,
     },
   });
+
+  const unreadChatNotifications = await prisma.notification.findMany({
+    where: {
+      userId: session.user.id,
+      type: 'CHAT_MESSAGE_NEW',
+      readAt: null,
+    },
+    select: { id: true, data: true },
+  });
+  const toMarkIds = unreadChatNotifications
+    .filter((n) => {
+      const d = n.data as { senderId?: string } | null;
+      return d?.senderId === otherUserId;
+    })
+    .map((n) => n.id);
+  if (toMarkIds.length > 0) {
+    await prisma.notification.updateMany({
+      where: { id: { in: toMarkIds } },
+      data: { readAt: markedAt },
+    });
+  }
 
   const conversations = await prisma.conversation.findMany({
     where: {
@@ -122,6 +145,10 @@ export async function POST(
       body: content,
     },
   });
+
+  notifyChatMessage(message.id).catch((err) =>
+    console.error('[notifications] notifyChatMessage failed', err),
+  );
 
   return NextResponse.json({
     from: message.senderId,

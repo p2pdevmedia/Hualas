@@ -83,36 +83,51 @@ function sanitizeFileName(name: string) {
 }
 
 async function getBillableConceptIds() {
-  const [activityFeeConcept, socialFeeConcept] = await prisma.$transaction([
-    prisma.billableConcept.upsert({
-      where: { code: BillableConceptCode.ACTIVITY_FEE },
-      create: {
-        code: BillableConceptCode.ACTIVITY_FEE,
-        name: 'Cuota de actividad',
-        active: true,
-      },
-      update: {
-        active: true,
-      },
-      select: { id: true },
-    }),
-    prisma.billableConcept.upsert({
-      where: { code: BillableConceptCode.SOCIAL_FEE },
-      create: {
-        code: BillableConceptCode.SOCIAL_FEE,
-        name: 'Cuota social',
-        active: true,
-      },
-      update: {
-        active: true,
-      },
-      select: { id: true },
-    }),
-  ]);
+  const [activityFeeConcept, socialFeeConcept, discountConcept] =
+    await prisma.$transaction([
+      prisma.billableConcept.upsert({
+        where: { code: BillableConceptCode.ACTIVITY_FEE },
+        create: {
+          code: BillableConceptCode.ACTIVITY_FEE,
+          name: 'Cuota de actividad',
+          active: true,
+        },
+        update: {
+          active: true,
+        },
+        select: { id: true },
+      }),
+      prisma.billableConcept.upsert({
+        where: { code: BillableConceptCode.SOCIAL_FEE },
+        create: {
+          code: BillableConceptCode.SOCIAL_FEE,
+          name: 'Cuota social',
+          active: true,
+        },
+        update: {
+          active: true,
+        },
+        select: { id: true },
+      }),
+      prisma.billableConcept.upsert({
+        where: { code: BillableConceptCode.DISCOUNT },
+        create: {
+          code: BillableConceptCode.DISCOUNT,
+          name: 'Descuento familiar',
+          active: true,
+        },
+        update: {
+          name: 'Descuento familiar',
+          active: true,
+        },
+        select: { id: true },
+      }),
+    ]);
 
   return {
     activityFeeConceptId: activityFeeConcept.id,
     socialFeeConceptId: socialFeeConcept.id,
+    discountConceptId: discountConcept.id,
   };
 }
 
@@ -285,11 +300,13 @@ export async function createManualPaymentCheckout(input: {
   });
 
   try {
-    const { activityFeeConceptId, socialFeeConceptId } =
+    const { activityFeeConceptId, socialFeeConceptId, discountConceptId } =
       await getBillableConceptIds();
     const payment = await prisma.$transaction(async (tx) => {
       const now = new Date();
       const period = currentPeriod();
+      const subtotal =
+        input.quote.totalActivityAmount + input.quote.totalSocialFeeAmount;
       const order = await tx.order.create({
         data: {
           responsibleUserId: input.user.id,
@@ -303,8 +320,8 @@ export async function createManualPaymentCheckout(input: {
           periodMonth: period.month,
           periodYear: period.year,
           status: 'PENDING_PAYMENT',
-          subtotal: input.quote.totalAmount,
-          discountTotal: 0,
+          subtotal,
+          discountTotal: input.quote.totalDiscountAmount,
           surchargeTotal: 0,
           total: input.quote.totalAmount,
         },
@@ -312,10 +329,13 @@ export async function createManualPaymentCheckout(input: {
 
       for (const [index, item] of input.quote.activityLines.entries()) {
         const source = input.quote.validatedItems[index];
+        const isChildTarget = source?.target && source.target !== 'self';
         await tx.orderItem.create({
           data: {
             orderId: order.id,
-            memberId: input.user.id,
+            // null for child registrations — PostgreSQL treats NULL != NULL in
+            // unique constraints, so multiple child items never conflict.
+            memberId: isChildTarget ? null : input.user.id,
             activityId: item.id,
             billableConceptId: activityFeeConceptId,
             description: item.name,
@@ -346,16 +366,41 @@ export async function createManualPaymentCheckout(input: {
         });
       }
 
-      for (const socialFeeLine of input.quote.socialFeeLines) {
+      if (input.quote.totalDiscountAmount > 0) {
+        await tx.orderItem.create({
+          data: {
+            orderId: order.id,
+            memberId: input.user.id,
+            billableConceptId: discountConceptId,
+            description: 'Descuento familiar',
+            quantity: 1,
+            unitPrice: -input.quote.totalDiscountAmount,
+            total: -input.quote.totalDiscountAmount,
+            periodMonth: period.month,
+            periodYear: period.year,
+          },
+        });
+      }
+
+      if (input.quote.socialFeeLines.length > 0) {
+        const totalSocialFee = input.quote.socialFeeLines.reduce(
+          (sum, line) => sum + line.amount,
+          0
+        );
+        const socialFeeDescription =
+          input.quote.socialFeeLines.length === 1
+            ? input.quote.socialFeeLines[0].label
+            : `Cuota social (${input.quote.socialFeeLines.length} participantes)`;
+
         await tx.orderItem.create({
           data: {
             orderId: order.id,
             memberId: input.user.id,
             billableConceptId: socialFeeConceptId,
-            description: socialFeeLine.label,
-            quantity: 1,
-            unitPrice: socialFeeLine.amount,
-            total: socialFeeLine.amount,
+            description: socialFeeDescription,
+            quantity: input.quote.socialFeeLines.length,
+            unitPrice: input.quote.socialFeeAmount,
+            total: totalSocialFee,
             periodMonth: period.month,
             periodYear: period.year,
           },
@@ -385,6 +430,7 @@ export async function createManualPaymentCheckout(input: {
             proofContentType:
               input.proofFile.type || 'application/octet-stream',
             socialFeeAmount: input.quote.socialFeeAmount,
+            familyDiscountAmount: input.quote.totalDiscountAmount,
             socialFeeParticipants: input.quote.socialFeeParticipants,
             validatedItems: input.quote.validatedItems,
           }),

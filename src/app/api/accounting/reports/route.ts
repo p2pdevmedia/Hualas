@@ -3,7 +3,12 @@ import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isAccountingRole } from '@/lib/accounting';
+import { getAccountingPaymentDate, isAccountingRole } from '@/lib/accounting';
+import {
+  buildAccountingReportEntries,
+  buildAccountingCategoryTotals,
+  summarizeAccounting,
+} from '@/lib/accounting-summary';
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -20,10 +25,37 @@ export async function GET(request: Request) {
   if (to) dateFilter.lte = new Date(to);
   const hasDateFilter = Object.keys(dateFilter).length > 0;
 
-  const [movements, mpPayments] = await Promise.all([
+  const [movements, manualPayments, mpPayments] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: hasDateFilter ? { date: dateFilter } : undefined,
       orderBy: { date: 'desc' },
+    }),
+    prisma.payment.findMany({
+      where: {
+        provider: 'MANUAL_TRANSFER',
+        status: 'APPROVED',
+      },
+      orderBy: { paidAt: 'desc' },
+      select: {
+        id: true,
+        paidAt: true,
+        updatedAt: true,
+        createdAt: true,
+        amount: true,
+        receiptUrl: true,
+        payerName: true,
+        order: {
+          select: {
+            responsibleName: true,
+            responsibleEmail: true,
+            items: {
+              select: {
+                activity: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
     }),
     prisma.activityParticipant.findMany({
       where: {
@@ -38,29 +70,61 @@ export async function GET(request: Request) {
     }),
   ]);
 
-  const totalIncome = movements
-    .filter((m) => m.type === 'INCOME')
-    .reduce((s, m) => s + m.amount, 0);
-  const totalExpense = movements
-    .filter((m) => m.type === 'EXPENSE')
-    .reduce((s, m) => s + m.amount, 0);
-  const totalMp = mpPayments.reduce((s, p) => s + p.activity.price * 100, 0);
+  const manualIncomePayments = manualPayments
+    .filter((payment) => {
+      const paymentDate = getAccountingPaymentDate(payment);
+      if (!paymentDate) return false;
+      return hasDateFilter
+        ? paymentDate >= (from ? new Date(from) : paymentDate) &&
+            paymentDate <= (to ? new Date(to) : paymentDate)
+        : true;
+    })
+    .map((payment) => ({
+      id: payment.id,
+      paidAt: payment.paidAt ?? payment.updatedAt ?? payment.createdAt,
+      amount: payment.amount,
+      customerName: payment.payerName ?? payment.order.responsibleName,
+      activities: payment.order.items
+        .map((item) => item.activity?.name)
+        .filter((name): name is string => Boolean(name)),
+      receiptUrl: payment.receiptUrl,
+    }));
 
-  const byCategory: Record<string, { income: number; expense: number }> = {};
-  for (const m of movements) {
-    if (!byCategory[m.category])
-      byCategory[m.category] = { income: 0, expense: 0 };
-    if (m.type === 'INCOME') byCategory[m.category].income += m.amount;
-    else byCategory[m.category].expense += m.amount;
-  }
+  const reportMpPayments = mpPayments.map((payment) => ({
+    id: payment.id,
+    receiptDate: payment.receiptDate,
+    amount: payment.activity.price * 100,
+    participantName: payment.child
+      ? `${payment.child.name} ${payment.child.lastName ?? ''}`.trim()
+      : `${payment.user.name ?? ''} ${payment.user.lastName ?? ''}`.trim(),
+    activityName: payment.activity.name,
+    receipt: payment.receipt,
+  }));
+
+  const summary = summarizeAccounting({
+    movements,
+    manualPayments: manualIncomePayments,
+    mpPayments: reportMpPayments,
+  });
+  const entries = buildAccountingReportEntries({
+    movements,
+    manualPayments: manualIncomePayments,
+    mpPayments: reportMpPayments,
+  });
+
+  const totalMp = summary.mpIncome;
+
+  const byCategory = buildAccountingCategoryTotals(entries);
 
   return NextResponse.json({
-    totalIncome,
-    totalExpense,
-    netBalance: totalIncome - totalExpense,
+    totalIncome: summary.totalIncome,
+    totalExpense: summary.totalExpense,
+    netBalance: summary.netBalance,
+    totalManualPayments: summary.manualIncome,
     totalMp,
     byCategory,
     movements,
+    manualPayments: manualIncomePayments,
     mpPayments: mpPayments.map((p) => ({
       id: p.id,
       receiptDate: p.receiptDate,
@@ -71,5 +135,6 @@ export async function GET(request: Request) {
         ? `${p.child.name} ${p.child.lastName ?? ''}`.trim()
         : `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim(),
     })),
+    entries,
   });
 }

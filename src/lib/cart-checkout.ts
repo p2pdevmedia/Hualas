@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { getActivityParticipantKey } from '@/lib/activity-participants';
 import {
   getSocialFeeAmount,
   hasSocialFeeForCurrentMonth,
@@ -26,10 +27,17 @@ type SocialFeeSummary = {
   label: string;
 };
 
+type DiscountSummary = {
+  amount: number;
+  label: string;
+};
+
 export type CartQuote = {
   activityLines: ActivitySummary[];
+  discountLines: DiscountSummary[];
   socialFeeLines: SocialFeeSummary[];
   totalActivityAmount: number;
+  totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalAmount: number;
   socialFeeAmount: number;
@@ -64,6 +72,17 @@ export async function buildCartQuote({
   }
 
   const uniqueIds = [...new Set(items.map((item) => item.activityId))];
+  const seenSelections = new Set<string>();
+  for (const item of items) {
+    const selectionKey = `${item.activityId}:${normalizeTarget(item.target) ?? 'self'}`;
+    if (seenSelections.has(selectionKey)) {
+      throw new CartQuoteError(
+        409,
+        'No podés agregar la misma actividad más de una vez para la misma inscripción.'
+      );
+    }
+    seenSelections.add(selectionKey);
+  }
   const activities = await prisma.activity.findMany({
     where: { id: { in: uniqueIds } },
     include: { participants: { select: { id: true } } },
@@ -121,6 +140,35 @@ export async function buildCartQuote({
     }
   }
 
+  const distinctChildIds = new Set(childTargets);
+
+  const participantKeys = items.map((item) =>
+    getActivityParticipantKey(
+      item.activityId,
+      userId,
+      normalizeTarget(item.target)
+    )
+  );
+  const existingParticipants = await prisma.activityParticipant.findMany({
+    where: {
+      participantKey: { in: participantKeys },
+    },
+    select: {
+      participantKey: true,
+      activity: { select: { name: true } },
+    },
+  });
+
+  if (existingParticipants.length > 0) {
+    const repeatedActivityName = existingParticipants[0]?.activity.name;
+    throw new CartQuoteError(
+      409,
+      repeatedActivityName
+        ? `Ya existe una inscripción para ${repeatedActivityName}.`
+        : 'Ya existe una inscripción para una de las actividades seleccionadas.'
+    );
+  }
+
   const activityLines = items.map((item) => {
     const activity = activityById.get(item.activityId)!;
     return {
@@ -131,6 +179,24 @@ export async function buildCartQuote({
         item.targetLabel ?? (item.target === 'self' ? 'Para mí' : 'Menor'),
     };
   });
+
+  const childActivityAmount = items.reduce((sum, item) => {
+    const childId = normalizeTarget(item.target);
+    if (!childId) {
+      return sum;
+    }
+
+    const activity = activityById.get(item.activityId);
+    return sum + (activity ? Number(activity.price) : 0);
+  }, 0);
+
+  const totalDiscountAmount =
+    distinctChildIds.size >= 2 ? Math.round(childActivityAmount * 0.1) : 0;
+
+  const discountLines: DiscountSummary[] =
+    totalDiscountAmount > 0
+      ? [{ amount: totalDiscountAmount, label: 'Descuento familiar' }]
+      : [];
 
   const participantByKey = new Map<string, SocialFeeParticipant>();
   for (const item of items) {
@@ -179,10 +245,13 @@ export async function buildCartQuote({
 
   return {
     activityLines,
+    discountLines,
     socialFeeLines,
     totalActivityAmount,
+    totalDiscountAmount,
     totalSocialFeeAmount,
-    totalAmount: totalActivityAmount + totalSocialFeeAmount,
+    totalAmount:
+      totalActivityAmount - totalDiscountAmount + totalSocialFeeAmount,
     socialFeeAmount,
     socialFeeParticipants,
     validatedItems: items,
@@ -219,5 +288,14 @@ export function toMercadoPagoItems(quote: CartQuote) {
     category_id: 'services' as const,
   }));
 
-  return [...activityItems, ...socialFeeItems];
+  const discountItems = quote.discountLines.map((line, index) => ({
+    id: `discount:${index}`,
+    title: line.label,
+    quantity: 1,
+    unit_price: -line.amount,
+    currency_id: 'ARS' as const,
+    category_id: 'services' as const,
+  }));
+
+  return [...activityItems, ...discountItems, ...socialFeeItems];
 }

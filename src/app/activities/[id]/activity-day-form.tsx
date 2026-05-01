@@ -1,10 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ProfessorPicker from '../professor-picker';
+import { SPORT_ICONS } from '@/lib/sport-icons';
 
 type ProfessorOption = {
   id: string;
@@ -26,6 +28,7 @@ type ActivityDayValues = {
   coordinates: Coordinates | null;
   professorIds: string[];
   activityGroupId: string | null;
+  sportIcon: string | null;
 };
 
 type GroupOption = {
@@ -70,6 +73,7 @@ function buildInitialState(
       coordinates: null,
       professorIds: defaultProfessorIds,
       activityGroupId: null,
+      sportIcon: null,
     }
   );
 }
@@ -107,6 +111,9 @@ export default function ActivityDayForm({
   const [activityGroupId, setActivityGroupId] = useState<string | null>(
     buildInitialState(initialValues, defaultProfessorIds).activityGroupId
   );
+  const [sportIcon, setSportIcon] = useState<string | null>(
+    buildInitialState(initialValues, defaultProfessorIds).sportIcon
+  );
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -120,6 +127,7 @@ export default function ActivityDayForm({
     setCoordinates(null);
     setProfessorIds(defaultProfessorIds);
     setActivityGroupId(null);
+    setSportIcon(null);
   };
 
   async function submitForm(e: React.FormEvent) {
@@ -150,6 +158,7 @@ export default function ActivityDayForm({
             longitude: coordinates.longitude,
             professorIds,
             activityGroupId,
+            sportIcon: sportIcon || null,
           }),
         }
       );
@@ -209,6 +218,33 @@ export default function ActivityDayForm({
       <div className="space-y-2">
         <p className="text-sm font-medium">Punto en el mapa</p>
         <LocationMapPicker value={coordinates} onChange={setCoordinates} />
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Deporte / ícono</p>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+          {SPORT_ICONS.map((icon) => (
+            <button
+              key={icon.file}
+              type="button"
+              onClick={() => setSportIcon(sportIcon === icon.file ? null : icon.file)}
+              className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
+                sportIcon === icon.file
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-background text-muted-foreground hover:bg-muted'
+              }`}
+              title={icon.label}
+            >
+              <Image
+                src={`/icons/${icon.file}`}
+                alt={icon.label}
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
+              <span className="text-center leading-tight">{icon.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
       <textarea
         value={description}

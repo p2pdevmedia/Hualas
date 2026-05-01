@@ -37,8 +37,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       activityLines: quote.activityLines,
+      discountLines: quote.discountLines,
       socialFeeLines: quote.socialFeeLines,
       totalActivityAmount: quote.totalActivityAmount,
+      totalDiscountAmount: quote.totalDiscountAmount,
       totalSocialFeeAmount: quote.totalSocialFeeAmount,
       totalAmount: quote.totalAmount,
       socialFeeAmount: quote.socialFeeAmount,

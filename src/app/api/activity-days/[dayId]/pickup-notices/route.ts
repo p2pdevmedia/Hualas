@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPickupNoticeSchema } from "@/lib/validations/pickup-notice";
+import { notifyPickupNoticeCreated } from "@/lib/notifications/notification-service";
 import { z } from "zod";
 
 export async function POST(
@@ -103,6 +104,9 @@ export async function POST(
             acknowledgments: true,
           },
         });
+        notifyPickupNoticeCreated(restoredNotice.id).catch((err) =>
+          console.error('[notifications] notifyPickupNoticeCreated failed', err),
+        );
         return NextResponse.json(restoredNotice, { status: 201 });
       }
     }
@@ -121,6 +125,10 @@ export async function POST(
         acknowledgments: true,
       },
     });
+
+    notifyPickupNoticeCreated(notice.id).catch((err) =>
+      console.error('[notifications] notifyPickupNoticeCreated failed', err),
+    );
 
     return NextResponse.json(notice, { status: 201 });
   } catch (error) {

@@ -174,6 +174,7 @@ export async function POST(req: Request) {
         userId: (session.user as { id: string }).id,
         environment,
         socialFeeAmount: quote.socialFeeAmount,
+        familyDiscountAmount: quote.totalDiscountAmount,
         socialFeeParticipants: JSON.stringify(quote.socialFeeParticipants),
       },
     },

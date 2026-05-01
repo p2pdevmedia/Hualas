@@ -37,6 +37,7 @@ export type ManualPaymentRawData = {
   reviewedBy?: string;
   previousRejections?: number;
   socialFeeAmount?: number;
+  familyDiscountAmount?: number;
   socialFeeParticipants?: Array<{
     userId: string;
     childId: string | null;
@@ -120,8 +121,7 @@ export function getManualPaymentRawData(
               ? (entry as { target: string }).target
               : undefined;
           const targetLabel =
-            typeof (entry as { targetLabel?: unknown }).targetLabel ===
-            'string'
+            typeof (entry as { targetLabel?: unknown }).targetLabel === 'string'
               ? (entry as { targetLabel: string }).targetLabel
               : undefined;
           return { activityId, target, targetLabel };
@@ -205,6 +205,10 @@ export function getManualPaymentRawData(
       typeof rawData.socialFeeAmount === 'number'
         ? rawData.socialFeeAmount
         : undefined,
+    familyDiscountAmount:
+      typeof rawData.familyDiscountAmount === 'number'
+        ? rawData.familyDiscountAmount
+        : undefined,
     socialFeeParticipants,
     validatedItems,
     reviews,
@@ -245,6 +249,7 @@ export function createManualPaymentRawData(input: {
   proofFileName: string;
   proofContentType: string;
   socialFeeAmount?: number;
+  familyDiscountAmount?: number;
   socialFeeParticipants?: Array<{
     userId: string;
     childId: string | null;
@@ -262,6 +267,7 @@ export function createManualPaymentRawData(input: {
     proofContentType: input.proofContentType,
     previousRejections: 0,
     socialFeeAmount: input.socialFeeAmount ?? 0,
+    familyDiscountAmount: input.familyDiscountAmount ?? 0,
     socialFeeParticipants: input.socialFeeParticipants ?? [],
     validatedItems: input.validatedItems ?? [],
     reviews: [

@@ -13,7 +13,6 @@ export default async function Home() {
     activities = await prisma.activity.findMany({
       include: { participants: true },
       orderBy: { date: 'asc' },
-      take: 6,
     });
   } catch (e) {
     if (
@@ -34,16 +33,10 @@ export default async function Home() {
       {/* Próximas actividades */}
       <section className="py-12 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-end justify-between mb-8">
+          <div className="mb-8">
             <h2 className="font-heading text-3xl font-semibold">
               Próximas actividades
             </h2>
-            <Link
-              href="/activities"
-              className="text-sm text-link hover:text-link/80 underline underline-offset-4 font-body"
-            >
-              Ver todas
-            </Link>
           </div>
 
           {activities.length === 0 ? (
