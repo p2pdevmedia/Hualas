@@ -2,6 +2,7 @@ type AnnualScheduleTemplate = {
   weekday: number;
   schedule: string;
   description?: string;
+  groupTempId?: string;
   geoLocation: string;
   latitude: number;
   longitude: number;

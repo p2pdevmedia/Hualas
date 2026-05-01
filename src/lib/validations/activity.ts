@@ -25,9 +25,16 @@ const annualScheduleSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
   description: z.string().optional(),
+  groupTempId: z.string().min(1).optional(),
   geoLocation: z.string().min(1),
   latitude: z.number(),
   longitude: z.number(),
+});
+
+const activityGroupDraftSchema = z.object({
+  tempId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
 });
 
 const activityBaseSchema = z.object({
@@ -48,6 +55,7 @@ const activityBaseSchema = z.object({
 
 export const activityCreateSchema = activityBaseSchema
   .extend({
+    groups: z.array(activityGroupDraftSchema).optional().default([]),
     annualSchedules: z.array(annualScheduleSchema).optional().default([]),
   })
   .superRefine((data, ctx) => {

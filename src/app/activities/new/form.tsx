@@ -24,6 +24,7 @@ type AnnualScheduleDraft = {
   weekday: string;
   schedule: string;
   description: string;
+  groupTempId: string;
   geoLocation: string;
   coordinates: Coordinates | null;
 };
@@ -58,6 +59,7 @@ function createEmptyAnnualScheduleDraft(): AnnualScheduleDraft {
     weekday: '1',
     schedule: '',
     description: '',
+    groupTempId: '',
     geoLocation: '',
     coordinates: null,
   };
@@ -181,6 +183,7 @@ export default function CreateActivityForm({
                 weekday: Number(draft.weekday),
                 schedule: draft.schedule.trim(),
                 description: draft.description.trim() || undefined,
+                groupTempId: draft.groupTempId || undefined,
                 geoLocation: draft.geoLocation.trim(),
                 latitude: draft.coordinates.latitude,
                 longitude: draft.coordinates.longitude,
@@ -200,6 +203,11 @@ export default function CreateActivityForm({
           price: Number(price),
           capacity: capacity ? Number(capacity) : undefined,
           professorIds,
+          groups: groups.map((group) => ({
+            tempId: group.tempId,
+            name: group.name,
+            description: group.description || undefined,
+          })),
           annualSchedules: normalizedAnnualSchedules,
         }),
       });
@@ -210,23 +218,6 @@ export default function CreateActivityForm({
       }
 
       const json = await res.json();
-
-      for (const group of groups) {
-        const groupRes = await fetch(`/api/activities/${json.id}/groups`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: group.name,
-            description: group.description || undefined,
-          }),
-        });
-
-        if (!groupRes.ok) {
-          throw new Error(
-            'La actividad se creó, pero falló la creación de grupos'
-          );
-        }
-      }
 
       setSuccess('Actividad creada');
       resetForm();
@@ -389,6 +380,26 @@ export default function CreateActivityForm({
                       }
                       className={inputClass}
                     />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Grupo</label>
+                    <select
+                      value={draft.groupTempId}
+                      onChange={(e) =>
+                        updateAnnualScheduleDraft(draft.tempId, {
+                          groupTempId: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">Sin grupo</option>
+                      {groups.map((group) => (
+                        <option key={group.tempId} value={group.tempId}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <input
