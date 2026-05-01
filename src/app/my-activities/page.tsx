@@ -168,6 +168,7 @@ export default async function MyActivitiesPage() {
     {
       activity: (typeof participations)[number]['activity'];
       labels: Set<string>;
+      participantNames: Set<string>;
     }
   >();
 
@@ -179,10 +180,12 @@ export default async function MyActivitiesPage() {
     const entry = grouped.get(key);
     if (entry) {
       entry.labels.add(label);
+      entry.participantNames.add(label);
     } else {
       grouped.set(key, {
         activity: p.activity,
         labels: new Set([label]),
+        participantNames: new Set([label]),
       });
     }
   }
@@ -196,6 +199,7 @@ export default async function MyActivitiesPage() {
       grouped.set(key, {
         activity: assignment.activity,
         labels: new Set(['Profesor']),
+        participantNames: new Set(),
       });
     }
   }
@@ -203,6 +207,7 @@ export default async function MyActivitiesPage() {
   const items = Array.from(grouped.values()).map((entry) => ({
     activity: entry.activity,
     labels: Array.from(entry.labels),
+    participantNames: Array.from(entry.participantNames),
     sessions: sessionsByActivity.get(entry.activity.id) ?? [],
   }));
 
@@ -227,7 +232,7 @@ export default async function MyActivitiesPage() {
             </div>
           ) : (
             <ul className="space-y-4">
-              {items.map(({ activity, labels, sessions }) => (
+              {items.map(({ activity, labels, participantNames, sessions }) => (
                 <li
                   key={activity.id}
                   className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
@@ -288,9 +293,23 @@ export default async function MyActivitiesPage() {
                                 <span className="h-14 w-14 shrink-0" />
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium leading-tight">
-                                  {dateLabel} · {s.schedule}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <p className="text-sm font-medium leading-tight">
+                                    {dateLabel} · {s.schedule}
+                                  </p>
+                                  {participantNames.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {participantNames.map((name) => (
+                                        <span
+                                          key={name}
+                                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                        >
+                                          {name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                                 <p className="truncate text-xs text-muted-foreground">
                                   {s.geoLocation}
                                 </p>
