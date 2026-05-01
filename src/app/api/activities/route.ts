@@ -74,6 +74,21 @@ export async function POST(req: Request) {
       });
     }
 
+    const groupIdByTempId = new Map<string, string>();
+    if (data.groups.length > 0) {
+      for (const group of data.groups) {
+        const createdGroup = await tx.activityGroup.create({
+          data: {
+            activityId,
+            name: group.name,
+            description: group.description,
+          },
+          select: { id: true },
+        });
+        groupIdByTempId.set(group.tempId, createdGroup.id);
+      }
+    }
+
     if (data.activityType === 'ANNUAL') {
       const annualDays = buildAnnualActivityDays(
         data.date,
@@ -82,6 +97,14 @@ export async function POST(req: Request) {
       );
 
       for (const day of annualDays) {
+        const activityGroupId = day.groupTempId
+          ? groupIdByTempId.get(day.groupTempId)
+          : null;
+
+        if (day.groupTempId && !activityGroupId) {
+          throw new Error('Una sesión anual referencia un grupo inválido');
+        }
+
         const activityDay = await tx.activityDay.create({
           data: {
             activityId,
@@ -89,6 +112,7 @@ export async function POST(req: Request) {
             date: day.date,
             schedule: day.schedule,
             description: day.description,
+            activityGroupId,
             geoLocation: day.geoLocation,
             latitude: day.latitude,
             longitude: day.longitude,
