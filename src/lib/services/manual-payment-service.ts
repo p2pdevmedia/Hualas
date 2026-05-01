@@ -413,7 +413,7 @@ export async function createManualPaymentCheckout(input: {
           orderId: order.id,
           provider: 'MANUAL_TRANSFER',
           providerPaymentId: null,
-          amount: input.quote.totalAmount,
+          amount: input.quote.totalAmount * 100,
           currency: 'ARS',
           status: 'PENDING',
           payerName:
