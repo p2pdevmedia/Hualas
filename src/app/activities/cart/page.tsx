@@ -15,6 +15,10 @@ type QuoteResponse = {
     amount: number;
     targetLabel: string;
   }>;
+  discountLines: Array<{
+    amount: number;
+    label: string;
+  }>;
   socialFeeLines: Array<{
     participant: {
       userId: string;
@@ -24,6 +28,7 @@ type QuoteResponse = {
     label: string;
   }>;
   totalActivityAmount: number;
+  totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalAmount: number;
   socialFeeAmount: number;
@@ -55,7 +60,9 @@ export default function ActivitiesCartPage() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
-  const [availableActivities, setAvailableActivities] = useState<AvailableActivity[]>([]);
+  const [availableActivities, setAvailableActivities] = useState<
+    AvailableActivity[]
+  >([]);
   const [availableLoading, setAvailableLoading] = useState(false);
   const [children, setChildren] = useState<ChildOption[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<'self' | string>('self');
@@ -157,7 +164,9 @@ export default function ActivitiesCartPage() {
           return;
         }
 
-        setAvailableActivities(Array.isArray(data.activities) ? data.activities : []);
+        setAvailableActivities(
+          Array.isArray(data.activities) ? data.activities : []
+        );
       } catch (fetchError) {
         if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
           setAvailableActivities([]);
@@ -171,13 +180,14 @@ export default function ActivitiesCartPage() {
     return () => controller.abort();
   }, [hydrated, items]);
 
-
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchChildren = async () => {
       try {
-        const response = await fetch('/api/children', { signal: controller.signal });
+        const response = await fetch('/api/children', {
+          signal: controller.signal,
+        });
         if (!response.ok) {
           setChildren([]);
           return;
@@ -206,7 +216,8 @@ export default function ActivitiesCartPage() {
   }, [children]);
 
   const selectedTargetLabel =
-    targetOptions.find((option) => option.value === selectedTarget)?.label ?? 'Para mí';
+    targetOptions.find((option) => option.value === selectedTarget)?.label ??
+    'Para mí';
 
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
@@ -259,7 +270,8 @@ export default function ActivitiesCartPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">Carrito de actividades</h1>
         <p className="text-sm text-muted-foreground">
-          El total incluye automáticamente la cuota social si corresponde.
+          El total incluye automáticamente la cuota social si corresponde y
+          aplica descuento familiar cuando hay dos hijos o más.
         </p>
       </header>
 
@@ -316,13 +328,20 @@ export default function ActivitiesCartPage() {
               </select>
             </label>
             {availableLoading ? (
-              <p className="text-sm text-muted-foreground">Buscando actividades disponibles...</p>
+              <p className="text-sm text-muted-foreground">
+                Buscando actividades disponibles...
+              </p>
             ) : availableActivities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No hay actividades adicionales disponibles.</p>
+              <p className="text-sm text-muted-foreground">
+                No hay actividades adicionales disponibles.
+              </p>
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
                 {availableActivities.map((activity) => (
-                  <article key={activity.id} className="rounded-md border p-4 space-y-2">
+                  <article
+                    key={activity.id}
+                    className="rounded-md border p-4 space-y-2"
+                  >
                     <p className="font-medium">{activity.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(activity.date).toLocaleString('es-AR', {
@@ -331,7 +350,9 @@ export default function ActivitiesCartPage() {
                       })}
                     </p>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold">{formatMoney(activity.price)}</span>
+                      <span className="font-semibold">
+                        {formatMoney(activity.price)}
+                      </span>
                       <Button
                         variant="outline"
                         onClick={() =>
@@ -367,9 +388,16 @@ export default function ActivitiesCartPage() {
                 <div className="space-y-2 text-sm">
                   <div className="space-y-1">
                     {quote.activityLines.map((line, index) => (
-                      <div key={`${line.id}-${index}`} className="flex items-center justify-between gap-4">
-                        <span>{line.name} · {line.targetLabel}</span>
-                        <span className="font-medium">{formatMoney(line.amount)}</span>
+                      <div
+                        key={`${line.id}-${index}`}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <span>
+                          {line.name} · {line.targetLabel}
+                        </span>
+                        <span className="font-medium">
+                          {formatMoney(line.amount)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -379,6 +407,17 @@ export default function ActivitiesCartPage() {
                       {formatMoney(quote.totalActivityAmount)}
                     </span>
                   </div>
+                  {quote.discountLines.map((line, index) => (
+                    <div
+                      key={`${line.label}-${index}`}
+                      className="flex items-center justify-between gap-4 text-emerald-700"
+                    >
+                      <span>{line.label}</span>
+                      <span className="font-medium">
+                        -{formatMoney(line.amount)}
+                      </span>
+                    </div>
+                  ))}
                   <div className="flex items-center justify-between gap-4">
                     <span>Cuotas sociales</span>
                     <span className="font-medium">

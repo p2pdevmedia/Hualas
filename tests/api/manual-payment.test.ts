@@ -5,7 +5,9 @@
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 jest.mock('@vercel/blob', () => ({
-  put: jest.fn().mockResolvedValue({ url: 'https://blob.example.com/proof.pdf' }),
+  put: jest
+    .fn()
+    .mockResolvedValue({ url: 'https://blob.example.com/proof.pdf' }),
   del: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -18,11 +20,15 @@ jest.mock('@/lib/manual-payments', () => ({
 
 const mockOrderItemCreate = jest.fn().mockResolvedValue({ id: 'item_1' });
 const mockOrderCreate = jest.fn().mockResolvedValue({ id: 'order_1' });
-const mockPaymentCreate = jest.fn().mockResolvedValue({ id: 'payment_1', orderId: 'order_1' });
+const mockPaymentCreate = jest
+  .fn()
+  .mockResolvedValue({ id: 'payment_1', orderId: 'order_1' });
 const mockParticipantUpsert = jest.fn().mockResolvedValue({});
-const mockBillableConceptUpsert = jest.fn()
+const mockBillableConceptUpsert = jest
+  .fn()
   .mockResolvedValueOnce({ id: 'concept_activity' })
-  .mockResolvedValueOnce({ id: 'concept_social' });
+  .mockResolvedValueOnce({ id: 'concept_social' })
+  .mockResolvedValueOnce({ id: 'concept_discount' });
 
 const mockTx = {
   order: { create: mockOrderCreate },
@@ -47,9 +53,11 @@ jest.mock('@/lib/prisma', () => ({
       return Promise.resolve();
     }),
     billableConcept: {
-      upsert: jest.fn()
+      upsert: jest
+        .fn()
         .mockResolvedValueOnce({ id: 'concept_activity' })
-        .mockResolvedValueOnce({ id: 'concept_social' }),
+        .mockResolvedValueOnce({ id: 'concept_social' })
+        .mockResolvedValueOnce({ id: 'concept_discount' }),
     },
   },
 }));
@@ -74,8 +82,10 @@ function baseQuote(overrides: Partial<CartQuote> = {}): CartQuote {
     activityLines: [
       { id: ACTIVITY_ID, name: 'Kayak', amount: 5000, targetLabel: 'Para mí' },
     ],
+    discountLines: [],
     socialFeeLines: [],
     totalActivityAmount: 5000,
+    totalDiscountAmount: 0,
     totalSocialFeeAmount: 0,
     totalAmount: 5000,
     socialFeeAmount: 0,
@@ -93,13 +103,18 @@ beforeEach(() => {
   const { prisma } = require('@/lib/prisma');
   (prisma.billableConcept.upsert as jest.Mock)
     .mockResolvedValueOnce({ id: 'concept_activity' })
-    .mockResolvedValueOnce({ id: 'concept_social' });
+    .mockResolvedValueOnce({ id: 'concept_social' })
+    .mockResolvedValueOnce({ id: 'concept_discount' });
 });
 
 describe('createManualPaymentCheckout', () => {
   it('crea un OrderItem con memberId del usuario para registro propio', async () => {
     const quote = baseQuote();
-    await createManualPaymentCheckout({ user: USER, quote, proofFile: makeProofFile() });
+    await createManualPaymentCheckout({
+      user: USER,
+      quote,
+      proofFile: makeProofFile(),
+    });
 
     const activityCall = mockOrderItemCreate.mock.calls.find(
       ([{ data }]) => data.activityId === ACTIVITY_ID
@@ -116,7 +131,11 @@ describe('createManualPaymentCheckout', () => {
       validatedItems: [{ activityId: ACTIVITY_ID, target: CHILD_ID }],
     });
 
-    await createManualPaymentCheckout({ user: USER, quote, proofFile: makeProofFile() });
+    await createManualPaymentCheckout({
+      user: USER,
+      quote,
+      proofFile: makeProofFile(),
+    });
 
     const activityCall = mockOrderItemCreate.mock.calls.find(
       ([{ data }]) => data.activityId === ACTIVITY_ID
@@ -128,7 +147,12 @@ describe('createManualPaymentCheckout', () => {
   it('no conflicto: misma actividad para usuario y su hijo crea dos OrderItems con memberId distintos', async () => {
     const quote = baseQuote({
       activityLines: [
-        { id: ACTIVITY_ID, name: 'Kayak', amount: 5000, targetLabel: 'Para mí' },
+        {
+          id: ACTIVITY_ID,
+          name: 'Kayak',
+          amount: 5000,
+          targetLabel: 'Para mí',
+        },
         { id: ACTIVITY_ID, name: 'Kayak', amount: 5000, targetLabel: 'Hijo' },
       ],
       totalActivityAmount: 10000,
@@ -139,7 +163,11 @@ describe('createManualPaymentCheckout', () => {
       ],
     });
 
-    await createManualPaymentCheckout({ user: USER, quote, proofFile: makeProofFile() });
+    await createManualPaymentCheckout({
+      user: USER,
+      quote,
+      proofFile: makeProofFile(),
+    });
 
     const activityCalls = mockOrderItemCreate.mock.calls.filter(
       ([{ data }]) => data.activityId === ACTIVITY_ID
@@ -174,7 +202,11 @@ describe('createManualPaymentCheckout', () => {
       ],
     });
 
-    await createManualPaymentCheckout({ user: USER, quote, proofFile: makeProofFile() });
+    await createManualPaymentCheckout({
+      user: USER,
+      quote,
+      proofFile: makeProofFile(),
+    });
 
     const socialFeeCalls = mockOrderItemCreate.mock.calls.filter(
       ([{ data }]) => data.billableConceptId === 'concept_social'
@@ -184,9 +216,48 @@ describe('createManualPaymentCheckout', () => {
     expect(socialFeeCalls[0][0].data.quantity).toBe(2);
   });
 
+  it('crea un OrderItem de descuento familiar cuando corresponde', async () => {
+    const quote = baseQuote({
+      activityLines: [
+        { id: ACTIVITY_ID, name: 'Kayak', amount: 5000, targetLabel: 'Hijo 1' },
+        {
+          id: `${ACTIVITY_ID}_2`,
+          name: 'Kayak',
+          amount: 5000,
+          targetLabel: 'Hijo 2',
+        },
+      ],
+      totalActivityAmount: 10000,
+      totalDiscountAmount: 1000,
+      totalAmount: 9000,
+      validatedItems: [
+        { activityId: ACTIVITY_ID, target: 'child_1' },
+        { activityId: `${ACTIVITY_ID}_2`, target: 'child_2' },
+      ],
+      discountLines: [{ amount: 1000, label: 'Descuento familiar' }],
+    });
+
+    await createManualPaymentCheckout({
+      user: USER,
+      quote,
+      proofFile: makeProofFile(),
+    });
+
+    const discountCall = mockOrderItemCreate.mock.calls.find(
+      ([{ data }]) => data.billableConceptId === 'concept_discount'
+    );
+
+    expect(discountCall).toBeDefined();
+    expect(discountCall![0].data.description).toBe('Descuento familiar');
+    expect(discountCall![0].data.total).toBe(-1000);
+    expect(discountCall![0].data.unitPrice).toBe(-1000);
+  });
+
   it('retorna error si el archivo de comprobante no es válido', async () => {
     const { validateManualPaymentFile } = require('@/lib/manual-payments');
-    (validateManualPaymentFile as jest.Mock).mockReturnValueOnce('Formato no permitido');
+    (validateManualPaymentFile as jest.Mock).mockReturnValueOnce(
+      'Formato no permitido'
+    );
 
     const result = await createManualPaymentCheckout({
       user: USER,

@@ -27,10 +27,17 @@ type SocialFeeSummary = {
   label: string;
 };
 
+type DiscountSummary = {
+  amount: number;
+  label: string;
+};
+
 export type CartQuote = {
   activityLines: ActivitySummary[];
+  discountLines: DiscountSummary[];
   socialFeeLines: SocialFeeSummary[];
   totalActivityAmount: number;
+  totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalAmount: number;
   socialFeeAmount: number;
@@ -133,8 +140,14 @@ export async function buildCartQuote({
     }
   }
 
+  const distinctChildIds = new Set(childTargets);
+
   const participantKeys = items.map((item) =>
-    getActivityParticipantKey(item.activityId, userId, normalizeTarget(item.target))
+    getActivityParticipantKey(
+      item.activityId,
+      userId,
+      normalizeTarget(item.target)
+    )
   );
   const existingParticipants = await prisma.activityParticipant.findMany({
     where: {
@@ -166,6 +179,24 @@ export async function buildCartQuote({
         item.targetLabel ?? (item.target === 'self' ? 'Para mí' : 'Menor'),
     };
   });
+
+  const childActivityAmount = items.reduce((sum, item) => {
+    const childId = normalizeTarget(item.target);
+    if (!childId) {
+      return sum;
+    }
+
+    const activity = activityById.get(item.activityId);
+    return sum + (activity ? Number(activity.price) : 0);
+  }, 0);
+
+  const totalDiscountAmount =
+    distinctChildIds.size >= 2 ? Math.round(childActivityAmount * 0.1) : 0;
+
+  const discountLines: DiscountSummary[] =
+    totalDiscountAmount > 0
+      ? [{ amount: totalDiscountAmount, label: 'Descuento familiar' }]
+      : [];
 
   const participantByKey = new Map<string, SocialFeeParticipant>();
   for (const item of items) {
@@ -214,10 +245,13 @@ export async function buildCartQuote({
 
   return {
     activityLines,
+    discountLines,
     socialFeeLines,
     totalActivityAmount,
+    totalDiscountAmount,
     totalSocialFeeAmount,
-    totalAmount: totalActivityAmount + totalSocialFeeAmount,
+    totalAmount:
+      totalActivityAmount - totalDiscountAmount + totalSocialFeeAmount,
     socialFeeAmount,
     socialFeeParticipants,
     validatedItems: items,
@@ -254,5 +288,14 @@ export function toMercadoPagoItems(quote: CartQuote) {
     category_id: 'services' as const,
   }));
 
-  return [...activityItems, ...socialFeeItems];
+  const discountItems = quote.discountLines.map((line, index) => ({
+    id: `discount:${index}`,
+    title: line.label,
+    quantity: 1,
+    unit_price: -line.amount,
+    currency_id: 'ARS' as const,
+    category_id: 'services' as const,
+  }));
+
+  return [...activityItems, ...discountItems, ...socialFeeItems];
 }
