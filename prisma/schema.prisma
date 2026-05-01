@@ -56,7 +56,7 @@ model User {
   pickupNoticesAsAlternate   PickupNotice[] @relation("PickupNoticeAlternatePerson")
   pickupNoticeAcknowledgments PickupNoticeAcknowledgment[]
   notifications              Notification[]
-  pushSubscriptions          PushSubscription[]
+  pushAlertSubscriptions     PushAlertSubscription[]
   notificationPreferences    NotificationPreference[]
 }
 
@@ -537,17 +537,15 @@ model Notification {
   @@index([type, createdAt])
 }
 
-model PushSubscription {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint   String    @unique
-  p256dh     String
-  auth       String
-  userAgent  String?
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime  @default(now())
-  failedAt   DateTime?
+model PushAlertSubscription {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriberId String   @unique
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime @default(now())
+  failedAt     DateTime?
 
   @@index([userId])
 }

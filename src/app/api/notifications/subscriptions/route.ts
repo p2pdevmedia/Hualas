@@ -22,19 +22,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
 
-  const subscription = await prisma.pushSubscription.upsert({
-    where: { endpoint: parsed.endpoint },
+  const subscription = await prisma.pushAlertSubscription.upsert({
+    where: { subscriberId: parsed.subscriberId },
     create: {
       userId,
-      endpoint: parsed.endpoint,
-      p256dh: parsed.keys.p256dh,
-      auth: parsed.keys.auth,
+      subscriberId: parsed.subscriberId,
       userAgent: parsed.userAgent ?? null,
     },
     update: {
       userId,
-      p256dh: parsed.keys.p256dh,
-      auth: parsed.keys.auth,
       userAgent: parsed.userAgent ?? null,
       lastUsedAt: new Date(),
       failedAt: null,

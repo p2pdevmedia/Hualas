@@ -13,13 +13,13 @@ export async function DELETE(
   }
   const userId = (session.user as { id: string }).id;
 
-  const subscription = await prisma.pushSubscription.findUnique({
+  const subscription = await prisma.pushAlertSubscription.findUnique({
     where: { id: params.id },
     select: { userId: true },
   });
   if (!subscription || subscription.userId !== userId) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
-  await prisma.pushSubscription.delete({ where: { id: params.id } });
+  await prisma.pushAlertSubscription.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, type NotificationType } from '@prisma/client';
 import { resolvePreferences } from './preferences';
-import { sendPush, PushSendError } from './push-sender';
+import { sendPushAlert, PushAlertError } from '@/lib/pushalert';
 
 export type DispatchInput = {
   type: NotificationType;
@@ -68,38 +68,28 @@ export async function dispatch(input: DispatchInput): Promise<void> {
   const pushUsers = candidates.filter((id) => prefs.get(id)?.push ?? true);
   if (pushUsers.length === 0) return;
 
-  const subs = await prisma.pushSubscription.findMany({
+  const subs = await prisma.pushAlertSubscription.findMany({
     where: { userId: { in: pushUsers }, failedAt: null },
+    select: { id: true, subscriberId: true, userId: true },
   });
   if (subs.length === 0) return;
 
-  const results = await Promise.allSettled(
-    subs.map((sub) =>
-      sendPush(
-        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-        { title, body, url: url ?? undefined, data: data ?? undefined },
-      ),
-    ),
-  );
-
-  const toMarkFailed: string[] = [];
-  for (let i = 0; i < results.length; i++) {
-    const r = results[i];
-    if (r.status === 'rejected') {
-      const reason = r.reason;
-      const status = reason instanceof PushSendError ? reason.statusCode : undefined;
-      if (status === 404 || status === 410) toMarkFailed.push(subs[i].id);
-      console.error('[notifications] push delivery failed', {
-        subscriptionId: subs[i].id,
-        status,
-        reason: reason instanceof Error ? reason.message : reason,
-      });
-    }
-  }
-  if (toMarkFailed.length > 0) {
-    await prisma.pushSubscription.updateMany({
-      where: { id: { in: toMarkFailed } },
-      data: { failedAt: new Date() },
+  const subscriberIds = [...new Set(subs.map((sub) => sub.subscriberId))];
+  try {
+    await sendPushAlert(subscriberIds, {
+      title,
+      message: body,
+      url: url ?? undefined,
+    });
+    await prisma.pushAlertSubscription.updateMany({
+      where: { subscriberId: { in: subscriberIds } },
+      data: { lastUsedAt: new Date(), failedAt: null },
+    });
+  } catch (err) {
+    console.error('[notifications] push delivery failed', {
+      subscriberIds,
+      reason: err instanceof Error ? err.message : err,
+      status: err instanceof PushAlertError ? err.statusCode : undefined,
     });
   }
 }

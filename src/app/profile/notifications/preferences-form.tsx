@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { NotificationType } from '@prisma/client';
 
 type PreferenceItem = {
@@ -22,21 +22,12 @@ type Props = {
   devices: Device[];
 };
 
-export default function PreferencesForm({ items: initialItems, devices: initialDevices }: Props) {
+export default function PreferencesForm({
+  items: initialItems,
+  devices: initialDevices,
+}: Props) {
   const [items, setItems] = useState(initialItems);
   const [devices, setDevices] = useState(initialDevices);
-  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(
-    'unsupported',
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!('Notification' in window)) {
-      setPermission('unsupported');
-    } else {
-      setPermission(Notification.permission);
-    }
-  }, []);
 
   async function updatePreference(
     type: NotificationType,
@@ -69,69 +60,25 @@ export default function PreferencesForm({ items: initialItems, devices: initialD
     }
   }
 
-  async function activateBrowser() {
-    if (!('Notification' in window)) return;
-    try {
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      if (result === 'granted' && 'serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready;
-        const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!publicKey) {
-          console.error(
-            '[preferences] NEXT_PUBLIC_VAPID_PUBLIC_KEY is missing. Browser push subscriptions are disabled.',
-          );
-          return;
-        }
-        const padding = '='.repeat((4 - (publicKey.length % 4)) % 4);
-        const base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const raw = atob(base64);
-        const key = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i++) key[i] = raw.charCodeAt(i);
-        const existing = await reg.pushManager.getSubscription();
-        const sub =
-          existing ??
-          (await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: key as BufferSource,
-          }));
-        const json = sub.toJSON();
-        await fetch('/api/notifications/subscriptions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpoint: json.endpoint,
-            keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
-            userAgent: navigator.userAgent,
-          }),
-        });
-      }
-    } catch (err) {
-      console.error('[preferences] activate failed', err);
-    }
-  }
-
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
-          Estado del navegador actual
-        </h2>
-        <BrowserStateBanner permission={permission} onActivate={activateBrowser} />
-      </section>
-
-      <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
+        <h2 className="mb-3 text-base font-semibold text-gray-900">
           Tipos de notificación
         </h2>
-        <div className="border rounded-md divide-y">
+        <div className="divide-y rounded-md border">
           {items.map((item) => (
-            <div key={item.type} className="px-4 py-3 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
+            <div
+              key={item.type}
+              className="flex items-start justify-between gap-4 px-4 py-3"
+            >
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-gray-900">{item.title}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  {item.description}
+                </div>
               </div>
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex shrink-0 items-center gap-4">
                 <label className="flex items-center gap-1.5 text-xs text-gray-700">
                   <input
                     type="checkbox"
@@ -157,20 +104,23 @@ export default function PreferencesForm({ items: initialItems, devices: initialD
       </section>
 
       <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
+        <h2 className="mb-3 text-base font-semibold text-gray-900">
           Dispositivos suscriptos
         </h2>
         {devices.length === 0 ? (
-          <p className="text-sm text-gray-500 border rounded-md px-4 py-3">
+          <p className="rounded-md border px-4 py-3 text-sm text-gray-500">
             No tenés ningún dispositivo suscripto a notificaciones push.
           </p>
         ) : (
-          <ul className="border rounded-md divide-y">
+          <ul className="divide-y rounded-md border">
             {devices.map((device) => (
-              <li key={device.id} className="px-4 py-3 flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+              <li
+                key={device.id}
+                className="flex items-center justify-between gap-4 px-4 py-3"
+              >
+                <div className="min-w-0 flex-1">
                   <div className="text-sm text-gray-900">{device.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="mt-0.5 text-xs text-gray-500">
                     Agregado el {new Date(device.addedAt).toLocaleDateString('es-AR')}
                     {device.failed && ' · entrega fallida'}
                   </div>
@@ -187,48 +137,6 @@ export default function PreferencesForm({ items: initialItems, devices: initialD
           </ul>
         )}
       </section>
-    </div>
-  );
-}
-
-function BrowserStateBanner({
-  permission,
-  onActivate,
-}: {
-  permission: NotificationPermission | 'unsupported';
-  onActivate: () => void;
-}) {
-  if (permission === 'unsupported') {
-    return (
-      <p className="text-sm text-gray-600 border rounded-md px-4 py-3">
-        Este navegador no soporta notificaciones push.
-      </p>
-    );
-  }
-  if (permission === 'granted') {
-    return (
-      <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-4 py-3">
-        Las notificaciones push están activadas en este navegador.
-      </p>
-    );
-  }
-  if (permission === 'denied') {
-    return (
-      <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-4 py-3">
-        Bloqueaste las notificaciones en este navegador. Reactivalas desde la configuración del sitio.
-      </p>
-    );
-  }
-  return (
-    <div className="text-sm text-gray-700 border rounded-md px-4 py-3 flex items-center justify-between gap-4">
-      <span>Las notificaciones aún no están activadas en este navegador.</span>
-      <button
-        type="button"
-        onClick={onActivate}
-        className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs hover:bg-blue-700"
-      >
-        Activar en este navegador
-      </button>
     </div>
   );
 }
