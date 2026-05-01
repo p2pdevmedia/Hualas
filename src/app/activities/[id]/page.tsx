@@ -93,15 +93,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   if (
     isProfessor &&
-    !activity.professors.some(
-      (prof) => prof.userId === session?.user.id
-    )
+    !activity.professors.some((prof) => prof.userId === session?.user.id)
   ) {
     redirect('/');
   }
 
-  const [participants, activityProfessors, professorOptions, activityGroups, days, pickupNoticesByDay] =
-    await Promise.all([
+  const [
+    participants,
+    activityProfessors,
+    professorOptions,
+    activityGroups,
+    days,
+    pickupNoticesByDay,
+  ] = await Promise.all([
     prisma.activityParticipant
       .findMany({
         where: { activityId: activity.id },
@@ -151,10 +155,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
       })
       .catch((error) => {
-        console.error(
-          '[activity-page] professor options query failed',
-          error
-        );
+        console.error('[activity-page] professor options query failed', error);
         return [];
       }),
     prisma.activityGroup
@@ -302,16 +303,21 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
         : (session.user.name ?? 'Yo'),
       groupId: participant.groupMembership?.activityGroupId ?? null,
-      groupName:
-        participant.groupMembership?.activityGroupId
-          ? activityGroupById.get(participant.groupMembership.activityGroupId) ??
-            null
-          : null,
+      groupName: participant.groupMembership?.activityGroupId
+        ? (activityGroupById.get(participant.groupMembership.activityGroupId) ??
+          null)
+        : null,
     }));
   }
 
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
+  const activityListHref = isParticipantInActivity
+    ? '/my-activities'
+    : '/activities';
+  const activityListLabel = isParticipantInActivity
+    ? 'Mis actividades'
+    : 'Actividades';
 
   const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
@@ -353,10 +359,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         {/* Breadcrumb */}
         <nav className="text-xs text-muted-foreground mb-5 font-body flex items-center gap-1">
           <Link
-            href="/activities"
+            href={activityListHref}
             className="hover:text-primary transition-colors"
           >
-            Actividades
+            {activityListLabel}
           </Link>
           <span>→</span>
           <span className="text-foreground">{activity.name}</span>
@@ -391,9 +397,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 },
                 {
                   label: 'Cupo',
-                  value: hasCapacity
-                    ? `${capacity} lugares`
-                    : 'Ilimitado',
+                  value: hasCapacity ? `${capacity} lugares` : 'Ilimitado',
                 },
                 activityProfessors.length > 0 && {
                   label: 'Profesores',
@@ -435,111 +439,166 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
 
           {/* Panel derecho (sticky) */}
-          <div
-            className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
-            style={{
-              border: '1.5px solid hsl(var(--border))',
-              background: 'hsl(var(--card))',
-            }}
-          >
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
-                Precio
-              </p>
-              <p className="font-heading text-3xl font-semibold">
-                ${activity.price}
-              </p>
-              {activity.frequency !== 'ONE_TIME' && (
-                <p className="text-xs text-muted-foreground font-body mt-0.5">
-                  / {frequencyLabels[activity.frequency]?.toLowerCase()}
+          {isParticipantInActivity ? (
+            <div
+              className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
+              style={{
+                border: '1.5px solid hsl(var(--border))',
+                background: 'hsl(var(--card))',
+              }}
+            >
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body">
+                  Estado
                 </p>
-              )}
-              {hasCapacity && (
-                <p
-                  className={`text-xs font-body mt-1 ${
-                    isFull ? 'text-destructive' : 'text-muted-foreground'
-                  }`}
+                <p className="font-heading text-2xl font-semibold">
+                  Ya estás inscripto
+                </p>
+                <p className="text-sm text-muted-foreground font-body">
+                  Esta actividad ya forma parte de tus actividades y no muestra
+                  el cuadro de inscripción.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body">
+                  Participantes registrados
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {registrations.map((registration) => (
+                    <span
+                      key={registration.id}
+                      className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                    >
+                      {registration.label}
+                      {registration.groupName
+                        ? ` · ${registration.groupName}`
+                        : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground font-body">
+                  Más abajo podés consultar días, asistencia y avisos
+                  relacionados con tu inscripción.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
+              style={{
+                border: '1.5px solid hsl(var(--border))',
+                background: 'hsl(var(--card))',
+              }}
+            >
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
+                  Precio
+                </p>
+                <p className="font-heading text-3xl font-semibold">
+                  ${activity.price}
+                </p>
+                {activity.frequency !== 'ONE_TIME' && (
+                  <p className="text-xs text-muted-foreground font-body mt-0.5">
+                    / {frequencyLabels[activity.frequency]?.toLowerCase()}
+                  </p>
+                )}
+                {hasCapacity && (
+                  <p
+                    className={`text-xs font-body mt-1 ${
+                      isFull ? 'text-destructive' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {isFull
+                      ? 'Cupo completo'
+                      : `${remainingSpots} lugares disponibles`}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-2">
+                {isFull ? (
+                  <Button disabled className="w-full">
+                    Cupo completo
+                  </Button>
+                ) : (
+                  <RegisterButton
+                    activityId={activity.id}
+                    activityName={activity.name}
+                    activityPrice={Number(activity.price)}
+                  />
+                )}
+                <Link
+                  href="/contact"
+                  className="block text-center text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 font-body"
                 >
-                  {isFull
-                    ? 'Cupo completo'
-                    : `${remainingSpots} lugares disponibles`}
+                  Contactanos
+                </Link>
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground font-body text-center">
+                  {hasCapacity
+                    ? `${enrolledCount} de ${capacity} lugares ocupados`
+                    : `${enrolledCount} personas ya inscriptas`}
                 </p>
-              )}
+              </div>
             </div>
-
-            <div className="space-y-3 pt-2">
-              {isFull ? (
-                <Button disabled className="w-full">
-                  Cupo completo
-                </Button>
-              ) : (
-                <RegisterButton activityId={activity.id} activityName={activity.name} activityPrice={Number(activity.price)} />
-              )}
-              <Link
-                href="/contact"
-                className="block text-center text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 font-body"
-              >
-                Contactanos
-              </Link>
-            </div>
-
-            <div className="pt-2 border-t border-border">
-              <p className="text-xs text-muted-foreground font-body text-center">
-                {hasCapacity
-                  ? `${enrolledCount} de ${capacity} lugares ocupados`
-                  : `${enrolledCount} personas ya inscriptas`}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
 
-        {canSeeSessions && <ActivityDaysPanel
-          activityId={activity.id}
-          canManageDays={canManageDays}
-          professors={professorOptions}
-          groups={activityGroupOptions}
-          defaultProfessorIds={activityProfessorIds}
-          registrations={registrations}
-          days={daysWithAttendance
-            .filter((day: any) => {
-              if (isAdmin) return true;
-              if (isProfessor) {
-                return day.professors.some(
-                  (assignment: { userId: string }) =>
-                    assignment.userId === session?.user.id
-                );
-              }
-              return true;
-            })
-            .map((day: any) => ({
-            id: day.id,
-            date: day.date.toISOString(),
-            schedule: day.schedule,
-            description: day.description,
-            geoLocation: day.geoLocation,
-            latitude: day.latitude,
-            longitude: day.longitude,
-            activityGroupId: day.activityGroupId,
-            sportIcon: day.sportIcon,
-            activityGroup: day.activityGroup,
-            canEdit: isAdmin,
-            assignedProfessors: day.professors.map((assignment: any) => ({
-              id: assignment.user.id,
-              name: assignment.user.name,
-              lastName: assignment.user.lastName,
-              email: assignment.user.email,
-            })),
-            attendances: day.attendances.map((attendance: any) => ({
-              activityParticipantId: attendance.activityParticipantId,
-              status: attendance.status,
-              confirmedAt: attendance.confirmedAt
-                ? attendance.confirmedAt.toISOString()
-                : null,
-            })),
-            attendanceList: day.attendanceList,
-            pickupNotices: day.pickupNotices || [],
-          }))}
-        />}
+        {canSeeSessions && (
+          <ActivityDaysPanel
+            activityId={activity.id}
+            canManageDays={canManageDays}
+            professors={professorOptions}
+            groups={activityGroupOptions}
+            defaultProfessorIds={activityProfessorIds}
+            registrations={registrations}
+            days={daysWithAttendance
+              .filter((day: any) => {
+                if (isAdmin) return true;
+                if (isProfessor) {
+                  return day.professors.some(
+                    (assignment: { userId: string }) =>
+                      assignment.userId === session?.user.id
+                  );
+                }
+                return true;
+              })
+              .map((day: any) => ({
+                id: day.id,
+                date: day.date.toISOString(),
+                schedule: day.schedule,
+                description: day.description,
+                geoLocation: day.geoLocation,
+                latitude: day.latitude,
+                longitude: day.longitude,
+                activityGroupId: day.activityGroupId,
+                sportIcon: day.sportIcon,
+                activityGroup: day.activityGroup,
+                canEdit: isAdmin,
+                assignedProfessors: day.professors.map((assignment: any) => ({
+                  id: assignment.user.id,
+                  name: assignment.user.name,
+                  lastName: assignment.user.lastName,
+                  email: assignment.user.email,
+                })),
+                attendances: day.attendances.map((attendance: any) => ({
+                  activityParticipantId: attendance.activityParticipantId,
+                  status: attendance.status,
+                  confirmedAt: attendance.confirmedAt
+                    ? attendance.confirmedAt.toISOString()
+                    : null,
+                })),
+                attendanceList: day.attendanceList,
+                pickupNotices: day.pickupNotices || [],
+              }))}
+          />
+        )}
 
         {isAdmin && (
           <InscriptosPanel
@@ -552,7 +611,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               isChild: !!p.child,
               groupId: p.groupMembership?.activityGroupId ?? null,
               groupName: p.groupMembership?.activityGroupId
-                ? activityGroupById.get(p.groupMembership.activityGroupId) ?? null
+                ? (activityGroupById.get(p.groupMembership.activityGroupId) ??
+                  null)
                 : null,
             }))}
             groups={activityGroupOptions}
