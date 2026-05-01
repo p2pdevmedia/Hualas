@@ -29,7 +29,6 @@ export async function POST(req: Request) {
   const activities = await prisma.activity.findMany({
     where: {
       id: { notIn: [...excludedIds] },
-      date: { gte: new Date() },
     },
     select: {
       id: true,
@@ -42,7 +41,6 @@ export async function POST(req: Request) {
       },
     },
     orderBy: { date: 'asc' },
-    take: 20,
   });
 
   const available = activities
