@@ -284,8 +284,8 @@ export default function ReportsClient() {
                 Resumen por categoría
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Los pagos manuales y de Mercado Pago se consolidan en el total
-                de ingresos.
+                Los pagos manuales y de Mercado Pago también aparecen como
+                categorías propias dentro de los ingresos.
               </p>
               <div className="mt-4 overflow-x-auto">
                 <table className="min-w-full text-sm">

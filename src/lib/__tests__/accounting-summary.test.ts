@@ -1,4 +1,5 @@
 import {
+  buildAccountingCategoryTotals,
   buildAccountingReportEntries,
   summarizeAccounting,
 } from '../accounting-summary';
@@ -115,6 +116,38 @@ describe('accounting summary helpers', () => {
       category: 'Cuotas',
       amount: 1000,
       reference: 'R-1',
+    });
+  });
+
+  it('builds category totals including manual payments and Mercado Pago', () => {
+    const totals = buildAccountingCategoryTotals([
+      {
+        category: 'Cuotas',
+        type: 'INCOME',
+        amount: 1000,
+      },
+      {
+        category: 'Pagos manuales',
+        type: 'INCOME',
+        amount: 400,
+      },
+      {
+        category: 'Mercado Pago',
+        type: 'INCOME',
+        amount: 600,
+      },
+      {
+        category: 'Salarios',
+        type: 'EXPENSE',
+        amount: 250,
+      },
+    ]);
+
+    expect(totals).toEqual({
+      Cuotas: { income: 1000, expense: 0 },
+      'Pagos manuales': { income: 400, expense: 0 },
+      'Mercado Pago': { income: 600, expense: 0 },
+      Salarios: { income: 0, expense: 250 },
     });
   });
 });

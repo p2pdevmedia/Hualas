@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
 import {
   buildAccountingReportEntries,
+  buildAccountingCategoryTotals,
   summarizeAccounting,
 } from '@/lib/accounting-summary';
 
@@ -98,13 +99,7 @@ export async function GET(request: Request) {
 
   const totalMp = summary.mpIncome;
 
-  const byCategory: Record<string, { income: number; expense: number }> = {};
-  for (const m of movements) {
-    if (!byCategory[m.category])
-      byCategory[m.category] = { income: 0, expense: 0 };
-    if (m.type === 'INCOME') byCategory[m.category].income += m.amount;
-    else byCategory[m.category].expense += m.amount;
-  }
+  const byCategory = buildAccountingCategoryTotals(entries);
 
   return NextResponse.json({
     totalIncome: summary.totalIncome,

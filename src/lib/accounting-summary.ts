@@ -55,6 +55,14 @@ export type AccountingSummary = {
   netBalance: number;
 };
 
+export type AccountingCategoryTotals = Record<
+  string,
+  {
+    income: number;
+    expense: number;
+  }
+>;
+
 function toIsoDate(value: Date | string | null | undefined) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -63,6 +71,26 @@ function toIsoDate(value: Date | string | null | undefined) {
 
 function sumAmounts(items: Array<{ amount: number }>) {
   return items.reduce((sum, item) => sum + item.amount, 0);
+}
+
+export function buildAccountingCategoryTotals(
+  entries: Array<Pick<AccountingReportEntry, 'category' | 'type' | 'amount'>>
+): AccountingCategoryTotals {
+  const totals: AccountingCategoryTotals = {};
+
+  for (const entry of entries) {
+    if (!totals[entry.category]) {
+      totals[entry.category] = { income: 0, expense: 0 };
+    }
+
+    if (entry.type === 'INCOME') {
+      totals[entry.category].income += entry.amount;
+    } else {
+      totals[entry.category].expense += entry.amount;
+    }
+  }
+
+  return totals;
 }
 
 export function summarizeAccounting({
