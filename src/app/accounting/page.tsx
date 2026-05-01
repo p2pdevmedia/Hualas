@@ -155,25 +155,26 @@ export default async function AccountingDashboardPage() {
         : null,
     })
   );
-  const recentManualPaymentEntries: RecentAccountingEntry[] =
-    approvedManualPayments
-      .map((payment) => {
-        const paymentDate = getAccountingPaymentDate(payment);
-        if (!paymentDate) return null;
+  const recentManualPaymentEntries = approvedManualPayments.reduce<
+    RecentAccountingEntry[]
+  >((entries, payment) => {
+    const paymentDate = getAccountingPaymentDate(payment);
+    if (!paymentDate) return entries;
 
-        return {
-          id: payment.id,
-          date: paymentDate,
-          origin: 'MANUAL_PAYMENT' as const,
-          type: 'INCOME' as const,
-          category: 'Pagos manuales',
-          description:
-            payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
-          amount: payment.amount,
-          receiptUrl: buildManualPaymentReceiptUrl(payment.id),
-        };
-      })
-      .filter((entry): entry is RecentAccountingEntry => entry !== null);
+    entries.push({
+      id: payment.id,
+      date: paymentDate,
+      origin: 'MANUAL_PAYMENT',
+      type: 'INCOME',
+      category: 'Pagos manuales',
+      description:
+        payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
+      amount: payment.amount,
+      receiptUrl: buildManualPaymentReceiptUrl(payment.id),
+    });
+
+    return entries;
+  }, []);
   const recentAccountingEntries: RecentAccountingEntry[] = [
     ...recentMovementEntries,
     ...recentManualPaymentEntries,
