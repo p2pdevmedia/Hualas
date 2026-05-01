@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useMemo } from 'react';
 
 export type CalendarActivityDay = {
@@ -9,9 +10,10 @@ export type CalendarActivityDay = {
   activityName: string;
   schedule: string;
   geoLocation: string;
+  sportIcon: string | null;
 };
 
-const WEEKDAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
+const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -40,8 +42,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  // Monday-first: Sunday (0) → position 6, Monday (1) → position 0
-  const firstDayOfWeek = (firstDay.getDay() + 6) % 7;
+  const firstDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday-first
   const totalCells = Math.ceil((firstDayOfWeek + lastDay.getDate()) / 7) * 7;
 
   const cells = Array.from({ length: totalCells }, (_, i) => {
@@ -67,47 +68,61 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
 
   const selectedActivities = selectedKey ? (dayMap.get(selectedKey) ?? []) : [];
 
-  const upcoming = useMemo(
-    () => activityDays.filter(d => d.date >= todayKey).slice(0, 8),
-    [activityDays, todayKey]
-  );
-
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4 lg:sticky lg:top-6">
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
       {/* Month navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-5 py-4 border-b">
         <button
           type="button"
           onClick={prevMonth}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-lg leading-none"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-xl leading-none"
         >
           ‹
         </button>
-        <span className="text-sm font-semibold">
+        <span className="text-base font-semibold">
           {MONTHS[month]} {year}
         </span>
         <button
           type="button"
           onClick={nextMonth}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-lg leading-none"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-xl leading-none"
         >
           ›
         </button>
       </div>
 
-      {/* Day grid */}
-      <div className="grid grid-cols-7 gap-y-1">
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 border-b">
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-[10px] font-medium text-muted-foreground pb-1">
+          <div
+            key={d}
+            className="py-2 text-center text-xs font-medium text-muted-foreground"
+          >
             {d}
           </div>
         ))}
+      </div>
+
+      {/* Day grid */}
+      <div className="grid grid-cols-7 divide-x divide-y divide-border">
         {cells.map((dayNum, i) => {
-          if (dayNum === null) return <div key={i} />;
+          if (dayNum === null) {
+            return <div key={i} className="h-20 bg-muted/20" />;
+          }
+
           const key = cellKey(dayNum);
-          const hasActivity = dayMap.has(key);
+          const activities = dayMap.get(key) ?? [];
+          const hasActivity = activities.length > 0;
           const isToday = key === todayKey;
           const isSelected = key === selectedKey;
+          const isPast = key < todayKey;
+
+          // Pick up to 2 unique icons from the day's activities
+          const icons = activities
+            .map(a => a.sportIcon)
+            .filter((icon): icon is string => Boolean(icon))
+            .filter((icon, idx, arr) => arr.indexOf(icon) === idx)
+            .slice(0, 2);
 
           return (
             <button
@@ -116,21 +131,49 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
               onClick={() => hasActivity && setSelectedKey(isSelected ? null : key)}
               disabled={!hasActivity}
               className={[
-                'relative mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors',
-                isSelected ? 'bg-primary text-primary-foreground font-semibold' : '',
-                isToday && !isSelected ? 'ring-1 ring-primary text-primary font-semibold' : '',
-                hasActivity && !isSelected ? 'font-medium hover:bg-muted cursor-pointer' : '',
-                !hasActivity ? 'text-muted-foreground cursor-default' : '',
-              ].join(' ')}
+                'relative h-20 flex flex-col items-center pt-1.5 gap-0.5 transition-colors text-left',
+                isSelected ? 'bg-primary/10' : '',
+                hasActivity && !isSelected ? 'hover:bg-muted/60 cursor-pointer' : '',
+                !hasActivity ? 'cursor-default' : '',
+                isPast && !isToday ? 'opacity-50' : '',
+              ].filter(Boolean).join(' ')}
             >
-              {dayNum}
-              {hasActivity && (
-                <span
-                  className={[
-                    'absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full',
-                    isSelected ? 'bg-primary-foreground' : 'bg-primary',
-                  ].join(' ')}
-                />
+              {/* Day number */}
+              <span
+                className={[
+                  'flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium leading-none',
+                  isToday ? 'bg-primary text-primary-foreground' : '',
+                  isSelected && !isToday ? 'text-primary font-semibold' : '',
+                  !isToday && !isSelected ? 'text-foreground' : '',
+                ].filter(Boolean).join(' ')}
+              >
+                {dayNum}
+              </span>
+
+              {/* Activity icons */}
+              {icons.length > 0 ? (
+                <div className="flex gap-0.5 justify-center">
+                  {icons.map((icon, idx) => (
+                    <Image
+                      key={idx}
+                      src={`/icons/${icon}`}
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 object-contain"
+                    />
+                  ))}
+                </div>
+              ) : hasActivity ? (
+                // Fallback dot if no icons assigned
+                <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" />
+              ) : null}
+
+              {/* More indicator */}
+              {activities.length > 2 && (
+                <span className="text-[10px] text-muted-foreground leading-none">
+                  +{activities.length - 2}
+                </span>
               )}
             </button>
           );
@@ -139,7 +182,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
 
       {/* Selected day detail */}
       {selectedKey && selectedActivities.length > 0 && (
-        <div className="border-t pt-4 space-y-3">
+        <div className="border-t px-5 py-4 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {new Date(selectedKey + 'T12:00:00').toLocaleDateString('es-AR', {
               weekday: 'long',
@@ -148,41 +191,26 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
             })}
           </p>
           {selectedActivities.map(d => (
-            <div key={d.id}>
-              <p className="text-sm font-medium">{d.activityName}</p>
-              <p className="text-xs text-muted-foreground">
-                {d.schedule} · {d.geoLocation}
-              </p>
+            <div key={d.id} className="flex items-center gap-3">
+              {d.sportIcon ? (
+                <Image
+                  src={`/icons/${d.sportIcon}`}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 shrink-0 object-contain"
+                />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+              )}
+              <div>
+                <p className="text-sm font-medium">{d.activityName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {d.schedule} · {d.geoLocation}
+                </p>
+              </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Upcoming sessions */}
-      {!selectedKey && upcoming.length > 0 && (
-        <div className="border-t pt-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Próximas sesiones
-          </p>
-          {upcoming.map(d => (
-            <div key={d.id}>
-              <p className="text-sm font-medium">{d.activityName}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(d.date + 'T12:00:00').toLocaleDateString('es-AR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'short',
-                })}{' '}
-                · {d.schedule}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!selectedKey && upcoming.length === 0 && (
-        <div className="border-t pt-4">
-          <p className="text-xs text-muted-foreground">No hay sesiones próximas.</p>
         </div>
       )}
     </div>

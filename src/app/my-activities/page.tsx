@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
@@ -6,14 +7,14 @@ import { isCounterRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
 import ActivityCalendar, { type CalendarActivityDay } from './activity-calendar';
 
-const frequencyLabels: Record<
-  'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME',
-  string
-> = {
-  DAILY: 'Diaria',
-  WEEKLY: 'Semanal',
-  MONTHLY: 'Mensual',
-  ONE_TIME: 'Un solo pago',
+type UpcomingSession = {
+  id: string;
+  date: string;
+  schedule: string;
+  geoLocation: string;
+  sportIcon: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export default async function MyActivitiesPage() {
@@ -36,7 +37,6 @@ export default async function MyActivitiesPage() {
       name: string;
       date: Date;
       frequency: string;
-      price: number;
     };
   }> = [];
   let professorAssignments: Array<{
@@ -46,7 +46,6 @@ export default async function MyActivitiesPage() {
       name: string;
       date: Date;
       frequency: string;
-      price: number;
     };
   }> = [];
 
@@ -57,7 +56,9 @@ export default async function MyActivitiesPage() {
           OR: [{ userId }, { child: { userId } }],
         },
         include: {
-          activity: true,
+          activity: {
+            select: { id: true, name: true, date: true, frequency: true },
+          },
           child: { select: { id: true, name: true, lastName: true } },
         },
         orderBy: { activity: { date: 'asc' } },
@@ -65,7 +66,9 @@ export default async function MyActivitiesPage() {
       prisma.activityProfessor.findMany({
         where: { userId },
         include: {
-          activity: true,
+          activity: {
+            select: { id: true, name: true, date: true, frequency: true },
+          },
         },
         orderBy: { activity: { date: 'asc' } },
       }),
@@ -95,7 +98,14 @@ export default async function MyActivitiesPage() {
             lte: sixMonthsLater,
           },
         },
-        include: {
+        select: {
+          id: true,
+          date: true,
+          schedule: true,
+          geoLocation: true,
+          sportIcon: true,
+          latitude: true,
+          longitude: true,
           activity: { select: { id: true, name: true } },
         },
         orderBy: { date: 'asc' },
@@ -107,10 +117,50 @@ export default async function MyActivitiesPage() {
         activityName: d.activity.name,
         schedule: d.schedule,
         geoLocation: d.geoLocation,
+        sportIcon: d.sportIcon,
       }));
     } catch {
       calendarDays = [];
     }
+  }
+
+  // Group upcoming sessions per activity (max 3)
+  const sessionsByActivity = new Map<string, UpcomingSession[]>();
+  if (activityIds.length > 0) {
+    try {
+      const rawSessions = await prisma.activityDay.findMany({
+        where: {
+          activityId: { in: activityIds },
+          date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+        select: {
+          id: true,
+          date: true,
+          schedule: true,
+          geoLocation: true,
+          sportIcon: true,
+          latitude: true,
+          longitude: true,
+          activityId: true,
+        },
+        orderBy: { date: 'asc' },
+      });
+      for (const s of rawSessions) {
+        const list = sessionsByActivity.get(s.activityId) ?? [];
+        if (list.length < 3) {
+          list.push({
+            id: s.id,
+            date: s.date.toISOString().slice(0, 10),
+            schedule: s.schedule,
+            geoLocation: s.geoLocation,
+            sportIcon: s.sportIcon,
+            latitude: s.latitude,
+            longitude: s.longitude,
+          });
+          sessionsByActivity.set(s.activityId, list);
+        }
+      }
+    } catch { /* ignore */ }
   }
 
   const grouped = new Map<
@@ -153,6 +203,7 @@ export default async function MyActivitiesPage() {
   const items = Array.from(grouped.values()).map((entry) => ({
     activity: entry.activity,
     labels: Array.from(entry.labels),
+    sessions: sessionsByActivity.get(entry.activity.id) ?? [],
   }));
 
   return (
@@ -167,47 +218,103 @@ export default async function MyActivitiesPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px] items-start">
-        <div>
-          {items.length === 0 ? (
+      <ActivityCalendar activityDays={calendarDays} />
+
+      <div className="mt-6">
+        {items.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground">
               <p>Todavía no tenés actividades asociadas.</p>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {items.map(({ activity, labels }) => (
+            <ul className="space-y-4">
+              {items.map(({ activity, labels, sessions }) => (
                 <li
                   key={activity.id}
-                  className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                  className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
                 >
+                  {/* Header: nombre + participantes */}
                   <div>
                     <Link
                       href={`/activities/${activity.id}`}
-                      className="text-base font-semibold transition-colors hover:text-primary"
+                      className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
                     >
                       {activity.name}
                     </Link>
-                    <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                      <span>
-                        {
-                          frequencyLabels[
-                            activity.frequency as keyof typeof frequencyLabels
-                          ]
-                        }
-                      </span>
-                      <span>·</span>
-                      <span>${activity.price}</span>
-                      <span>·</span>
-                      <span>{labels.join(' · ')}</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {labels.map((label) => (
+                        <span
+                          key={label}
+                          className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
+                        >
+                          {label}
+                        </span>
+                      ))}
                     </div>
                   </div>
+
+                  {/* Próximas sesiones */}
+                  {sessions.length > 0 && (
+                    <div className="space-y-2 border-t pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Próximas sesiones
+                      </p>
+                      <ul className="space-y-2">
+                        {sessions.map((s) => {
+                          const mapHref =
+                            s.latitude != null && s.longitude != null
+                              ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
+                              : null;
+                          const dateLabel = new Date(
+                            s.date + 'T12:00:00'
+                          ).toLocaleDateString('es-AR', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                          });
+                          return (
+                            <li
+                              key={s.id}
+                              className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
+                            >
+                              {s.sportIcon ? (
+                                <Image
+                                  src={`/icons/${s.sportIcon}`}
+                                  alt=""
+                                  width={28}
+                                  height={28}
+                                  className="h-7 w-7 shrink-0 object-contain"
+                                />
+                              ) : (
+                                <span className="h-7 w-7 shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium leading-tight">
+                                  {dateLabel} · {s.schedule}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {s.geoLocation}
+                                </p>
+                              </div>
+                              {mapHref && (
+                                <a
+                                  href={mapHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="shrink-0 text-xs text-link hover:underline underline-offset-4"
+                                >
+                                  Mapa
+                                </a>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-        </div>
-
-        <ActivityCalendar activityDays={calendarDays} />
       </div>
     </main>
   );
