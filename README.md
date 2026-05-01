@@ -26,18 +26,12 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 - `MP_EXCLUDED_PAYMENT_TYPES`: IDs separados por coma.
 
 
-## Web Push notifications
+## Push notifications
 
-Notificaciones push usan VAPID self-hosted (sin servicios pagos). Generar las keys una sola vez con:
+Las push web usan PushAlert.
 
-```bash
-npx web-push generate-vapid-keys
-```
+Agregá al `.env.local`:
 
-Y agregar al `.env.local`:
+- `PUSHALERT_REST_API_KEY`: clave REST para enviar notificaciones desde el servidor.
 
-- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`: clave pública (se expone al cliente).
-- `VAPID_PRIVATE_KEY`: clave privada (server-only, no commitear).
-- `VAPID_SUBJECT`: `mailto:operador@hualas.com` o URL `https://hualas.com` que identifica al operador del servicio.
-
-Sin estas variables el flujo de subscribe arroja error en runtime; la notification in-app sigue funcionando.
+La app carga el script público de PushAlert en el layout y guarda el `subscriber_id` de cada navegador para poder enviarle notificaciones segmentadas. Las notificaciones in-app siguen funcionando aunque falte esta variable, pero el envío push no.

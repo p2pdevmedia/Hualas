@@ -2,6 +2,7 @@ import './globals.css';
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
 import { Chivo } from 'next/font/google';
+import Script from 'next/script';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Providers from '@/components/providers';
@@ -45,6 +46,16 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <Script id="pushalert-unified-code" strategy="beforeInteractive">
+          {`(function(d, t) {
+    var g = d.createElement(t),
+    s = d.getElementsByTagName(t)[0];
+    g.src = "https://cdn.pushalert.co/unified_bb185d3211576a36bc9a0d4726b49fc2.js";
+    s.parentNode.insertBefore(g, s);
+}(document, "script"));`}
+        </Script>
+      </head>
       <body
         className={`${chivo.variable} min-h-screen text-foreground flex flex-col font-body`}
       >

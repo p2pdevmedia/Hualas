@@ -103,7 +103,7 @@ export default async function NotificationsPreferencesPage() {
       where: { userId },
       select: { type: true, inApp: true, push: true },
     }),
-    prisma.pushSubscription.findMany({
+    prisma.pushAlertSubscription.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -137,10 +137,7 @@ export default async function NotificationsPreferencesPage() {
     addedAt: s.createdAt.toISOString(),
     failed: !!s.failedAt,
   }));
-  const vapidConfigured =
-    !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
-    !!process.env.VAPID_PRIVATE_KEY &&
-    !!process.env.VAPID_SUBJECT;
+  const pushAlertConfigured = !!process.env.PUSHALERT_REST_API_KEY;
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
@@ -150,11 +147,10 @@ export default async function NotificationsPreferencesPage() {
       <p className="text-sm text-gray-600 mb-6">
         Elegí qué notificaciones querés recibir y cómo.
       </p>
-      {!vapidConfigured ? (
+      {!pushAlertConfigured ? (
         <div className="mb-6 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Faltan variables VAPID en el entorno. Sin `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
-          `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`, no se pueden suscribir ni enviar
-          push notifications.
+          Faltan variables de PushAlert en el entorno. Sin
+          `PUSHALERT_REST_API_KEY` no se pueden enviar push notifications.
         </div>
       ) : null}
       <PreferencesForm items={items} devices={devices} />
