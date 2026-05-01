@@ -3,6 +3,7 @@ import {
   buildAccountingReportEntries,
   summarizeAccounting,
 } from '../accounting-summary';
+import { getAccountingPaymentDate } from '../accounting';
 
 describe('accounting summary helpers', () => {
   it('counts manual payments and Mercado Pago as income and expenses only from movements', () => {
@@ -149,5 +150,23 @@ describe('accounting summary helpers', () => {
       'Mercado Pago': { income: 600, expense: 0 },
       Salarios: { income: 0, expense: 250 },
     });
+  });
+
+  it('falls back to updatedAt or createdAt for manual payment dates', () => {
+    expect(
+      getAccountingPaymentDate({
+        paidAt: null,
+        updatedAt: '2026-05-03T12:00:00.000Z',
+        createdAt: '2026-05-01T12:00:00.000Z',
+      })?.toISOString()
+    ).toBe('2026-05-03T12:00:00.000Z');
+
+    expect(
+      getAccountingPaymentDate({
+        paidAt: null,
+        updatedAt: null,
+        createdAt: '2026-05-01T12:00:00.000Z',
+      })?.toISOString()
+    ).toBe('2026-05-01T12:00:00.000Z');
   });
 });

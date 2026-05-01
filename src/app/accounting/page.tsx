@@ -7,6 +7,7 @@ import {
   formatAccountingDate,
   formatAmount,
   formatPersonName,
+  getAccountingPaymentDate,
   isAccountingRole,
   movementTypeClass,
   movementTypeLabel,
@@ -72,17 +73,16 @@ export default async function AccountingDashboardPage() {
         child: { select: { name: true, lastName: true } },
       },
     }),
-    prisma.payment.aggregate({
+    prisma.payment.findMany({
       where: {
         provider: 'MANUAL_TRANSFER',
         status: 'APPROVED',
-        paidAt: {
-          gte: monthStart,
-          lte: monthEnd,
-        },
       },
-      _sum: {
+      select: {
         amount: true,
+        paidAt: true,
+        updatedAt: true,
+        createdAt: true,
       },
     }),
     prisma.payment.count({
@@ -93,7 +93,14 @@ export default async function AccountingDashboardPage() {
     }),
   ]);
 
-  const manualIncome = monthManualPayments._sum.amount ?? 0;
+  const manualIncome = monthManualPayments
+    .filter((payment) => {
+      const paymentDate = getAccountingPaymentDate(payment);
+      return paymentDate
+        ? paymentDate >= monthStart && paymentDate <= monthEnd
+        : false;
+    })
+    .reduce((sum, payment) => sum + payment.amount, 0);
   const totalMp = monthPayments.reduce(
     (sum, payment) => sum + payment.activity.price * 100,
     0
@@ -128,9 +135,9 @@ export default async function AccountingDashboardPage() {
             helper: 'Ingresos menos egresos',
           },
           {
-            label: 'Pagos manuales',
+            label: 'Pagos manuales verificados',
             value: formatAmount(manualIncome),
-            helper: 'Transferencias aprobadas del mes',
+            helper: 'Transferencias aprobadas o verificadas del mes',
           },
           {
             label: 'Cobrado por MP',

@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isAccountingRole } from '@/lib/accounting';
+import { getAccountingPaymentDate, isAccountingRole } from '@/lib/accounting';
 import {
   buildAccountingReportEntries,
   buildAccountingCategoryTotals,
@@ -34,10 +34,16 @@ export async function GET(request: Request) {
       where: {
         provider: 'MANUAL_TRANSFER',
         status: 'APPROVED',
-        ...(hasDateFilter ? { paidAt: dateFilter } : {}),
       },
       orderBy: { paidAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        paidAt: true,
+        updatedAt: true,
+        createdAt: true,
+        amount: true,
+        receiptUrl: true,
+        payerName: true,
         order: {
           select: {
             responsibleName: true,
@@ -64,16 +70,25 @@ export async function GET(request: Request) {
     }),
   ]);
 
-  const manualIncomePayments = manualPayments.map((payment) => ({
-    id: payment.id,
-    paidAt: payment.paidAt,
-    amount: payment.amount,
-    customerName: payment.payerName ?? payment.order.responsibleName,
-    activities: payment.order.items
-      .map((item) => item.activity?.name)
-      .filter((name): name is string => Boolean(name)),
-    receiptUrl: payment.receiptUrl,
-  }));
+  const manualIncomePayments = manualPayments
+    .filter((payment) => {
+      const paymentDate = getAccountingPaymentDate(payment);
+      if (!paymentDate) return false;
+      return hasDateFilter
+        ? paymentDate >= (from ? new Date(from) : paymentDate) &&
+            paymentDate <= (to ? new Date(to) : paymentDate)
+        : true;
+    })
+    .map((payment) => ({
+      id: payment.id,
+      paidAt: payment.paidAt ?? payment.updatedAt ?? payment.createdAt,
+      amount: payment.amount,
+      customerName: payment.payerName ?? payment.order.responsibleName,
+      activities: payment.order.items
+        .map((item) => item.activity?.name)
+        .filter((name): name is string => Boolean(name)),
+      receiptUrl: payment.receiptUrl,
+    }));
 
   const reportMpPayments = mpPayments.map((payment) => ({
     id: payment.id,

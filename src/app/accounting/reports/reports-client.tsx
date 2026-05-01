@@ -261,7 +261,7 @@ export default function ReportsClient() {
               { label: 'Egresos', value: formatAmount(data.totalExpense) },
               { label: 'Balance', value: formatAmount(data.netBalance) },
               {
-                label: 'Pagos manuales',
+                label: 'Pagos manuales verificados',
                 value: formatAmount(data.totalManualPayments),
               },
               { label: 'Cobrado MP', value: formatAmount(data.totalMp) },
