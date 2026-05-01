@@ -6,6 +6,9 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { formatAccountingDate, formatAmount } from '@/lib/accounting';
+import { buildAccountingCategoryTotals } from '@/lib/accounting-summary';
+
+type ExportSource = 'movements' | 'manualPayments' | 'mpPayments';
 
 type ReportData = {
   totalIncome: number;
@@ -66,6 +69,13 @@ export default function ReportsClient() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [exportSources, setExportSources] = useState<
+    Record<ExportSource, boolean>
+  >({
+    movements: true,
+    manualPayments: true,
+    mpPayments: true,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -101,8 +111,61 @@ export default function ReportsClient() {
     );
   }, [data]);
 
+  const selectedExportEntries = useMemo(() => {
+    if (!data) return [];
+
+    return data.entries.filter((entry) => {
+      switch (entry.source) {
+        case 'Movimiento manual':
+          return exportSources.movements;
+        case 'Pago manual':
+          return exportSources.manualPayments;
+        case 'Mercado Pago':
+          return exportSources.mpPayments;
+      }
+    });
+  }, [data, exportSources]);
+
+  const selectedExportCategoryRows = useMemo(() => {
+    return Object.entries(
+      buildAccountingCategoryTotals(selectedExportEntries)
+    ).sort(([a], [b]) => a.localeCompare(b));
+  }, [selectedExportEntries]);
+
+  const selectedExportSummary = useMemo(
+    () =>
+      selectedExportEntries.reduce(
+        (acc, entry) => {
+          if (entry.type === 'INCOME') {
+            acc.totalIncome += entry.amount;
+          } else {
+            acc.totalExpense += entry.amount;
+          }
+
+          if (entry.source === 'Pago manual') {
+            acc.totalManualPayments += entry.amount;
+          }
+
+          if (entry.source === 'Mercado Pago') {
+            acc.totalMp += entry.amount;
+          }
+
+          return acc;
+        },
+        {
+          totalIncome: 0,
+          totalExpense: 0,
+          totalManualPayments: 0,
+          totalMp: 0,
+        }
+      ),
+    [selectedExportEntries]
+  );
+
+  const canExport = selectedExportEntries.length > 0;
+
   const downloadCsv = () => {
-    if (!data) return;
+    if (!data || !canExport) return;
     const lines = [
       [
         'Origen',
@@ -113,7 +176,7 @@ export default function ReportsClient() {
         'Monto',
         'Referencia',
       ].join(','),
-      ...data.entries.map((entry) =>
+      ...selectedExportEntries.map((entry) =>
         [
           entry.source,
           entry.type,
@@ -140,7 +203,7 @@ export default function ReportsClient() {
   };
 
   const downloadPdf = async () => {
-    if (!data) return;
+    if (!data || !canExport) return;
 
     const doc = new jsPDF();
     doc.setFontSize(18);
@@ -155,11 +218,14 @@ export default function ReportsClient() {
       ],
       body: [
         [
-          formatAmount(data.totalIncome),
-          formatAmount(data.totalExpense),
-          formatAmount(data.netBalance),
-          formatAmount(data.totalManualPayments),
-          formatAmount(data.totalMp),
+          formatAmount(selectedExportSummary.totalIncome),
+          formatAmount(selectedExportSummary.totalExpense),
+          formatAmount(
+            selectedExportSummary.totalIncome -
+              selectedExportSummary.totalExpense
+          ),
+          formatAmount(selectedExportSummary.totalManualPayments),
+          formatAmount(selectedExportSummary.totalMp),
         ],
       ],
     });
@@ -167,7 +233,7 @@ export default function ReportsClient() {
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
       head: [['Categoría', 'Ingresos', 'Egresos']],
-      body: categoryRows.map(([category, totals]) => [
+      body: selectedExportCategoryRows.map(([category, totals]) => [
         category,
         formatAmount(totals.income),
         formatAmount(totals.expense),
@@ -177,7 +243,7 @@ export default function ReportsClient() {
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
       head: [['Origen', 'Fecha', 'Descripción', 'Monto', 'Referencia']],
-      body: data.entries
+      body: selectedExportEntries
         .slice(0, 20)
         .map((entry) => [
           entry.source,
@@ -219,6 +285,32 @@ export default function ReportsClient() {
             <Button
               type="button"
               variant="outline"
+              onClick={() =>
+                setExportSources({
+                  movements: true,
+                  manualPayments: true,
+                  mpPayments: true,
+                })
+              }
+            >
+              Seleccionar todo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setExportSources({
+                  movements: false,
+                  manualPayments: false,
+                  mpPayments: false,
+                })
+              }
+            >
+              Limpiar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => window.location.reload()}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -228,16 +320,52 @@ export default function ReportsClient() {
               type="button"
               variant="outline"
               onClick={downloadCsv}
-              disabled={!data}
+              disabled={!data || !canExport}
             >
               <Download className="mr-2 h-4 w-4" />
               CSV
             </Button>
-            <Button type="button" onClick={downloadPdf} disabled={!data}>
+            <Button
+              type="button"
+              onClick={downloadPdf}
+              disabled={!data || !canExport}
+            >
               <FileDown className="mr-2 h-4 w-4" />
               PDF
             </Button>
           </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+          <span className="text-sm font-medium">Exportar:</span>
+          {(
+            [
+              { key: 'movements', label: 'Movimientos' },
+              { key: 'manualPayments', label: 'Pagos manuales' },
+              { key: 'mpPayments', label: 'Mercado Pago' },
+            ] as const
+          ).map((option) => (
+            <label
+              key={option.key}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={exportSources[option.key]}
+                onChange={() =>
+                  setExportSources((current) => ({
+                    ...current,
+                    [option.key]: !current[option.key],
+                  }))
+                }
+              />
+              {option.label}
+            </label>
+          ))}
+          <span className="text-xs text-muted-foreground">
+            {selectedExportEntries.length} registro
+            {selectedExportEntries.length === 1 ? '' : 's'} seleccionado
+            {selectedExportEntries.length === 1 ? '' : 's'} para exportar
+          </span>
         </div>
       </div>
 

@@ -10,6 +10,15 @@ import {
   summarizeAccounting,
 } from '@/lib/accounting-summary';
 
+function parseDateInput(value: string, endOfDay = false) {
+  const [year, month, day] = value.split('-').map((part) => Number(part));
+  if (!year || !month || !day) return null;
+
+  return endOfDay
+    ? new Date(year, month - 1, day, 23, 59, 59, 999)
+    : new Date(year, month - 1, day, 0, 0, 0, 0);
+}
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!isAccountingRole((session?.user as any)?.role)) {
@@ -20,10 +29,12 @@ export async function GET(request: Request) {
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
+  const fromDate = from ? parseDateInput(from) : null;
+  const toDate = to ? parseDateInput(to, true) : null;
   const dateFilter: Prisma.DateTimeFilter = {};
-  if (from) dateFilter.gte = new Date(from);
-  if (to) dateFilter.lte = new Date(to);
-  const hasDateFilter = Object.keys(dateFilter).length > 0;
+  if (fromDate) dateFilter.gte = fromDate;
+  if (toDate) dateFilter.lte = toDate;
+  const hasDateFilter = Boolean(fromDate || toDate);
 
   const [movements, manualPayments, mpPayments] = await Promise.all([
     prisma.accountingMovement.findMany({
@@ -74,10 +85,10 @@ export async function GET(request: Request) {
     .filter((payment) => {
       const paymentDate = getAccountingPaymentDate(payment);
       if (!paymentDate) return false;
-      return hasDateFilter
-        ? paymentDate >= (from ? new Date(from) : paymentDate) &&
-            paymentDate <= (to ? new Date(to) : paymentDate)
-        : true;
+      if (!hasDateFilter) return true;
+      if (fromDate && paymentDate < fromDate) return false;
+      if (toDate && paymentDate > toDate) return false;
+      return true;
     })
     .map((payment) => ({
       id: payment.id,
