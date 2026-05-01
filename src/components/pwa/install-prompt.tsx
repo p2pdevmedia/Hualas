@@ -116,58 +116,69 @@ export default function InstallPrompt() {
   if (!mounted || !visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 sm:inset-auto sm:right-4 sm:bottom-4 sm:px-0">
-      <div className="mx-auto max-w-md rounded-2xl border border-border/70 bg-background/95 p-4 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Smartphone className="h-5 w-5" aria-hidden="true" />
+    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 sm:px-4 sm:pb-4">
+      <div className="mx-auto max-w-lg rounded-t-3xl border border-border/70 border-b-0 bg-background/95 p-4 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:rounded-2xl sm:border-b sm:border-border/70">
+        <div className="flex min-h-[220px] flex-col gap-3 sm:min-h-0">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Smartphone className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Instalá Hualas para recibir notificaciones
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Agregá la app a tu dispositivo para que los avisos lleguen mejor
+                    en Android, iPhone y PC.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Cerrar"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              {isIos && (
+                <div className="mt-3 rounded-xl bg-muted/60 p-3 text-xs leading-5 text-muted-foreground">
+                  En iPhone: tocá el botón de compartir del navegador y elegí{' '}
+                  <span className="font-medium text-foreground">
+                    Agregar a pantalla de inicio
+                  </span>
+                  .
+                </div>
+              )}
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">
-                  Instalá Hualas para recibir notificaciones
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Agregá la app a tu dispositivo para que los avisos lleguen mejor en
-                  Android, iPhone y PC.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Cerrar"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
 
-            {isIos && (
-              <div className="mt-3 rounded-xl bg-muted/60 p-3 text-xs leading-5 text-muted-foreground">
-                En iPhone: tocá el botón de compartir del navegador y elegí{' '}
-                <span className="font-medium text-foreground">
-                  Agregar a pantalla de inicio
-                </span>
-                .
-              </div>
-            )}
-
-            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={handleDismiss} type="button">
-                Después
-              </Button>
-              <Button onClick={handleInstall} type="button" className="gap-2">
-                {promptEvent ? (
-                  <>
-                    <Download className="h-4 w-4" aria-hidden="true" />
-                    Instalar app
-                  </>
-                ) : (
-                  'Entendido'
-                )}
-              </Button>
-            </div>
+          <div className="mt-auto flex flex-col-reverse gap-2 border-t border-border/60 pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={handleDismiss}
+              type="button"
+              className="w-full sm:w-auto"
+            >
+              Después
+            </Button>
+            <Button
+              onClick={handleInstall}
+              type="button"
+              className="w-full gap-2 sm:w-auto"
+            >
+              {promptEvent ? (
+                <>
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Instalar app
+                </>
+              ) : (
+                'Entendido'
+              )}
+            </Button>
           </div>
         </div>
       </div>
