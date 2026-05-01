@@ -77,7 +77,12 @@ export default function PreferencesForm({ items: initialItems, devices: initialD
       if (result === 'granted' && 'serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready;
         const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!publicKey) return;
+        if (!publicKey) {
+          console.error(
+            '[preferences] NEXT_PUBLIC_VAPID_PUBLIC_KEY is missing. Browser push subscriptions are disabled.',
+          );
+          return;
+        }
         const padding = '='.repeat((4 - (publicKey.length % 4)) % 4);
         const base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
         const raw = atob(base64);

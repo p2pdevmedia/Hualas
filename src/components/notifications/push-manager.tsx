@@ -92,7 +92,12 @@ export default function PushManager() {
 
   async function ensureSubscription(reg: ServiceWorkerRegistration): Promise<void> {
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!publicKey) return;
+    if (!publicKey) {
+      console.error(
+        '[push-manager] NEXT_PUBLIC_VAPID_PUBLIC_KEY is missing. Browser push subscriptions are disabled.',
+      );
+      return;
+    }
     const existing = await reg.pushManager.getSubscription();
     if (existing) {
       await postSubscription(existing);
