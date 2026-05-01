@@ -94,6 +94,7 @@ export default async function AccountingDashboardPage() {
         status: 'APPROVED',
       },
       select: {
+        id: true,
         amount: true,
         payerName: true,
         order: {
@@ -140,11 +141,11 @@ export default async function AccountingDashboardPage() {
     .reduce((sum, movement) => sum + movement.amount, 0);
   const totalIncome = totalMovementIncome + manualIncome + totalMp;
   const netBalance = totalIncome - totalExpense;
-  const recentAccountingEntries: RecentAccountingEntry[] = [
-    ...recentMovements.map((movement) => ({
+  const recentMovementEntries: RecentAccountingEntry[] = recentMovements.map(
+    (movement) => ({
       id: movement.id,
       date: movement.date,
-      origin: 'MOVEMENT' as const,
+      origin: 'MOVEMENT',
       type: movement.type,
       category: movement.category,
       description: movement.description,
@@ -152,8 +153,10 @@ export default async function AccountingDashboardPage() {
       receiptUrl: movement.receiptImage
         ? buildAccountingMovementReceiptUrl(movement.id)
         : null,
-    })),
-    ...approvedManualPayments
+    })
+  );
+  const recentManualPaymentEntries: RecentAccountingEntry[] =
+    approvedManualPayments
       .map((payment) => {
         const paymentDate = getAccountingPaymentDate(payment);
         if (!paymentDate) return null;
@@ -170,7 +173,10 @@ export default async function AccountingDashboardPage() {
           receiptUrl: buildManualPaymentReceiptUrl(payment.id),
         };
       })
-      .filter((entry): entry is RecentAccountingEntry => Boolean(entry)),
+      .filter((entry): entry is RecentAccountingEntry => entry !== null);
+  const recentAccountingEntries: RecentAccountingEntry[] = [
+    ...recentMovementEntries,
+    ...recentManualPaymentEntries,
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 10);
