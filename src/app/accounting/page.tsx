@@ -204,8 +204,8 @@ export default async function AccountingDashboardPage() {
           },
           {
             label: 'Pagos manuales verificados',
-            value: String(verifiedManualPaymentsCount),
-            helper: 'Transferencias aprobadas',
+            value: formatAmount(manualIncome),
+            helper: 'Transferencias aprobadas del mes',
           },
           {
             label: 'Cobrado por MP',
