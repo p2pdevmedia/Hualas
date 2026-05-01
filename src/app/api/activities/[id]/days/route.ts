@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityDayCreateSchema } from '@/lib/validations/activity';
+import { notifyActivityDayCreated } from '@/lib/notifications/notification-service';
 
 export async function POST(
   req: Request,
@@ -82,6 +83,10 @@ export async function POST(
       },
     },
   });
+
+  notifyActivityDayCreated(activityDay.id).catch((err) =>
+    console.error('[notifications] notifyActivityDayCreated failed', err),
+  );
 
   return NextResponse.json(activityDay);
 }

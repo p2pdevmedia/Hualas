@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
 import { movementSchema } from '@/lib/validations/accounting';
+import { notifyPaymentManualCreated } from '@/lib/notifications/notification-service';
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -61,6 +62,10 @@ export async function POST(request: Request) {
       createdById: (session!.user as any).id,
     },
   });
+
+  notifyPaymentManualCreated(movement.id).catch((err) =>
+    console.error('[notifications] notifyPaymentManualCreated failed', err),
+  );
 
   return NextResponse.json(movement, { status: 201 });
 }

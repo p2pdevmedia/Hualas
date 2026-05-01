@@ -11,6 +11,10 @@ import {
   registerSocialFeePayment,
   type SocialFeeParticipant,
 } from '@/lib/social-fee';
+import {
+  notifyActivityPaymentApproved,
+  notifyActivityCapacityFull,
+} from '@/lib/notifications/notification-service';
 
 export async function POST(req: NextRequest) {
   let body: Prisma.InputJsonValue | null = null;
@@ -128,7 +132,7 @@ export async function POST(req: NextRequest) {
         receiptDate: new Date(date),
       };
 
-      await prisma.activityParticipant.upsert({
+      const participant = await prisma.activityParticipant.upsert({
         where: {
           participantKey,
         },
@@ -139,7 +143,22 @@ export async function POST(req: NextRequest) {
           ...participantData,
         },
         update: participantData,
+        select: { id: true },
       });
+
+      if (!existingParticipant) {
+        notifyActivityPaymentApproved(participant.id).catch((err) =>
+          console.error('[notifications] notifyActivityPaymentApproved failed', err),
+        );
+        if (
+          activity.capacity != null &&
+          activity.participants.length + 1 >= activity.capacity
+        ) {
+          notifyActivityCapacityFull(activityId).catch((err) =>
+            console.error('[notifications] notifyActivityCapacityFull failed', err),
+          );
+        }
+      }
     }
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);

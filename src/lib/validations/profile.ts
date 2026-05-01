@@ -16,7 +16,10 @@ export const profileUpdateSchema = z.object({
   nationality: z.string().optional(),
   maritalStatus: z.string().optional(),
   email: z.string().email().optional(),
-  password: z.string().min(6).optional(),
+  password: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().min(6).optional()
+  ),
   allergies: z.string().optional(),
   regularMedication: z.string().optional(),
   relevantDiseases: z.string().optional(),

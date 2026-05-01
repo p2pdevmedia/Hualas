@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { acknowledgePickupNoticeSchema } from "@/lib/validations/pickup-notice";
+import { notifyPickupNoticeAcknowledged } from "@/lib/notifications/notification-service";
 import { z } from "zod";
 
 export async function POST(
@@ -78,6 +79,10 @@ export async function POST(
         },
       },
     });
+
+    notifyPickupNoticeAcknowledged(ack.id).catch((err) =>
+      console.error('[notifications] notifyPickupNoticeAcknowledged failed', err),
+    );
 
     return NextResponse.json(ack, { status: 201 });
   } catch (error) {

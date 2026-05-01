@@ -15,6 +15,8 @@ import {
 } from './language-provider';
 import type { Lang } from '@/lib/i18n';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
+import NotificationBell from './notifications/notification-bell';
+import PushManager from './notifications/push-manager';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
 const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
@@ -203,13 +205,16 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <button
-          className="rounded-md p-1.5 opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200 md:hidden"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          {session && <NotificationBell />}
+          <button
+            className="rounded-md p-1.5 opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
 
         <div className="hidden md:flex md:items-center md:gap-6">
           {session && !isCounter && (
@@ -293,6 +298,7 @@ export default function Navbar() {
           </Link>
           {session ? (
             <div className="flex items-center gap-3">
+              <NotificationBell />
               <div
                 className={cn(
                   'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
@@ -389,6 +395,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      <PushManager />
       {menuOpen && (
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
           {session && !isCounter && (

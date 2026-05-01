@@ -55,6 +55,9 @@ model User {
   pickupNoticesCreated       PickupNotice[] @relation("PickupNoticeCreator")
   pickupNoticesAsAlternate   PickupNotice[] @relation("PickupNoticeAlternatePerson")
   pickupNoticeAcknowledgments PickupNoticeAcknowledgment[]
+  notifications              Notification[]
+  pushSubscriptions          PushSubscription[]
+  notificationPreferences    NotificationPreference[]
 }
 
 
@@ -518,6 +521,49 @@ model Payment {
   @@index([provider, providerPaymentId])
 }
 
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  url       String?
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([type, createdAt])
+}
+
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+  failedAt   DateTime?
+
+  @@index([userId])
+}
+
+model NotificationPreference {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  inApp     Boolean          @default(true)
+  push      Boolean          @default(true)
+  updatedAt DateTime         @updatedAt
+
+  @@unique([userId, type])
+}
+
 enum Role {
   ADMIN
   COUNTER
@@ -604,4 +650,16 @@ enum PaymentStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+enum NotificationType {
+  ACTIVITY_DAY_NEW
+  ACTIVITY_DAY_UPDATED
+  PICKUP_NOTICE_CREATED
+  PICKUP_NOTICE_ACKNOWLEDGED
+  PAYMENT_MANUAL_CREATED
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  ACTIVITY_CAPACITY_FULL
+  CHAT_MESSAGE_NEW
 }
