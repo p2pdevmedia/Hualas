@@ -20,6 +20,7 @@ export const dynamic = 'force-dynamic';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#393f45',
 };
 
 export async function generateMetadata() {
@@ -34,7 +35,6 @@ export async function generateMetadata() {
       title: 'Hualas Club',
       statusBarStyle: 'default',
     },
-    themeColor: '#393f45',
     icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}` }],
   };
 }
