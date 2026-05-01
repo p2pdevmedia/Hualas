@@ -30,7 +30,19 @@ export default function LoginPage() {
       setError('invalidCredentials');
     } else {
       setSuccess('Login successful');
-      setTimeout(() => router.push('/my-activities'), 1000);
+
+      try {
+        const redirectResponse = await fetch('/api/auth/post-login-redirect', {
+          method: 'GET',
+        });
+        const data = (await redirectResponse.json()) as {
+          redirectUrl?: string;
+        };
+
+        setTimeout(() => router.push(data.redirectUrl ?? '/'), 1000);
+      } catch {
+        setTimeout(() => router.push('/'), 1000);
+      }
     }
   };
 
@@ -110,7 +122,7 @@ export default function LoginPage() {
 
           <Button
             className="w-full flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-muted"
-            onClick={() => signIn('google', { callbackUrl: '/my-activities' })}
+            onClick={() => signIn('google', { callbackUrl: '/' })}
           >
             <Image src="/google.svg" alt="Google logo" width={18} height={18} />
             {t.signInWithGoogle}
