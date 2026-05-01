@@ -27,6 +27,14 @@ export async function generateMetadata() {
   return {
     title: 'Hualas Club',
     description: 'Club de montaña en San Martín de los Andes, Patagonia',
+    manifest: '/manifest.webmanifest',
+    applicationName: 'Hualas Club',
+    appleWebApp: {
+      capable: true,
+      title: 'Hualas Club',
+      statusBarStyle: 'default',
+    },
+    themeColor: '#393f45',
     icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}` }],
   };
 }
