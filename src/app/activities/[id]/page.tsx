@@ -4,8 +4,8 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
-import ActivityGroupsPanel from './activity-groups-panel';
 import ActivityDaysPanel from './activity-days-panel';
+import InscriptosPanel from './inscriptos-panel';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
@@ -280,17 +280,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     ? Math.max(capacity - enrolledCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
-  const canManageGroups = isAdmin;
   const canManageDays = isAdmin;
 
   let registrations: Array<{
-    id: string;
-    label: string;
-    groupId: string | null;
-    groupName: string | null;
-  }> = [];
-
-  let groupParticipants: Array<{
     id: string;
     label: string;
     groupId: string | null;
@@ -321,49 +313,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
 
-  if (canManageGroups) {
-    const participantsForGroups = await prisma.activityParticipant.findMany({
-      where: { activityId: activity.id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            lastName: true,
-          },
-        },
-        child: {
-          select: {
-            id: true,
-            name: true,
-            lastName: true,
-          },
-        },
-        groupMembership: {
-          select: {
-            activityGroupId: true,
-            activityGroup: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { id: 'asc' },
-    });
-
-    groupParticipants = participantsForGroups.map((participant: any) => ({
-      id: participant.id,
-      label: participant.child
-        ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
-        : `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`,
-      groupId: participant.groupMembership?.activityGroupId ?? null,
-      groupName: participant.groupMembership?.activityGroup?.name ?? null,
-    }));
-  }
-
   const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
     return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
@@ -372,7 +321,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     id: group.id,
     name: group.name,
   }));
-  const adminParticipants = participants as ActivityParticipantDetail[];
 
   return (
     <main>
@@ -545,21 +493,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         </div>
 
-        {canManageGroups && (
-          <ActivityGroupsPanel
-            activityId={activity.id}
-            canManageGroups={canManageGroups}
-            groups={activityGroups.map((group: any) => ({
-              id: group.id,
-              name: group.name,
-              description: group.description,
-              memberCount: group._count.members,
-              dayCount: group._count.days,
-            }))}
-            participants={groupParticipants}
-          />
-        )}
-
         {canSeeSessions && <ActivityDaysPanel
           activityId={activity.id}
           canManageDays={canManageDays}
@@ -609,70 +542,24 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         />}
 
         {isAdmin && (
-          <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="font-heading text-2xl font-semibold">
-                  Inscriptos
-                </h2>
-                <p className="text-sm text-muted-foreground font-body mt-1">
-                  {enrolledCount} inscripto
-                  {enrolledCount === 1 ? '' : 's'}
-                </p>
-              </div>
-              {hasCapacity && (
-                <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {remainingSpots} lugares disponibles
-                </div>
-              )}
-            </div>
-
-            {adminParticipants.length === 0 ? (
-              <p className="mt-6 text-sm text-muted-foreground font-body">
-                Aún no hay inscriptos en esta actividad.
-              </p>
-            ) : (
-              <ul className="mt-6 divide-y divide-border">
-                {adminParticipants.map((participant) => (
-                  <li
-                    key={participant.id}
-                    className="py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {getParticipantName(participant)}
-                      </p>
-                      <p className="text-sm text-muted-foreground font-body">
-                        {getParticipantSubtitle(participant)}
-                      </p>
-                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground font-body">
-                        {participant.receipt && (
-                          <span>Comprobante {participant.receipt}</span>
-                        )}
-                        {participant.receiptDate && (
-                          <span>
-                            {participant.receipt ? '· ' : ''}
-                            Pago aprobado el{' '}
-                            {participant.receiptDate.toLocaleDateString(
-                              'es-AR',
-                              {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                              }
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground font-body">
-                      {participant.child ? 'Hijo/a' : 'Titular'}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <InscriptosPanel
+            participants={(participants as any[]).map((p) => ({
+              id: p.id,
+              name: getParticipantName(p),
+              subtitle: getParticipantSubtitle(p),
+              receipt: p.receipt ?? null,
+              receiptDate: p.receiptDate ? p.receiptDate.toISOString() : null,
+              isChild: !!p.child,
+              groupId: p.groupMembership?.activityGroupId ?? null,
+              groupName: p.groupMembership?.activityGroupId
+                ? activityGroupById.get(p.groupMembership.activityGroupId) ?? null
+                : null,
+            }))}
+            groups={activityGroupOptions}
+            canAssignGroups={isAdmin}
+            enrolledCount={enrolledCount}
+            capacity={capacity}
+          />
         )}
       </div>
     </main>

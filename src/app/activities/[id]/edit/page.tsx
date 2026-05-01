@@ -27,16 +27,24 @@ export default async function EditActivityPage({
     redirect('/activities');
   }
 
-  const professors = await prisma.user.findMany({
-    where: { role: 'PROFESSOR', isActive: true },
-    select: {
-      id: true,
-      name: true,
-      lastName: true,
-      email: true,
-    },
-    orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
-  });
+  const [professors, groups] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: 'PROFESSOR', isActive: true },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        email: true,
+      },
+      orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+    }),
+    prisma.activityGroup.findMany({
+      where: { activityId: params.id },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, description: true },
+    }),
+  ]);
+
   return (
     <main className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Editar actividad</h1>
@@ -54,6 +62,7 @@ export default async function EditActivityPage({
           ),
         }}
         professors={professors}
+        initialGroups={groups}
       />
       <div className="mt-8 border-t pt-8">
         <h2 className="mb-4 text-xl font-semibold">Imagen de la actividad</h2>
