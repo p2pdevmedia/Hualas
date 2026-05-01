@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityUpdateSchema } from '@/lib/validations/activity';
@@ -34,43 +35,51 @@ export async function PUT(
     }
   }
 
-  const activity = await prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<Array<{ id: string }>>`
-      UPDATE "Activity"
-      SET
-        "name" = ${data.name},
-        "date" = ${data.date},
-        "endDate" = ${data.endDate},
-        "activityType" = CAST(${data.activityType} AS "ActivityType"),
-        "frequency" = CAST(${data.frequency} AS "ActivityFrequency"),
-        "image" = ${data.image ?? null},
-        "description" = ${data.description ?? null},
-        "price" = ${data.price},
-        "capacity" = ${data.capacity ?? null}
-      WHERE "id" = ${params.id}
-      RETURNING "id"
-    `;
-
-    const activityId = rows[0]?.id;
-    if (!activityId) {
-      return null;
-    }
-
-    await tx.activityProfessor.deleteMany({
-      where: { activityId },
-    });
-
-    if (professorIds.length > 0) {
-      await tx.activityProfessor.createMany({
-        data: professorIds.map((userId) => ({
-          activityId,
-          userId,
-        })),
+  const activity = await prisma
+    .$transaction(async (tx) => {
+      const updatedActivity = await tx.activity.update({
+        where: { id: params.id },
+        data: {
+          name: data.name,
+          date: data.date,
+          endDate: data.endDate,
+          activityType: data.activityType,
+          frequency: data.frequency,
+          image: data.image ?? null,
+          description: data.description ?? null,
+          price: data.price,
+          capacity: data.capacity ?? null,
+        },
+        select: { id: true },
       });
-    }
 
-    return { id: activityId };
-  });
+      const activityId = updatedActivity.id;
+
+      await tx.activityProfessor.deleteMany({
+        where: { activityId },
+      });
+
+      if (professorIds.length > 0) {
+        await tx.activityProfessor.createMany({
+          data: professorIds.map((userId) => ({
+            activityId,
+            userId,
+          })),
+        });
+      }
+
+      return { id: activityId };
+    })
+    .catch((error) => {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        return null;
+      }
+
+      throw error;
+    });
 
   if (!activity) {
     return NextResponse.json(

@@ -33,37 +33,22 @@ export async function POST(req: Request) {
   }
 
   const created = await prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<Array<{ id: string }>>`
-      INSERT INTO "Activity" (
-        "name",
-        "date",
-        "endDate",
-        "activityType",
-        "frequency",
-        "image",
-        "description",
-        "price",
-        "capacity"
-      )
-      VALUES (
-        ${data.name},
-        ${data.date},
-        ${data.endDate},
-        CAST(${data.activityType} AS "ActivityType"),
-        CAST(${data.frequency} AS "ActivityFrequency"),
-        ${data.image ?? null},
-        ${data.description ?? null},
-        ${data.price},
-        ${data.capacity ?? null}
-      )
-      RETURNING "id"
-    `;
+    const activity = await tx.activity.create({
+      data: {
+        name: data.name,
+        date: data.date,
+        endDate: data.endDate,
+        activityType: data.activityType,
+        frequency: data.frequency,
+        image: data.image ?? null,
+        description: data.description ?? null,
+        price: data.price,
+        capacity: data.capacity ?? null,
+      },
+      select: { id: true },
+    });
 
-    const activityId = rows[0]?.id;
-
-    if (!activityId) {
-      throw new Error('No se pudo crear la actividad');
-    }
+    const activityId = activity.id;
 
     if (professorIds.length > 0) {
       await tx.activityProfessor.createMany({
