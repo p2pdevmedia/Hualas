@@ -4,11 +4,20 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 ## Development
 
-1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Mercadopago token and Pinata JWT for IPFS uploads).
+1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Google OAuth client credentials if using Google sign-in, Mercadopago token and Pinata JWT for IPFS uploads).
 2. Install dependencies with `pnpm install`.
 3. Generate the Prisma client: `pnpm prisma:generate`.
 4. Start the dev server: `pnpm dev`.
 
+## Google OAuth on Vercel
+
+- `NEXTAUTH_URL` in `.env.example` is for local development only: `http://localhost:3000`.
+- In Vercel, prefer leaving `NEXTAUTH_URL` unset so NextAuth can infer the current host. If you set it, it must exactly match the origin that serves sign-in for that environment.
+- In Google Cloud, the OAuth client must authorize the exact callback URL used by NextAuth:
+  - local: `http://localhost:3000/api/auth/callback/google`
+  - production: `https://your-domain.com/api/auth/callback/google`
+- Preview or staging deployments need their own authorized callback URL. If Google OAuth is not configured for that hostname, disable Google sign-in there and use credentials auth for testing.
+- If the Vercel domain, `NEXTAUTH_URL`, and Google authorized redirect URI do not match exactly, Google sign-in can fail with `OAUTH_CALLBACK_ERROR` / `invalid_grant`.
 
 ## Mercado Pago environments
 

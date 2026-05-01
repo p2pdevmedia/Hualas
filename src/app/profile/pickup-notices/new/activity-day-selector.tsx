@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Select,
@@ -43,7 +43,20 @@ export default function ActivityDaySelector({
   childrenList,
   users,
 }: ActivityDaySelectorProps) {
-  const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [selectedDayId, setSelectedDayId] = useState<string>(
+    activityDays.length === 1 ? activityDays[0].id : ''
+  );
+
+  useEffect(() => {
+    if (activityDays.length === 1) {
+      setSelectedDayId(activityDays[0].id);
+      return;
+    }
+
+    setSelectedDayId((currentDayId) =>
+      activityDays.some((day) => day.id === currentDayId) ? currentDayId : ''
+    );
+  }, [activityDays]);
 
   const selectedDay = activityDays.find((d) => d.id === selectedDayId);
 
