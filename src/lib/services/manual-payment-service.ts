@@ -346,16 +346,25 @@ export async function createManualPaymentCheckout(input: {
         });
       }
 
-      for (const socialFeeLine of input.quote.socialFeeLines) {
+      if (input.quote.socialFeeLines.length > 0) {
+        const totalSocialFee = input.quote.socialFeeLines.reduce(
+          (sum, line) => sum + line.amount,
+          0
+        );
+        const socialFeeDescription =
+          input.quote.socialFeeLines.length === 1
+            ? input.quote.socialFeeLines[0].label
+            : `Cuota social (${input.quote.socialFeeLines.length} participantes)`;
+
         await tx.orderItem.create({
           data: {
             orderId: order.id,
             memberId: input.user.id,
             billableConceptId: socialFeeConceptId,
-            description: socialFeeLine.label,
-            quantity: 1,
-            unitPrice: socialFeeLine.amount,
-            total: socialFeeLine.amount,
+            description: socialFeeDescription,
+            quantity: input.quote.socialFeeLines.length,
+            unitPrice: input.quote.socialFeeAmount,
+            total: totalSocialFee,
             periodMonth: period.month,
             periodYear: period.year,
           },
