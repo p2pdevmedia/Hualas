@@ -280,12 +280,12 @@ export default async function MyActivitiesPage() {
                                 <Image
                                   src={`/icons/${s.sportIcon}`}
                                   alt=""
-                                  width={28}
-                                  height={28}
-                                  className="h-7 w-7 shrink-0 object-contain"
+                                  width={56}
+                                  height={56}
+                                  className="h-14 w-14 shrink-0 object-contain"
                                 />
                               ) : (
-                                <span className="h-7 w-7 shrink-0" />
+                                <span className="h-14 w-14 shrink-0" />
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium leading-tight">
