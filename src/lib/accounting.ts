@@ -59,7 +59,7 @@ export function getAccountingManualPaymentAmount(
   const rawAmount =
     payment.amount !== 0 ? payment.amount : (payment.order?.total ?? 0);
 
-  return rawAmount * 100;
+  return rawAmount;
 }
 
 export function formatPersonName(
