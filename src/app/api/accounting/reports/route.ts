@@ -3,7 +3,11 @@ import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getAccountingPaymentDate, isAccountingRole } from '@/lib/accounting';
+import {
+  getAccountingManualPaymentAmount,
+  getAccountingPaymentDate,
+  isAccountingRole,
+} from '@/lib/accounting';
 import {
   buildAccountingReportEntries,
   buildAccountingCategoryTotals,
@@ -59,6 +63,7 @@ export async function GET(request: Request) {
           select: {
             responsibleName: true,
             responsibleEmail: true,
+            total: true,
             items: {
               select: {
                 activity: { select: { name: true } },
@@ -93,7 +98,7 @@ export async function GET(request: Request) {
     .map((payment) => ({
       id: payment.id,
       paidAt: payment.paidAt ?? payment.updatedAt ?? payment.createdAt,
-      amount: payment.amount,
+      amount: getAccountingManualPaymentAmount(payment),
       customerName: payment.payerName ?? payment.order.responsibleName,
       activities: payment.order.items
         .map((item) => item.activity?.name)

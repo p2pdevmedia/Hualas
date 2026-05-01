@@ -10,7 +10,9 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "prisma:generate": "prisma generate",
-    "test": "jest"
+    "test": "jest",
+    "import:verano-2026": "node scripts/import-verano-2026.mjs",
+    "import:inscripciones-web": "node scripts/import-inscripciones-web.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.9.0",

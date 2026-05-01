@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import {
   formatAccountingDate,
   formatAmount,
+  getAccountingManualPaymentAmount,
   formatPersonName,
   getAccountingPaymentDate,
   isAccountingRole,
@@ -100,6 +101,7 @@ export default async function AccountingDashboardPage() {
         order: {
           select: {
             responsibleName: true,
+            total: true,
           },
         },
         paidAt: true,
@@ -128,7 +130,7 @@ export default async function AccountingDashboardPage() {
         ? paymentDate >= monthStart && paymentDate <= monthEnd
         : false;
     })
-    .reduce((sum, payment) => sum + payment.amount, 0);
+    .reduce((sum, payment) => sum + getAccountingManualPaymentAmount(payment), 0);
   const totalMp = monthPayments.reduce(
     (sum, payment) => sum + payment.activity.price * 100,
     0
@@ -169,7 +171,7 @@ export default async function AccountingDashboardPage() {
       category: 'Pagos manuales',
       description:
         payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
-      amount: payment.amount,
+      amount: getAccountingManualPaymentAmount(payment),
       receiptUrl: buildManualPaymentReceiptUrl(payment.id),
     });
 

@@ -43,6 +43,25 @@ export function formatAccountingDate(value: Date | string): string {
   }).format(date);
 }
 
+export function getAccountingManualPaymentAmount(
+  payment:
+    | {
+        amount: number;
+        order?: {
+          total?: number | null;
+        } | null;
+      }
+    | null
+    | undefined
+): number {
+  if (!payment) return 0;
+
+  const rawAmount =
+    payment.amount !== 0 ? payment.amount : (payment.order?.total ?? 0);
+
+  return rawAmount * 100;
+}
+
 export function formatPersonName(
   person:
     | {
