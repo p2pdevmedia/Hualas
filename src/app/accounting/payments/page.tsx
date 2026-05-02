@@ -214,18 +214,18 @@ export default async function PaymentsPage({
           </span>
           <div className="flex gap-2">
             {page > 1 ? (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline">
                 <Link href={pageHref(page - 1)}>Anterior</Link>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" disabled>Anterior</Button>
+              <Button variant="outline" disabled>Anterior</Button>
             )}
             {page < totalPages ? (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline">
                 <Link href={pageHref(page + 1)}>Siguiente</Link>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" disabled>Siguiente</Button>
+              <Button variant="outline" disabled>Siguiente</Button>
             )}
           </div>
         </div>
