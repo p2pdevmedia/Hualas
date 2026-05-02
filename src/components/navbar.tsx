@@ -236,19 +236,6 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {isMemberRole && (
-            <Link
-              href="/activities/cart"
-              className={cn(
-                navLinkClass('/activities/cart'),
-                'inline-flex items-center gap-2'
-              )}
-            >
-              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span>Carrito</span>
-              {cartItemsCount > 0 && renderCartNotificationIcon()}
-            </Link>
-          )}
           {session && (
             <div className="relative group">
               <button className={`${linkClass} inline-flex items-center gap-2`}>
@@ -322,38 +309,49 @@ export default function Navbar() {
           {session ? (
             <div className="flex items-center gap-3">
               <NotificationBell />
-              <div
-                className={cn(
-                  'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
-                  'h-9 w-9 text-xs',
-                  !photoFailed && 'bg-transparent'
-                )}
-              >
-                {!photoFailed ? (
-                  <div className="relative h-full w-full">
-                    <Image
-                      src={`/api/users/${session.user.id}/photo`}
-                      alt={session.user.name ?? 'Profile photo'}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                      sizes="36px"
-                      onError={() => setPhotoFailed(true)}
-                    />
-                  </div>
-                ) : (
-                  <span
-                    className={cn(
-                      'grid h-full w-full place-items-center text-white',
-                      avatarColor(session.user.id)
-                    )}
-                  >
-                    {initials(session.user.name)}
-                  </span>
-                )}
-              </div>
+              {isMemberRole && (
+                <Link
+                  href="/activities/cart"
+                  className={cn(
+                    navLinkClass('/activities/cart'),
+                    'relative inline-flex items-center gap-1'
+                  )}
+                >
+                  <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                  {cartItemsCount > 0 && renderCartNotificationIcon()}
+                </Link>
+              )}
               <div className="relative group">
-                <button className={linkClass}>{t.profile}</button>
+                <div
+                  className={cn(
+                    'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted cursor-pointer',
+                    'h-9 w-9 text-xs',
+                    !photoFailed && 'bg-transparent'
+                  )}
+                >
+                  {!photoFailed ? (
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={`/api/users/${session.user.id}/photo`}
+                        alt={session.user.name ?? 'Profile photo'}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                        sizes="36px"
+                        onError={() => setPhotoFailed(true)}
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      className={cn(
+                        'grid h-full w-full place-items-center text-white',
+                        avatarColor(session.user.id)
+                      )}
+                    >
+                      {initials(session.user.name)}
+                    </span>
+                  )}
+                </div>
                 <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
                   <Link
                     href="/profile"

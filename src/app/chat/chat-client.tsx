@@ -100,6 +100,7 @@ function Avatar({
           src={src}
           alt={`Foto de perfil de ${name ?? 'usuario'}`}
           fill
+          unoptimized
           className="object-cover"
         />
       ) : (
