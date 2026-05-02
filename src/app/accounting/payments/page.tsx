@@ -16,10 +16,13 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
 import PersonLink from '@/components/accounting/person-link';
 
+const PAGE_SIZE = 20;
+
 type SearchParams = {
   from?: string;
   to?: string;
   activity?: string;
+  page?: string;
 };
 
 export default async function PaymentsPage({
@@ -35,6 +38,7 @@ export default async function PaymentsPage({
   const from = searchParams.from ?? '';
   const to = searchParams.to ?? '';
   const activity = searchParams.activity ?? '';
+  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
 
   const where: Prisma.ActivityParticipantWhereInput = {
     receipt: { not: null },
@@ -54,15 +58,31 @@ export default async function PaymentsPage({
     };
   }
 
-  const payments = await prisma.activityParticipant.findMany({
-    where,
-    orderBy: { receiptDate: 'desc' },
-    include: {
-      activity: { select: { name: true, price: true } },
-      user: { select: { id: true, name: true, lastName: true } },
-      child: { select: { id: true, userId: true, name: true, lastName: true } },
-    },
-  });
+  const [payments, total] = await Promise.all([
+    prisma.activityParticipant.findMany({
+      where,
+      orderBy: { receiptDate: 'desc' },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        activity: { select: { name: true, price: true } },
+        user: { select: { id: true, name: true, lastName: true } },
+        child: { select: { id: true, userId: true, name: true, lastName: true } },
+      },
+    }),
+    prisma.activityParticipant.count({ where }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  function pageHref(p: number) {
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (activity) params.set('activity', activity);
+    params.set('page', String(p));
+    return `/accounting/payments?${params.toString()}`;
+  }
 
   return (
     <div className="space-y-6">
@@ -186,6 +206,30 @@ export default async function PaymentsPage({
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            Página {page} de {totalPages} · {total} pagos
+          </span>
+          <div className="flex gap-2">
+            {page > 1 ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={pageHref(page - 1)}>Anterior</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>Anterior</Button>
+            )}
+            {page < totalPages ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={pageHref(page + 1)}>Siguiente</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>Siguiente</Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,9 @@ export default function UsersList({
 }) {
   const t = useTranslation().actions;
   const router = useRouter();
+  const PAGE_SIZE = 20;
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const filtered = users.filter((u) => {
     const q = query.toLowerCase();
     return (
@@ -37,6 +39,8 @@ export default function UsersList({
       u.dni?.toLowerCase().includes(q)
     );
   });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const linkClass =
     'text-sm text-link hover:text-link/80 hover:underline underline-offset-4';
@@ -65,12 +69,12 @@ export default function UsersList({
       <input
         type="text"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => { setQuery(e.target.value); setPage(1); }}
         placeholder="Buscar por nombre, apellido, correo o DNI"
         className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
       />
       <ul className="divide-y divide-border">
-        {filtered.map((u) => (
+        {paginated.map((u) => (
           <li key={u.id} className="flex items-center gap-3 py-3 flex-wrap">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
               {u.profilePhoto ? (
@@ -151,6 +155,31 @@ export default function UsersList({
           </li>
         ))}
       </ul>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 text-sm">
+          <span className="text-muted-foreground">
+            Página {page} de {totalPages} · {filtered.length} usuarios
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-md border px-3 py-1 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-md border px-3 py-1 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
