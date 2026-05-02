@@ -68,6 +68,9 @@ export default function ManualPaymentDetail({
   const proofIsPdf =
     payment.proofContentType === 'application/pdf' ||
     payment.proofFileName?.toLowerCase().endsWith('.pdf');
+  const socialFeeAmount = payment.rawData.socialFeeAmount ?? 0;
+  const socialFeeParticipants =
+    payment.rawData.socialFeeParticipants?.length ?? 0;
 
   return (
     <section className="space-y-5 rounded-2xl border bg-card p-5 shadow-sm">
@@ -129,13 +132,30 @@ export default function ManualPaymentDetail({
             </article>
             <article className="rounded-xl border bg-muted/20 p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Fecha de carga
+                Fecha de pago
               </p>
               <p className="mt-1 text-lg font-semibold">
-                {payment.createdAt.toLocaleDateString('es-AR')}
+                {(payment.paidAt ?? payment.createdAt).toLocaleDateString(
+                  'es-AR'
+                )}
               </p>
             </article>
           </div>
+
+          {socialFeeAmount > 0 ? (
+            <article className="rounded-xl border bg-muted/20 p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Cuota social
+              </p>
+              <p className="mt-1 text-lg font-semibold">
+                {formatAmount(socialFeeAmount, payment.currency)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {socialFeeParticipants} participante
+                {socialFeeParticipants === 1 ? '' : 's'}
+              </p>
+            </article>
+          ) : null}
 
           {payment.activities.length > 0 ? (
             <article className="rounded-xl border bg-muted/20 p-4">

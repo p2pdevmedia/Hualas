@@ -46,6 +46,12 @@ export default async function ProfilePaymentsPage() {
         select: {
           items: {
             select: {
+              description: true,
+              billableConcept: {
+                select: {
+                  code: true,
+                },
+              },
               activity: {
                 select: {
                   name: true,
@@ -151,13 +157,20 @@ export default async function ProfilePaymentsPage() {
                   const rawData = getManualPaymentRawData(payment.rawData);
                   const status = formatManualPaymentStatus(payment.status);
                   const activityNames = payment.order.items
-                    .map((item) => item.activity?.name)
+                    .filter(
+                      (item) => item.billableConcept.code === 'ACTIVITY_FEE'
+                    )
+                    .map((item) => item.activity?.name ?? item.description)
                     .filter((name): name is string => Boolean(name));
 
                   return (
                     <tr key={payment.id} className="border-b last:border-0">
                       <td className="px-3 py-2 text-muted-foreground">
-                        {payment.createdAt.toLocaleDateString('es-AR')}
+                        {(
+                          payment.paidAt ??
+                          payment.updatedAt ??
+                          payment.createdAt
+                        ).toLocaleDateString('es-AR')}
                       </td>
                       <td className="px-3 py-2">
                         {activityNames.length > 0

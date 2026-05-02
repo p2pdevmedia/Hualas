@@ -154,6 +154,7 @@ function mapPaymentToReview(payment: {
     responsibleName: string;
     responsibleEmail: string;
     items: Array<{
+      billableConcept: { code: string };
       activity: { id: string; name: string; description: string | null } | null;
       description: string;
     }>;
@@ -161,6 +162,22 @@ function mapPaymentToReview(payment: {
 }): ManualPaymentSummary {
   const rawData = getManualPaymentRawData(payment.rawData);
   const reviews = getManualPaymentReviews(payment.rawData);
+  const activities = payment.order.items
+    .filter((item) => item.billableConcept.code === 'ACTIVITY_FEE')
+    .map((item, index) => {
+      const activity = item.activity;
+      const fallbackName = item.description?.trim() || 'Sin actividad';
+
+      return {
+        id: activity?.id ?? `${payment.id}:${index}`,
+        name: activity?.name ?? fallbackName,
+        description: activity?.description ?? item.description ?? null,
+      };
+    })
+    .filter((activity, index, array) => {
+      if (activity.name !== 'Sin actividad') return true;
+      return array.length === 1 || index === 0;
+    });
 
   return {
     id: payment.id,
@@ -181,22 +198,7 @@ function mapPaymentToReview(payment: {
     customerName:
       payment.payerName ?? normalizeName(payment.order.responsibleName, null),
     customerEmail: payment.payerEmail ?? payment.order.responsibleEmail,
-    activities: payment.order.items
-      .map((item) => item.activity)
-      .filter(
-        (
-          activity
-        ): activity is {
-          id: string;
-          name: string;
-          description: string | null;
-        } => Boolean(activity)
-      )
-      .map((activity) => ({
-        id: activity.id,
-        name: activity.name,
-        description: activity.description,
-      })),
+    activities,
     reviews,
     rawData,
   };
@@ -227,6 +229,11 @@ export async function listManualPayments({
             items: {
               select: {
                 description: true,
+                billableConcept: {
+                  select: {
+                    code: true,
+                  },
+                },
                 activity: {
                   select: {
                     id: true,
@@ -262,6 +269,11 @@ export async function getManualPaymentById(id: string) {
           items: {
             select: {
               description: true,
+              billableConcept: {
+                select: {
+                  code: true,
+                },
+              },
               activity: {
                 select: {
                   id: true,

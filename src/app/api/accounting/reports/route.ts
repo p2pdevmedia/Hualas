@@ -66,6 +66,12 @@ export async function GET(request: Request) {
             total: true,
             items: {
               select: {
+                description: true,
+                billableConcept: {
+                  select: {
+                    code: true,
+                  },
+                },
                 activity: { select: { name: true } },
               },
             },
@@ -101,7 +107,8 @@ export async function GET(request: Request) {
       amount: getAccountingManualPaymentAmount(payment),
       customerName: payment.payerName ?? payment.order.responsibleName,
       activities: payment.order.items
-        .map((item) => item.activity?.name)
+        .filter((item) => item.billableConcept.code === 'ACTIVITY_FEE')
+        .map((item) => item.activity?.name ?? item.description)
         .filter((name): name is string => Boolean(name)),
       receiptUrl: payment.receiptUrl,
     }));
