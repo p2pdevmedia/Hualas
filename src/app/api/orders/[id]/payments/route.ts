@@ -7,10 +7,16 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const body = await req.json();
+  const amount = Number(body.amount);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+  }
+
   return NextResponse.json(
     await paymentService.createPaymentForOrder(
       params.id,
-      body.amount,
+      Math.round(amount * 100),
       body.provider
     )
   );
