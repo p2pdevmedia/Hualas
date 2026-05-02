@@ -130,6 +130,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/admin/users/page.tsx`
   - Related component: `src/app/admin/users/users-list.tsx`
 
+- `/admin/users/new` → Create user
+  - File: `src/app/admin/users/new/page.tsx`
+  - Related form: `src/app/admin/users/new/form.tsx`
+
 - `/admin/users/[id]` → Edit user
   - File: `src/app/admin/users/[id]/page.tsx`
   - Related form: `src/app/admin/users/[id]/form.tsx`
@@ -172,6 +176,9 @@ Agents should check this before searching the codebase.
 ### Users
 
 - `GET /api/users` → list users
+  - File: `src/app/api/users/route.ts`
+
+- `POST /api/users` → create user
   - File: `src/app/api/users/route.ts`
 
 - `GET /api/users/[id]/photo` → profile photo
