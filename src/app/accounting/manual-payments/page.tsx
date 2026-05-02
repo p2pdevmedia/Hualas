@@ -7,6 +7,7 @@ import ManualPaymentsDashboard from '@/components/accounting/manual-payments-das
 
 type SearchParams = {
   status?: string;
+  q?: string;
   page?: string;
   limit?: string;
 };
@@ -33,9 +34,11 @@ export default async function ManualPaymentsPage({
     searchParams.status === 'REJECTED'
       ? searchParams.status
       : null;
+  const q = searchParams.q?.trim() ?? '';
 
   const result = await listManualPayments({
     status,
+    q,
     limit,
     offset,
   });
@@ -62,6 +65,16 @@ export default async function ManualPaymentsPage({
             <option value="APPROVED">Aprobados</option>
             <option value="REJECTED">Rechazados</option>
           </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Buscar</span>
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Nombre, apellido, actividad o mail"
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
         </label>
         <label className="space-y-1 text-sm">
           <span className="font-medium">Cantidad por página</span>
