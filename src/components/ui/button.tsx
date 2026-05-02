@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { useFormPending } from './form';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'ghost' | 'destructive';
@@ -7,9 +8,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', asChild, children, ...props }, ref) => {
+  ({ className, variant = 'primary', asChild, children, type, disabled, ...props }, ref) => {
+    const formPending = useFormPending();
+    const isDisabled = disabled || (type === 'submit' && formPending);
+
     const classes = cn(
-      'inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50',
+      'inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
       variant === 'primary' &&
         'bg-primary text-primary-foreground hover:bg-primary/90',
       variant === 'outline' &&
@@ -31,7 +35,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <button ref={ref} className={classes} {...props}>
+      <button ref={ref} className={classes} type={type} disabled={isDisabled} {...props}>
         {children}
       </button>
     );

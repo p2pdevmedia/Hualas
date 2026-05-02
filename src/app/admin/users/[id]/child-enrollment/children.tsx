@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type Child = {
   id: string;
@@ -174,7 +175,7 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
         <h2 className="text-base font-semibold">Agregar hijo</h2>
-        <form onSubmit={addChild} className="space-y-3">
+        <Form onSubmit={addChild} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
               className={inputClass}
@@ -334,7 +335,7 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
           <Button type="submit" className="w-full">
             Agregar hijo
           </Button>
-        </form>
+        </Form>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 export default function ContactForm() {
   const [name, setName] = useState('');
@@ -47,7 +48,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <Form onSubmit={submit} className="space-y-4">
       <input
         className={inputClass}
         placeholder="Nombre"
@@ -85,6 +86,6 @@ export default function ContactForm() {
       <Button type="submit" className="w-full">
         Enviar mensaje
       </Button>
-    </form>
+    </Form>
   );
 }

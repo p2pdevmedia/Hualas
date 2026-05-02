@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 export default function AddChildForm({
   userAddress,
@@ -125,7 +126,7 @@ export default function AddChildForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <Form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
@@ -322,6 +323,6 @@ export default function AddChildForm({
       <Button type="submit" className="w-full">
         Agregar hijo
       </Button>
-    </form>
+    </Form>
   );
 }

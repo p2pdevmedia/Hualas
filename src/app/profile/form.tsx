@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type User = {
   name: string | null;
@@ -126,7 +127,7 @@ export default function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3" autoComplete="on">
+    <Form onSubmit={submit} className="space-y-3" autoComplete="on">
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
@@ -282,6 +283,6 @@ export default function ProfileForm({ user }: { user: User }) {
       <Button type="submit" className="w-full">
         Guardar cambios
       </Button>
-    </form>
+    </Form>
   );
 }

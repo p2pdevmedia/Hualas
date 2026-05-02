@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type Child = {
   id: string;
@@ -153,7 +154,7 @@ export default function EditChildForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <Form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
@@ -323,6 +324,6 @@ export default function EditChildForm({
           Cancelar
         </Link>
       </div>
-    </form>
+    </Form>
   );
 }

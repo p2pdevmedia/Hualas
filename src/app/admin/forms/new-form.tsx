@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type Field = {
   label: string;
@@ -71,7 +72,7 @@ export default function NewForm() {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <Form onSubmit={submit} className="space-y-5">
       <div className="space-y-1">
         <label className="text-sm font-medium">Título del formulario</label>
         <input
@@ -159,6 +160,6 @@ export default function NewForm() {
       <Button type="submit" className="w-full">
         Guardar formulario
       </Button>
-    </form>
+    </Form>
   );
 }

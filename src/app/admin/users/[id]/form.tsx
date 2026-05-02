@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type User = {
   id: string;
@@ -114,7 +115,7 @@ export default function EditUserForm({ user }: { user: User }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <Form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
@@ -271,6 +272,6 @@ export default function EditUserForm({ user }: { user: User }) {
       <Button type="submit" className="w-full">
         Guardar cambios
       </Button>
-    </form>
+    </Form>
   );
 }

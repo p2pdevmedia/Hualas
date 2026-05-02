@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { Form } from '@/components/ui/form';
 
 function formatMoneyInput(value: number) {
   return Number.isFinite(value) ? String(value) : '0';
@@ -64,7 +65,7 @@ export default function SocialFeeSettingsForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <Form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label
           className="block text-sm font-medium"
@@ -102,6 +103,6 @@ export default function SocialFeeSettingsForm({
       </div>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-    </form>
+    </Form>
   );
 }

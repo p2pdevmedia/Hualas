@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 type Child = {
   id: string;
@@ -168,7 +169,7 @@ export default function ChildrenManager({
           ))}
         </ul>
       )}
-      <form onSubmit={addChild} className="space-y-3">
+      <Form onSubmit={addChild} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <input
             className={inputClass}
@@ -352,7 +353,7 @@ export default function ChildrenManager({
         <Button type="submit" className="w-full">
           Agregar hijo
         </Button>
-      </form>
+      </Form>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 
 export default function FormDisplay({ form }: { form: any }) {
   const [data, setData] = useState<Record<string, string>>({});
@@ -34,7 +35,7 @@ export default function FormDisplay({ form }: { form: any }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <Form onSubmit={handleSubmit} className="space-y-4">
       {form.fields.map((f: any) => (
         <div key={f.id} className="space-y-1">
           <label className="block text-sm font-medium">
@@ -81,6 +82,6 @@ export default function FormDisplay({ form }: { form: any }) {
       <Button type="submit" className="w-full">
         Enviar
       </Button>
-    </form>
+    </Form>
   );
 }

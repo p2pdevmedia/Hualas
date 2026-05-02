@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import ProfessorPicker from '../../professor-picker';
 
 type ProfessorOption = {
@@ -143,7 +144,7 @@ export default function EditActivityForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <Form onSubmit={handleSubmit} className="space-y-4">
       <input
         type="text"
         placeholder="Nombre de la actividad"
@@ -298,6 +299,6 @@ export default function EditActivityForm({
       <Button type="submit" className="w-full">
         Guardar
       </Button>
-    </form>
+    </Form>
   );
 }

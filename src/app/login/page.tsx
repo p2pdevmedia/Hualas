@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import { useTranslation } from '@/components/language-provider';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -60,7 +61,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-          <form onSubmit={submit} className="space-y-3">
+          <Form onSubmit={submit} className="space-y-3">
             <input
               className={inputClass}
               id="login-email"
@@ -107,7 +108,7 @@ export default function LoginPage() {
               {t.signIn}
             </Button>
             <input type="hidden" name="auth-type" value="login" />
-          </form>
+          </Form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

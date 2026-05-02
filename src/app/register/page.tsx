@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import { registerSchema } from '@/lib/validations/auth';
 import { useTranslation } from '@/components/language-provider';
 import { Eye, EyeOff } from 'lucide-react';
@@ -56,7 +57,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-          <form onSubmit={submit} className="space-y-3" autoComplete="on">
+          <Form onSubmit={submit} className="space-y-3" autoComplete="on">
             <input
               className={inputClass}
               id="register-name"
@@ -109,7 +110,7 @@ export default function RegisterPage() {
               Registrarse
             </Button>
             <input type="hidden" name="auth-type" value="register" />
-          </form>
+          </Form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
