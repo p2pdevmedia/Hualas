@@ -23,7 +23,7 @@ export async function GET(req: Request) {
         userId,
         ...(unreadOnly ? { readAt: null } : {}),
       },
-      orderBy: [{ readAt: 'asc' }, { createdAt: 'desc' }],
+      orderBy: { createdAt: 'desc' },
       take: limit,
       select: {
         id: true,

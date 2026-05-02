@@ -40,6 +40,7 @@ export default function ActivityRegisterButton({
         ...children.map((c) => ({ id: c.id, label: c.name })),
       ]
     : [];
+  const needsTargetSelection = Boolean(session && people.length > 1 && !target);
 
   const handleClick = () => {
     if (!session) {
@@ -71,7 +72,18 @@ export default function ActivityRegisterButton({
   };
 
   return (
-    <div className="space-y-2">
+    <div
+      className={`relative space-y-2 ${needsTargetSelection ? 'pt-10' : ''}`}
+    >
+      {needsTargetSelection && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute left-0 top-0 z-10 inline-flex max-w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 shadow-md"
+        >
+          Seleccioná para quién es la actividad.
+        </div>
+      )}
       {session && people.length === 1 && (
         <p className="text-sm text-muted-foreground">{people[0].label}</p>
       )}
@@ -91,7 +103,7 @@ export default function ActivityRegisterButton({
           ))}
         </select>
       )}
-      <RegisterButton onClick={handleClick} />
+      <RegisterButton onClick={handleClick} disabled={needsTargetSelection} />
     </div>
   );
 }

@@ -7,11 +7,16 @@ import { useTranslation } from './language-provider';
 interface Props {
   href?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
-export default function RegisterButton({ href, onClick }: Props) {
+export default function RegisterButton({ href, onClick, disabled }: Props) {
   const t = useTranslation();
-  const btn = <Button onClick={onClick}>{t.nav.register}</Button>;
+  const btn = (
+    <Button onClick={onClick} disabled={disabled}>
+      {t.nav.register}
+    </Button>
+  );
   if (href) {
     return <Link href={href}>{btn}</Link>;
   }
