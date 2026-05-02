@@ -25,6 +25,7 @@ type CurrentUser = {
 
 type ManualPaymentListQuery = {
   status?: PaymentStatus | null;
+  q?: string;
   limit: number;
   offset: number;
 };
@@ -209,12 +210,36 @@ function mapPaymentToReview(payment: {
 
 export async function listManualPayments({
   status,
+  q,
   limit,
   offset,
 }: ManualPaymentListQuery): Promise<ManualPaymentListResponse> {
   const where: Prisma.PaymentWhereInput = {
     provider: 'MANUAL_TRANSFER',
     ...(status ? { status } : {}),
+    ...(q
+      ? {
+          OR: [
+            { payerName: { contains: q, mode: 'insensitive' } },
+            { payerEmail: { contains: q, mode: 'insensitive' } },
+            {
+              order: { responsibleName: { contains: q, mode: 'insensitive' } },
+            },
+            {
+              order: { responsibleEmail: { contains: q, mode: 'insensitive' } },
+            },
+            {
+              order: {
+                items: {
+                  some: {
+                    activity: { name: { contains: q, mode: 'insensitive' } },
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {}),
   };
 
   const [total, payments] = await Promise.all([

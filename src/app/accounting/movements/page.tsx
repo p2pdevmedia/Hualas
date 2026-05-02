@@ -13,6 +13,7 @@ type SearchParams = {
   type?: string;
   from?: string;
   to?: string;
+  q?: string;
 };
 
 export default async function MovementsPage({
@@ -31,6 +32,7 @@ export default async function MovementsPage({
       : '';
   const from = searchParams.from ?? '';
   const to = searchParams.to ?? '';
+  const q = searchParams.q?.trim() ?? '';
 
   const where: Prisma.AccountingMovementWhereInput = {};
   if (type) where.type = type;
@@ -39,6 +41,15 @@ export default async function MovementsPage({
     if (from) dateFilter.gte = new Date(from);
     if (to) dateFilter.lte = new Date(to);
     where.date = dateFilter;
+  }
+  if (q) {
+    where.OR = [
+      { category: { contains: q, mode: 'insensitive' } },
+      { description: { contains: q, mode: 'insensitive' } },
+      { createdBy: { name: { contains: q, mode: 'insensitive' } } },
+      { createdBy: { lastName: { contains: q, mode: 'insensitive' } } },
+      { createdBy: { email: { contains: q, mode: 'insensitive' } } },
+    ];
   }
 
   const movements = await prisma.accountingMovement.findMany({
@@ -83,7 +94,7 @@ export default async function MovementsPage({
             name: `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
           },
         }))}
-        initialFilters={{ type, from, to }}
+        initialFilters={{ type, from, to, q }}
       />
     </div>
   );

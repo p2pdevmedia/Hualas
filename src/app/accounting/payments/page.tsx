@@ -22,6 +22,7 @@ type SearchParams = {
   from?: string;
   to?: string;
   activity?: string;
+  q?: string;
   page?: string;
 };
 
@@ -38,6 +39,7 @@ export default async function PaymentsPage({
   const from = searchParams.from ?? '';
   const to = searchParams.to ?? '';
   const activity = searchParams.activity ?? '';
+  const q = searchParams.q?.trim() ?? '';
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
 
   const where: Prisma.ActivityParticipantWhereInput = {
@@ -57,6 +59,16 @@ export default async function PaymentsPage({
       },
     };
   }
+  if (q) {
+    where.OR = [
+      { activity: { name: { contains: q, mode: 'insensitive' } } },
+      { user: { name: { contains: q, mode: 'insensitive' } } },
+      { user: { lastName: { contains: q, mode: 'insensitive' } } },
+      { child: { name: { contains: q, mode: 'insensitive' } } },
+      { child: { lastName: { contains: q, mode: 'insensitive' } } },
+      { user: { email: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
 
   const [payments, total] = await Promise.all([
     prisma.activityParticipant.findMany({
@@ -67,7 +79,9 @@ export default async function PaymentsPage({
       include: {
         activity: { select: { name: true, price: true } },
         user: { select: { id: true, name: true, lastName: true } },
-        child: { select: { id: true, userId: true, name: true, lastName: true } },
+        child: {
+          select: { id: true, userId: true, name: true, lastName: true },
+        },
       },
     }),
     prisma.activityParticipant.count({ where }),
@@ -80,6 +94,7 @@ export default async function PaymentsPage({
     if (from) params.set('from', from);
     if (to) params.set('to', to);
     if (activity) params.set('activity', activity);
+    if (q) params.set('q', q);
     params.set('page', String(p));
     return `/accounting/payments?${params.toString()}`;
   }
@@ -102,7 +117,7 @@ export default async function PaymentsPage({
       </div>
 
       <form className="rounded-2xl border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-5">
           <label className="space-y-1 text-sm">
             <span className="font-medium">Desde</span>
             <input
@@ -128,6 +143,16 @@ export default async function PaymentsPage({
               name="activity"
               defaultValue={activity}
               placeholder="Nombre de actividad"
+              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
+          <label className="space-y-1 text-sm md:col-span-2">
+            <span className="font-medium">Buscar</span>
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="Nombre, apellido, actividad o mail"
               className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </label>
@@ -218,14 +243,18 @@ export default async function PaymentsPage({
                 <Link href={pageHref(page - 1)}>Anterior</Link>
               </Button>
             ) : (
-              <Button variant="outline" disabled>Anterior</Button>
+              <Button variant="outline" disabled>
+                Anterior
+              </Button>
             )}
             {page < totalPages ? (
               <Button asChild variant="outline">
                 <Link href={pageHref(page + 1)}>Siguiente</Link>
               </Button>
             ) : (
-              <Button variant="outline" disabled>Siguiente</Button>
+              <Button variant="outline" disabled>
+                Siguiente
+              </Button>
             )}
           </div>
         </div>
