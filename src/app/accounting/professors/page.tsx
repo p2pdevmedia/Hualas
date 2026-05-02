@@ -6,9 +6,11 @@ import { authOptions } from '@/lib/auth';
 import {
   isAccountingRole,
   formatAmount,
+  getAccountingProfessorProfileHref,
   formatPersonName,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
+import PersonLink from '@/components/accounting/person-link';
 
 export default async function ProfessorsAccountingPage() {
   const session = await getServerSession(authOptions);
@@ -75,7 +77,14 @@ export default async function ProfessorsAccountingPage() {
                   className="hover:bg-muted/20 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <div className="font-medium">{formatPersonName(prof)}</div>
+                    <div className="font-medium">
+                      <PersonLink
+                        href={getAccountingProfessorProfileHref(prof.id)}
+                        className="text-link hover:underline"
+                      >
+                        {formatPersonName(prof)}
+                      </PersonLink>
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {prof.email}
                     </div>

@@ -27,7 +27,7 @@ export default async function ProfessorAccountingDetailPage({
           payments: {
             orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
             include: {
-              createdBy: { select: { name: true, lastName: true } },
+              createdBy: { select: { id: true, name: true, lastName: true } },
             },
           },
         },

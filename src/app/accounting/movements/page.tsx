@@ -46,7 +46,7 @@ export default async function MovementsPage({
     orderBy: { date: 'desc' },
     include: {
       createdBy: {
-        select: { name: true, lastName: true },
+        select: { id: true, name: true, lastName: true },
       },
     },
   });
@@ -78,8 +78,10 @@ export default async function MovementsPage({
           receiptImageUrl: movement.receiptImage
             ? buildAccountingMovementReceiptUrl(movement.id)
             : null,
-          createdBy:
-            `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
+          createdBy: {
+            id: movement.createdBy.id,
+            name: `${movement.createdBy.name ?? ''} ${movement.createdBy.lastName ?? ''}`.trim(),
+          },
         }))}
         initialFilters={{ type, from, to }}
       />

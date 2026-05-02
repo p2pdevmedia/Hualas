@@ -7,6 +7,8 @@ import {
   formatAccountingDate,
   formatAmount,
   getAccountingManualPaymentAmount,
+  getAccountingChildProfileHref,
+  getAccountingUserProfileHref,
   formatPersonName,
   getAccountingPaymentDate,
   isAccountingRole,
@@ -15,6 +17,7 @@ import {
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import { ReceiptText, ArrowRight } from 'lucide-react';
+import PersonLink from '@/components/accounting/person-link';
 import {
   buildAccountingMovementReceiptUrl,
   buildManualPaymentReceiptUrl,
@@ -37,6 +40,7 @@ type RecentAccountingEntry = {
   description: string;
   amount: number;
   receiptUrl: string | null;
+  personHref?: string | null;
 };
 
 export default async function AccountingDashboardPage() {
@@ -85,8 +89,10 @@ export default async function AccountingDashboardPage() {
       orderBy: { receiptDate: 'desc' },
       include: {
         activity: { select: { name: true, price: true } },
-        user: { select: { name: true, lastName: true } },
-        child: { select: { name: true, lastName: true } },
+        user: { select: { id: true, name: true, lastName: true } },
+        child: {
+          select: { id: true, userId: true, name: true, lastName: true },
+        },
       },
     }),
     prisma.payment.findMany({
@@ -100,6 +106,7 @@ export default async function AccountingDashboardPage() {
         payerName: true,
         order: {
           select: {
+            responsibleUserId: true,
             responsibleName: true,
             total: true,
           },
@@ -176,6 +183,9 @@ export default async function AccountingDashboardPage() {
         payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
       amount: getAccountingManualPaymentAmount(payment),
       receiptUrl: buildManualPaymentReceiptUrl(payment.id),
+      personHref: payment.order.responsibleUserId
+        ? getAccountingUserProfileHref(payment.order.responsibleUserId)
+        : null,
     });
 
     return entries;
@@ -297,7 +307,14 @@ export default async function AccountingDashboardPage() {
                         </span>
                       </td>
                       <td className="py-3 pr-4">{entry.category}</td>
-                      <td className="py-3 pr-4">{entry.description}</td>
+                      <td className="py-3 pr-4">
+                        <PersonLink
+                          href={entry.personHref}
+                          className="text-link hover:underline"
+                        >
+                          {entry.description}
+                        </PersonLink>
+                      </td>
                       <td className="py-3 pr-4 font-medium">
                         {formatAmount(entry.amount)}
                       </td>
@@ -356,7 +373,19 @@ export default async function AccountingDashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="font-medium">
-                        {formatPersonName(payment.child ?? payment.user)}
+                        <PersonLink
+                          href={
+                            payment.child
+                              ? getAccountingChildProfileHref(
+                                  payment.user.id,
+                                  payment.child.id
+                                )
+                              : getAccountingUserProfileHref(payment.user.id)
+                          }
+                          className="text-link hover:underline"
+                        >
+                          {formatPersonName(payment.child ?? payment.user)}
+                        </PersonLink>
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {payment.activity.name}

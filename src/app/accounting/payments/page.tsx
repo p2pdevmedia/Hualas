@@ -7,11 +7,14 @@ import { prisma } from '@/lib/prisma';
 import {
   formatAccountingDate,
   formatAmount,
+  getAccountingChildProfileHref,
+  getAccountingUserProfileHref,
   formatPersonName,
   isAccountingRole,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
+import PersonLink from '@/components/accounting/person-link';
 
 type SearchParams = {
   from?: string;
@@ -56,8 +59,8 @@ export default async function PaymentsPage({
     orderBy: { receiptDate: 'desc' },
     include: {
       activity: { select: { name: true, price: true } },
-      user: { select: { name: true, lastName: true } },
-      child: { select: { name: true, lastName: true } },
+      user: { select: { id: true, name: true, lastName: true } },
+      child: { select: { id: true, userId: true, name: true, lastName: true } },
     },
   });
 
@@ -152,7 +155,19 @@ export default async function PaymentsPage({
                   </td>
                   <td className="px-4 py-3">{payment.activity.name}</td>
                   <td className="px-4 py-3">
-                    {formatPersonName(payment.child ?? payment.user)}
+                    <PersonLink
+                      href={
+                        payment.child
+                          ? getAccountingChildProfileHref(
+                              payment.user.id,
+                              payment.child.id
+                            )
+                          : getAccountingUserProfileHref(payment.user.id)
+                      }
+                      className="text-link hover:underline"
+                    >
+                      {formatPersonName(payment.child ?? payment.user)}
+                    </PersonLink>
                   </td>
                   <td className="px-4 py-3">
                     {formatAmount(payment.activity.price * 100)}

@@ -3,7 +3,12 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isAccountingRole } from '@/lib/accounting';
+import {
+  getAccountingChildProfileHref,
+  getAccountingUserProfileHref,
+  isAccountingRole,
+} from '@/lib/accounting';
+import PersonLink from '@/components/accounting/person-link';
 import SocialFeeSettingsForm from './social-fee-settings-form';
 import SocialFeePeriodFilter from './social-fee-period-filter';
 
@@ -16,12 +21,14 @@ type PersonRecord = {
   key: string;
   type: 'Titular' | 'Hijo/a';
   name: string;
+  href: string;
   email?: string | null;
   status: 'PAID' | 'PENDING';
   amount: number;
   paymentId?: string | null;
   paidAt?: Date | null;
   payerLabel?: string;
+  payerHref?: string;
 };
 
 function formatMoney(amount: number) {
@@ -150,12 +157,16 @@ export default async function SocialFeePage({
       key: memberKey,
       type: 'Titular',
       name: memberName,
+      href: getAccountingUserProfileHref(member.id),
       email: member.email,
       status: memberPayment ? 'PAID' : 'PENDING',
       amount: memberPayment?.amount ?? socialFeeAmount,
       paymentId: memberPayment?.mercadoPagoPaymentId,
       paidAt: memberPayment?.createdAt ?? null,
       payerLabel: memberPayment ? 'Titular' : undefined,
+      payerHref: memberPayment
+        ? getAccountingUserProfileHref(member.id)
+        : undefined,
     });
 
     for (const child of member.children) {
@@ -166,11 +177,13 @@ export default async function SocialFeePage({
         key: childKey,
         type: 'Hijo/a',
         name: formatPersonName(child),
+        href: getAccountingChildProfileHref(member.id, child.id),
         status: childPayment ? 'PAID' : 'PENDING',
         amount: childPayment?.amount ?? socialFeeAmount,
         paymentId: childPayment?.mercadoPagoPaymentId,
         paidAt: childPayment?.createdAt ?? null,
         payerLabel: memberName,
+        payerHref: getAccountingUserProfileHref(member.id),
       });
     }
   }
@@ -266,7 +279,14 @@ export default async function SocialFeePage({
                       paidPeople.map((person) => (
                         <tr key={person.key} className="align-top">
                           <td className="px-4 py-3">
-                            <div className="font-medium">{person.name}</div>
+                            <div className="font-medium">
+                              <PersonLink
+                                href={person.href}
+                                className="text-link hover:underline"
+                              >
+                                {person.name}
+                              </PersonLink>
+                            </div>
                             {person.email ? (
                               <div className="text-xs text-muted-foreground">
                                 {person.email}
@@ -274,7 +294,13 @@ export default async function SocialFeePage({
                             ) : null}
                             {person.type === 'Hijo/a' && person.payerLabel ? (
                               <div className="text-xs text-muted-foreground">
-                                Responsable: {person.payerLabel}
+                                Responsable:{' '}
+                                <PersonLink
+                                  href={person.payerHref}
+                                  className="text-link hover:underline"
+                                >
+                                  {person.payerLabel}
+                                </PersonLink>
                               </div>
                             ) : null}
                           </td>
@@ -326,7 +352,14 @@ export default async function SocialFeePage({
                       pendingPeople.map((person) => (
                         <tr key={person.key} className="align-top">
                           <td className="px-4 py-3">
-                            <div className="font-medium">{person.name}</div>
+                            <div className="font-medium">
+                              <PersonLink
+                                href={person.href}
+                                className="text-link hover:underline"
+                              >
+                                {person.name}
+                              </PersonLink>
+                            </div>
                             {person.email ? (
                               <div className="text-xs text-muted-foreground">
                                 {person.email}

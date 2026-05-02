@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { formatAmount } from '@/lib/accounting';
+import { formatAmount, getAccountingUserProfileHref } from '@/lib/accounting';
+import PersonLink from '@/components/accounting/person-link';
 
 const MONTHS = [
   'Enero',
@@ -28,7 +29,7 @@ type Payment = {
   status: 'PENDING' | 'PAID' | 'CANCELLED';
   paidAt: string | null;
   notes: string | null;
-  createdBy: { name: string | null; lastName: string | null };
+  createdBy: { id: string; name: string | null; lastName: string | null };
 };
 
 type Props = {
@@ -388,8 +389,15 @@ export default function ProfessorProfileForm({
                       {payment.notes || '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {`${payment.createdBy.name ?? ''} ${payment.createdBy.lastName ?? ''}`.trim() ||
-                        '—'}
+                      <PersonLink
+                        href={getAccountingUserProfileHref(
+                          payment.createdBy.id
+                        )}
+                        className="text-link hover:underline"
+                      >
+                        {`${payment.createdBy.name ?? ''} ${payment.createdBy.lastName ?? ''}`.trim() ||
+                          '—'}
+                      </PersonLink>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-end">

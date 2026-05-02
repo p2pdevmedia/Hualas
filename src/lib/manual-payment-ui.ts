@@ -28,6 +28,7 @@ export type ManualPaymentReviewEntry = {
 export type ManualPaymentSummary = {
   id: string;
   orderId: string;
+  responsibleUserId: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   amount: number;
   currency: string;

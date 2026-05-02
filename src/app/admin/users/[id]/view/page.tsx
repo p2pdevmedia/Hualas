@@ -69,7 +69,9 @@ export default async function ViewUserPage({
           },
         },
       },
-      activityParticipants: { include: { activity: true, child: true } },
+      activityParticipants: {
+        include: { activity: true, child: true, user: true },
+      },
       conversations: {
         include: {
           conversation: {
@@ -139,8 +141,8 @@ export default async function ViewUserPage({
     .filter((payment) => payment.receipt)
     .sort(
       (a, b) =>
-        (b.receiptDate?.getTime() ?? b.createdAt.getTime()) -
-        (a.receiptDate?.getTime() ?? a.createdAt.getTime())
+        (b.receiptDate?.getTime() ?? b.activity.date.getTime()) -
+        (a.receiptDate?.getTime() ?? a.activity.date.getTime())
     );
 
   return (

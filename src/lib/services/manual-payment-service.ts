@@ -32,6 +32,7 @@ type ManualPaymentListQuery = {
 export type ManualPaymentSummary = {
   id: string;
   orderId: string;
+  responsibleUserId: string | null;
   status: PaymentStatus;
   amount: number;
   currency: string;
@@ -151,6 +152,7 @@ function mapPaymentToReview(payment: {
   receiptUrl: string | null;
   rawData: Prisma.JsonValue | null;
   order: {
+    responsibleUserId: string | null;
     responsibleName: string;
     responsibleEmail: string;
     items: Array<{
@@ -182,6 +184,7 @@ function mapPaymentToReview(payment: {
   return {
     id: payment.id,
     orderId: payment.orderId,
+    responsibleUserId: payment.order.responsibleUserId,
     status: payment.status,
     amount: payment.amount,
     currency: payment.currency,
@@ -224,6 +227,7 @@ export async function listManualPayments({
       include: {
         order: {
           select: {
+            responsibleUserId: true,
             responsibleName: true,
             responsibleEmail: true,
             items: {
@@ -264,6 +268,7 @@ export async function getManualPaymentById(id: string) {
     include: {
       order: {
         select: {
+          responsibleUserId: true,
           responsibleName: true,
           responsibleEmail: true,
           items: {

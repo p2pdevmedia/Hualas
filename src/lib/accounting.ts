@@ -107,3 +107,15 @@ export function getAccountingPaymentDate(
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+export function getAccountingUserProfileHref(userId: string) {
+  return `/admin/users/${userId}/view`;
+}
+
+export function getAccountingChildProfileHref(userId: string, childId: string) {
+  return `/admin/users/${userId}/children/${childId}/view`;
+}
+
+export function getAccountingProfessorProfileHref(professorId: string) {
+  return `/accounting/professors/${professorId}`;
+}

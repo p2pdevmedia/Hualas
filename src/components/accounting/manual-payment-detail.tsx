@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import AuditTrail, { type AuditTrailEntry } from '@/components/audit-trail';
+import PersonLink from '@/components/accounting/person-link';
 import {
   formatManualPaymentStatus,
   type ManualPaymentSummary,
 } from '@/lib/manual-payment-ui';
+import { getAccountingUserProfileHref } from '@/lib/accounting';
 
 type ManualPaymentDetailProps = {
   payment: ManualPaymentSummary | null;
@@ -89,7 +91,18 @@ export default function ManualPaymentDetail({
           ) : null}
         </div>
         <div>
-          <h3 className="text-xl font-semibold">{payment.customerName}</h3>
+          <h3 className="text-xl font-semibold">
+            <PersonLink
+              href={
+                payment.responsibleUserId
+                  ? getAccountingUserProfileHref(payment.responsibleUserId)
+                  : null
+              }
+              className="text-link hover:underline"
+            >
+              {payment.customerName}
+            </PersonLink>
+          </h3>
           <p className="text-sm text-muted-foreground">
             {payment.customerEmail}
           </p>

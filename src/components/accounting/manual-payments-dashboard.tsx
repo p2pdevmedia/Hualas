@@ -3,11 +3,13 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ManualPaymentDetail from '@/components/accounting/manual-payment-detail';
+import PersonLink from '@/components/accounting/person-link';
 import { Button } from '@/components/ui/button';
 import {
   formatManualPaymentStatus,
   type ManualPaymentSummary,
 } from '@/lib/manual-payment-ui';
+import { getAccountingUserProfileHref } from '@/lib/accounting';
 import { useToast } from '@/hooks/use-toast';
 
 type ManualPaymentsDashboardProps = {
@@ -182,10 +184,17 @@ export default function ManualPaymentsDashboard({
               const active = payment.id === selectedId;
 
               return (
-                <button
+                <div
                   key={payment.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedId(payment.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setSelectedId(payment.id);
+                    }
+                  }}
                   className={`w-full rounded-xl border p-4 text-left transition-colors ${
                     active
                       ? 'border-primary bg-primary/5'
@@ -194,7 +203,21 @@ export default function ManualPaymentsDashboard({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="font-medium">{payment.customerName}</p>
+                      <p className="font-medium">
+                        <PersonLink
+                          href={
+                            payment.responsibleUserId
+                              ? getAccountingUserProfileHref(
+                                  payment.responsibleUserId
+                                )
+                              : null
+                          }
+                          className="text-link hover:underline"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {payment.customerName}
+                        </PersonLink>
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {payment.activities[0]?.name ?? 'Sin actividad'}
                         {payment.activities.length > 1
@@ -216,7 +239,7 @@ export default function ManualPaymentsDashboard({
                       </span>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

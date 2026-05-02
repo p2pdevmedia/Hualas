@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import {
   formatAccountingDate,
   formatAmount,
+  getAccountingUserProfileHref,
   movementTypeClass,
   movementTypeLabel,
 } from '@/lib/accounting';
+import PersonLink from '@/components/accounting/person-link';
 
 type Movement = {
   id: string;
@@ -22,7 +24,10 @@ type Movement = {
   receiptNumber: string | null;
   receiptImage: string | null;
   receiptImageUrl: string | null;
-  createdBy: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
 };
 
 export default function MovementsTable({
@@ -187,7 +192,14 @@ export default function MovementsTable({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">{movement.createdBy}</td>
+                  <td className="px-4 py-3">
+                    <PersonLink
+                      href={getAccountingUserProfileHref(movement.createdBy.id)}
+                      className="text-link hover:underline"
+                    >
+                      {movement.createdBy.name}
+                    </PersonLink>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Button asChild variant="outline" className="px-3 py-2">
