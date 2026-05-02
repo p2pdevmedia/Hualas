@@ -185,17 +185,6 @@ export default async function ActivityJoinPage({
               />
             )}
 
-            <p className="text-xs leading-relaxed text-muted-foreground font-body">
-              Este acceso está pensado para la inscripción desde la portada. La
-              vista completa de tu actividad sigue disponible en{' '}
-              <Link
-                href={`/activities/${activity.id}`}
-                className="underline underline-offset-4 hover:text-foreground"
-              >
-                /activities/{activity.id}
-              </Link>
-              .
-            </p>
           </div>
         </aside>
       </div>

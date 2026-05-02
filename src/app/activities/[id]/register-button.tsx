@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 
+type Person = { id: string; label: string };
+
 export default function ActivityRegisterButton({
   activityId,
   activityName,
@@ -20,7 +22,7 @@ export default function ActivityRegisterButton({
   const [children, setChildren] = useState<Array<{ id: string; name: string }>>(
     []
   );
-  const [target, setTarget] = useState('self');
+  const [target, setTarget] = useState('');
 
   useEffect(() => {
     if (session)
@@ -29,20 +31,27 @@ export default function ActivityRegisterButton({
         .then((data) => setChildren(data));
   }, [session]);
 
+  const people: Person[] = session
+    ? [
+        { id: 'self', label: 'Para mí' },
+        ...children.map((c) => ({ id: c.id, label: c.name })),
+      ]
+    : [];
+
   const handleClick = () => {
     if (!session) {
       router.push('/login');
       return;
     }
+    const effectiveTarget = people.length === 1 ? people[0].id : target;
+    if (!effectiveTarget) return;
     const targetLabel =
-      target === 'self'
-        ? 'Para mí'
-        : (children.find((c) => c.id === target)?.name ?? 'Menor');
+      people.find((p) => p.id === effectiveTarget)?.label ?? 'Para mí';
     const item: ActivityCartItem = {
       activityId,
       activityName,
       price: activityPrice,
-      target,
+      target: effectiveTarget,
       targetLabel,
     };
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -60,16 +69,21 @@ export default function ActivityRegisterButton({
 
   return (
     <div className="space-y-2">
-      {session && (
+      {session && people.length === 1 && (
+        <p className="text-sm text-muted-foreground">{people[0].label}</p>
+      )}
+      {session && people.length > 1 && (
         <select
-          className="border px-2 py-1"
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           value={target}
           onChange={(e) => setTarget(e.target.value)}
         >
-          <option value="self">Para mí</option>
-          {children.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+          <option value="" disabled>
+            Seleccioná para quién
+          </option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
             </option>
           ))}
         </select>
