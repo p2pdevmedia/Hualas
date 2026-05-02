@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import type { Prisma } from '@prisma/client';
 import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
-import RegisterButton from './register-button';
 import PaymentHandler from './payment-handler';
 import ActivityDaysPanel from './activity-days-panel';
 import InscriptosPanel from './inscriptos-panel';
@@ -11,7 +10,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -283,10 +281,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   );
   const capacity = activity.capacity;
   const hasCapacity = capacity != null;
-  const remainingSpots = hasCapacity
-    ? Math.max(capacity - enrolledCount, 0)
-    : null;
-  const isFull = hasCapacity && remainingSpots === 0;
   const canManageDays = isAdmin;
 
   let registrations: Array<{
@@ -374,7 +368,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           <span className="text-foreground">{activity.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
+        <div className="grid grid-cols-1 gap-8 items-start">
           {/* Columna izquierda */}
           <div className="space-y-6">
             <div>
@@ -440,112 +434,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               </Link>
             )}
           </div>
-
-          {/* Panel derecho (sticky) */}
-          {isParticipantInActivity ? (
-            <div
-              className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
-              style={{
-                border: '1.5px solid hsl(var(--border))',
-                background: 'hsl(var(--card))',
-              }}
-            >
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body">
-                  Estado
-                </p>
-                <p className="font-heading text-2xl font-semibold">
-                  Ya estás inscripto
-                </p>
-                <p className="text-sm text-muted-foreground font-body">
-                  Esta actividad ya forma parte de tus actividades y no muestra
-                  el cuadro de inscripción.
-                </p>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body">
-                  Participantes registrados
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {registrations.map((registration) => (
-                    <span
-                      key={registration.id}
-                      className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
-                    >
-                      {registration.label}
-                      {registration.groupName
-                        ? ` · ${registration.groupName}`
-                        : ''}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground font-body">
-                  Más abajo podés consultar días, asistencia y avisos
-                  relacionados con tu inscripción.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="rounded-xl p-5 space-y-4 lg:sticky lg:top-6"
-              style={{
-                border: '1.5px solid hsl(var(--border))',
-                background: 'hsl(var(--card))',
-              }}
-            >
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
-                  Precio
-                </p>
-                <p className="font-heading text-3xl font-semibold">
-                  ${activity.price}
-                </p>
-                {hasCapacity && (
-                  <p
-                    className={`text-xs font-body mt-1 ${
-                      isFull ? 'text-destructive' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {isFull
-                      ? 'Cupo completo'
-                      : `${remainingSpots} lugares disponibles`}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-3 pt-2">
-                {isFull ? (
-                  <Button disabled className="w-full">
-                    Cupo completo
-                  </Button>
-                ) : (
-                  <RegisterButton
-                    activityId={activity.id}
-                    activityName={activity.name}
-                    activityPrice={Number(activity.price)}
-                  />
-                )}
-                <Link
-                  href="/contact"
-                  className="block text-center text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 font-body"
-                >
-                  Contactanos
-                </Link>
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground font-body text-center">
-                  {hasCapacity
-                    ? `${enrolledCount} de ${capacity} lugares ocupados`
-                    : `${enrolledCount} personas ya inscriptas`}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {canSeeSessions && (

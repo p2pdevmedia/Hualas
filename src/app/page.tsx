@@ -53,7 +53,7 @@ export default async function Home() {
               {activities.map((activity) => (
                 <Link
                   key={activity.id}
-                  href={`/activities/${activity.id}`}
+                  href={`/activities/join/${activity.id}`}
                   className="group block"
                 >
                   <div className="overflow-hidden rounded-lg border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">

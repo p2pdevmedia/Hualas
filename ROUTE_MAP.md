@@ -35,6 +35,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/activities/page.tsx`
   - Related component: `src/components/activities-heading.tsx`
 
+- `/activities/join/[id]` → Public activity join landing page
+  - File: `src/app/activities/join/[id]/page.tsx`
+  - Used from the home page for activity inscription entry
+
 - `/activities/new` → Create activity
   - File: `src/app/activities/new/page.tsx`
   - Related form: `src/app/activities/new/form.tsx`
@@ -42,8 +46,9 @@ Agents should check this before searching the codebase.
 - `/activities/[id]` → Activity detail
   - File: `src/app/activities/[id]/page.tsx`
   - Related components:
-    - `src/app/activities/[id]/register-button.tsx`
     - `src/app/activities/[id]/payment-handler.tsx`
+  - Used for the detail view from `my-activities` and admin contexts
+  - Does not include the public inscription CTA; that lives under `/activities/join/[id]`
 
 - `/activities/[id]/groups/[groupId]` → Activity group detail
   - File: `src/app/activities/[id]/groups/[groupId]/page.tsx`
