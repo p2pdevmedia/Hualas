@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import PaymentMethodSelector, {
@@ -34,19 +35,6 @@ type QuoteResponse = {
   socialFeeAmount: number;
 };
 
-type AvailableActivity = {
-  id: string;
-  name: string;
-  date: string;
-  price: number;
-};
-
-type ChildOption = {
-  id: string;
-  name: string;
-  lastName: string;
-};
-
 function formatMoney(amount: number) {
   return `$${Number(amount).toLocaleString('es-AR')}`;
 }
@@ -60,12 +48,6 @@ export default function ActivitiesCartPage() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
-  const [availableActivities, setAvailableActivities] = useState<
-    AvailableActivity[]
-  >([]);
-  const [availableLoading, setAvailableLoading] = useState(false);
-  const [children, setChildren] = useState<ChildOption[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState<'self' | string>('self');
 
   useEffect(() => {
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -139,85 +121,6 @@ export default function ActivitiesCartPage() {
     return () => controller.abort();
   }, [hydrated, items]);
 
-  useEffect(() => {
-    if (!hydrated || items.length === 0) {
-      setAvailableActivities([]);
-      return;
-    }
-
-    const controller = new AbortController();
-    const fetchAvailable = async () => {
-      setAvailableLoading(true);
-      try {
-        const response = await fetch('/api/activities/cart/available', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }),
-          signal: controller.signal,
-        });
-
-        const data = (await response.json().catch(() => ({}))) as {
-          activities?: AvailableActivity[];
-        };
-        if (!response.ok) {
-          setAvailableActivities([]);
-          return;
-        }
-
-        setAvailableActivities(
-          Array.isArray(data.activities) ? data.activities : []
-        );
-      } catch (fetchError) {
-        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
-          setAvailableActivities([]);
-        }
-      } finally {
-        setAvailableLoading(false);
-      }
-    };
-
-    fetchAvailable();
-    return () => controller.abort();
-  }, [hydrated, items]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchChildren = async () => {
-      try {
-        const response = await fetch('/api/children', {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          setChildren([]);
-          return;
-        }
-
-        const data = (await response.json().catch(() => [])) as ChildOption[];
-        setChildren(Array.isArray(data) ? data : []);
-      } catch (fetchError) {
-        if ((fetchError as { name?: string } | null)?.name !== 'AbortError') {
-          setChildren([]);
-        }
-      }
-    };
-
-    fetchChildren();
-    return () => controller.abort();
-  }, []);
-
-  const targetOptions = useMemo(() => {
-    const childOptions = children.map((child) => ({
-      value: child.id,
-      label: `${child.name} ${child.lastName}`.trim(),
-    }));
-
-    return [{ value: 'self', label: 'Para mí' }, ...childOptions];
-  }, [children]);
-
-  const selectedTargetLabel =
-    targetOptions.find((option) => option.value === selectedTarget)?.label ??
-    'Para mí';
 
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
@@ -308,74 +211,14 @@ export default function ActivitiesCartPage() {
             ))}
           </section>
 
-          <section className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-            <h2 className="text-lg font-semibold">Sumar actividades</h2>
-            <p className="text-sm text-muted-foreground">
-              Podés agregar otras actividades antes de finalizar el pago.
-            </p>
-            <label className="space-y-1 block">
-              <span className="text-sm font-medium">Inscribir a</span>
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm"
-                value={selectedTarget}
-                onChange={(event) => setSelectedTarget(event.target.value)}
-              >
-                {targetOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {availableLoading ? (
-              <p className="text-sm text-muted-foreground">
-                Buscando actividades disponibles...
-              </p>
-            ) : availableActivities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No hay actividades adicionales disponibles.
-              </p>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {availableActivities.map((activity) => (
-                  <article
-                    key={activity.id}
-                    className="rounded-md border p-4 space-y-2"
-                  >
-                    <p className="font-medium">{activity.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(activity.date).toLocaleString('es-AR', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })}
-                    </p>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold">
-                        {formatMoney(activity.price)}
-                      </span>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          persist([
-                            ...items,
-                            {
-                              activityId: activity.id,
-                              activityName: activity.name,
-                              price: activity.price,
-                              target: selectedTarget,
-                              targetLabel: selectedTargetLabel,
-                            },
-                          ])
-                        }
-                      >
-                        Agregar
-                      </Button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+          <div>
+            <Link
+              href="/"
+              className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              ← Seguir agregando actividades
+            </Link>
+          </div>
 
           <section className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm md:grid-cols-2">
             <div className="space-y-3">
