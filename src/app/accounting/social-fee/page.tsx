@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
 import SocialFeeSettingsForm from './social-fee-settings-form';
+import SocialFeePeriodFilter from './social-fee-period-filter';
 
 type SearchParams = {
   month?: string;
@@ -232,36 +233,7 @@ export default async function SocialFeePage({
               </p>
             </div>
 
-            <form className="flex flex-wrap gap-2">
-              <label className="space-y-1 text-sm">
-                <span className="font-medium">Mes</span>
-                <input
-                  type="number"
-                  name="month"
-                  min={1}
-                  max={12}
-                  defaultValue={month}
-                  className="w-24 rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </label>
-              <label className="space-y-1 text-sm">
-                <span className="font-medium">Año</span>
-                <input
-                  type="number"
-                  name="year"
-                  min={2020}
-                  max={2100}
-                  defaultValue={year}
-                  className="w-28 rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </label>
-              <button
-                type="submit"
-                className="self-end rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Ver período
-              </button>
-            </form>
+            <SocialFeePeriodFilter initialMonth={month} initialYear={year} />
           </div>
 
           <div className="space-y-6">

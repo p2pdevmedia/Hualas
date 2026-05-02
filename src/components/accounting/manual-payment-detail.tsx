@@ -16,7 +16,7 @@ type ManualPaymentDetailProps = {
   busy?: boolean;
 };
 
-function formatAmount(amount: number, currency: string) {
+function formatPesos(amount: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency,
@@ -127,7 +127,7 @@ export default function ManualPaymentDetail({
                 Monto
               </p>
               <p className="mt-1 text-lg font-semibold">
-                {formatAmount(payment.amount, payment.currency)}
+                {formatPesos(payment.amount / 100, payment.currency)}
               </p>
             </article>
             <article className="rounded-xl border bg-muted/20 p-4">
@@ -148,7 +148,7 @@ export default function ManualPaymentDetail({
                 Cuota social
               </p>
               <p className="mt-1 text-lg font-semibold">
-                {formatAmount(socialFeeAmount, payment.currency)}
+                {formatPesos(socialFeeAmount, payment.currency)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {socialFeeParticipants} participante

@@ -18,7 +18,7 @@ type ManualPaymentsDashboardProps = {
   status: string | null;
 };
 
-function formatAmount(amount: number, currency: string) {
+function formatPesos(amount: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency,
@@ -207,7 +207,7 @@ export default function ManualPaymentsDashboard({
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        {formatAmount(payment.amount, payment.currency)}
+                        {formatPesos(payment.amount / 100, payment.currency)}
                       </p>
                       <span
                         className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${statusInfo.className}`}
