@@ -300,15 +300,18 @@ export default function Navbar() {
               {t.accounting}
             </Link>
           )}
-          <Link href="/contact" className={navLinkClass('/contact')}>
-            {t.contact}
-          </Link>
-          <Link href="/faq" className={navLinkClass('/faq')}>
-            FAQ
-          </Link>
+          {(!session || (!isAdmin && !isCounter)) && (
+            <>
+              <Link href="/contact" className={navLinkClass('/contact')}>
+                {t.contact}
+              </Link>
+              <Link href="/faq" className={navLinkClass('/faq')}>
+                FAQ
+              </Link>
+            </>
+          )}
           {session ? (
             <div className="flex items-center gap-3">
-              <NotificationBell />
               {isMemberRole && (
                 <Link
                   href="/activities/cart"
@@ -409,6 +412,7 @@ export default function Navbar() {
                   </button>
                 </div>
               </div>
+              <NotificationBell />
             </div>
           ) : (
             <>
@@ -523,20 +527,24 @@ export default function Navbar() {
               {t.accounting}
             </Link>
           )}
-          <Link
-            href="/contact"
-            className={navLinkClass('/contact')}
-            onClick={() => setMenuOpen(false)}
-          >
-            {t.contact}
-          </Link>
-          <Link
-            href="/faq"
-            className={navLinkClass('/faq')}
-            onClick={() => setMenuOpen(false)}
-          >
-            FAQ
-          </Link>
+          {(!session || (!isAdmin && !isCounter)) && (
+            <>
+              <Link
+                href="/contact"
+                className={navLinkClass('/contact')}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.contact}
+              </Link>
+              <Link
+                href="/faq"
+                className={navLinkClass('/faq')}
+                onClick={() => setMenuOpen(false)}
+              >
+                FAQ
+              </Link>
+            </>
+          )}
           {session ? (
             <>
               <div className="flex items-center gap-3 py-2">
