@@ -110,9 +110,19 @@ Agents should check this before searching the codebase.
 - `/accounting/payments` → Mercado Pago payments read-only
   - File: `src/app/accounting/payments/page.tsx`
 
+- `/accounting/professors` → Professor payment management (COUNTER/ADMIN)
+  - File: `src/app/accounting/professors/page.tsx`
+
+- `/accounting/professors/[id]` → Professor banking data + salary + payment history
+  - File: `src/app/accounting/professors/[id]/page.tsx`
+  - Related form: `src/app/accounting/professors/[id]/professor-profile-form.tsx`
+
 - `/accounting/reports` → Reports with CSV/PDF export
   - File: `src/app/accounting/reports/page.tsx`
   - Related client: `src/app/accounting/reports/reports-client.tsx`
+
+- `/my-payments` → Professor self-view of banking data and payment history (read-only)
+  - File: `src/app/my-payments/page.tsx`
 
 ### Admin
 
@@ -253,6 +263,26 @@ Agents should check this before searching the codebase.
 
 - `GET /api/accounting/reports` → aggregated report data
   - File: `src/app/api/accounting/reports/route.ts`
+
+### Professor Payments
+
+- `GET /api/professors/[id]/profile` → get professor banking/salary profile
+  - File: `src/app/api/professors/[id]/profile/route.ts`
+
+- `PUT /api/professors/[id]/profile` → upsert professor profile (COUNTER/ADMIN only)
+  - File: `src/app/api/professors/[id]/profile/route.ts`
+
+- `GET /api/professors/[id]/payments` → list professor payments
+  - File: `src/app/api/professors/[id]/payments/route.ts`
+
+- `POST /api/professors/[id]/payments` → create payment record (COUNTER/ADMIN only)
+  - File: `src/app/api/professors/[id]/payments/route.ts`
+
+- `PATCH /api/professor-payments/[paymentId]` → update payment status
+  - File: `src/app/api/professor-payments/[paymentId]/route.ts`
+
+- `DELETE /api/professor-payments/[paymentId]` → delete payment record
+  - File: `src/app/api/professor-payments/[paymentId]/route.ts`
 
 ### Children
 

@@ -12,7 +12,11 @@
     "prisma:generate": "prisma generate",
     "test": "jest",
     "import:verano-2026": "node scripts/import-verano-2026.mjs",
-    "import:inscripciones-web": "node scripts/import-inscripciones-web.mjs"
+    "import:inscripciones-web": "node scripts/import-inscripciones-web.mjs",
+    "import:usuarios-hualas": "node scripts/import-usuarios-hualas.mjs"
+  },
+  "prisma": {
+    "seed": "node scripts/seed-professors.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.9.0",

@@ -58,6 +58,8 @@ model User {
   notifications              Notification[]
   pushAlertSubscriptions     PushAlertSubscription[]
   notificationPreferences    NotificationPreference[]
+  professorProfile           ProfessorProfile?
+  professorPaymentsCreated   ProfessorPayment[] @relation("ProfessorPaymentCreatedBy")
 }
 
 
@@ -667,4 +669,47 @@ enum NotificationType {
   PAYMENT_REJECTED
   ACTIVITY_CAPACITY_FULL
   CHAT_MESSAGE_NEW
+}
+
+model ProfessorProfile {
+  id            String             @id @default(cuid())
+  userId        String             @unique
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthlySalary Int                @default(0)
+  bankName      String?
+  cbu           String?
+  alias         String?
+  cuit          String?
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  payments      ProfessorPayment[]
+
+  @@index([userId])
+}
+
+model ProfessorPayment {
+  id                 String                 @id @default(cuid())
+  professorProfileId String
+  professorProfile   ProfessorProfile       @relation(fields: [professorProfileId], references: [id], onDelete: Cascade)
+  periodMonth        Int
+  periodYear         Int
+  amount             Int
+  status             ProfessorPaymentStatus @default(PENDING)
+  paidAt             DateTime?
+  notes              String?
+  createdById        String
+  createdBy          User                   @relation("ProfessorPaymentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@unique([professorProfileId, periodMonth, periodYear])
+  @@index([professorProfileId])
+  @@index([status, periodMonth, periodYear])
+}
+
+enum ProfessorPaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
 }

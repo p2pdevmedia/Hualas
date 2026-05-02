@@ -53,6 +53,7 @@ export default function Navbar() {
   const isSuperAdmin = role === 'SUPER_ADMIN';
   const isCounter = isCounterRole(role);
   const isAccounting = role === 'COUNTER' || isAdmin;
+  const isProfessor = role === 'PROFESSOR';
   const isMember = !!session && !isAdmin && !isCounter;
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
@@ -359,6 +360,14 @@ export default function Navbar() {
                   >
                     Historial de pagos
                   </Link>
+                  {isProfessor && (
+                    <Link
+                      href="/my-payments"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                    >
+                      Mis pagos
+                    </Link>
+                  )}
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value as Lang)}
@@ -567,6 +576,15 @@ export default function Navbar() {
               >
                 Historial de pagos
               </Link>
+              {isProfessor && (
+                <Link
+                  href="/my-payments"
+                  className={navLinkClass('/my-payments')}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Mis pagos
+                </Link>
+              )}
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}

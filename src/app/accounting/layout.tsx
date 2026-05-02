@@ -11,6 +11,7 @@ const links = [
   { href: '/accounting/movements', label: 'Movimientos' },
   { href: '/accounting/payments', label: 'Pagos MP' },
   { href: '/accounting/manual-payments', label: 'Pagos manuales' },
+  { href: '/accounting/professors', label: 'Profesores' },
   { href: '/accounting/reports', label: 'Reportes' },
 ] as const;
 
