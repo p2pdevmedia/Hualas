@@ -56,6 +56,7 @@ export default async function ViewUserPage({
                   alt={`Foto de perfil de ${user.name ?? 'usuario'}`}
                   width={56}
                   height={56}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (
