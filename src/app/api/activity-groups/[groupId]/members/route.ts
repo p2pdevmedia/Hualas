@@ -44,11 +44,12 @@ async function canManageGroupMembership(
     return false;
   }
 
-  const isAdmin =
-    sessionRole === 'ADMIN' || sessionRole === 'SUPER_ADMIN';
+  const isAdmin = sessionRole === 'ADMIN' || sessionRole === 'SUPER_ADMIN';
   return (
     isAdmin ||
-    activity.professors.some((assignment) => assignment.userId === sessionUserId)
+    activity.professors.some(
+      (assignment) => assignment.userId === sessionUserId
+    )
   );
 }
 

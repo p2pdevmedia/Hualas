@@ -147,7 +147,7 @@ export async function POST(
   });
 
   notifyChatMessage(message.id).catch((err) =>
-    console.error('[notifications] notifyChatMessage failed', err),
+    console.error('[notifications] notifyChatMessage failed', err)
   );
 
   return NextResponse.json({

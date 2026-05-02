@@ -1,32 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { updatePickupNoticeSchema } from "@/lib/validations/pickup-notice";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { updatePickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { z } from 'zod';
 
-async function checkNoticeOwnershipAndFuture(
-  noticeId: string,
-  userId: string
-) {
+async function checkNoticeOwnershipAndFuture(noticeId: string, userId: string) {
   const notice = await prisma.pickupNotice.findUnique({
     where: { id: noticeId },
     include: { activityDay: true },
   });
 
   if (!notice) {
-    return { valid: false, status: 404, message: "Notice not found" };
+    return { valid: false, status: 404, message: 'Notice not found' };
   }
 
   if (notice.createdById !== userId) {
-    return { valid: false, status: 403, message: "Cannot modify this notice" };
+    return { valid: false, status: 403, message: 'Cannot modify this notice' };
   }
 
   if (new Date(notice.activityDay.date) <= new Date()) {
     return {
       valid: false,
       status: 400,
-      message: "Cannot modify notices after activity day",
+      message: 'Cannot modify notices after activity day',
     };
   }
 
@@ -42,15 +39,15 @@ export async function PUT(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     // Check ownership and future date
-    const check = await checkNoticeOwnershipAndFuture(noticeId, session.user.id);
+    const check = await checkNoticeOwnershipAndFuture(
+      noticeId,
+      session.user.id
+    );
     if (!check.valid) {
       return NextResponse.json(
         { error: check.message },
@@ -77,13 +74,13 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error updating pickup notice:", error);
+    console.error('Error updating pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -98,15 +95,15 @@ export async function DELETE(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     // Check ownership and future date
-    const check = await checkNoticeOwnershipAndFuture(noticeId, session.user.id);
+    const check = await checkNoticeOwnershipAndFuture(
+      noticeId,
+      session.user.id
+    );
     if (!check.valid) {
       return NextResponse.json(
         { error: check.message },
@@ -124,9 +121,9 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting pickup notice:", error);
+    console.error('Error deleting pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -21,7 +21,8 @@ export async function GET(
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
   const role = (session?.user as any)?.role;
-  if (!userId) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
   const isProfessorSelf = role === 'PROFESSOR' && userId === params.id;
   const isAccounting = isAccountingRole(role);
@@ -59,7 +60,10 @@ export async function PUT(
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const professor = await prisma.user.findUnique({
@@ -67,7 +71,10 @@ export async function PUT(
     select: { id: true },
   });
   if (!professor) {
-    return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Profesor no encontrado' },
+      { status: 404 }
+    );
   }
 
   const profile = await prisma.professorProfile.upsert({

@@ -18,9 +18,8 @@ export default function InstallPrompt() {
   const [mounted, setMounted] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(
-    null,
-  );
+  const [promptEvent, setPromptEvent] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [dismissedAt, setDismissedAt] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -33,7 +32,8 @@ export default function InstallPrompt() {
     const ios = /iPhone|iPad|iPod/.test(ua);
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+      (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+        true;
 
     setIsIos(ios);
     setIsStandalone(standalone);
@@ -61,7 +61,10 @@ export default function InstallPrompt() {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
@@ -74,7 +77,8 @@ export default function InstallPrompt() {
 
     const canShowIosHint = isIos;
     const canShowInstallButton = !!promptEvent;
-    const dismissedRecently = dismissedAt > 0 && Date.now() - dismissedAt < SEVEN_DAYS_MS;
+    const dismissedRecently =
+      dismissedAt > 0 && Date.now() - dismissedAt < SEVEN_DAYS_MS;
 
     if (dismissedRecently) {
       setVisible(false);
@@ -130,8 +134,8 @@ export default function InstallPrompt() {
                     Instalá Hualas para recibir notificaciones
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Agregá la app a tu dispositivo para que los avisos lleguen mejor
-                    en Android, iPhone y PC.
+                    Agregá la app a tu dispositivo para que los avisos lleguen
+                    mejor en Android, iPhone y PC.
                   </p>
                 </div>
                 <button

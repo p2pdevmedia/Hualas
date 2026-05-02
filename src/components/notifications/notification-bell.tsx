@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import NotificationPanel, {
-  type NotificationRow,
-} from './notification-panel';
+import NotificationPanel, { type NotificationRow } from './notification-panel';
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -85,8 +83,10 @@ export default function NotificationBell() {
   async function handleItemRead(id: string) {
     setItems((prev) =>
       prev.map((n) =>
-        n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n,
-      ),
+        n.id === id && !n.readAt
+          ? { ...n, readAt: new Date().toISOString() }
+          : n
+      )
     );
     setUnreadCount((c) => Math.max(0, c - 1));
     try {
@@ -98,9 +98,7 @@ export default function NotificationBell() {
 
   async function handleMarkAllRead() {
     const now = new Date().toISOString();
-    setItems((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: now })),
-    );
+    setItems((prev) => prev.map((n) => (n.readAt ? n : { ...n, readAt: now })));
     setUnreadCount(0);
     try {
       await fetch('/api/notifications', { method: 'PATCH' });

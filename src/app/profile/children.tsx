@@ -289,8 +289,8 @@ export default function ChildrenManager({
             required
           />
           <span>
-            Declaro, bajo carácter de declaración jurada, que soy padre, madre
-            o tutor legal del menor que estoy registrando.
+            Declaro, bajo carácter de declaración jurada, que soy padre, madre o
+            tutor legal del menor que estoy registrando.
           </span>
         </label>
         <div className="rounded-lg border bg-muted/20 p-4 space-y-3">

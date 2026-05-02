@@ -3,7 +3,11 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { isAccountingRole, formatAmount, formatPersonName } from '@/lib/accounting';
+import {
+  isAccountingRole,
+  formatAmount,
+  formatPersonName,
+} from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 
 export default async function ProfessorsAccountingPage() {
@@ -66,20 +70,28 @@ export default async function ProfessorsAccountingPage() {
             {professors.map((prof) => {
               const lastPayment = prof.professorProfile?.payments[0];
               return (
-                <tr key={prof.id} className="hover:bg-muted/20 transition-colors">
+                <tr
+                  key={prof.id}
+                  className="hover:bg-muted/20 transition-colors"
+                >
                   <td className="px-4 py-3">
                     <div className="font-medium">{formatPersonName(prof)}</div>
-                    <div className="text-xs text-muted-foreground">{prof.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {prof.email}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
-                    {prof.professorProfile
-                      ? formatAmount(prof.professorProfile.monthlySalary)
-                      : <span className="text-muted-foreground">—</span>}
+                    {prof.professorProfile ? (
+                      formatAmount(prof.professorProfile.monthlySalary)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">
-                    {prof.professorProfile?.cbu || prof.professorProfile?.alias || (
-                      <span className="text-muted-foreground">Sin datos</span>
-                    )}
+                    {prof.professorProfile?.cbu ||
+                      prof.professorProfile?.alias || (
+                        <span className="text-muted-foreground">Sin datos</span>
+                      )}
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {lastPayment
@@ -90,12 +102,20 @@ export default async function ProfessorsAccountingPage() {
                     {lastPayment ? (
                       <PaymentStatusBadge status={lastPayment.status} />
                     ) : (
-                      <span className="text-xs text-muted-foreground">Sin pagos</span>
+                      <span className="text-xs text-muted-foreground">
+                        Sin pagos
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button asChild variant="outline" className="px-3 py-1 text-xs">
-                      <Link href={`/accounting/professors/${prof.id}`}>Ver</Link>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="px-3 py-1 text-xs"
+                    >
+                      <Link href={`/accounting/professors/${prof.id}`}>
+                        Ver
+                      </Link>
                     </Button>
                   </td>
                 </tr>
@@ -103,7 +123,10 @@ export default async function ProfessorsAccountingPage() {
             })}
             {professors.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <td
+                  colSpan={6}
+                  className="px-4 py-8 text-center text-sm text-muted-foreground"
+                >
                   No hay profesores activos.
                 </td>
               </tr>
@@ -117,13 +140,24 @@ export default async function ProfessorsAccountingPage() {
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    PENDING: { label: 'Pendiente', className: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    PAID: { label: 'Pagado', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    CANCELLED: { label: 'Cancelado', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+    PENDING: {
+      label: 'Pendiente',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    },
+    PAID: {
+      label: 'Pagado',
+      className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    },
+    CANCELLED: {
+      label: 'Cancelado',
+      className: 'bg-rose-100 text-rose-700 border-rose-200',
+    },
   };
   const config = map[status] ?? map.PENDING;
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+    >
       {config.label}
     </span>
   );

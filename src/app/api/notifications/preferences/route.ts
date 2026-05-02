@@ -41,7 +41,10 @@ export async function PUT(req: Request) {
     parsed = preferenceUpdateSchema.parse(await req.json());
   } catch (err) {
     if (err instanceof ZodError) {
-      return NextResponse.json({ error: 'Invalid body', details: err.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid body', details: err.errors },
+        { status: 400 }
+      );
     }
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }

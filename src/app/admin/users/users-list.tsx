@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -73,9 +74,11 @@ export default function UsersList({
           <li key={u.id} className="flex items-center gap-3 py-3 flex-wrap">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
               {u.profilePhoto ? (
-                <img
+                <Image
                   src={`/api/users/${u.id}/photo?v=${new Date(u.updatedAt).getTime()}`}
                   alt={`Foto de perfil de ${u.name ?? 'usuario'}`}
+                  width={40}
+                  height={40}
                   className="h-full w-full object-cover"
                 />
               ) : (

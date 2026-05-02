@@ -21,7 +21,8 @@ export default function FAQPage() {
       title: '👥 Tipos de Usuarios y Roles',
       faqs: [
         {
-          question: '¿Cuáles son los diferentes tipos de usuarios en la plataforma?',
+          question:
+            '¿Cuáles son los diferentes tipos de usuarios en la plataforma?',
           answer:
             'Hay cinco tipos de usuarios: Público (sin registro), Miembro, Profesor, Admin y Super Admin. Cada uno con diferentes permisos y funcionalidades.',
         },
@@ -346,7 +347,8 @@ Si no recibes el email, verifica tu carpeta de spam.`,
             Preguntas Frecuentes
           </h1>
           <p className="text-white/90 font-body">
-            Todo lo que necesitas saber sobre Club Hualas y cómo funciona nuestra plataforma
+            Todo lo que necesitas saber sobre Club Hualas y cómo funciona
+            nuestra plataforma
           </p>
         </div>
       </section>
@@ -386,7 +388,8 @@ Si no recibes el email, verifica tu carpeta de spam.`,
               ¿No encontraste tu respuesta?
             </h3>
             <p className="text-muted-foreground font-body mb-4">
-              Si tienes más preguntas o necesitas ayuda adicional, no dudes en contactarnos directamente.
+              Si tienes más preguntas o necesitas ayuda adicional, no dudes en
+              contactarnos directamente.
             </p>
             <Link
               href="/contact"

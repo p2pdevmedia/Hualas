@@ -6,7 +6,11 @@ type Props = {
   onDismiss: () => void;
 };
 
-export default function PushPermissionModal({ isIos, onEnable, onDismiss }: Props) {
+export default function PushPermissionModal({
+  isIos,
+  onEnable,
+  onDismiss,
+}: Props) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4"
@@ -16,13 +20,13 @@ export default function PushPermissionModal({ isIos, onEnable, onDismiss }: Prop
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h3 className="text-lg font-semibold mb-2">Activar notificaciones</h3>
         <p className="text-sm text-gray-600 mb-3">
-          Recibí avisos sobre actividades, retiros, pagos y mensajes nuevos directamente
-          en tu navegador o celular.
+          Recibí avisos sobre actividades, retiros, pagos y mensajes nuevos
+          directamente en tu navegador o celular.
         </p>
         {isIos && (
           <p className="text-xs text-gray-500 mb-3">
-            En iPhone, primero agregá la app a tu pantalla de inicio para poder recibir
-            notificaciones.
+            En iPhone, primero agregá la app a tu pantalla de inicio para poder
+            recibir notificaciones.
           </p>
         )}
         <div className="flex gap-2 justify-end mt-4">

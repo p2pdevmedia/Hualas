@@ -78,7 +78,8 @@ export default async function CreatePickupNoticePage() {
             Crear aviso de retiro
           </h1>
           <p className="text-muted-foreground mb-6">
-            No tenés hijos registrados. Primero debes agregar un hijo a tu perfil.
+            No tenés hijos registrados. Primero debes agregar un hijo a tu
+            perfil.
           </p>
           <Link href="/profile">
             <Button>Volver al perfil</Button>

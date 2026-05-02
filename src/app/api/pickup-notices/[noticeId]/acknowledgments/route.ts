@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { acknowledgePickupNoticeSchema } from "@/lib/validations/pickup-notice";
-import { notifyPickupNoticeAcknowledged } from "@/lib/notifications/notification-service";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { acknowledgePickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { notifyPickupNoticeAcknowledged } from '@/lib/notifications/notification-service';
+import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
@@ -15,10 +15,7 @@ export async function POST(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -29,10 +26,7 @@ export async function POST(
     });
 
     if (!notice) {
-      return NextResponse.json(
-        { error: "Notice not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Notice not found' }, { status: 404 });
     }
 
     // Verify the professor is assigned to this activity day
@@ -45,7 +39,7 @@ export async function POST(
 
     if (!isAssigned) {
       return NextResponse.json(
-        { error: "You do not have access to this notice" },
+        { error: 'You do not have access to this notice' },
         { status: 403 }
       );
     }
@@ -81,20 +75,23 @@ export async function POST(
     });
 
     notifyPickupNoticeAcknowledged(ack.id).catch((err) =>
-      console.error('[notifications] notifyPickupNoticeAcknowledged failed', err),
+      console.error(
+        '[notifications] notifyPickupNoticeAcknowledged failed',
+        err
+      )
     );
 
     return NextResponse.json(ack, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error acknowledging notice:", error);
+    console.error('Error acknowledging notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

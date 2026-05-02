@@ -10,7 +10,18 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', asChild, children, type, disabled, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = 'primary',
+      asChild,
+      children,
+      type,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const formPending = useFormPending();
     const isDisabled = disabled || (type === 'submit' && formPending);
 
@@ -37,7 +48,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <button ref={ref} className={classes} type={type} disabled={isDisabled} {...props}>
+      <button
+        ref={ref}
+        className={classes}
+        type={type}
+        disabled={isDisabled}
+        {...props}
+      >
         {children}
       </button>
     );

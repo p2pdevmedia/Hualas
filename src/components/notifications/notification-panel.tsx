@@ -42,7 +42,9 @@ export default function NotificationPanel({
   return (
     <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-900">Notificaciones</span>
+        <span className="text-sm font-semibold text-gray-900">
+          Notificaciones
+        </span>
         {hasUnread && (
           <button
             type="button"

@@ -47,7 +47,7 @@ export default function PushManager() {
 
     const dismissedAt = parseInt(
       window.localStorage.getItem(DISMISSED_KEY) ?? '0',
-      10,
+      10
     );
     if (dismissedAt && Date.now() - dismissedAt < SEVEN_DAYS_MS) {
       return;
@@ -84,7 +84,11 @@ export default function PushManager() {
     queue.push([
       'onFailure',
       (result: PushAlertResult) => {
-        if (result.status === -1 || result.status === 0 || result.status === 1) {
+        if (
+          result.status === -1 ||
+          result.status === 0 ||
+          result.status === 1
+        ) {
           setShowHint(true);
         }
       },

@@ -46,7 +46,8 @@ export async function POST(req: Request) {
   const available = activities
     .filter(
       (activity) =>
-        activity.capacity == null || activity._count.participants < activity.capacity
+        activity.capacity == null ||
+        activity._count.participants < activity.capacity
     )
     .map((activity) => ({
       id: activity.id,
@@ -54,7 +55,8 @@ export async function POST(req: Request) {
       date: activity.date,
       price: activity.price,
       hasAvailability:
-        activity.capacity == null || activity._count.participants < activity.capacity,
+        activity.capacity == null ||
+        activity._count.participants < activity.capacity,
     }));
 
   return NextResponse.json({ activities: available });

@@ -84,7 +84,9 @@ export async function notifyActivityDayUpdated(dayId: string): Promise<void> {
   }
 }
 
-export async function notifyPickupNoticeCreated(noticeId: string): Promise<void> {
+export async function notifyPickupNoticeCreated(
+  noticeId: string
+): Promise<void> {
   try {
     const notice = await prisma.pickupNotice.findUnique({
       where: { id: noticeId },
@@ -120,7 +122,9 @@ export async function notifyPickupNoticeCreated(noticeId: string): Promise<void>
   }
 }
 
-export async function notifyPickupNoticeAcknowledged(ackId: string): Promise<void> {
+export async function notifyPickupNoticeAcknowledged(
+  ackId: string
+): Promise<void> {
   try {
     const ack = await prisma.pickupNoticeAcknowledgment.findUnique({
       where: { id: ackId },
@@ -138,26 +142,40 @@ export async function notifyPickupNoticeAcknowledged(ackId: string): Promise<voi
     if (!ack) return;
     const recipients = await recipientsForPickupNoticeAcknowledged(ackId);
     if (recipients.length === 0) return;
-    const profName = `${ack.acknowledgedBy.name ?? ''}${ack.acknowledgedBy.lastName ? ' ' + ack.acknowledgedBy.lastName : ''}`.trim();
+    const profName =
+      `${ack.acknowledgedBy.name ?? ''}${ack.acknowledgedBy.lastName ? ' ' + ack.acknowledgedBy.lastName : ''}`.trim();
     const childName = `${ack.pickupNotice.child.name}${ack.pickupNotice.child.lastName ? ' ' + ack.pickupNotice.child.lastName : ''}`;
     await dispatch({
       type: 'PICKUP_NOTICE_ACKNOWLEDGED',
       recipients,
       title: `Aviso confirmado — ${childName}`,
-      body: profName ? `Confirmado por ${profName}.` : 'Confirmado por el profesor.',
+      body: profName
+        ? `Confirmado por ${profName}.`
+        : 'Confirmado por el profesor.',
       url: `/profile/pickup-notices`,
-      data: { noticeId: ack.pickupNotice.id, ackId: ack.id } as Prisma.JsonObject,
+      data: {
+        noticeId: ack.pickupNotice.id,
+        ackId: ack.id,
+      } as Prisma.JsonObject,
     });
   } catch (err) {
     logFailure('notifyPickupNoticeAcknowledged', err);
   }
 }
 
-export async function notifyPaymentManualCreated(movementId: string): Promise<void> {
+export async function notifyPaymentManualCreated(
+  movementId: string
+): Promise<void> {
   try {
     const movement = await prisma.accountingMovement.findUnique({
       where: { id: movementId },
-      select: { id: true, type: true, amount: true, category: true, description: true },
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        category: true,
+        description: true,
+      },
     });
     if (!movement) return;
     const recipients = await recipientsForManualMovement();
@@ -176,7 +194,9 @@ export async function notifyPaymentManualCreated(movementId: string): Promise<vo
   }
 }
 
-export async function notifyOrderPaymentApproved(paymentId: string): Promise<void> {
+export async function notifyOrderPaymentApproved(
+  paymentId: string
+): Promise<void> {
   try {
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
@@ -191,14 +211,19 @@ export async function notifyOrderPaymentApproved(paymentId: string): Promise<voi
       title: 'Pago aprobado',
       body: `Tu pago de ${formatAmount(payment.amount)} fue aprobado.`,
       url: `/profile`,
-      data: { paymentId: payment.id, orderId: payment.orderId } as Prisma.JsonObject,
+      data: {
+        paymentId: payment.id,
+        orderId: payment.orderId,
+      } as Prisma.JsonObject,
     });
   } catch (err) {
     logFailure('notifyOrderPaymentApproved', err);
   }
 }
 
-export async function notifyOrderPaymentRejected(paymentId: string): Promise<void> {
+export async function notifyOrderPaymentRejected(
+  paymentId: string
+): Promise<void> {
   try {
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
@@ -213,7 +238,10 @@ export async function notifyOrderPaymentRejected(paymentId: string): Promise<voi
       title: 'Pago rechazado',
       body: `Tu pago de ${formatAmount(payment.amount)} no pudo procesarse.`,
       url: `/profile`,
-      data: { paymentId: payment.id, orderId: payment.orderId } as Prisma.JsonObject,
+      data: {
+        paymentId: payment.id,
+        orderId: payment.orderId,
+      } as Prisma.JsonObject,
     });
   } catch (err) {
     logFailure('notifyOrderPaymentRejected', err);
@@ -221,7 +249,7 @@ export async function notifyOrderPaymentRejected(paymentId: string): Promise<voi
 }
 
 export async function notifyActivityPaymentApproved(
-  participantId: string,
+  participantId: string
 ): Promise<void> {
   try {
     const participant = await prisma.activityParticipant.findUnique({
@@ -251,7 +279,9 @@ export async function notifyActivityPaymentApproved(
   }
 }
 
-export async function notifyActivityCapacityFull(activityId: string): Promise<void> {
+export async function notifyActivityCapacityFull(
+  activityId: string
+): Promise<void> {
   try {
     const activity = await prisma.activity.findUnique({
       where: { id: activityId },
@@ -273,7 +303,9 @@ export async function notifyActivityCapacityFull(activityId: string): Promise<vo
   }
 }
 
-export async function notifyProfessorPaymentPaid(paymentId: string): Promise<void> {
+export async function notifyProfessorPaymentPaid(
+  paymentId: string
+): Promise<void> {
   try {
     const payment = await prisma.professorPayment.findUnique({
       where: { id: paymentId },
@@ -289,8 +321,18 @@ export async function notifyProfessorPaymentPaid(paymentId: string): Promise<voi
     });
     if (!payment) return;
     const monthNames = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
     ];
     const period = `${monthNames[payment.periodMonth - 1]} ${payment.periodYear}`;
     await dispatch({
@@ -306,7 +348,9 @@ export async function notifyProfessorPaymentPaid(paymentId: string): Promise<voi
   }
 }
 
-export async function notifyProfessorPaymentCancelled(paymentId: string): Promise<void> {
+export async function notifyProfessorPaymentCancelled(
+  paymentId: string
+): Promise<void> {
   try {
     const payment = await prisma.professorPayment.findUnique({
       where: { id: paymentId },
@@ -323,8 +367,18 @@ export async function notifyProfessorPaymentCancelled(paymentId: string): Promis
     if (!payment) return;
     const professorUserId = payment.professorProfile.userId;
     const monthNames = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
     ];
     const period = `${monthNames[payment.periodMonth - 1]} ${payment.periodYear}`;
     await dispatch({
@@ -354,8 +408,11 @@ export async function notifyChatMessage(messageId: string): Promise<void> {
     if (!message) return;
     const info = await recipientsForChatMessage(messageId);
     if (!info || info.recipients.length === 0) return;
-    const senderName = `${message.sender.name ?? ''}${message.sender.lastName ? ' ' + message.sender.lastName : ''}`.trim() || 'Alguien';
-    const preview = message.body.length > 80 ? message.body.slice(0, 77) + '…' : message.body;
+    const senderName =
+      `${message.sender.name ?? ''}${message.sender.lastName ? ' ' + message.sender.lastName : ''}`.trim() ||
+      'Alguien';
+    const preview =
+      message.body.length > 80 ? message.body.slice(0, 77) + '…' : message.body;
     await dispatch({
       type: 'CHAT_MESSAGE_NEW',
       recipients: info.recipients,

@@ -148,14 +148,20 @@ export async function POST(req: NextRequest) {
 
       if (!existingParticipant) {
         notifyActivityPaymentApproved(participant.id).catch((err) =>
-          console.error('[notifications] notifyActivityPaymentApproved failed', err),
+          console.error(
+            '[notifications] notifyActivityPaymentApproved failed',
+            err
+          )
         );
         if (
           activity.capacity != null &&
           activity.participants.length + 1 >= activity.capacity
         ) {
           notifyActivityCapacityFull(activityId).catch((err) =>
-            console.error('[notifications] notifyActivityCapacityFull failed', err),
+            console.error(
+              '[notifications] notifyActivityCapacityFull failed',
+              err
+            )
           );
         }
       }

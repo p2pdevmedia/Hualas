@@ -226,7 +226,9 @@ export default function ActivityDayForm({
             <button
               key={icon.file}
               type="button"
-              onClick={() => setSportIcon(sportIcon === icon.file ? null : icon.file)}
+              onClick={() =>
+                setSportIcon(sportIcon === icon.file ? null : icon.file)
+              }
               className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
                 sportIcon === icon.file
                   ? 'border-primary bg-primary/10 text-primary'

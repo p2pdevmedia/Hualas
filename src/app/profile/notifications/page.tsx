@@ -8,7 +8,13 @@ import type { NotificationType, Role } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
-const ALL_ROLES: Role[] = ['MEMBER', 'PROFESSOR', 'COUNTER', 'ADMIN', 'SUPER_ADMIN'];
+const ALL_ROLES: Role[] = [
+  'MEMBER',
+  'PROFESSOR',
+  'COUNTER',
+  'ADMIN',
+  'SUPER_ADMIN',
+];
 
 const TYPE_ROLES: Record<NotificationType, Role[]> = {
   ACTIVITY_DAY_NEW: ALL_ROLES,
@@ -22,14 +28,19 @@ const TYPE_ROLES: Record<NotificationType, Role[]> = {
   CHAT_MESSAGE_NEW: ALL_ROLES,
 };
 
-const TYPE_LABELS: Record<NotificationType, { title: string; description: string }> = {
+const TYPE_LABELS: Record<
+  NotificationType,
+  { title: string; description: string }
+> = {
   ACTIVITY_DAY_NEW: {
     title: 'Nuevo día en una actividad',
-    description: 'Cuando se agrega un día a una actividad en la que estás inscripto.',
+    description:
+      'Cuando se agrega un día a una actividad en la que estás inscripto.',
   },
   ACTIVITY_DAY_UPDATED: {
     title: 'Día de actividad actualizado',
-    description: 'Cuando cambia la fecha, horario o lugar de un día programado.',
+    description:
+      'Cuando cambia la fecha, horario o lugar de un día programado.',
   },
   PICKUP_NOTICE_CREATED: {
     title: 'Nuevo aviso de retiro',
@@ -63,15 +74,16 @@ const TYPE_LABELS: Record<NotificationType, { title: string; description: string
 
 function parseUserAgent(ua: string | null): string {
   if (!ua) return 'Dispositivo desconocido';
-  const browser = /Chrome/.test(ua) && !/Edg/.test(ua)
-    ? 'Chrome'
-    : /Firefox/.test(ua)
-      ? 'Firefox'
-      : /Edg/.test(ua)
-        ? 'Edge'
-        : /Safari/.test(ua)
-          ? 'Safari'
-          : 'Navegador';
+  const browser =
+    /Chrome/.test(ua) && !/Edg/.test(ua)
+      ? 'Chrome'
+      : /Firefox/.test(ua)
+        ? 'Firefox'
+        : /Edg/.test(ua)
+          ? 'Edge'
+          : /Safari/.test(ua)
+            ? 'Safari'
+            : 'Navegador';
   const os = /Windows/.test(ua)
     ? 'Windows'
     : /Mac OS X/.test(ua)
@@ -95,7 +107,7 @@ export default async function NotificationsPreferencesPage() {
   const role = (session.user as { role: Role }).role;
 
   const visibleTypes = NOTIFICATION_TYPES.filter((type) =>
-    TYPE_ROLES[type].includes(role),
+    TYPE_ROLES[type].includes(role)
   );
 
   const [prefRows, subscriptions] = await Promise.all([

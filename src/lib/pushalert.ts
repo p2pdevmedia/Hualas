@@ -31,7 +31,7 @@ function getApiKey(): string {
 
 export async function sendPushAlert(
   subscriberIds: string[],
-  payload: PushAlertPayload,
+  payload: PushAlertPayload
 ): Promise<void> {
   if (subscriberIds.length === 0) return;
 
@@ -66,7 +66,7 @@ export async function sendPushAlert(
     throw new PushAlertError(
       data?.msg ||
         `PushAlert delivery failed${res.status ? ` (HTTP ${res.status})` : ''}`,
-      res.status,
+      res.status
     );
   }
 }

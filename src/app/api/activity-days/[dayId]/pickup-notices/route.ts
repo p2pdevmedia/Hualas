@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { createPickupNoticeSchema } from "@/lib/validations/pickup-notice";
-import { notifyPickupNoticeCreated } from "@/lib/notifications/notification-service";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { createPickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { notifyPickupNoticeCreated } from '@/lib/notifications/notification-service';
+import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
@@ -15,10 +15,7 @@ export async function POST(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -33,14 +30,14 @@ export async function POST(
 
     if (!activityDay) {
       return NextResponse.json(
-        { error: "Activity day not found" },
+        { error: 'Activity day not found' },
         { status: 404 }
       );
     }
 
     if (new Date(activityDay.date) <= new Date()) {
       return NextResponse.json(
-        { error: "Cannot create notice for past activity day" },
+        { error: 'Cannot create notice for past activity day' },
         { status: 400 }
       );
     }
@@ -52,7 +49,7 @@ export async function POST(
 
     if (!child || child.userId !== session.user.id) {
       return NextResponse.json(
-        { error: "Cannot create notice for this child" },
+        { error: 'Cannot create notice for this child' },
         { status: 403 }
       );
     }
@@ -67,7 +64,7 @@ export async function POST(
 
     if (!childEnrolled) {
       return NextResponse.json(
-        { error: "Child is not enrolled in this activity" },
+        { error: 'Child is not enrolled in this activity' },
         { status: 400 }
       );
     }
@@ -86,7 +83,7 @@ export async function POST(
       if (!existingNotice.deletedAt) {
         // Active notice already exists
         return NextResponse.json(
-          { error: "A notice already exists for this child on this day" },
+          { error: 'A notice already exists for this child on this day' },
           { status: 400 }
         );
       } else {
@@ -105,7 +102,7 @@ export async function POST(
           },
         });
         notifyPickupNoticeCreated(restoredNotice.id).catch((err) =>
-          console.error('[notifications] notifyPickupNoticeCreated failed', err),
+          console.error('[notifications] notifyPickupNoticeCreated failed', err)
         );
         return NextResponse.json(restoredNotice, { status: 201 });
       }
@@ -127,20 +124,20 @@ export async function POST(
     });
 
     notifyPickupNoticeCreated(notice.id).catch((err) =>
-      console.error('[notifications] notifyPickupNoticeCreated failed', err),
+      console.error('[notifications] notifyPickupNoticeCreated failed', err)
     );
 
     return NextResponse.json(notice, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error creating pickup notice:", error);
+    console.error('Error creating pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -155,10 +152,7 @@ export async function GET(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -169,7 +163,7 @@ export async function GET(
 
     if (!activityDay) {
       return NextResponse.json(
-        { error: "Activity day not found" },
+        { error: 'Activity day not found' },
         { status: 404 }
       );
     }
@@ -184,7 +178,7 @@ export async function GET(
 
     if (!isAssignedProfessor) {
       return NextResponse.json(
-        { error: "You do not have access to this activity day" },
+        { error: 'You do not have access to this activity day' },
         { status: 403 }
       );
     }
@@ -232,15 +226,15 @@ export async function GET(
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(notices, { status: 200 });
   } catch (error) {
-    console.error("Error fetching pickup notices:", error);
+    console.error('Error fetching pickup notices:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

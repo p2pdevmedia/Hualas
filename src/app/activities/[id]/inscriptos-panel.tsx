@@ -32,7 +32,9 @@ export default function InscriptosPanel({
   capacity,
 }: InscriptosPanelProps) {
   const router = useRouter();
-  const [selectedGroups, setSelectedGroups] = useState<Record<string, string>>({});
+  const [selectedGroups, setSelectedGroups] = useState<Record<string, string>>(
+    {}
+  );
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
@@ -43,7 +45,9 @@ export default function InscriptosPanel({
   }, [participants]);
 
   const hasCapacity = capacity != null;
-  const remainingSpots = hasCapacity ? Math.max(capacity! - enrolledCount, 0) : null;
+  const remainingSpots = hasCapacity
+    ? Math.max(capacity! - enrolledCount, 0)
+    : null;
 
   async function saveGroup(participantId: string) {
     const participant = participants.find((p) => p.id === participantId);
@@ -58,11 +62,14 @@ export default function InscriptosPanel({
 
     try {
       if (!nextGroupId) {
-        const res = await fetch(`/api/activity-groups/${currentGroupId}/members`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ participantId }),
-        });
+        const res = await fetch(
+          `/api/activity-groups/${currentGroupId}/members`,
+          {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ participantId }),
+          }
+        );
         if (!res.ok) {
           const payload = await res.json().catch(() => null);
           throw new Error(payload?.error || 'No se pudo quitar del grupo');
@@ -80,7 +87,9 @@ export default function InscriptosPanel({
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo actualizar el grupo');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo actualizar el grupo'
+      );
     } finally {
       setSavingId(null);
     }
@@ -131,11 +140,14 @@ export default function InscriptosPanel({
                       <span>
                         {participant.receipt ? '· ' : ''}
                         Pago aprobado el{' '}
-                        {new Date(participant.receiptDate).toLocaleDateString('es-AR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
+                        {new Date(participant.receiptDate).toLocaleDateString(
+                          'es-AR',
+                          {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          }
+                        )}
                       </span>
                     )}
                   </div>
@@ -167,7 +179,9 @@ export default function InscriptosPanel({
                       </select>
                       <button
                         type="button"
-                        disabled={isSaving || selectedGroupId === currentGroupId}
+                        disabled={
+                          isSaving || selectedGroupId === currentGroupId
+                        }
                         onClick={() => saveGroup(participant.id)}
                         className="rounded-md border border-border bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
                       >

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { ArrowLeft, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -89,16 +90,17 @@ function Avatar({
   return (
     <div
       className={cn(
-        'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold',
+        'relative shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold',
         size === 'md' ? 'h-11 w-11 text-sm' : 'h-9 w-9 text-xs',
         avatarColor(id)
       )}
     >
       {src ? (
-        <img
+        <Image
           src={src}
           alt={`Foto de perfil de ${name ?? 'usuario'}`}
-          className="h-full w-full object-cover"
+          fill
+          className="object-cover"
         />
       ) : (
         initials(name)

@@ -40,10 +40,15 @@ export async function dispatch(input: DispatchInput): Promise<void> {
       const skip = new Set(
         unread
           .filter((n) => {
-            const d = n.data as { senderId?: string; conversationId?: string } | null;
-            return d?.senderId === senderId && d?.conversationId === conversationId;
+            const d = n.data as {
+              senderId?: string;
+              conversationId?: string;
+            } | null;
+            return (
+              d?.senderId === senderId && d?.conversationId === conversationId
+            );
           })
-          .map((n) => n.userId),
+          .map((n) => n.userId)
       );
       candidates = candidates.filter((id) => !skip.has(id));
     }

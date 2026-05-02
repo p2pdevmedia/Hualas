@@ -15,15 +15,29 @@ export type CalendarActivityDay = {
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 function toLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export default function ActivityCalendar({ activityDays }: { activityDays: CalendarActivityDay[] }) {
+export default function ActivityCalendar({
+  activityDays,
+}: {
+  activityDays: CalendarActivityDay[];
+}) {
   const today = new Date();
   const todayKey = toLocalDateKey(today);
 
@@ -55,14 +69,18 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
   }
 
   function prevMonth() {
-    if (month === 0) { setYear(y => y - 1); setMonth(11); }
-    else setMonth(m => m - 1);
+    if (month === 0) {
+      setYear((y) => y - 1);
+      setMonth(11);
+    } else setMonth((m) => m - 1);
     setSelectedKey(null);
   }
 
   function nextMonth() {
-    if (month === 11) { setYear(y => y + 1); setMonth(0); }
-    else setMonth(m => m + 1);
+    if (month === 11) {
+      setYear((y) => y + 1);
+      setMonth(0);
+    } else setMonth((m) => m + 1);
     setSelectedKey(null);
   }
 
@@ -93,7 +111,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-b">
-        {WEEKDAYS.map(d => (
+        {WEEKDAYS.map((d) => (
           <div
             key={d}
             className="py-2 text-center text-xs font-medium text-muted-foreground"
@@ -119,7 +137,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
 
           // Pick up to 2 unique icons from the day's activities
           const icons = activities
-            .map(a => a.sportIcon)
+            .map((a) => a.sportIcon)
             .filter((icon): icon is string => Boolean(icon))
             .filter((icon, idx, arr) => arr.indexOf(icon) === idx)
             .slice(0, 2);
@@ -128,15 +146,21 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
             <button
               key={i}
               type="button"
-              onClick={() => hasActivity && setSelectedKey(isSelected ? null : key)}
+              onClick={() =>
+                hasActivity && setSelectedKey(isSelected ? null : key)
+              }
               disabled={!hasActivity}
               className={[
                 'relative h-28 flex flex-col items-center pt-1.5 gap-1 transition-colors text-left',
                 isSelected ? 'bg-primary/10' : '',
-                hasActivity && !isSelected ? 'hover:bg-muted/60 cursor-pointer' : '',
+                hasActivity && !isSelected
+                  ? 'hover:bg-muted/60 cursor-pointer'
+                  : '',
                 !hasActivity ? 'cursor-default' : '',
                 isPast && !isToday ? 'opacity-50' : '',
-              ].filter(Boolean).join(' ')}
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
               {/* Day number */}
               <span
@@ -145,7 +169,9 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
                   isToday ? 'bg-primary text-primary-foreground' : '',
                   isSelected && !isToday ? 'text-primary font-semibold' : '',
                   !isToday && !isSelected ? 'text-foreground' : '',
-                ].filter(Boolean).join(' ')}
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 {dayNum}
               </span>
@@ -190,7 +216,7 @@ export default function ActivityCalendar({ activityDays }: { activityDays: Calen
               month: 'long',
             })}
           </p>
-          {selectedActivities.map(d => (
+          {selectedActivities.map((d) => (
             <div key={d.id} className="flex items-center gap-3">
               {d.sportIcon ? (
                 <Image

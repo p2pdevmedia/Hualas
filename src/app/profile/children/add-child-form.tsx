@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 
-export default function AddChildForm({
-  userAddress,
-}: {
-  userAddress: string;
-}) {
+export default function AddChildForm({ userAddress }: { userAddress: string }) {
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
   const [documentType, setDocumentType] = useState('');
@@ -237,15 +233,13 @@ export default function AddChildForm({
         <input
           type="checkbox"
           checked={relationshipDeclarationAccepted}
-          onChange={(e) =>
-            setRelationshipDeclarationAccepted(e.target.checked)
-          }
+          onChange={(e) => setRelationshipDeclarationAccepted(e.target.checked)}
           className="accent-primary mt-0.5"
           required
         />
         <span>
-          Declaro, bajo carácter de declaración jurada, que soy padre, madre
-          o tutor legal del menor que estoy registrando.
+          Declaro, bajo carácter de declaración jurada, que soy padre, madre o
+          tutor legal del menor que estoy registrando.
         </span>
       </label>
       <div className="rounded-lg border bg-muted/20 p-4 space-y-3">

@@ -126,7 +126,7 @@ export const translations = {
       forms: 'Formulaires',
       notifications: 'Notifications',
       admin: 'Administrateur du Site',
-      auditLog: 'Journal d\'audit',
+      auditLog: "Journal d'audit",
       login: 'Connexion',
       register: 'S’inscrire',
       logout: 'Déconnexion',

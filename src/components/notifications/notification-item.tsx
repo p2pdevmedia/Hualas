@@ -69,15 +69,13 @@ export default function NotificationItem({
       onClick={() => onClick(id, url)}
       className={cn(
         'w-full text-left flex gap-3 px-3 py-2.5 transition-colors',
-        isUnread
-          ? 'bg-blue-50/60 hover:bg-blue-50'
-          : 'hover:bg-gray-50',
+        isUnread ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-gray-50'
       )}
     >
       <div
         className={cn(
           'shrink-0 mt-0.5 grid place-items-center w-8 h-8 rounded-full',
-          isUnread ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500',
+          isUnread ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
         )}
       >
         <Icon className="h-4 w-4" />
@@ -87,7 +85,7 @@ export default function NotificationItem({
           <span
             className={cn(
               'text-sm truncate',
-              isUnread ? 'font-semibold text-gray-900' : 'text-gray-700',
+              isUnread ? 'font-semibold text-gray-900' : 'text-gray-700'
             )}
           >
             {title}
@@ -99,7 +97,10 @@ export default function NotificationItem({
         <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{body}</p>
       </div>
       {isUnread && (
-        <span className="shrink-0 mt-1 w-2 h-2 rounded-full bg-blue-500" aria-hidden />
+        <span
+          className="shrink-0 mt-1 w-2 h-2 rounded-full bg-blue-500"
+          aria-hidden
+        />
       )}
     </button>
   );

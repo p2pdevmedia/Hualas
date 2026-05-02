@@ -130,7 +130,10 @@ export default async function AccountingDashboardPage() {
         ? paymentDate >= monthStart && paymentDate <= monthEnd
         : false;
     })
-    .reduce((sum, payment) => sum + getAccountingManualPaymentAmount(payment), 0);
+    .reduce(
+      (sum, payment) => sum + getAccountingManualPaymentAmount(payment),
+      0
+    );
   const totalMp = monthPayments.reduce(
     (sum, payment) => sum + payment.activity.price * 100,
     0

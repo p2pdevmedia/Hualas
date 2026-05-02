@@ -185,14 +185,19 @@ export default function Navbar() {
   );
 
   return (
-    <nav className={cn(
-      'sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-xl transition-all duration-300 supports-[backdrop-filter]:backdrop-blur-xl',
-      isScrolled
-        ? 'border-white/10 bg-[#393f45]/85 text-white shadow-lg shadow-black/10'
-        : 'border-border/60 bg-white/80 text-foreground shadow-sm'
-    )}>
+    <nav
+      className={cn(
+        'sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-xl transition-all duration-300 supports-[backdrop-filter]:backdrop-blur-xl',
+        isScrolled
+          ? 'border-white/10 bg-[#393f45]/85 text-white shadow-lg shadow-black/10'
+          : 'border-border/60 bg-white/80 text-foreground shadow-sm'
+      )}
+    >
       <div className="flex max-w-full items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5 transition-colors duration-200 hover:text-primary">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 transition-colors duration-200 hover:text-primary"
+        >
           <Image
             src={logoUrl}
             alt="Hualas Club logo"
@@ -213,20 +218,30 @@ export default function Navbar() {
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {menuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
 
         <div className="hidden md:flex md:items-center md:gap-6">
           {session && !isCounter && (
-            <Link href={activitiesHref} className={navLinkClass(activitiesHref)}>
+            <Link
+              href={activitiesHref}
+              className={navLinkClass(activitiesHref)}
+            >
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
           {isMember && (
             <Link
               href="/activities/cart"
-              className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
+              className={cn(
+                navLinkClass('/activities/cart'),
+                'inline-flex items-center gap-2'
+              )}
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span>Carrito</span>
@@ -259,10 +274,16 @@ export default function Navbar() {
           )}
           {isAdmin && (
             <>
-              <Link href="/admin/users" className={navLinkClass('/admin/users')}>
+              <Link
+                href="/admin/users"
+                className={navLinkClass('/admin/users')}
+              >
                 {t.users}
               </Link>
-              <Link href="/admin/forms" className={navLinkClass('/admin/forms')}>
+              <Link
+                href="/admin/forms"
+                className={navLinkClass('/admin/forms')}
+              >
                 {t.forms}
               </Link>
               {isSuperAdmin && (
@@ -419,7 +440,10 @@ export default function Navbar() {
           {isMember && (
             <Link
               href="/activities/cart"
-              className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
+              className={cn(
+                navLinkClass('/activities/cart'),
+                'inline-flex items-center gap-2'
+              )}
               onClick={() => setMenuOpen(false)}
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
@@ -429,7 +453,9 @@ export default function Navbar() {
           )}
           {session && (
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium opacity-90">Comunicación</span>
+              <span className="text-sm font-medium opacity-90">
+                Comunicación
+              </span>
               <Link
                 href="/chat"
                 className={navLinkClass('/chat')}
@@ -563,7 +589,10 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/activities/cart"
-                className={cn(navLinkClass('/activities/cart'), 'inline-flex items-center gap-2')}
+                className={cn(
+                  navLinkClass('/activities/cart'),
+                  'inline-flex items-center gap-2'
+                )}
                 onClick={() => setMenuOpen(false)}
               >
                 <span>Carrito</span>

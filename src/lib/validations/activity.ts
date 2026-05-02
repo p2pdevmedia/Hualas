@@ -123,18 +123,21 @@ export const activityGroupCreateSchema = z.object({
 });
 
 export const activityDayCreateSchema = z.object({
-  date: z.string().min(1).transform((value, ctx) => {
-    const parsed = parseDateInput(value);
-    if (Number.isNaN(parsed.getTime())) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Fecha inválida',
-      });
-      return z.NEVER;
-    }
+  date: z
+    .string()
+    .min(1)
+    .transform((value, ctx) => {
+      const parsed = parseDateInput(value);
+      if (Number.isNaN(parsed.getTime())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Fecha inválida',
+        });
+        return z.NEVER;
+      }
 
-    return parsed;
-  }),
+      return parsed;
+    }),
   schedule: z.string().min(1),
   description: z.string().optional(),
   geoLocation: z.string().min(1),

@@ -7,7 +7,7 @@ const DEFAULT_PREFERENCE: Preference = { inApp: true, push: true };
 
 export async function resolvePreferences(
   userIds: string[],
-  type: NotificationType,
+  type: NotificationType
 ): Promise<Map<string, Preference>> {
   const result = new Map<string, Preference>();
   if (userIds.length === 0) return result;
@@ -24,7 +24,7 @@ export async function resolvePreferences(
 }
 
 export async function getPreferenceMap(
-  userId: string,
+  userId: string
 ): Promise<Record<NotificationType, Preference>> {
   const rows = await prisma.notificationPreference.findMany({
     where: { userId },

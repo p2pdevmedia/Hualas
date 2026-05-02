@@ -6,8 +6,18 @@ import { Button } from '@/components/ui/button';
 import { formatAmount } from '@/lib/accounting';
 
 const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 type Payment = {
@@ -34,7 +44,11 @@ type Props = {
   payments: Payment[];
 };
 
-export default function ProfessorProfileForm({ professorId, profile, payments: initialPayments }: Props) {
+export default function ProfessorProfileForm({
+  professorId,
+  profile,
+  payments: initialPayments,
+}: Props) {
   const router = useRouter();
 
   // Profile fields
@@ -140,13 +154,17 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
     if (!res.ok) return;
     setPayments((prev) =>
       prev.map((p) =>
-        p.id === paymentId ? { ...p, status: body.payment.status, paidAt: body.payment.paidAt } : p
+        p.id === paymentId
+          ? { ...p, status: body.payment.status, paidAt: body.payment.paidAt }
+          : p
       )
     );
   };
 
   const deletePayment = async (paymentId: string) => {
-    const res = await fetch(`/api/professor-payments/${paymentId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/professor-payments/${paymentId}`, {
+      method: 'DELETE',
+    });
     if (!res.ok) return;
     setPayments((prev) => prev.filter((p) => p.id !== paymentId));
   };
@@ -237,8 +255,12 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
             />
           </label>
 
-          {profileError && <p className="text-sm text-destructive">{profileError}</p>}
-          {profileSuccess && <p className="text-sm text-emerald-600">{profileSuccess}</p>}
+          {profileError && (
+            <p className="text-sm text-destructive">{profileError}</p>
+          )}
+          {profileSuccess && (
+            <p className="text-sm text-emerald-600">{profileSuccess}</p>
+          )}
 
           <Button type="submit" disabled={profileSaving}>
             {profileSaving ? 'Guardando...' : 'Guardar datos'}
@@ -260,7 +282,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
                 required
               >
                 {MONTHS.map((m, i) => (
-                  <option key={i + 1} value={i + 1}>{m}</option>
+                  <option key={i + 1} value={i + 1}>
+                    {m}
+                  </option>
                 ))}
               </select>
             </label>
@@ -290,7 +314,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
                 required
               />
               {newAmountCents > 0 && (
-                <span className="text-xs text-muted-foreground">{formatAmount(newAmountCents)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatAmount(newAmountCents)}
+                </span>
               )}
             </label>
           </div>
@@ -307,7 +333,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
             />
           </label>
 
-          {paymentError && <p className="text-sm text-destructive">{paymentError}</p>}
+          {paymentError && (
+            <p className="text-sm text-destructive">{paymentError}</p>
+          )}
 
           <Button type="submit" disabled={paymentSaving}>
             {paymentSaving ? 'Registrando...' : 'Registrar pago'}
@@ -319,7 +347,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Historial de pagos</h3>
         {payments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin pagos registrados.</p>
+          <p className="text-sm text-muted-foreground">
+            Sin pagos registrados.
+          </p>
         ) : (
           <div className="overflow-x-auto rounded-xl border">
             <table className="w-full text-sm">
@@ -336,7 +366,10 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
               </thead>
               <tbody className="divide-y">
                 {payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={payment.id}
+                    className="hover:bg-muted/20 transition-colors"
+                  >
                     <td className="px-4 py-3 font-mono text-xs">
                       {MONTHS[payment.periodMonth - 1]} {payment.periodYear}
                     </td>
@@ -355,7 +388,8 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
                       {payment.notes || '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {`${payment.createdBy.name ?? ''} ${payment.createdBy.lastName ?? ''}`.trim() || '—'}
+                      {`${payment.createdBy.name ?? ''} ${payment.createdBy.lastName ?? ''}`.trim() ||
+                        '—'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-end">
@@ -363,7 +397,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
                           <Button
                             variant="outline"
                             className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 px-3 py-1 text-xs"
-                            onClick={() => updatePaymentStatus(payment.id, 'PAID')}
+                            onClick={() =>
+                              updatePaymentStatus(payment.id, 'PAID')
+                            }
                           >
                             Marcar pagado
                           </Button>
@@ -372,7 +408,9 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
                           <Button
                             variant="outline"
                             className="px-3 py-1 text-xs"
-                            onClick={() => updatePaymentStatus(payment.id, 'PENDING')}
+                            onClick={() =>
+                              updatePaymentStatus(payment.id, 'PENDING')
+                            }
                           >
                             Revertir
                           </Button>
@@ -401,13 +439,24 @@ export default function ProfessorProfileForm({ professorId, profile, payments: i
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    PENDING: { label: 'Pendiente', className: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    PAID: { label: 'Pagado', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    CANCELLED: { label: 'Cancelado', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+    PENDING: {
+      label: 'Pendiente',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    },
+    PAID: {
+      label: 'Pagado',
+      className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    },
+    CANCELLED: {
+      label: 'Cancelado',
+      className: 'bg-rose-100 text-rose-700 border-rose-200',
+    },
   };
   const config = map[status] ?? map.PENDING;
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+    >
       {config.label}
     </span>
   );

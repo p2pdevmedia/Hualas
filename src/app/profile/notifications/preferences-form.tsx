@@ -32,13 +32,13 @@ export default function PreferencesForm({
   async function updatePreference(
     type: NotificationType,
     field: 'inApp' | 'push',
-    value: boolean,
+    value: boolean
   ) {
     const target = items.find((i) => i.type === type);
     if (!target) return;
     const next = { ...target.preference, [field]: value };
     setItems((prev) =>
-      prev.map((i) => (i.type === type ? { ...i, preference: next } : i)),
+      prev.map((i) => (i.type === type ? { ...i, preference: next } : i))
     );
     try {
       await fetch('/api/notifications/preferences', {
@@ -54,7 +54,9 @@ export default function PreferencesForm({
   async function deleteDevice(id: string) {
     setDevices((prev) => prev.filter((d) => d.id !== id));
     try {
-      await fetch(`/api/notifications/subscriptions/${id}`, { method: 'DELETE' });
+      await fetch(`/api/notifications/subscriptions/${id}`, {
+        method: 'DELETE',
+      });
     } catch (err) {
       console.error('[preferences] delete device failed', err);
     }
@@ -73,7 +75,9 @@ export default function PreferencesForm({
               className="flex items-start justify-between gap-4 px-4 py-3"
             >
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-gray-900">{item.title}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {item.title}
+                </div>
                 <div className="mt-0.5 text-xs text-gray-500">
                   {item.description}
                 </div>
@@ -84,7 +88,9 @@ export default function PreferencesForm({
                     type="checkbox"
                     className="h-4 w-4"
                     checked={item.preference.inApp}
-                    onChange={(e) => updatePreference(item.type, 'inApp', e.target.checked)}
+                    onChange={(e) =>
+                      updatePreference(item.type, 'inApp', e.target.checked)
+                    }
                   />
                   En la app
                 </label>
@@ -93,7 +99,9 @@ export default function PreferencesForm({
                     type="checkbox"
                     className="h-4 w-4"
                     checked={item.preference.push}
-                    onChange={(e) => updatePreference(item.type, 'push', e.target.checked)}
+                    onChange={(e) =>
+                      updatePreference(item.type, 'push', e.target.checked)
+                    }
                   />
                   Push
                 </label>
@@ -121,7 +129,8 @@ export default function PreferencesForm({
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-gray-900">{device.label}</div>
                   <div className="mt-0.5 text-xs text-gray-500">
-                    Agregado el {new Date(device.addedAt).toLocaleDateString('es-AR')}
+                    Agregado el{' '}
+                    {new Date(device.addedAt).toLocaleDateString('es-AR')}
                     {device.failed && ' · entrega fallida'}
                   </div>
                 </div>

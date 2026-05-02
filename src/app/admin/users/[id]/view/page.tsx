@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -50,9 +51,11 @@ export default async function ViewUserPage({
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 overflow-hidden rounded-full border bg-muted shrink-0">
               {user.profilePhoto ? (
-                <img
+                <Image
                   src={`/api/users/${user.id}/photo?v=${user.updatedAt.getTime()}`}
                   alt={`Foto de perfil de ${user.name ?? 'usuario'}`}
+                  width={56}
+                  height={56}
                   className="h-full w-full object-cover"
                 />
               ) : (

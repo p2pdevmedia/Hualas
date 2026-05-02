@@ -11,16 +11,28 @@ export default function Footer() {
 
           {/* Links */}
           <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">
+            <Link
+              href="/"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
               Inicio
             </Link>
-            <Link href="/activities" className="opacity-80 hover:opacity-100 transition-opacity">
+            <Link
+              href="/activities"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
               Actividades
             </Link>
-            <Link href="/contact" className="opacity-80 hover:opacity-100 transition-opacity">
+            <Link
+              href="/contact"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
               Contacto
             </Link>
-            <Link href="/faq" className="opacity-80 hover:opacity-100 transition-opacity">
+            <Link
+              href="/faq"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
               Preguntas Frecuentes
             </Link>
           </div>
@@ -46,7 +58,13 @@ export default function Footer() {
               >
                 <rect x="3" y="3" width="18" height="18" rx="5" />
                 <circle cx="12" cy="12" r="4.1" />
-                <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+                <circle
+                  cx="17.2"
+                  cy="6.8"
+                  r="1"
+                  fill="currentColor"
+                  stroke="none"
+                />
               </svg>
               <span className="text-sm">@hualas_patagonico</span>
             </a>

@@ -76,7 +76,8 @@ export default async function EditPickupNoticePage({
         <div className="space-y-1 text-sm text-muted-foreground">
           <p>{notice.activityDay.activity.name}</p>
           <p>
-            Fecha: {new Date(notice.activityDay.date).toLocaleDateString('es-AR')}
+            Fecha:{' '}
+            {new Date(notice.activityDay.date).toLocaleDateString('es-AR')}
           </p>
           <p>Hijo: {notice.child.name}</p>
         </div>

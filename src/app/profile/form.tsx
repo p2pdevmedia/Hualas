@@ -38,14 +38,24 @@ export default function ProfileForm({ user }: { user: User }) {
   const [nationality, setNationality] = useState(user.nationality ?? '');
   const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [allergies, setAllergies] = useState(user.allergies ?? '');
-  const [regularMedication, setRegularMedication] = useState(user.regularMedication ?? '');
-  const [relevantDiseases, setRelevantDiseases] = useState(user.relevantDiseases ?? '');
-  const [previousInjuries, setPreviousInjuries] = useState(user.previousInjuries ?? '');
-  const [physicalRestrictions, setPhysicalRestrictions] = useState(user.physicalRestrictions ?? '');
+  const [regularMedication, setRegularMedication] = useState(
+    user.regularMedication ?? ''
+  );
+  const [relevantDiseases, setRelevantDiseases] = useState(
+    user.relevantDiseases ?? ''
+  );
+  const [previousInjuries, setPreviousInjuries] = useState(
+    user.previousInjuries ?? ''
+  );
+  const [physicalRestrictions, setPhysicalRestrictions] = useState(
+    user.physicalRestrictions ?? ''
+  );
   const [bloodGroup, setBloodGroup] = useState(user.bloodGroup ?? '');
   const [primaryDoctor, setPrimaryDoctor] = useState(user.primaryDoctor ?? '');
   const [doctorPhone, setDoctorPhone] = useState(user.doctorPhone ?? '');
-  const [doctorCertificate, setDoctorCertificate] = useState(user.doctorCertificate ?? '');
+  const [doctorCertificate, setDoctorCertificate] = useState(
+    user.doctorCertificate ?? ''
+  );
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone ?? '');
   const [password, setPassword] = useState('');

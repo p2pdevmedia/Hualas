@@ -21,7 +21,7 @@ export function Form({ onSubmit, children, ...props }: FormProps) {
       const result = onSubmit(e);
       if ((result as unknown) instanceof Promise) {
         setIsPending(true);
-        ((result as unknown) as Promise<void>).finally(() => setIsPending(false));
+        (result as unknown as Promise<void>).finally(() => setIsPending(false));
       }
     },
     [onSubmit]

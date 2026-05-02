@@ -51,8 +51,8 @@ export default function DeleteActivityButton({
         <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
           <h2 className="text-lg font-semibold mb-2">Confirmar eliminación</h2>
           <p className="text-muted-foreground mb-6">
-            ¿Estás seguro de que deseas borrar la actividad &quot;{activityName}&quot;?
-            Esta acción no se puede deshacer.
+            ¿Estás seguro de que deseas borrar la actividad &quot;{activityName}
+            &quot;? Esta acción no se puede deshacer.
           </p>
           <div className="flex gap-3 justify-end">
             <button

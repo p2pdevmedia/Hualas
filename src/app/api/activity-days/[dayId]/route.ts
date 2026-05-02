@@ -104,7 +104,7 @@ export async function PUT(
   const geoChanged = day.geoLocation !== data.geoLocation;
   if (dateChanged || scheduleChanged || geoChanged) {
     notifyActivityDayUpdated(updatedDay.id).catch((err) =>
-      console.error('[notifications] notifyActivityDayUpdated failed', err),
+      console.error('[notifications] notifyActivityDayUpdated failed', err)
     );
   }
 

@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
@@ -80,7 +81,9 @@ export default async function ViewMyChildPage({
           )}
           {child.lastName && (
             <div>
-              <span className="font-medium block text-foreground">Apellido</span>
+              <span className="font-medium block text-foreground">
+                Apellido
+              </span>
               <span className="text-muted-foreground">{child.lastName}</span>
             </div>
           )}
@@ -176,11 +179,14 @@ export default async function ViewMyChildPage({
                   <span className="font-medium block text-foreground text-sm mb-2">
                     Foto Delantera
                   </span>
-                  <img
-                    src={child.documentFrontPhoto}
-                    alt="Foto delantera del documento"
-                    className="rounded-lg border border-border w-full max-h-64 object-cover"
-                  />
+                  <div className="relative h-64 w-full">
+                    <Image
+                      src={child.documentFrontPhoto}
+                      alt="Foto delantera del documento"
+                      fill
+                      className="rounded-lg border border-border object-cover"
+                    />
+                  </div>
                 </div>
               )}
               {child.documentBackPhoto && (
@@ -188,11 +194,14 @@ export default async function ViewMyChildPage({
                   <span className="font-medium block text-foreground text-sm mb-2">
                     Foto Trasera
                   </span>
-                  <img
-                    src={child.documentBackPhoto}
-                    alt="Foto trasera del documento"
-                    className="rounded-lg border border-border w-full max-h-64 object-cover"
-                  />
+                  <div className="relative h-64 w-full">
+                    <Image
+                      src={child.documentBackPhoto}
+                      alt="Foto trasera del documento"
+                      fill
+                      className="rounded-lg border border-border object-cover"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -269,7 +278,9 @@ export default async function ViewMyChildPage({
                 <span className="font-medium block text-foreground">
                   Grupo Sanguíneo
                 </span>
-                <span className="text-muted-foreground">{child.bloodGroup}</span>
+                <span className="text-muted-foreground">
+                  {child.bloodGroup}
+                </span>
               </div>
             )}
             {child.primaryDoctor && (

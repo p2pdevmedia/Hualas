@@ -5,8 +5,18 @@ import { authOptions } from '@/lib/auth';
 import { formatAmount } from '@/lib/accounting';
 
 const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 export default async function MyPaymentsPage() {
@@ -39,7 +49,8 @@ export default async function MyPaymentsPage() {
 
       {!profile ? (
         <div className="rounded-xl border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-          Contaduría aún no configuró tus datos bancarios. Contactate con el administrador.
+          Contaduría aún no configuró tus datos bancarios. Contactate con el
+          administrador.
         </div>
       ) : (
         <>
@@ -48,38 +59,50 @@ export default async function MyPaymentsPage() {
             <h2 className="text-lg font-semibold">Datos bancarios</h2>
             <dl className="grid gap-3 sm:grid-cols-2 text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual</dt>
+                <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Sueldo mensual
+                </dt>
                 <dd className="mt-0.5 font-mono font-semibold text-base">
                   {formatAmount(profile.monthlySalary)}
                 </dd>
               </div>
               {profile.bankName && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">Banco</dt>
+                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Banco
+                  </dt>
                   <dd className="mt-0.5">{profile.bankName}</dd>
                 </div>
               )}
               {profile.cbu && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">CBU</dt>
+                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                    CBU
+                  </dt>
                   <dd className="mt-0.5 font-mono text-xs">{profile.cbu}</dd>
                 </div>
               )}
               {profile.alias && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">Alias</dt>
+                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Alias
+                  </dt>
                   <dd className="mt-0.5 font-mono">{profile.alias}</dd>
                 </div>
               )}
               {profile.cuit && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">CUIT</dt>
+                  <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                    CUIT
+                  </dt>
                   <dd className="mt-0.5 font-mono">{profile.cuit}</dd>
                 </div>
               )}
             </dl>
             {profile.notes && (
-              <p className="text-xs text-muted-foreground border-t pt-3">{profile.notes}</p>
+              <p className="text-xs text-muted-foreground border-t pt-3">
+                {profile.notes}
+              </p>
             )}
           </section>
 
@@ -87,7 +110,9 @@ export default async function MyPaymentsPage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Historial de pagos</h2>
             {profile.payments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin pagos registrados.</p>
+              <p className="text-sm text-muted-foreground">
+                Sin pagos registrados.
+              </p>
             ) : (
               <div className="overflow-x-auto rounded-xl border">
                 <table className="w-full text-sm">
@@ -102,7 +127,10 @@ export default async function MyPaymentsPage() {
                   </thead>
                   <tbody className="divide-y">
                     {profile.payments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-muted/20 transition-colors">
+                      <tr
+                        key={payment.id}
+                        className="hover:bg-muted/20 transition-colors"
+                      >
                         <td className="px-4 py-3 font-mono text-xs">
                           {MONTHS[payment.periodMonth - 1]} {payment.periodYear}
                         </td>
@@ -114,7 +142,9 @@ export default async function MyPaymentsPage() {
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {payment.paidAt
-                            ? new Date(payment.paidAt).toLocaleDateString('es-AR')
+                            ? new Date(payment.paidAt).toLocaleDateString(
+                                'es-AR'
+                              )
                             : '—'}
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
@@ -135,13 +165,24 @@ export default async function MyPaymentsPage() {
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    PENDING: { label: 'Pendiente', className: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    PAID: { label: 'Pagado', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    CANCELLED: { label: 'Cancelado', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+    PENDING: {
+      label: 'Pendiente',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    },
+    PAID: {
+      label: 'Pagado',
+      className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    },
+    CANCELLED: {
+      label: 'Cancelado',
+      className: 'bg-rose-100 text-rose-700 border-rose-200',
+    },
   };
   const config = map[status] ?? map.PENDING;
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+    >
       {config.label}
     </span>
   );

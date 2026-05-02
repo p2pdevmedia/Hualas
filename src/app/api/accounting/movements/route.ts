@@ -64,7 +64,7 @@ export async function POST(request: Request) {
   });
 
   notifyPaymentManualCreated(movement.id).catch((err) =>
-    console.error('[notifications] notifyPaymentManualCreated failed', err),
+    console.error('[notifications] notifyPaymentManualCreated failed', err)
   );
 
   return NextResponse.json(movement, { status: 201 });

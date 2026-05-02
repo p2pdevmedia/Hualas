@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface PickupNotice {
   id: string;
@@ -51,8 +51,10 @@ export function ProfessorPickupNoticeList({
   currentUserId,
 }: ProfessorListProps) {
   const { toast } = useToast();
-  const [confirmingNoticeId, setConfirmingNoticeId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
+  const [confirmingNoticeId, setConfirmingNoticeId] = useState<string | null>(
+    null
+  );
+  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async (noticeId: string) => {
@@ -61,30 +63,31 @@ export function ProfessorPickupNoticeList({
       const response = await fetch(
         `/api/pickup-notices/${noticeId}/acknowledgments`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes: notes || null }),
         }
       );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to confirm");
+        throw new Error(error.error || 'Failed to confirm');
       }
 
       toast({
-        title: "Confirmed",
-        description: "Pickup notice confirmed",
+        title: 'Confirmed',
+        description: 'Pickup notice confirmed',
       });
 
       setConfirmingNoticeId(null);
-      setNotes("");
+      setNotes('');
       window.location.reload();
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to confirm",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          error instanceof Error ? error.message : 'Failed to confirm',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -114,9 +117,7 @@ export function ProfessorPickupNoticeList({
           >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold text-lg">
-                  {notice.child.name}
-                </h3>
+                <h3 className="font-semibold text-lg">{notice.child.name}</h3>
                 <p className="text-sm text-gray-600">
                   Parent: {notice.createdBy.name}
                 </p>
@@ -131,7 +132,7 @@ export function ProfessorPickupNoticeList({
               <p className="font-semibold">
                 {notice.alternatePersonUser?.name ||
                   notice.alternatePersonName ||
-                  "Unknown"}
+                  'Unknown'}
               </p>
             </div>
 
@@ -147,7 +148,10 @@ export function ProfessorPickupNoticeList({
               ) : (
                 <ul className="space-y-2">
                   {notice.acknowledgments.map((ack) => (
-                    <li key={ack.id} className="bg-green-50 p-2 rounded text-sm">
+                    <li
+                      key={ack.id}
+                      className="bg-green-50 p-2 rounded text-sm"
+                    >
                       <p className="font-medium">{ack.acknowledgedBy.name}</p>
                       {ack.notes && (
                         <p className="text-gray-700">{ack.notes}</p>
@@ -177,14 +181,14 @@ export function ProfessorPickupNoticeList({
                         onClick={() => handleConfirm(notice.id)}
                         disabled={loading}
                       >
-                        {loading ? "Confirming..." : "Confirm Receipt"}
+                        {loading ? 'Confirming...' : 'Confirm Receipt'}
                       </Button>
                       <Button
                         className="px-3 py-1 text-xs"
                         variant="outline"
                         onClick={() => {
                           setConfirmingNoticeId(null);
-                          setNotes("");
+                          setNotes('');
                         }}
                       >
                         Cancel

@@ -12,7 +12,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const unreadOnly = url.searchParams.get('unread') === '1';
   const limitRaw = parseInt(url.searchParams.get('limit') ?? '20', 10);
-  const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? limitRaw : 20, 1), 50);
+  const limit = Math.min(
+    Math.max(Number.isFinite(limitRaw) ? limitRaw : 20, 1),
+    50
+  );
 
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({

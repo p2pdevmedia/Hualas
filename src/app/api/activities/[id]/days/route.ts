@@ -85,7 +85,7 @@ export async function POST(
   });
 
   notifyActivityDayCreated(activityDay.id).catch((err) =>
-    console.error('[notifications] notifyActivityDayCreated failed', err),
+    console.error('[notifications] notifyActivityDayCreated failed', err)
   );
 
   return NextResponse.json(activityDay);

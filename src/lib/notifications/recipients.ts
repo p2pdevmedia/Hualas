@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 
-export async function recipientsForActivityDay(dayId: string): Promise<string[]> {
+export async function recipientsForActivityDay(
+  dayId: string
+): Promise<string[]> {
   const day = await prisma.activityDay.findUnique({
     where: { id: dayId },
     select: { activityId: true },
@@ -13,7 +15,9 @@ export async function recipientsForActivityDay(dayId: string): Promise<string[]>
   return [...new Set(participants.map((p) => p.userId))];
 }
 
-export async function recipientsForPickupNotice(noticeId: string): Promise<string[]> {
+export async function recipientsForPickupNotice(
+  noticeId: string
+): Promise<string[]> {
   const notice = await prisma.pickupNotice.findUnique({
     where: { id: noticeId },
     select: {
@@ -41,7 +45,7 @@ export async function recipientsForPickupNotice(noticeId: string): Promise<strin
 }
 
 export async function recipientsForPickupNoticeAcknowledged(
-  ackId: string,
+  ackId: string
 ): Promise<string[]> {
   const ack = await prisma.pickupNoticeAcknowledgment.findUnique({
     where: { id: ackId },
@@ -62,7 +66,9 @@ export async function recipientsForManualMovement(): Promise<string[]> {
   return users.map((u) => u.id);
 }
 
-export async function recipientsForOrderPayment(paymentId: string): Promise<string[]> {
+export async function recipientsForOrderPayment(
+  paymentId: string
+): Promise<string[]> {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
     select: { order: { select: { responsibleUserId: true } } },
@@ -72,7 +78,7 @@ export async function recipientsForOrderPayment(paymentId: string): Promise<stri
 }
 
 export async function recipientsForActivityParticipant(
-  participantId: string,
+  participantId: string
 ): Promise<string[]> {
   const participant = await prisma.activityParticipant.findUnique({
     where: { id: participantId },
@@ -99,7 +105,7 @@ export type ChatMessageRecipients = {
 };
 
 export async function recipientsForChatMessage(
-  messageId: string,
+  messageId: string
 ): Promise<ChatMessageRecipients | null> {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -116,7 +122,7 @@ export async function recipientsForChatMessage(
     ...new Set(
       message.conversation.participants
         .map((p) => p.userId)
-        .filter((id) => id !== message.senderId),
+        .filter((id) => id !== message.senderId)
     ),
   ];
   return {
