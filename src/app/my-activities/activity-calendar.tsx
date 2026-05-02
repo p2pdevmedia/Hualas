@@ -135,11 +135,9 @@ export default function ActivityCalendar({
           const isSelected = key === selectedKey;
           const isPast = key < todayKey;
 
-          // Pick up to 2 unique icons from the day's activities
           const icons = activities
             .map((a) => a.sportIcon)
             .filter((icon): icon is string => Boolean(icon))
-            .filter((icon, idx, arr) => arr.indexOf(icon) === idx)
             .slice(0, 2);
 
           return (
@@ -186,7 +184,7 @@ export default function ActivityCalendar({
                       alt=""
                       width={56}
                       height={56}
-                      className="h-14 w-14 object-contain"
+                      className={icons.length > 1 ? 'h-9 w-9 object-contain' : 'h-14 w-14 object-contain'}
                     />
                   ))}
                 </div>
