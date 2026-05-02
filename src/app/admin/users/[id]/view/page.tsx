@@ -5,8 +5,42 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
-import { formatAmount } from '@/lib/accounting';
+import { formatAccountingDate, formatAmount } from '@/lib/accounting';
+import { getManualPaymentRawData } from '@/lib/manual-payments';
+import { formatManualPaymentStatus } from '@/lib/manual-payment-ui';
 import DeleteChildButton from './delete-child-button';
+
+const MONTHS = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
+
+function formatPeriod(month: number, year: number) {
+  return `${MONTHS[month - 1]} ${year}`;
+}
+
+function formatPersonName(
+  person:
+    | {
+        name?: string | null;
+        lastName?: string | null;
+      }
+    | null
+    | undefined
+) {
+  if (!person) return 'Sin nombre';
+  return `${person.name ?? ''} ${person.lastName ?? ''}`.trim() || 'Sin nombre';
+}
 
 export default async function ViewUserPage({
   params,
@@ -54,6 +88,60 @@ export default async function ViewUserPage({
   });
 
   if (!user) redirect('/admin/users');
+
+  const manualPayments = await prisma.payment.findMany({
+    where: {
+      provider: 'MANUAL_TRANSFER',
+      order: {
+        responsibleUserId: user.id,
+      },
+    },
+    orderBy: [{ createdAt: 'desc' }],
+    include: {
+      order: {
+        select: {
+          items: {
+            select: {
+              description: true,
+              billableConcept: {
+                select: {
+                  code: true,
+                },
+              },
+              activity: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const socialFeePayments = await prisma.socialFeePayment.findMany({
+    where: {
+      userId: user.id,
+    },
+    orderBy: [{ createdAt: 'desc' }],
+    include: {
+      child: {
+        select: {
+          name: true,
+          lastName: true,
+        },
+      },
+    },
+  });
+
+  const activityPayments = user.activityParticipants
+    .filter((payment) => payment.receipt)
+    .sort(
+      (a, b) =>
+        (b.receiptDate?.getTime() ?? b.createdAt.getTime()) -
+        (a.receiptDate?.getTime() ?? a.createdAt.getTime())
+    );
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -378,6 +466,196 @@ export default async function ViewUserPage({
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Historial de pagos
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pagos de actividades, transferencias manuales y cuota social
+            asociados a este usuario.
+          </p>
+        </div>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Pagos de actividades
+          </h3>
+
+          {activityPayments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Sin pagos de actividades registrados.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="min-w-full text-sm">
+                <thead className="border-b bg-muted/20 text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Fecha</th>
+                    <th className="px-4 py-3 font-medium">Actividad</th>
+                    <th className="px-4 py-3 font-medium">Participante</th>
+                    <th className="px-4 py-3 font-medium">Comprobante</th>
+                    <th className="px-4 py-3 font-medium text-right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {activityPayments.map((payment) => {
+                    const participant = payment.child ?? payment.user;
+                    const participantName = formatPersonName(participant);
+
+                    return (
+                      <tr key={payment.id}>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {payment.receiptDate
+                            ? formatAccountingDate(payment.receiptDate)
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">{payment.activity.name}</td>
+                        <td className="px-4 py-3">
+                          {participantName || 'Sin nombre'}
+                        </td>
+                        <td className="px-4 py-3">{payment.receipt ?? '—'}</td>
+                        <td className="px-4 py-3 text-right font-medium">
+                          {formatAmount(payment.activity.price * 100)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Transferencias manuales
+          </h3>
+
+          {manualPayments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Sin transferencias manuales registradas.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="min-w-full text-sm">
+                <thead className="border-b bg-muted/20 text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Fecha</th>
+                    <th className="px-4 py-3 font-medium">Actividad</th>
+                    <th className="px-4 py-3 font-medium">Estado</th>
+                    <th className="px-4 py-3 font-medium">Comentario</th>
+                    <th className="px-4 py-3 font-medium text-right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {manualPayments.map((payment) => {
+                    const rawData = getManualPaymentRawData(payment.rawData);
+                    const status = formatManualPaymentStatus(payment.status);
+                    const activityNames = payment.order.items
+                      .filter(
+                        (item) => item.billableConcept.code === 'ACTIVITY_FEE'
+                      )
+                      .map((item) => item.activity?.name ?? item.description)
+                      .filter((name): name is string => Boolean(name));
+                    const detail = [
+                      activityNames.length > 0
+                        ? activityNames.join(', ')
+                        : null,
+                      rawData.socialFeeAmount ? 'Cuota social' : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ');
+
+                    return (
+                      <tr key={payment.id}>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatAccountingDate(
+                            payment.paidAt ??
+                              payment.updatedAt ??
+                              payment.createdAt
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {detail || 'Sin actividad'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${status.className}`}
+                          >
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {rawData.accountantComments ?? '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium">
+                          {formatAmount(payment.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Cuota social
+          </h3>
+
+          {socialFeePayments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Sin pagos de cuota social registrados.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="min-w-full text-sm">
+                <thead className="border-b bg-muted/20 text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Fecha</th>
+                    <th className="px-4 py-3 font-medium">Período</th>
+                    <th className="px-4 py-3 font-medium">Beneficiario</th>
+                    <th className="px-4 py-3 font-medium">MP</th>
+                    <th className="px-4 py-3 font-medium text-right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {socialFeePayments.map((payment) => {
+                    const beneficiary = payment.child
+                      ? formatPersonName(payment.child)
+                      : formatPersonName(user);
+
+                    return (
+                      <tr key={payment.id}>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatAccountingDate(payment.createdAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatPeriod(
+                            payment.periodMonth,
+                            payment.periodYear
+                          )}
+                        </td>
+                        <td className="px-4 py-3">{beneficiary}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          {payment.mercadoPagoPaymentId}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium">
+                          {formatAmount(payment.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
