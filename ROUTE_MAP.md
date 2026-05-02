@@ -130,6 +130,13 @@ Agents should check this before searching the codebase.
   - File: `src/app/admin/users/page.tsx`
   - Related component: `src/app/admin/users/users-list.tsx`
 
+- `/admin/users/[id]` → Edit user
+  - File: `src/app/admin/users/[id]/page.tsx`
+  - Related form: `src/app/admin/users/[id]/form.tsx`
+
+- `/admin/users/[id]/view` → User detail
+  - File: `src/app/admin/users/[id]/view/page.tsx`
+
 - `/admin/forms` → Forms list
   - File: `src/app/admin/forms/page.tsx`
   - Related components:
@@ -169,6 +176,9 @@ Agents should check this before searching the codebase.
 
 - `GET /api/users/[id]/photo` → profile photo
   - File: `src/app/api/users/[id]/photo/route.ts`
+
+- `DELETE /api/users/[id]/children/[childId]` → delete a child for an admin user view
+  - File: `src/app/api/users/[id]/children/[childId]/route.ts`
 
 - `PATCH /api/profile` → update profile
   - File: `src/app/api/profile/route.ts`

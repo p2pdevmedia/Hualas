@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Button } from '@/components/ui/button';
+import DeleteChildButton from './delete-child-button';
 
 export default async function ViewUserPage({
   params,
@@ -47,7 +49,7 @@ export default async function ViewUserPage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 overflow-hidden rounded-full border bg-muted shrink-0">
               {user.profilePhoto ? (
@@ -72,9 +74,14 @@ export default async function ViewUserPage({
               <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
             </div>
           </div>
-          <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
-            {user.role}
-          </span>
+          <div className="flex flex-col items-end gap-2">
+            <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
+              {user.role}
+            </span>
+            <Button asChild variant="outline" className="h-9 px-4">
+              <Link href={`/admin/users/${user.id}`}>Editar usuario</Link>
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm border-t border-border pt-3">
           {user.phone && (
@@ -214,7 +221,7 @@ export default async function ViewUserPage({
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <Link
                     href={`/admin/users/${user.id}/children/${child.id}/view`}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
@@ -227,6 +234,11 @@ export default async function ViewUserPage({
                   >
                     Editar
                   </Link>
+                  <DeleteChildButton
+                    userId={user.id}
+                    childId={child.id}
+                    childName={`${child.name} ${child.lastName ?? ''}`.trim()}
+                  />
                 </div>
               </li>
             ))}
