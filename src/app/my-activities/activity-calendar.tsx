@@ -176,20 +176,20 @@ export default function ActivityCalendar({
 
               {/* Activity icons */}
               {icons.length > 0 ? (
-                <div className="flex gap-0.5 justify-center">
+                <div className="flex gap-0.5 w-full flex-1 min-h-0 items-center">
                   {icons.map((icon, idx) => (
-                    <Image
-                      key={idx}
-                      src={`/icons/${icon}`}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className={icons.length > 1 ? 'h-9 w-9 object-contain' : 'h-14 w-14 object-contain'}
-                    />
+                    <div key={idx} className="flex-1 min-w-0 h-full flex items-center justify-center">
+                      <Image
+                        src={`/icons/${icon}`}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
                   ))}
                 </div>
               ) : hasActivity ? (
-                // Fallback dot if no icons assigned
                 <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" />
               ) : null}
 
