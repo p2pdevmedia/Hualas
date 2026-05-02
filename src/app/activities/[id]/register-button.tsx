@@ -18,6 +18,7 @@ export default function ActivityRegisterButton({
   activityPrice: number;
 }) {
   const { data: session } = useSession();
+  const isMember = session?.user?.role === 'MEMBER';
   const router = useRouter();
   const [children, setChildren] = useState<Array<{ id: string; name: string }>>(
     []
@@ -25,11 +26,13 @@ export default function ActivityRegisterButton({
   const [target, setTarget] = useState('');
 
   useEffect(() => {
-    if (session)
+    if (session && isMember)
       fetch('/api/children')
         .then((res) => res.json())
         .then((data) => setChildren(data));
-  }, [session]);
+  }, [session, isMember]);
+
+  if (session && !isMember) return null;
 
   const people: Person[] = session
     ? [

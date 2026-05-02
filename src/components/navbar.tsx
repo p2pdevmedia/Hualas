@@ -55,6 +55,7 @@ export default function Navbar() {
   const isAccounting = role === 'COUNTER' || isAdmin;
   const isProfessor = role === 'PROFESSOR';
   const isMember = !!session && !isAdmin && !isCounter;
+  const isMemberRole = role === 'MEMBER';
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
   const t = translations.nav;
@@ -80,7 +81,7 @@ export default function Navbar() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (!session || !isMember) {
+    if (!session || !isMemberRole) {
       setCartItemsCount(0);
       return;
     }
@@ -235,7 +236,7 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {isMember && (
+          {isMemberRole && (
             <Link
               href="/activities/cart"
               className={cn(
@@ -366,15 +367,17 @@ export default function Navbar() {
                   >
                     {actions.myChildren}
                   </Link>
-                  <Link
-                    href="/activities/cart"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <span>Carrito</span>
-                      {cartItemsCount > 0 && renderCartNotificationIcon()}
-                    </span>
-                  </Link>
+                  {isMemberRole && (
+                    <Link
+                      href="/activities/cart"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span>Carrito</span>
+                        {cartItemsCount > 0 && renderCartNotificationIcon()}
+                      </span>
+                    </Link>
+                  )}
                   <Link
                     href="/profile/payments"
                     className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
@@ -437,7 +440,7 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {isMember && (
+          {isMemberRole && (
             <Link
               href="/activities/cart"
               className={cn(
@@ -587,17 +590,19 @@ export default function Navbar() {
               >
                 {actions.myChildren}
               </Link>
-              <Link
-                href="/activities/cart"
-                className={cn(
-                  navLinkClass('/activities/cart'),
-                  'inline-flex items-center gap-2'
-                )}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span>Carrito</span>
-                {cartItemsCount > 0 && renderCartNotificationIcon()}
-              </Link>
+              {isMemberRole && (
+                <Link
+                  href="/activities/cart"
+                  className={cn(
+                    navLinkClass('/activities/cart'),
+                    'inline-flex items-center gap-2'
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span>Carrito</span>
+                  {cartItemsCount > 0 && renderCartNotificationIcon()}
+                </Link>
+              )}
               <Link
                 href="/profile/payments"
                 className={navLinkClass('/profile/payments')}
