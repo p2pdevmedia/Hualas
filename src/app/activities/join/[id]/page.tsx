@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
-import RegisterButton from '@/components/register-button';
+import RegisterButton from '@/app/activities/[id]/register-button';
 
 interface ActivityJoinPageProps {
   params: { id: string };
@@ -39,9 +39,10 @@ export default async function ActivityJoinPage({
     TEMPORARY: 'Temporal',
     ANNUAL: 'Anual',
   };
-  const hasCapacity = activity.capacity != null;
+  const capacity = activity.capacity;
+  const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
-    ? Math.max(activity.capacity - participantCount, 0)
+    ? Math.max(capacity - participantCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
   const activityDateRange = formatDateRange(activity.date, activity.endDate);
