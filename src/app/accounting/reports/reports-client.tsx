@@ -9,6 +9,14 @@ import { formatAccountingDate, formatAmount } from '@/lib/accounting';
 import { buildAccountingCategoryTotals } from '@/lib/accounting-summary';
 
 type ExportSource = 'movements' | 'manualPayments' | 'mpPayments';
+type ChartMode = 'month' | 'year';
+
+type TimelineBucket = {
+  key: string;
+  label: string;
+  income: number;
+  expense: number;
+};
 
 type ReportData = {
   totalIncome: number;
@@ -63,12 +71,225 @@ const defaultTo = new Date(today.getFullYear(), today.getMonth() + 1, 0)
   .toISOString()
   .slice(0, 10);
 
+const MONTH_LABELS = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+] as const;
+
+function buildTimelineBuckets(entries: ReportData['entries'], mode: ChartMode) {
+  const buckets = new Map<string, TimelineBucket>();
+
+  for (const entry of entries) {
+    const key =
+      mode === 'year' ? entry.date.slice(0, 4) : entry.date.slice(0, 7);
+    const bucket =
+      buckets.get(key) ??
+      ({
+        key,
+        label:
+          mode === 'year'
+            ? key
+            : (() => {
+                const year = Number(key.slice(0, 4));
+                const month = Number(key.slice(5, 7));
+                return `${MONTH_LABELS[month - 1]} ${year}`;
+              })(),
+        income: 0,
+        expense: 0,
+      } satisfies TimelineBucket);
+
+    if (entry.type === 'INCOME') {
+      bucket.income += entry.amount;
+    } else {
+      bucket.expense += entry.amount;
+    }
+
+    buckets.set(key, bucket);
+  }
+
+  return [...buckets.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+function formatTimelineValue(value: number) {
+  return formatAmount(value);
+}
+
+function ReportsTimelineChart({
+  buckets,
+  mode,
+  onModeChange,
+}: {
+  buckets: TimelineBucket[];
+  mode: ChartMode;
+  onModeChange: (mode: ChartMode) => void;
+}) {
+  const maxValue = Math.max(
+    0,
+    ...buckets.map((bucket) => Math.max(bucket.income, bucket.expense))
+  );
+  const totalIncome = buckets.reduce((sum, bucket) => sum + bucket.income, 0);
+  const totalExpense = buckets.reduce((sum, bucket) => sum + bucket.expense, 0);
+  const periodLabel =
+    buckets.length === 1
+      ? mode === 'month'
+        ? 'mes'
+        : 'año'
+      : mode === 'month'
+        ? 'meses'
+        : 'años';
+
+  return (
+    <article className="rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold tracking-tight">
+            Gráficas de reportes
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Compará ingresos y egresos agrupados por mes o por año.
+          </p>
+        </div>
+
+        <div className="inline-flex rounded-full border bg-muted/30 p-1">
+          <Button
+            type="button"
+            variant={mode === 'month' ? 'primary' : 'ghost'}
+            className="h-9 px-4"
+            onClick={() => onModeChange('month')}
+          >
+            Por mes
+          </Button>
+          <Button
+            type="button"
+            variant={mode === 'year' ? 'primary' : 'ghost'}
+            className="h-9 px-4"
+            onClick={() => onModeChange('year')}
+          >
+            Por año
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="overflow-x-auto rounded-2xl border bg-background/70 p-4">
+          {buckets.length === 0 ? (
+            <p className="py-16 text-center text-sm text-muted-foreground">
+              No hay datos para mostrar en esta vista.
+            </p>
+          ) : (
+            <div className="min-w-[640px]">
+              <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{formatTimelineValue(0)}</span>
+                <span>{formatTimelineValue(maxValue)}</span>
+              </div>
+
+              <div className="flex items-end gap-3">
+                {buckets.map((bucket) => {
+                  const incomeHeight =
+                    maxValue === 0 ? 0 : (bucket.income / maxValue) * 100;
+                  const expenseHeight =
+                    maxValue === 0 ? 0 : (bucket.expense / maxValue) * 100;
+
+                  return (
+                    <div
+                      key={bucket.key}
+                      className="flex w-20 shrink-0 flex-col items-center gap-2"
+                    >
+                      <div
+                        className="flex h-56 w-full items-end gap-2 rounded-2xl bg-muted/30 px-3 pb-3 pt-4"
+                        aria-label={`${bucket.label}: ingresos ${formatTimelineValue(
+                          bucket.income
+                        )}, egresos ${formatTimelineValue(bucket.expense)}`}
+                      >
+                        <div className="flex h-full flex-1 items-end">
+                          <div
+                            className="w-full rounded-t-lg bg-emerald-500"
+                            style={{ height: `${incomeHeight}%` }}
+                            title={`${bucket.label} - Ingresos ${formatTimelineValue(
+                              bucket.income
+                            )}`}
+                          />
+                        </div>
+                        <div className="flex h-full flex-1 items-end">
+                          <div
+                            className="w-full rounded-t-lg bg-rose-500"
+                            style={{ height: `${expenseHeight}%` }}
+                            title={`${bucket.label} - Egresos ${formatTimelineValue(
+                              bucket.expense
+                            )}`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="text-xs font-medium leading-tight">
+                          {bucket.label}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatTimelineValue(bucket.income - bucket.expense)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-2xl border bg-muted/20 p-4">
+            <p className="text-sm font-medium">Leyenda</p>
+            <div className="mt-3 space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-emerald-500" />
+                <span>Ingresos</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-rose-500" />
+                <span>Egresos</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-4">
+            <p className="text-sm text-muted-foreground">Vista actual</p>
+            <p className="mt-2 text-2xl font-bold tracking-tight">
+              {buckets.length} {periodLabel}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ingresos {formatTimelineValue(totalIncome)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Egresos {formatTimelineValue(totalExpense)}
+            </p>
+            <p className="mt-2 text-sm font-medium">
+              Balance {formatTimelineValue(totalIncome - totalExpense)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function ReportsClient() {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [chartMode, setChartMode] = useState<ChartMode>('month');
   const [exportSources, setExportSources] = useState<
     Record<ExportSource, boolean>
   >({
@@ -110,6 +331,11 @@ export default function ReportsClient() {
       a.localeCompare(b)
     );
   }, [data]);
+
+  const chartBuckets = useMemo(() => {
+    if (!data) return [];
+    return buildTimelineBuckets(data.entries, chartMode);
+  }, [data, chartMode]);
 
   const selectedExportEntries = useMemo(() => {
     if (!data) return [];
@@ -405,6 +631,12 @@ export default function ReportsClient() {
               </article>
             ))}
           </section>
+
+          <ReportsTimelineChart
+            buckets={chartBuckets}
+            mode={chartMode}
+            onModeChange={setChartMode}
+          />
 
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-2xl border bg-card p-5 shadow-sm">
