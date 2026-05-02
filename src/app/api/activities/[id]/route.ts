@@ -45,7 +45,7 @@ export async function PUT(
           endDate: data.endDate,
           activityType: data.activityType,
           frequency: data.frequency,
-          image: data.image ?? null,
+          ...(data.image !== undefined ? { image: data.image } : {}),
           description: data.description ?? null,
           price: data.price,
           capacity: data.capacity ?? null,
