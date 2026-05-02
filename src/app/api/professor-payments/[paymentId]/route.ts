@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
+import { notifyProfessorPaymentCancelled, notifyProfessorPaymentPaid } from '@/lib/notifications/notification-service';
 
 const patchSchema = z.object({
   status: z.enum(['PENDING', 'PAID', 'CANCELLED']),
@@ -50,6 +51,12 @@ export async function PATCH(
       notes: parsed.data.notes ?? existing.notes,
     },
   });
+
+  if (parsed.data.status === 'PAID' && existing.status !== 'PAID') {
+    notifyProfessorPaymentPaid(params.paymentId);
+  } else if (parsed.data.status === 'CANCELLED' && existing.status !== 'CANCELLED') {
+    notifyProfessorPaymentCancelled(params.paymentId);
+  }
 
   return NextResponse.json({ payment });
 }

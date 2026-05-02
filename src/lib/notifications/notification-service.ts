@@ -273,6 +273,73 @@ export async function notifyActivityCapacityFull(activityId: string): Promise<vo
   }
 }
 
+export async function notifyProfessorPaymentPaid(paymentId: string): Promise<void> {
+  try {
+    const payment = await prisma.professorPayment.findUnique({
+      where: { id: paymentId },
+      select: {
+        id: true,
+        amount: true,
+        periodMonth: true,
+        periodYear: true,
+        professorProfile: {
+          select: { userId: true },
+        },
+      },
+    });
+    if (!payment) return;
+    const monthNames = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    const period = `${monthNames[payment.periodMonth - 1]} ${payment.periodYear}`;
+    await dispatch({
+      type: 'PAYMENT_APPROVED',
+      recipients: [payment.professorProfile.userId],
+      title: 'Pago acreditado',
+      body: `Tu pago de ${formatAmount(payment.amount)} (${period}) fue acreditado.`,
+      url: `/my-payments`,
+      data: { paymentId: payment.id } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyProfessorPaymentPaid', err);
+  }
+}
+
+export async function notifyProfessorPaymentCancelled(paymentId: string): Promise<void> {
+  try {
+    const payment = await prisma.professorPayment.findUnique({
+      where: { id: paymentId },
+      select: {
+        id: true,
+        amount: true,
+        periodMonth: true,
+        periodYear: true,
+        professorProfile: {
+          select: { userId: true },
+        },
+      },
+    });
+    if (!payment) return;
+    const professorUserId = payment.professorProfile.userId;
+    const monthNames = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    const period = `${monthNames[payment.periodMonth - 1]} ${payment.periodYear}`;
+    await dispatch({
+      type: 'PAYMENT_REJECTED',
+      recipients: [professorUserId],
+      title: 'Pago rechazado',
+      body: `Tu pago de ${formatAmount(payment.amount)} (${period}) fue rechazado por contaduría.`,
+      url: `/my-payments`,
+      data: { paymentId: payment.id } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyProfessorPaymentCancelled', err);
+  }
+}
+
 export async function notifyChatMessage(messageId: string): Promise<void> {
   try {
     const message = await prisma.message.findUnique({
