@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
+import { formatAmount } from '@/lib/accounting';
 import DeleteChildButton from './delete-child-button';
 
 export default async function ViewUserPage({
@@ -25,6 +26,14 @@ export default async function ViewUserPage({
     include: {
       children: {
         orderBy: { createdAt: 'asc' },
+      },
+      professorProfile: {
+        include: {
+          payments: {
+            orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+            take: 3,
+          },
+        },
       },
       activityParticipants: { include: { activity: true, child: true } },
       conversations: {
@@ -134,6 +143,98 @@ export default async function ViewUserPage({
           </div>
         )}
       </div>
+
+      {user.role === 'PROFESSOR' && (
+        <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">
+                Datos de profesor
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Información bancaria, sueldo y pagos registrados.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="h-9 px-4">
+              <Link href={`/accounting/professors/${user.id}`}>
+                Editar datos
+              </Link>
+            </Button>
+          </div>
+
+          {user.professorProfile ? (
+            <div className="grid gap-3 rounded-lg border bg-muted/20 p-4 text-sm sm:grid-cols-2">
+              <div>
+                <span className="font-medium text-foreground">Sueldo:</span>{' '}
+                <span className="text-muted-foreground">
+                  {formatAmount(user.professorProfile.monthlySalary)}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-foreground">Banco:</span>{' '}
+                <span className="text-muted-foreground">
+                  {user.professorProfile.bankName ?? 'Sin dato'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-foreground">CBU:</span>{' '}
+                <span className="font-mono text-muted-foreground">
+                  {user.professorProfile.cbu ?? 'Sin dato'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-foreground">Alias:</span>{' '}
+                <span className="font-mono text-muted-foreground">
+                  {user.professorProfile.alias ?? 'Sin dato'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-foreground">CUIT:</span>{' '}
+                <span className="font-mono text-muted-foreground">
+                  {user.professorProfile.cuit ?? 'Sin dato'}
+                </span>
+              </div>
+              <div className="sm:col-span-2">
+                <span className="font-medium text-foreground">Notas:</span>{' '}
+                <span className="text-muted-foreground">
+                  {user.professorProfile.notes ?? 'Sin notas'}
+                </span>
+              </div>
+              <div className="sm:col-span-2 border-t border-border pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Últimos pagos
+                </p>
+                <div className="mt-2 space-y-2">
+                  {user.professorProfile.payments.length > 0 ? (
+                    user.professorProfile.payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between gap-3 rounded-md bg-background px-3 py-2"
+                      >
+                        <span>
+                          {payment.periodMonth.toString().padStart(2, '0')}/
+                          {payment.periodYear}
+                        </span>
+                        <span className="font-medium">
+                          {formatAmount(payment.amount)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Sin pagos registrados.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Todavía no tiene un perfil de profesor cargado.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
         <div className="flex items-start justify-between gap-4">
