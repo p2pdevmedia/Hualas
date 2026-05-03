@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivityDayForm from './activity-day-form';
@@ -131,6 +131,30 @@ export default function ActivityDaysPanel({
   const [expandedAttendance, setExpandedAttendance] = useState<
     Record<string, boolean>
   >({});
+
+  const { currentDays, pastDays } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const current: ActivityDay[] = [];
+    const past: ActivityDay[] = [];
+
+    for (const day of days) {
+      const dayDate = new Date(day.date);
+      dayDate.setHours(0, 0, 0, 0);
+
+      if (dayDate < today) {
+        past.push(day);
+      } else {
+        current.push(day);
+      }
+    }
+
+    return { currentDays: current, pastDays: past };
+  }, [days]);
+
+  const visibleDays = currentDays.length > 0 ? currentDays : days;
+
   const calendarDays: CalendarActivityDay[] = days.map((day) => ({
     id: day.id,
     date: day.date.slice(0, 10),
@@ -259,7 +283,7 @@ export default function ActivityDaysPanel({
         </p>
       ) : (
         <div className="mt-6 space-y-4">
-          {days.map((day) => {
+          {visibleDays.map((day) => {
             const goingCount = day.attendances.filter(
               (attendance) => attendance.status === 'GOING'
             ).length;
@@ -663,6 +687,34 @@ export default function ActivityDaysPanel({
             );
           })}
         </div>
+      )}
+
+      {pastDays.length > 0 && (
+        <details className="mt-6 rounded-lg border bg-background p-4">
+          <summary className="cursor-pointer text-sm font-semibold">
+            Antiguas ({pastDays.length})
+          </summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Estas sesiones ya pasaron.
+          </p>
+          <div className="mt-4 space-y-3">
+            {pastDays.map((day) => (
+              <article key={day.id} className="rounded-md border bg-card p-3">
+                <p className="text-sm font-medium">
+                  {new Date(day.date).toLocaleDateString('es-AR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {day.schedule} · {day.geoLocation}
+                </p>
+              </article>
+            ))}
+          </div>
+        </details>
       )}
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
