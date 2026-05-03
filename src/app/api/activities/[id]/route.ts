@@ -119,8 +119,11 @@ export async function PUT(
               select: { id: true },
             });
             await tx.activityDayProfessor.createMany({
-              data: createdDays.flatMap(({ id: activityDayId }) =>
-                professorIds.map((userId) => ({ activityDayId, userId }))
+              data: createdDays.flatMap(({ id: activityDayId }, index) =>
+                annualDays[index].professorIds.map((userId) => ({
+                  activityDayId,
+                  userId,
+                }))
               ),
             });
           } else {
