@@ -224,19 +224,6 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {session && (
-            <Link
-              href="/chat"
-              className={cn(
-                navLinkClass('/chat'),
-                'inline-flex items-center gap-2'
-              )}
-            >
-              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
-            </Link>
-          )}
           {isAdmin && (
             <>
               <Link
@@ -287,9 +274,21 @@ export default function Navbar() {
               </Link>
             </>
           )}
+          {session && (
+            <Link
+              href="/chat"
+              className={cn(
+                navLinkClass('/chat'),
+                'inline-flex items-center gap-2'
+              )}
+            >
+              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
+            </Link>
+          )}
           {session ? (
             <div className="flex items-center gap-3">
-              <ProfileSwitcher />
               {isMemberRole && (
                 <Link
                   href="/activities/cart"
@@ -302,6 +301,8 @@ export default function Navbar() {
                   {cartItemsCount > 0 && renderCartNotificationIcon()}
                 </Link>
               )}
+              <NotificationBell />
+              <ProfileSwitcher />
               <div className="relative group">
                 <div
                   className={cn(
@@ -389,7 +390,6 @@ export default function Navbar() {
                   </button>
                 </div>
               </div>
-              <NotificationBell />
             </div>
           ) : (
             <>
@@ -431,20 +431,6 @@ export default function Navbar() {
               {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
               <span>Carrito</span>
               {cartItemsCount > 0 && renderCartNotificationIcon()}
-            </Link>
-          )}
-          {session && (
-            <Link
-              href="/chat"
-              className={cn(
-                navLinkClass('/chat'),
-                'inline-flex items-center gap-2'
-              )}
-              onClick={() => setMenuOpen(false)}
-            >
-              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
             </Link>
           )}
           {isAdmin && (
@@ -512,6 +498,20 @@ export default function Navbar() {
                 FAQ
               </Link>
             </>
+          )}
+          {session && (
+            <Link
+              href="/chat"
+              className={cn(
+                navLinkClass('/chat'),
+                'inline-flex items-center gap-2'
+              )}
+              onClick={() => setMenuOpen(false)}
+            >
+              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
+            </Link>
           )}
           {session ? (
             <>
