@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function ActivityDayPage({
   params,
@@ -83,8 +84,15 @@ export default async function ActivityDayPage({
       <div className="grid gap-3 sm:grid-cols-3">
         <Link
           href={`${base}/descripcion`}
-          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
+          <Image
+            src="/1_Informacion.png"
+            alt="Información"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Descripción
           </span>
@@ -97,8 +105,15 @@ export default async function ActivityDayPage({
 
         <Link
           href={`${base}/observaciones`}
-          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
+          <Image
+            src="/1_Observacion.png"
+            alt="Observación"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Observaciones
           </span>
@@ -111,8 +126,15 @@ export default async function ActivityDayPage({
 
         <Link
           href={`${base}/attendance`}
-          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
+          <Image
+            src="/1_asistencia.png"
+            alt="Asistencia"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Asistencia
           </span>
