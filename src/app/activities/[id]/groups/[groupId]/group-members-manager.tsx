@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
@@ -35,20 +35,36 @@ export default function ActivityGroupMembersManager({
   );
   const [error, setError] = useState('');
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredAvailableParticipants = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+
+    if (!normalized) {
+      return availableParticipants;
+    }
+
+    return availableParticipants.filter((participant) =>
+      participant.label.toLowerCase().includes(normalized)
+    );
+  }, [availableParticipants, searchTerm]);
+
   useEffect(() => {
-    if (availableParticipants.length === 0) {
+    if (filteredAvailableParticipants.length === 0) {
       setSelectedParticipantId('');
       return;
     }
 
-    const selectedExists = availableParticipants.some(
+    const selectedExists = filteredAvailableParticipants.some(
       (participant) => participant.participantId === selectedParticipantId
     );
 
     if (!selectedExists) {
-      setSelectedParticipantId(availableParticipants[0]?.participantId ?? '');
+      setSelectedParticipantId(
+        filteredAvailableParticipants[0]?.participantId ?? ''
+      );
     }
-  }, [availableParticipants, selectedParticipantId]);
+  }, [filteredAvailableParticipants, selectedParticipantId]);
 
   async function mutateMembership(
     participantId: string,
@@ -198,12 +214,19 @@ export default function ActivityGroupMembersManager({
               onSubmit={handleAddParticipant}
               className="space-y-3 rounded-lg border bg-background p-4"
             >
+              <input
+                type="text"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                placeholder="Buscar por nombre y apellido"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <select
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={selectedParticipantId}
                 onChange={(e) => setSelectedParticipantId(e.target.value)}
               >
-                {availableParticipants.map((participant) => (
+                {filteredAvailableParticipants.map((participant) => (
                   <option
                     key={participant.participantId}
                     value={participant.participantId}
@@ -215,12 +238,23 @@ export default function ActivityGroupMembersManager({
                   </option>
                 ))}
               </select>
+              {filteredAvailableParticipants.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No se encontraron participantes con esa búsqueda.
+                </p>
+              )}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Si el participante ya pertenece a otro grupo, se moverá a
                   {` ${groupName}.`}
                 </p>
-                <Button type="submit" disabled={!selectedParticipantId}>
+                <Button
+                  type="submit"
+                  disabled={
+                    !selectedParticipantId ||
+                    filteredAvailableParticipants.length === 0
+                  }
+                >
                   Agregar al grupo
                 </Button>
               </div>
