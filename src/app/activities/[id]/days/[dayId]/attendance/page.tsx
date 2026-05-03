@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import AttendanceManager from './attendance-manager';
+import DayNotesForm from './day-notes-form';
 
 export default async function DayAttendancePage({
   params,
@@ -113,13 +114,24 @@ export default async function DayAttendancePage({
         )}
       </div>
 
-      {participantList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No hay inscriptos para esta sesión.
-        </p>
-      ) : (
-        <AttendanceManager dayId={day.id} participants={participantList} />
-      )}
+      <DayNotesForm
+        dayId={day.id}
+        initialPlanificacion={day.planificacion ?? null}
+        initialDevolucion={day.devolucion ?? null}
+      />
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Asistencia
+        </h2>
+        {participantList.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No hay inscriptos para esta sesión.
+          </p>
+        ) : (
+          <AttendanceManager dayId={day.id} participants={participantList} />
+        )}
+      </div>
     </main>
   );
 }

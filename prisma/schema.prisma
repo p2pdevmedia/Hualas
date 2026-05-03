@@ -210,6 +210,8 @@ model ActivityDay {
   date        DateTime
   schedule    String
   description String?
+  planificacion String?
+  devolucion  String?
   geoLocation String
   latitude    Float?
   longitude   Float?

@@ -36,10 +36,14 @@ export async function PATCH(
   const body = await req.json();
   const description =
     typeof body.description === 'string' ? body.description || null : null;
+  const planificacion =
+    typeof body.planificacion === 'string' ? body.planificacion || null : null;
+  const devolucion =
+    typeof body.devolucion === 'string' ? body.devolucion || null : null;
 
   const updatedDay = await prisma.activityDay.update({
     where: { id: day.id },
-    data: { description },
+    data: { description, planificacion, devolucion },
   });
 
   return NextResponse.json(updatedDay);
