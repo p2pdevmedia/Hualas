@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -472,22 +473,35 @@ export default function EditActivityForm({
 
                     <div className="space-y-1">
                       <label className="text-sm font-medium">Deporte</label>
-                      <select
-                        value={draft.sportIcon}
-                        onChange={(e) =>
-                          updateScheduleDraft(draft.tempId, {
-                            sportIcon: e.target.value,
-                          })
-                        }
-                        className={inputClass}
-                      >
-                        <option value="">Sin ícono</option>
+                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                         {SPORT_ICONS.map((icon) => (
-                          <option key={icon.file} value={icon.file}>
-                            {icon.label}
-                          </option>
+                          <button
+                            key={icon.file}
+                            type="button"
+                            onClick={() =>
+                              updateScheduleDraft(draft.tempId, {
+                                sportIcon:
+                                  draft.sportIcon === icon.file
+                                    ? ''
+                                    : icon.file,
+                              })
+                            }
+                            className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
+                              draft.sportIcon === icon.file
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                            }`}
+                          >
+                            <Image
+                              src={`/icons/${icon.file}`}
+                              alt={icon.label}
+                              width={40}
+                              height={40}
+                            />
+                            <span>{icon.label}</span>
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
 
                     <div className="space-y-1">
