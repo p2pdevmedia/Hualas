@@ -261,6 +261,12 @@ Agents should check this before searching the codebase.
   - Related page: `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`
 
+- `GET /api/chat` → professor chat context with activities, groups, and shared participants
+  - File: `src/app/api/chat/route.ts`
+
+- `POST /api/messages/groups/[groupId]` → send one chat message to every user in an activity group
+  - File: `src/app/api/messages/groups/[groupId]/route.ts`
+
 ### Accounting API
 
 - `GET /api/accounting/movements` → list movements

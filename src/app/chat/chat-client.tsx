@@ -32,6 +32,49 @@ type Conversation = {
   unreadCount?: number;
 };
 
+type ProfessorChatPerson = {
+  userId: string;
+  label: string;
+  subtitle: string;
+  activityParticipantId: string;
+};
+
+type ProfessorChatGroup = {
+  id: string;
+  name: string;
+  description: string | null;
+  memberCount: number;
+  members: ProfessorChatPerson[];
+};
+
+type ProfessorChatActivity = {
+  id: string;
+  name: string;
+  description: string | null;
+  date: string;
+  endDate: string;
+  participants: ProfessorChatPerson[];
+  groups: ProfessorChatGroup[];
+};
+
+type SharedParticipant = {
+  userId: string;
+  label: string;
+  subtitle: string;
+  activityCount: number;
+  activities: string[];
+};
+
+type ProfessorChatContext = {
+  activities: ProfessorChatActivity[];
+  sharedParticipants: SharedParticipant[];
+};
+
+type SelectedGroup = {
+  activityId: string;
+  groupId: string;
+};
+
 const AVATAR_COLORS = [
   'bg-rose-500',
   'bg-amber-500',
@@ -75,6 +118,22 @@ function formatPreviewTime(iso: string | undefined) {
   yesterday.setDate(now.getDate() - 1);
   if (d.toDateString() === yesterday.toDateString()) return 'ayer';
   return d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
+}
+
+function formatActivityRange(startIso: string, endIso: string) {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const startText = start.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+  });
+  const endText = end.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+  });
+  return start.toDateString() === end.toDateString()
+    ? startText
+    : `${startText} al ${endText}`;
 }
 
 function Avatar({
@@ -133,8 +192,14 @@ export default function ChatClient() {
   const [history, setHistory] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [recipient, setRecipient] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<SelectedGroup | null>(
+    null
+  );
+  const [professorContext, setProfessorContext] =
+    useState<ProfessorChatContext | null>(null);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [groupSendStatus, setGroupSendStatus] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -142,6 +207,24 @@ export default function ChatClient() {
     fetch('/api/users')
       .then((res) => res.json())
       .then((data: User[]) => setUsers(data));
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    const roles = ((session.user as any).roles as string[] | undefined) ?? [];
+    const isProfessor =
+      roles.includes('PROFESSOR') ||
+      session.user.role === 'PROFESSOR' ||
+      session.user.activeRole === 'PROFESSOR';
+    if (!isProfessor) {
+      setProfessorContext(null);
+      return;
+    }
+
+    fetch('/api/chat')
+      .then((res) => res.json())
+      .then((data: ProfessorChatContext) => setProfessorContext(data))
+      .catch(() => setProfessorContext(null));
   }, [session]);
 
   const fetchHistory = useCallback(async () => {
@@ -174,6 +257,13 @@ export default function ChatClient() {
     const id = window.setInterval(() => fetchThread(recipient), POLL_THREAD_MS);
     return () => window.clearInterval(id);
   }, [recipient, fetchThread, fetchHistory]);
+
+  useEffect(() => {
+    if (recipient) {
+      setSelectedGroup(null);
+      setGroupSendStatus('');
+    }
+  }, [recipient]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -224,15 +314,25 @@ export default function ChatClient() {
   const filteredContacts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return contacts;
-    return contacts.filter(({ user }) =>
-      (user.name ?? '').toLowerCase().includes(q) ||
-      (user.lastName ?? '').toLowerCase().includes(q) ||
-      (user.email ?? '').toLowerCase().includes(q) ||
-      (user.dni ?? '').toLowerCase().includes(q)
+    return contacts.filter(
+      ({ user }) =>
+        (user.name ?? '').toLowerCase().includes(q) ||
+        (user.lastName ?? '').toLowerCase().includes(q) ||
+        (user.email ?? '').toLowerCase().includes(q) ||
+        (user.dni ?? '').toLowerCase().includes(q)
     );
   }, [contacts, searchQuery]);
 
   const selectedUser = users.find((u) => u.id === recipient) ?? null;
+  const selectedActivity = professorContext?.activities.find(
+    (activity) => activity.id === selectedGroup?.activityId
+  );
+  const selectedGroupData = selectedActivity?.groups.find(
+    (group) => group.id === selectedGroup?.groupId
+  );
+  const canUseProfessorTools = professorContext != null;
+
+  const selectedGroupMessageCount = selectedGroupData?.memberCount ?? 0;
 
   const sendMessage = async () => {
     if (!recipient || !session || !input.trim()) return;
@@ -256,13 +356,38 @@ export default function ChatClient() {
     }
   };
 
+  const sendGroupMessage = async () => {
+    if (!selectedGroup || !session || !input.trim()) return;
+    const content = input.trim();
+    setInput('');
+    setGroupSendStatus('');
+
+    try {
+      const res = await fetch(`/api/messages/groups/${selectedGroup.groupId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(payload?.error || 'No se pudo enviar el mensaje');
+      }
+
+      setGroupSendStatus(
+        `Mensaje enviado a ${payload?.recipientCount ?? selectedGroupMessageCount} usuarios.`
+      );
+    } catch {
+      setInput(content);
+    }
+  };
+
   return (
     <div className="mx-auto h-[calc(100vh-9rem)] max-w-6xl px-2 py-4 md:px-4">
       <div className="flex h-full overflow-hidden rounded-xl border bg-card shadow-sm">
         <aside
           className={cn(
             'w-full flex-col border-r md:flex md:w-80',
-            recipient ? 'hidden' : 'flex'
+            recipient || selectedGroup ? 'hidden' : 'flex'
           )}
         >
           <div className="border-b px-4 py-4 space-y-3">
@@ -274,10 +399,189 @@ export default function ChatClient() {
               className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+          {canUseProfessorTools && professorContext && (
+            <div className="border-b px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Actividades
+                </h2>
+                <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                  {professorContext.activities.length}{' '}
+                  {professorContext.activities.length === 1
+                    ? 'actividad'
+                    : 'actividades'}
+                </span>
+              </div>
+
+              {professorContext.sharedParticipants.length > 0 && (
+                <div className="mt-4 rounded-lg border bg-background p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Personas en común
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {professorContext.sharedParticipants.map((person) => (
+                      <div
+                        key={person.userId}
+                        className="rounded-md border bg-card px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
+                              {person.label}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {person.subtitle}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                            {person.activityCount} actividades
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 space-y-3">
+                {professorContext.activities.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No tenés actividades asignadas todavía.
+                  </p>
+                ) : (
+                  professorContext.activities.map((activity) => {
+                    const isSelectedActivity =
+                      selectedActivity?.id === activity.id;
+                    return (
+                      <article
+                        key={activity.id}
+                        className={cn(
+                          'rounded-lg border bg-background p-3',
+                          isSelectedActivity && 'border-primary/60 bg-primary/5'
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">
+                              {activity.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatActivityRange(
+                                activity.date,
+                                activity.endDate
+                              )}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                            {activity.groups.length} grupo
+                            {activity.groups.length === 1 ? '' : 's'}
+                          </span>
+                        </div>
+
+                        {activity.description && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {activity.description}
+                          </p>
+                        )}
+
+                        {activity.participants.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              Personas
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {activity.participants
+                                .slice(0, 5)
+                                .map((person) => (
+                                  <span
+                                    key={person.activityParticipantId}
+                                    className="rounded-full border bg-card px-2 py-1 text-xs"
+                                  >
+                                    {person.label}
+                                  </span>
+                                ))}
+                              {activity.participants.length > 5 && (
+                                <span className="rounded-full border bg-card px-2 py-1 text-xs text-muted-foreground">
+                                  +{activity.participants.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {activity.groups.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {activity.groups.map((group) => {
+                              const isSelected =
+                                selectedGroup?.groupId === group.id;
+                              return (
+                                <button
+                                  key={group.id}
+                                  onClick={() => {
+                                    setRecipient('');
+                                    setInput('');
+                                    setGroupSendStatus('');
+                                    setSelectedGroup({
+                                      activityId: activity.id,
+                                      groupId: group.id,
+                                    });
+                                  }}
+                                  className={cn(
+                                    'w-full rounded-md border px-3 py-2 text-left transition-colors',
+                                    isSelected
+                                      ? 'border-primary bg-primary/5'
+                                      : 'hover:bg-muted/50'
+                                  )}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-medium">
+                                        {group.name}
+                                      </p>
+                                      {group.description && (
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                          {group.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                                      {group.memberCount}
+                                    </span>
+                                  </div>
+
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    {group.members.slice(0, 4).map((person) => (
+                                      <span
+                                        key={person.activityParticipantId}
+                                        className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
+                                      >
+                                        {person.label}
+                                      </span>
+                                    ))}
+                                    {group.members.length > 4 && (
+                                      <span className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                                        +{group.members.length - 4}
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto">
             {filteredContacts.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">
-                {searchQuery.trim() ? 'Sin resultados' : 'No hay contactos disponibles'}
+                {searchQuery.trim()
+                  ? 'Sin resultados'
+                  : 'No hay contactos disponibles'}
               </p>
             ) : (
               filteredContacts.map(({ user, lastMessage, unreadCount }) => {
@@ -332,10 +636,89 @@ export default function ChatClient() {
         <section
           className={cn(
             'flex-1 flex-col',
-            recipient ? 'flex' : 'hidden md:flex'
+            recipient || selectedGroup ? 'flex' : 'hidden md:flex'
           )}
         >
-          {selectedUser ? (
+          {selectedGroup && selectedActivity && selectedGroupData ? (
+            <>
+              <div className="flex items-center gap-3 border-b px-4 py-3">
+                <button
+                  onClick={() => {
+                    setSelectedGroup(null);
+                    setInput('');
+                    setGroupSendStatus('');
+                  }}
+                  className="rounded-md p-1 hover:bg-muted md:hidden"
+                  aria-label="Volver"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">
+                    {selectedActivity.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    Grupo {selectedGroupData.name} · {selectedGroupMessageCount}{' '}
+                    usuario{selectedGroupMessageCount === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <p className="text-sm font-semibold">
+                    Mensaje para todo el grupo
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    El mensaje se duplicará en una conversación individual con
+                    cada integrante del grupo.
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {selectedGroupData.members.map((person) => (
+                      <span
+                        key={person.activityParticipantId}
+                        className="rounded-full border bg-background px-3 py-1 text-xs"
+                      >
+                        {person.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {groupSendStatus && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {groupSendStatus}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t p-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Escribir mensaje al grupo..."
+                    className="flex-1 rounded-full border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendGroupMessage();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={sendGroupMessage}
+                    disabled={!input.trim()}
+                    className="rounded-full bg-primary p-2.5 text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40"
+                    aria-label="Enviar al grupo"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : selectedUser ? (
             <>
               <div className="flex items-center gap-3 border-b px-4 py-3">
                 <button
@@ -352,9 +735,7 @@ export default function ChatClient() {
                   photoVersion={selectedUser.updatedAt}
                   size="sm"
                 />
-                <span className="font-semibold">
-                  {fullName(selectedUser)}
-                </span>
+                <span className="font-semibold">{fullName(selectedUser)}</span>
               </div>
 
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
@@ -418,7 +799,9 @@ export default function ChatClient() {
           ) : (
             <div className="flex flex-1 items-center justify-center px-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Seleccioná un contacto para empezar a chatear
+                {canUseProfessorTools
+                  ? 'Seleccioná un contacto o un grupo para empezar a chatear'
+                  : 'Seleccioná un contacto para empezar a chatear'}
               </p>
             </div>
           )}
