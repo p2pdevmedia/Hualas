@@ -273,22 +273,12 @@ export default async function MyActivitiesPage() {
               >
                 {/* Header: nombre + participantes */}
                 <div>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <Link
-                      href={`/activities/${activity.id}`}
-                      className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
-                    >
-                      {activity.name}
-                    </Link>
-                    {isProfessor && (
-                      <Link
-                        href={`/activities/${activity.id}`}
-                        className="shrink-0 rounded-full border border-primary px-3 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
-                      >
-                        Tomar asistencia
-                      </Link>
-                    )}
-                  </div>
+                  <Link
+                    href={`/activities/${activity.id}`}
+                    className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
+                  >
+                    {activity.name}
+                  </Link>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {labels.map((label) => (
                       <span
@@ -379,6 +369,14 @@ export default async function MyActivitiesPage() {
                               >
                                 Mapa
                               </a>
+                            )}
+                            {isProfessor && (
+                              <Link
+                                href={`/activities/${activity.id}/days/${s.id}/attendance`}
+                                className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                              >
+                                Asistencia
+                              </Link>
                             )}
                           </li>
                         );
