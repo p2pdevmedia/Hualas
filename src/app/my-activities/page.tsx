@@ -3,7 +3,8 @@ import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { isCounterRole } from '@/lib/accounting';
+import RoleSwitchPrompt from '@/components/role-switch-prompt';
+import { hasProfessorCapability } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
 import ActivityCalendar, {
   type CalendarActivityDay,
@@ -35,11 +36,17 @@ export default async function MyActivitiesPage({
   if (!session) {
     redirect('/login');
   }
-  if (isCounterRole(session.user.role)) {
-    redirect('/accounting');
+  const activeRole = session.user.activeRole ?? session.user.role;
+  if (activeRole !== 'MEMBER' && activeRole !== 'PROFESSOR') {
+    return hasProfessorCapability(session) ? (
+      <RoleSwitchPrompt requiredRole="PROFESSOR" />
+    ) : (
+      <RoleSwitchPrompt requiredRole="MEMBER" />
+    );
   }
 
   const userId = session.user.id;
+  const isProfessorView = activeRole === 'PROFESSOR';
 
   let participations: Array<{
     id: string;
@@ -64,8 +71,18 @@ export default async function MyActivitiesPage({
   }> = [];
 
   try {
-    [participations, professorAssignments] = await Promise.all([
-      prisma.activityParticipant.findMany({
+    if (isProfessorView) {
+      professorAssignments = await prisma.activityProfessor.findMany({
+        where: { userId },
+        include: {
+          activity: {
+            select: { id: true, name: true, date: true, frequency: true },
+          },
+        },
+        orderBy: { activity: { date: 'asc' } },
+      });
+    } else {
+      participations = await prisma.activityParticipant.findMany({
         where: {
           OR: [{ userId }, { child: { userId } }],
         },
@@ -81,17 +98,8 @@ export default async function MyActivitiesPage({
           },
         },
         orderBy: { activity: { date: 'asc' } },
-      }),
-      prisma.activityProfessor.findMany({
-        where: { userId },
-        include: {
-          activity: {
-            select: { id: true, name: true, date: true, frequency: true },
-          },
-        },
-        orderBy: { activity: { date: 'asc' } },
-      }),
-    ]);
+      });
+    }
   } catch {
     participations = [];
     professorAssignments = [];
@@ -258,7 +266,8 @@ export default async function MyActivitiesPage({
     sessions.some((sessionItem) => new Date(sessionItem.date) >= today)
   );
   const oldItems = items.filter(
-    ({ sessions }) => !sessions.some((sessionItem) => new Date(sessionItem.date) >= today)
+    ({ sessions }) =>
+      !sessions.some((sessionItem) => new Date(sessionItem.date) >= today)
   );
   const visibleItems = selectedTab === 'old' ? oldItems : currentItems;
 
@@ -269,8 +278,9 @@ export default async function MyActivitiesPage({
           Mis actividades
         </h1>
         <p className="text-sm text-muted-foreground">
-          Actividades en las que estás inscripto vos, alguno de tus hijos o en
-          las que sos profesor.
+          {isProfessorView
+            ? 'Actividades en las que estás asignado como profesor.'
+            : 'Actividades en las que estás inscripto vos o alguno de tus hijos.'}
         </p>
       </div>
 
@@ -310,126 +320,126 @@ export default async function MyActivitiesPage({
           </div>
         ) : (
           <ul className="space-y-4">
-            {visibleItems.map(({ activity, labels, participants, sessions, isProfessor }) => (
-              <li
-                key={activity.id}
-                className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
-              >
-                {/* Header: nombre + participantes */}
-                <div>
-                  <Link
-                    href={`/activities/${activity.id}`}
-                    className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
-                  >
-                    {activity.name}
-                  </Link>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {labels.map((label) => (
-                      <span
-                        key={label}
-                        className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
-                      >
-                        {label}
-                      </span>
-                    ))}
+            {visibleItems.map(
+              ({ activity, labels, participants, sessions, isProfessor }) => (
+                <li
+                  key={activity.id}
+                  className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
+                >
+                  <div>
+                    <Link
+                      href={`/activities/${activity.id}`}
+                      className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
+                    >
+                      {activity.name}
+                    </Link>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {labels.map((label) => (
+                        <span
+                          key={label}
+                          className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Próximas sesiones */}
-                {sessions.length > 0 && (
-                  <div className="space-y-2 border-t pt-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Próximas sesiones
-                    </p>
-                    <ul className="space-y-2">
-                      {sessions.map((s) => {
-                        const sessionParticipantNames = Array.from(
-                          new Set(
-                            (s.activityGroupId
-                              ? participants.filter(
-                                  (participant) =>
-                                    participant.isChild &&
-                                    participant.groupId === s.activityGroupId
-                                )
-                              : participants
-                            ).map((participant) => participant.label)
-                          )
-                        );
-                        const mapHref =
-                          s.latitude != null && s.longitude != null
-                            ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
-                            : null;
-                        const dateLabel = new Date(
-                          s.date + 'T12:00:00'
-                        ).toLocaleDateString('es-AR', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        });
-                        return (
-                          <li
-                            key={s.id}
-                            className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
-                          >
-                            {s.sportIcon ? (
-                              <Image
-                                src={`/icons/${s.sportIcon}`}
-                                alt=""
-                                width={56}
-                                height={56}
-                                className="h-14 w-14 shrink-0 object-contain"
-                              />
-                            ) : (
-                              <span className="h-14 w-14 shrink-0" />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <p className="text-sm font-medium leading-tight">
-                                  {dateLabel} · {s.schedule}
+                  {sessions.length > 0 && (
+                    <div className="space-y-2 border-t pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Próximas sesiones
+                      </p>
+                      <ul className="space-y-2">
+                        {sessions.map((s) => {
+                          const sessionParticipantNames = Array.from(
+                            new Set(
+                              (s.activityGroupId
+                                ? participants.filter(
+                                    (participant) =>
+                                      participant.isChild &&
+                                      participant.groupId === s.activityGroupId
+                                  )
+                                : participants
+                              ).map((participant) => participant.label)
+                            )
+                          );
+                          const mapHref =
+                            s.latitude != null && s.longitude != null
+                              ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
+                              : null;
+                          const dateLabel = new Date(
+                            s.date + 'T12:00:00'
+                          ).toLocaleDateString('es-AR', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                          });
+                          return (
+                            <li
+                              key={s.id}
+                              className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
+                            >
+                              {s.sportIcon ? (
+                                <Image
+                                  src={`/icons/${s.sportIcon}`}
+                                  alt=""
+                                  width={56}
+                                  height={56}
+                                  className="h-14 w-14 shrink-0 object-contain"
+                                />
+                              ) : (
+                                <span className="h-14 w-14 shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <p className="text-sm font-medium leading-tight">
+                                    {dateLabel} · {s.schedule}
+                                  </p>
+                                  {sessionParticipantNames.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {sessionParticipantNames.map((name) => (
+                                        <span
+                                          key={name}
+                                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                        >
+                                          {name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {s.geoLocation}
                                 </p>
-                                {sessionParticipantNames.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {sessionParticipantNames.map((name) => (
-                                      <span
-                                        key={name}
-                                        className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                                      >
-                                        {name}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {s.geoLocation}
-                              </p>
-                            </div>
-                            {mapHref && (
-                              <a
-                                href={mapHref}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="shrink-0 text-xs text-link hover:underline underline-offset-4"
-                              >
-                                Mapa
-                              </a>
-                            )}
-                            {isProfessor && (
-                              <Link
-                                href={`/activities/${activity.id}/days/${s.id}`}
-                                className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
-                              >
-                                Ver sesión
-                              </Link>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </li>
-            ))}
+                              {mapHref && (
+                                <a
+                                  href={mapHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="shrink-0 text-xs text-link hover:underline underline-offset-4"
+                                >
+                                  Mapa
+                                </a>
+                              )}
+                              {isProfessor && (
+                                <Link
+                                  href={`/activities/${activity.id}/days/${s.id}`}
+                                  className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                  Ver sesión
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              )
+            )}
           </ul>
         )}
       </div>
