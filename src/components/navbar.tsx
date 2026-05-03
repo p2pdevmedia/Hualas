@@ -256,7 +256,7 @@ export default function Navbar() {
                 'inline-flex items-center gap-2'
               )}
             >
-              {renderNavIcon('/Chat.png', 'Chat')}
+              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
               <span>{t.chat}</span>
               {hasUnreadMessages && renderUnreadIcon()}
             </Link>
@@ -463,7 +463,7 @@ export default function Navbar() {
               )}
               onClick={() => setMenuOpen(false)}
             >
-              {renderNavIcon('/Chat.png', 'Chat')}
+              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
               <span>{t.chat}</span>
               {hasUnreadMessages && renderUnreadIcon()}
             </Link>

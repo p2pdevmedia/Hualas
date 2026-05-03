@@ -121,8 +121,8 @@ export default function NotificationBell() {
         <Image
           src="/Notificacion.png"
           alt="Notificaciones"
-          width={20}
-          height={20}
+          width={25}
+          height={25}
           unoptimized
         />
         {unreadCount > 0 && (
