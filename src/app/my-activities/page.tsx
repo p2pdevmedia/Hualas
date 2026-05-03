@@ -120,6 +120,9 @@ export default async function MyActivitiesPage({
       const raw = await prisma.activityDay.findMany({
         where: {
           activityId: { in: activityIds },
+          ...(isProfessorView
+            ? { professors: { some: { userId } } }
+            : {}),
           date: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lte: sixMonthsLater,
@@ -158,6 +161,9 @@ export default async function MyActivitiesPage({
       const rawSessions = await prisma.activityDay.findMany({
         where: {
           activityId: { in: activityIds },
+          ...(isProfessorView
+            ? { professors: { some: { userId } } }
+            : {}),
           date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
         },
         select: {

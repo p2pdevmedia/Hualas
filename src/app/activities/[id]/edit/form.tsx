@@ -32,6 +32,7 @@ type AnnualScheduleDraft = {
   weekday: string;
   schedule: string;
   groupId: string;
+  professorIds: string[];
 };
 
 type AnnualSharedDraft = {
@@ -83,6 +84,7 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     weekday: '1',
     schedule: '',
     groupId: '',
+    professorIds: [],
   };
 }
 
@@ -250,6 +252,10 @@ export default function EditActivityForm({
           setError(`Completá el horario de la sesión ${i + 1}`);
           return;
         }
+        if (draft.professorIds.length === 0) {
+          setError(`Asigná al menos un profesor en la sesión ${i + 1}`);
+          return;
+        }
       }
     }
 
@@ -274,6 +280,7 @@ export default function EditActivityForm({
               weekday: Number(d.weekday),
               schedule: d.schedule.trim(),
               groupId: d.groupId || undefined,
+              professorIds: d.professorIds,
             }))
           : [];
 
@@ -666,6 +673,15 @@ export default function EditActivityForm({
                         ))}
                       </select>
                     </div>
+                    <ProfessorPicker
+                      professors={professors}
+                      value={draft.professorIds}
+                      onChange={(value) =>
+                        updateScheduleDraft(draft.tempId, {
+                          professorIds: value,
+                        })
+                      }
+                    />
                   </div>
                 ))}
               </div>
