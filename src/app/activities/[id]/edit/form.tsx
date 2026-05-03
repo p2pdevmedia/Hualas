@@ -419,6 +419,84 @@ export default function EditActivityForm({
             className={inputClass}
           />
         </div>
+
+        <div className="space-y-3 rounded-lg border bg-background p-4">
+          <p className="text-sm font-semibold">Grupos</p>
+
+          {existingGroups.length > 0 ? (
+            <ul className="space-y-2">
+              {existingGroups.map((group) => (
+                <li
+                  key={group.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                >
+                  <span>
+                    {group.name}
+                    {group.description && (
+                      <span className="ml-2 text-muted-foreground">
+                        — {group.description}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={deletingGroupId === group.id}
+                    onClick={() => setConfirmDeleteGroupId(group.id)}
+                    className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
+                  >
+                    {deletingGroupId === group.id
+                      ? 'Eliminando...'
+                      : 'Eliminar'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
+          )}
+
+          <div className="grid gap-2 items-end sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              type="text"
+              placeholder="Nombre del grupo"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              className={inputClass}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleCreateGroup();
+                }
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Descripción (opcional)"
+              value={newGroupDesc}
+              onChange={(e) => setNewGroupDesc(e.target.value)}
+              className={inputClass}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleCreateGroup();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={creatingGroup}
+              onClick={() => void handleCreateGroup()}
+            >
+              {creatingGroup ? 'Creando...' : 'Agregar'}
+            </Button>
+          </div>
+
+          {groupError && (
+            <p className="text-xs text-destructive">{groupError}</p>
+          )}
+        </div>
+
         <ProfessorPicker
           professors={professors}
           value={professorIds}
@@ -594,83 +672,6 @@ export default function EditActivityForm({
             )}
           </div>
         )}
-
-        <div className="space-y-3 rounded-lg border bg-background p-4">
-          <p className="text-sm font-semibold">Grupos</p>
-
-          {existingGroups.length > 0 ? (
-            <ul className="space-y-2">
-              {existingGroups.map((group) => (
-                <li
-                  key={group.id}
-                  className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                >
-                  <span>
-                    {group.name}
-                    {group.description && (
-                      <span className="ml-2 text-muted-foreground">
-                        — {group.description}
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={deletingGroupId === group.id}
-                    onClick={() => setConfirmDeleteGroupId(group.id)}
-                    className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
-                  >
-                    {deletingGroupId === group.id
-                      ? 'Eliminando...'
-                      : 'Eliminar'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
-          )}
-
-          <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
-            <input
-              type="text"
-              placeholder="Nombre del grupo"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              className={inputClass}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  void handleCreateGroup();
-                }
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Descripción (opcional)"
-              value={newGroupDesc}
-              onChange={(e) => setNewGroupDesc(e.target.value)}
-              className={inputClass}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  void handleCreateGroup();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={creatingGroup}
-              onClick={() => void handleCreateGroup()}
-            >
-              {creatingGroup ? 'Creando...' : 'Agregar'}
-            </Button>
-          </div>
-
-          {groupError && (
-            <p className="text-xs text-destructive">{groupError}</p>
-          )}
-        </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
         {success && <p className="text-success text-sm">{success}</p>}

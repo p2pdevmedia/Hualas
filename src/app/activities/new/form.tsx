@@ -333,6 +333,69 @@ export default function CreateActivityForm({
         />
       </div>
 
+      <div className="space-y-3 rounded-lg border bg-background p-4">
+        <p className="text-sm font-semibold">Grupos</p>
+
+        {groups.length > 0 && (
+          <ul className="space-y-2">
+            {groups.map((group) => (
+              <li
+                key={group.tempId}
+                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+              >
+                <span>
+                  {group.name}
+                  {group.description && (
+                    <span className="ml-2 text-muted-foreground">
+                      - {group.description}
+                    </span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeGroupDraft(group.tempId)}
+                  className="ml-4 text-xs text-destructive hover:text-destructive/80"
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
+          <input
+            type="text"
+            placeholder="Nombre del grupo"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            className={inputClass}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addGroupDraft();
+              }
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Descripción (opcional)"
+            value={newGroupDesc}
+            onChange={(e) => setNewGroupDesc(e.target.value)}
+            className={inputClass}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addGroupDraft();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" onClick={addGroupDraft}>
+            Agregar
+          </Button>
+        </div>
+      </div>
+
       <ProfessorPicker
         professors={professors}
         value={professorIds}
@@ -500,69 +563,6 @@ export default function CreateActivityForm({
           )}
         </div>
       )}
-
-      <div className="space-y-3 rounded-lg border bg-background p-4">
-        <p className="text-sm font-semibold">Grupos</p>
-
-        {groups.length > 0 && (
-          <ul className="space-y-2">
-            {groups.map((group) => (
-              <li
-                key={group.tempId}
-                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-              >
-                <span>
-                  {group.name}
-                  {group.description && (
-                    <span className="ml-2 text-muted-foreground">
-                      - {group.description}
-                    </span>
-                  )}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeGroupDraft(group.tempId)}
-                  className="ml-4 text-xs text-destructive hover:text-destructive/80"
-                >
-                  Quitar
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
-          <input
-            type="text"
-            placeholder="Nombre del grupo"
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            className={inputClass}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addGroupDraft();
-              }
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Descripción (opcional)"
-            value={newGroupDesc}
-            onChange={(e) => setNewGroupDesc(e.target.value)}
-            className={inputClass}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addGroupDraft();
-              }
-            }}
-          />
-          <Button type="button" variant="outline" onClick={addGroupDraft}>
-            Agregar
-          </Button>
-        </div>
-      </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {success && <p className="text-sm text-success">{success}</p>}
