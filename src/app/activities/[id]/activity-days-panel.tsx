@@ -7,6 +7,9 @@ import ActivityDayForm from './activity-day-form';
 import AttendanceList, {
   type ParticipantForAttendance,
 } from './attendance-list';
+import ActivityCalendar, {
+  type CalendarActivityDay,
+} from '@/app/my-activities/activity-calendar';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
 
@@ -116,7 +119,9 @@ export default function ActivityDaysPanel({
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
-  const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
+  const [editingDescriptionId, setEditingDescriptionId] = useState<
+    string | null
+  >(null);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [error, setError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -126,6 +131,15 @@ export default function ActivityDaysPanel({
   const [expandedAttendance, setExpandedAttendance] = useState<
     Record<string, boolean>
   >({});
+  const calendarDays: CalendarActivityDay[] = days.map((day) => ({
+    id: day.id,
+    date: day.date.slice(0, 10),
+    activityId,
+    activityName: 'Actividad',
+    schedule: day.schedule,
+    geoLocation: day.geoLocation,
+    sportIcon: day.sportIcon,
+  }));
 
   async function updateAttendance(
     dayId: string,
@@ -230,6 +244,12 @@ export default function ActivityDaysPanel({
             groups={groups}
             defaultProfessorIds={defaultProfessorIds}
           />
+        </div>
+      )}
+
+      {days.length > 0 && (
+        <div className="mt-6">
+          <ActivityCalendar activityDays={calendarDays} />
         </div>
       )}
 
@@ -367,7 +387,9 @@ export default function ActivityDaysPanel({
                       <Button
                         type="button"
                         disabled={savingKey === `desc:${day.id}`}
-                        onClick={() => saveDescription(day.id, descriptionDraft)}
+                        onClick={() =>
+                          saveDescription(day.id, descriptionDraft)
+                        }
                       >
                         {savingKey === `desc:${day.id}`
                           ? 'Guardando...'
