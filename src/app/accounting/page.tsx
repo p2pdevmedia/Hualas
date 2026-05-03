@@ -64,6 +64,7 @@ export default async function AccountingDashboardPage({
     approvedManualPayments,
     verifiedManualPaymentsCount,
     pendingManualPaymentsCount,
+    monthProfessorPayments,
   ] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: {
@@ -132,6 +133,15 @@ export default async function AccountingDashboardPage({
         status: 'PENDING',
       },
     }),
+    prisma.professorPayment.findMany({
+      where: {
+        status: 'PAID',
+        paidAt: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+      },
+    }),
   ]);
 
   const manualIncome = approvedManualPayments
@@ -152,9 +162,14 @@ export default async function AccountingDashboardPage({
   const totalMovementIncome = monthMovements
     .filter((movement) => movement.type === 'INCOME')
     .reduce((sum, movement) => sum + movement.amount, 0);
-  const totalExpense = monthMovements
+  const totalMovementExpense = monthMovements
     .filter((movement) => movement.type === 'EXPENSE')
     .reduce((sum, movement) => sum + movement.amount, 0);
+  const totalProfessorExpense = monthProfessorPayments.reduce(
+    (sum, p) => sum + p.amount,
+    0
+  );
+  const totalExpense = totalMovementExpense + totalProfessorExpense;
   const totalIncome = totalMovementIncome + manualIncome + totalMp;
   const netBalance = totalIncome - totalExpense;
   const recentMovementEntries: RecentAccountingEntry[] = recentMovements.map(
@@ -236,7 +251,7 @@ export default async function AccountingDashboardPage({
           {
             label: 'Egresos del mes',
             value: formatAmount(totalExpense),
-            helper: 'Movimientos manuales registrados',
+            helper: 'Movimientos manuales y honorarios de profesores',
           },
           {
             label: 'Balance neto',

@@ -28,10 +28,17 @@ export type MercadoPagoLike = {
   receipt?: string | null;
 };
 
+export type ProfessorPaymentLike = {
+  id: string;
+  paidAt: Date | string | null;
+  amount: number;
+  professorName: string;
+};
+
 export type AccountingReportEntry = {
   id: string;
   date: string;
-  source: 'Movimiento manual' | 'Pago manual' | 'Mercado Pago';
+  source: 'Movimiento manual' | 'Pago manual' | 'Mercado Pago' | 'Pago a profesor';
   type: MovementType;
   category: string;
   description: string;
@@ -43,6 +50,7 @@ export type AccountingSummaryInput = {
   movements: AccountingMovementLike[];
   manualPayments: ManualPaymentLike[];
   mpPayments: MercadoPagoLike[];
+  professorPayments?: ProfessorPaymentLike[];
 };
 
 export type AccountingSummary = {
@@ -50,6 +58,7 @@ export type AccountingSummary = {
   movementExpense: number;
   manualIncome: number;
   mpIncome: number;
+  professorExpense: number;
   totalIncome: number;
   totalExpense: number;
   netBalance: number;
@@ -97,6 +106,7 @@ export function summarizeAccounting({
   movements,
   manualPayments,
   mpPayments,
+  professorPayments = [],
 }: AccountingSummaryInput): AccountingSummary {
   const movementIncome = sumAmounts(
     movements.filter((movement) => movement.type === 'INCOME')
@@ -106,15 +116,17 @@ export function summarizeAccounting({
   );
   const manualIncome = sumAmounts(manualPayments);
   const mpIncome = sumAmounts(mpPayments);
+  const professorExpense = sumAmounts(professorPayments);
 
   return {
     movementIncome,
     movementExpense,
     manualIncome,
     mpIncome,
+    professorExpense,
     totalIncome: movementIncome + manualIncome + mpIncome,
-    totalExpense: movementExpense,
-    netBalance: movementIncome + manualIncome + mpIncome - movementExpense,
+    totalExpense: movementExpense + professorExpense,
+    netBalance: movementIncome + manualIncome + mpIncome - movementExpense - professorExpense,
   };
 }
 
@@ -122,6 +134,7 @@ export function buildAccountingReportEntries({
   movements,
   manualPayments,
   mpPayments,
+  professorPayments = [],
 }: AccountingSummaryInput): AccountingReportEntry[] {
   const entries: AccountingReportEntry[] = [
     ...movements.map((movement) => ({
@@ -156,6 +169,16 @@ export function buildAccountingReportEntries({
       description: `${payment.activityName} · ${payment.participantName}`,
       amount: payment.amount,
       reference: payment.receipt ?? null,
+    })),
+    ...professorPayments.map((payment) => ({
+      id: `professor:${payment.id}`,
+      date: toIsoDate(payment.paidAt) ?? new Date(0).toISOString(),
+      source: 'Pago a profesor' as const,
+      type: 'EXPENSE' as const,
+      category: 'Honorarios profesores',
+      description: payment.professorName,
+      amount: payment.amount,
+      reference: null,
     })),
   ];
 

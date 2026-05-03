@@ -12,6 +12,7 @@ import {
   buildAccountingReportEntries,
   buildAccountingCategoryTotals,
   summarizeAccounting,
+  type ProfessorPaymentLike,
 } from '@/lib/accounting-summary';
 
 function parseDateInput(value: string, endOfDay = false) {
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
   if (toDate) dateFilter.lte = toDate;
   const hasDateFilter = Boolean(fromDate || toDate);
 
-  const [movements, manualPayments, mpPayments] = await Promise.all([
+  const [movements, manualPayments, mpPayments, paidProfessorPayments] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: hasDateFilter ? { date: dateFilter } : undefined,
       orderBy: { date: 'desc' },
@@ -90,6 +91,18 @@ export async function GET(request: Request) {
         child: { select: { name: true, lastName: true } },
       },
     }),
+    prisma.professorPayment.findMany({
+      where: {
+        status: 'PAID',
+        ...(hasDateFilter ? { paidAt: dateFilter } : {}),
+      },
+      orderBy: { paidAt: 'desc' },
+      include: {
+        professorProfile: {
+          include: { user: { select: { name: true, lastName: true } } },
+        },
+      },
+    }),
   ]);
 
   const manualIncomePayments = manualPayments
@@ -124,15 +137,24 @@ export async function GET(request: Request) {
     receipt: payment.receipt,
   }));
 
+  const reportProfessorPayments: ProfessorPaymentLike[] = paidProfessorPayments.map((p) => ({
+    id: p.id,
+    paidAt: p.paidAt,
+    amount: p.amount,
+    professorName: `${p.professorProfile.user.name ?? ''} ${p.professorProfile.user.lastName ?? ''}`.trim() || 'Profesor',
+  }));
+
   const summary = summarizeAccounting({
     movements,
     manualPayments: manualIncomePayments,
     mpPayments: reportMpPayments,
+    professorPayments: reportProfessorPayments,
   });
   const entries = buildAccountingReportEntries({
     movements,
     manualPayments: manualIncomePayments,
     mpPayments: reportMpPayments,
+    professorPayments: reportProfessorPayments,
   });
 
   const totalMp = summary.mpIncome;
@@ -145,9 +167,11 @@ export async function GET(request: Request) {
     netBalance: summary.netBalance,
     totalManualPayments: summary.manualIncome,
     totalMp,
+    totalProfessorExpense: summary.professorExpense,
     byCategory,
     movements,
     manualPayments: manualIncomePayments,
+    professorPayments: reportProfessorPayments,
     mpPayments: mpPayments.map((p) => ({
       id: p.id,
       receiptDate: p.receiptDate,
