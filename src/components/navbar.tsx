@@ -185,14 +185,14 @@ export default function Navbar() {
     />
   );
 
-  const renderNavIcon = (src: string, alt: string) => (
+  const renderNavIcon = (src: string, alt: string, className = 'h-4 w-4') => (
     <Image
       src={src}
       alt={alt}
       width={18}
       height={18}
       unoptimized
-      className="h-4 w-4 object-contain"
+      className={`${className} object-contain`}
       aria-hidden="true"
     />
   );
@@ -332,7 +332,7 @@ export default function Navbar() {
                     'relative inline-flex items-center gap-1'
                   )}
                 >
-                  {renderNavIcon('/Inscripcion.png', 'Carrito')}
+                  {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
                   {cartItemsCount > 0 && renderCartNotificationIcon()}
                 </Link>
               )}
@@ -386,7 +386,11 @@ export default function Navbar() {
                       className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                     >
                       <span className="inline-flex items-center gap-2">
-                        {renderNavIcon('/Inscripcion.png', 'Carrito')}
+                        {renderNavIcon(
+                          '/Inscripcion.png',
+                          'Carrito',
+                          'h-8 w-8'
+                        )}
                         <span>Carrito</span>
                         {cartItemsCount > 0 && renderCartNotificationIcon()}
                       </span>
@@ -464,7 +468,7 @@ export default function Navbar() {
               )}
               onClick={() => setMenuOpen(false)}
             >
-              {renderNavIcon('/Inscripcion.png', 'Carrito')}
+              {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
               <span>Carrito</span>
               {cartItemsCount > 0 && renderCartNotificationIcon()}
             </Link>
