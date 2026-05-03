@@ -133,19 +133,54 @@ export default async function MyActivitiesPage({
           sportIcon: true,
           latitude: true,
           longitude: true,
+          activityGroupId: true,
           activity: { select: { id: true, name: true } },
         },
         orderBy: { date: 'asc' },
       });
-      calendarDays = raw.map((d) => ({
-        id: d.id,
-        date: d.date.toISOString().slice(0, 10),
-        activityId: d.activity.id,
-        activityName: d.activity.name,
-        schedule: d.schedule,
-        geoLocation: d.geoLocation,
-        sportIcon: d.sportIcon,
-      }));
+      const participantScopeByActivity = new Map<
+        string,
+        { groupIds: Set<string>; hasUngroupedParticipant: boolean }
+      >();
+
+      for (const participation of participations) {
+        const current = participantScopeByActivity.get(participation.activity.id) ?? {
+          groupIds: new Set<string>(),
+          hasUngroupedParticipant: false,
+        };
+
+        const groupId = participation.groupMembership?.activityGroupId ?? null;
+        if (groupId) {
+          current.groupIds.add(groupId);
+        } else {
+          current.hasUngroupedParticipant = true;
+        }
+
+        participantScopeByActivity.set(participation.activity.id, current);
+      }
+
+      calendarDays = raw
+        .filter((d) => {
+          if (isProfessorView) return true;
+
+          const scope = participantScopeByActivity.get(d.activity.id);
+          if (!scope) return false;
+
+          if (d.activityGroupId === null) {
+            return scope.hasUngroupedParticipant;
+          }
+
+          return scope.groupIds.has(d.activityGroupId);
+        })
+        .map((d) => ({
+          id: d.id,
+          date: d.date.toISOString().slice(0, 10),
+          activityId: d.activity.id,
+          activityName: d.activity.name,
+          schedule: d.schedule,
+          geoLocation: d.geoLocation,
+          sportIcon: d.sportIcon,
+        }));
     } catch {
       calendarDays = [];
     }
