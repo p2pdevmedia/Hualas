@@ -30,6 +30,11 @@ export default async function Home() {
     activities = [];
   }
 
+  const now = new Date();
+  const upcomingActivities = activities.filter(
+    (activity) => activity.endDate >= now
+  );
+
   return (
     <>
       {/* Divisor */}
@@ -44,13 +49,13 @@ export default async function Home() {
             </h2>
           </div>
 
-          {activities.length === 0 ? (
+          {upcomingActivities.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground font-body">
               <p>No hay actividades disponibles por el momento.</p>
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {activities.map((activity) => (
+              {upcomingActivities.map((activity) => (
                 <Link
                   key={activity.id}
                   href={`/activities/join/${activity.id}`}
