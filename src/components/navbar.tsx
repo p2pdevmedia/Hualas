@@ -249,28 +249,17 @@ export default function Navbar() {
             </Link>
           )}
           {session && (
-            <div className="relative group">
-              <button className={`${linkClass} inline-flex items-center gap-2`}>
-                <span>Comunicación</span>
-                {hasUnreadMessages && renderUnreadIcon()}
-              </button>
-              <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-56">
-                <Link
-                  href="/chat"
-                  className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
-                >
-                  {t.chat}
-                </Link>
-                {(isMember || isAdmin) && (
-                  <Link
-                    href="/profile/pickup-notices"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                  >
-                    Avisos de Retiro
-                  </Link>
-                )}
-              </div>
-            </div>
+            <Link
+              href="/chat"
+              className={cn(
+                navLinkClass('/chat'),
+                'inline-flex items-center gap-2'
+              )}
+            >
+              {renderNavIcon('/Chat.png', 'Chat')}
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
+            </Link>
           )}
           {isAdmin && (
             <>
@@ -380,20 +369,12 @@ export default function Navbar() {
                   >
                     {actions.myChildren}
                   </Link>
-                  {isMemberRole && (
+                  {(isMember || isAdmin) && (
                     <Link
-                      href="/activities/cart"
+                      href="/profile/pickup-notices"
                       className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                     >
-                      <span className="inline-flex items-center gap-2">
-                        {renderNavIcon(
-                          '/Inscripcion.png',
-                          'Carrito',
-                          'h-8 w-8'
-                        )}
-                        <span>Carrito</span>
-                        {cartItemsCount > 0 && renderCartNotificationIcon()}
-                      </span>
+                      Avisos de Retiro
                     </Link>
                   )}
                   <Link
@@ -474,32 +455,18 @@ export default function Navbar() {
             </Link>
           )}
           {session && (
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium opacity-90">
-                Comunicación
-              </span>
-              <Link
-                href="/chat"
-                className={cn(
-                  navLinkClass('/chat'),
-                  'inline-flex items-center gap-2'
-                )}
-                onClick={() => setMenuOpen(false)}
-              >
-                {renderNavIcon('/Chat.png', 'Chat')}
-                <span>{t.chat}</span>
-                {hasUnreadMessages && renderUnreadIcon()}
-              </Link>
-              {isMember && (
-                <Link
-                  href="/profile/pickup-notices"
-                  className={navLinkClass('/profile/pickup-notices')}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Avisos de Retiro
-                </Link>
+            <Link
+              href="/chat"
+              className={cn(
+                navLinkClass('/chat'),
+                'inline-flex items-center gap-2'
               )}
-            </div>
+              onClick={() => setMenuOpen(false)}
+            >
+              {renderNavIcon('/Chat.png', 'Chat')}
+              <span>{t.chat}</span>
+              {hasUnreadMessages && renderUnreadIcon()}
+            </Link>
           )}
           {isAdmin && (
             <>
@@ -618,17 +585,13 @@ export default function Navbar() {
               >
                 {actions.myChildren}
               </Link>
-              {isMemberRole && (
+              {(isMember || isAdmin) && (
                 <Link
-                  href="/activities/cart"
-                  className={cn(
-                    navLinkClass('/activities/cart'),
-                    'inline-flex items-center gap-2'
-                  )}
+                  href="/profile/pickup-notices"
+                  className={navLinkClass('/profile/pickup-notices')}
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>Carrito</span>
-                  {cartItemsCount > 0 && renderCartNotificationIcon()}
+                  Avisos de Retiro
                 </Link>
               )}
               <Link
