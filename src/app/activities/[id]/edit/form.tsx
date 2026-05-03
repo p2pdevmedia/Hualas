@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,40 @@ type ExistingGroup = {
   description: string | null;
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+type AnnualScheduleDraft = {
+  tempId: string;
+  weekday: string;
+  schedule: string;
+  description: string;
+  groupId: string;
+  geoLocation: string;
+  coordinates: Coordinates | null;
+};
+
+const WEEKDAY_OPTIONS = [
+  { value: '0', label: 'Domingo' },
+  { value: '1', label: 'Lunes' },
+  { value: '2', label: 'Martes' },
+  { value: '3', label: 'Miércoles' },
+  { value: '4', label: 'Jueves' },
+  { value: '5', label: 'Viernes' },
+  { value: '6', label: 'Sábado' },
+];
+
+const LocationMapPicker = dynamic(() => import('../../location-map-picker'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-80 items-center justify-center rounded-lg border bg-muted/20 text-sm text-muted-foreground">
+      Cargando mapa...
+    </div>
+  ),
+});
+
 interface EditActivityFormProps {
   activity: {
     id: string;
@@ -33,12 +68,26 @@ interface EditActivityFormProps {
   };
   professors: ProfessorOption[];
   initialGroups: ExistingGroup[];
+  existingDayCount: number;
+}
+
+function createEmptyScheduleDraft(): AnnualScheduleDraft {
+  return {
+    tempId: crypto.randomUUID(),
+    weekday: '1',
+    schedule: '',
+    description: '',
+    groupId: '',
+    geoLocation: '',
+    coordinates: null,
+  };
 }
 
 export default function EditActivityForm({
   activity,
   professors,
   initialGroups,
+  existingDayCount,
 }: EditActivityFormProps) {
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
@@ -53,6 +102,10 @@ export default function EditActivityForm({
     activity.professorIds
   );
 
+  const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
+    []
+  );
+
   const [existingGroups, setExistingGroups] =
     useState<ExistingGroup[]>(initialGroups);
   const [newGroupName, setNewGroupName] = useState('');
@@ -61,12 +114,35 @@ export default function EditActivityForm({
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
 
+  const [confirmPending, setConfirmPending] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const router = useRouter();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
+  function addScheduleDraft() {
+    setAnnualSchedules((current) => [...current, createEmptyScheduleDraft()]);
+  }
+
+  function updateScheduleDraft(
+    tempId: string,
+    updates: Partial<AnnualScheduleDraft>
+  ) {
+    setAnnualSchedules((current) =>
+      current.map((d) => (d.tempId === tempId ? { ...d, ...updates } : d))
+    );
+  }
+
+  function removeScheduleDraft(tempId: string) {
+    setAnnualSchedules((current) =>
+      current.filter((d) => d.tempId !== tempId)
+    );
+  }
 
   async function handleCreateGroup() {
     if (!newGroupName.trim()) return;
@@ -104,6 +180,11 @@ export default function EditActivityForm({
       });
       if (!res.ok) throw new Error('No se pudo eliminar el grupo');
       setExistingGroups((current) => current.filter((g) => g.id !== groupId));
+      setAnnualSchedules((current) =>
+        current.map((d) =>
+          d.groupId === groupId ? { ...d, groupId: '' } : d
+        )
+      );
     } catch (err) {
       setGroupError(
         err instanceof Error ? err.message : 'Error al eliminar el grupo'
@@ -113,11 +194,70 @@ export default function EditActivityForm({
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  function buildConfirmMessage(): string | null {
+    const willDeleteDays =
+      activityType === 'TEMPORARY' ||
+      (activityType === 'ANNUAL' && annualSchedules.length > 0);
+
+    if (!willDeleteDays || existingDayCount === 0) return null;
+
+    if (activityType === 'TEMPORARY') {
+      return `Esta acción borrará las ${existingDayCount} sesiones existentes de la actividad al cambiarla a Temporal. ¿Confirmás?`;
+    }
+
+    return `Esta acción borrará las ${existingDayCount} sesiones existentes y creará nuevas según la configuración indicada. ¿Confirmás?`;
+  }
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (activityType === 'ANNUAL') {
+      for (let i = 0; i < annualSchedules.length; i++) {
+        const draft = annualSchedules[i];
+        if (!draft.schedule.trim()) {
+          setError(`Completá el horario de la sesión ${i + 1}`);
+          return;
+        }
+        if (!draft.geoLocation.trim()) {
+          setError(`Completá la ubicación de la sesión ${i + 1}`);
+          return;
+        }
+        if (!draft.coordinates) {
+          setError(`Seleccioná un punto en el mapa para la sesión ${i + 1}`);
+          return;
+        }
+      }
+    }
+
+    const msg = buildConfirmMessage();
+    if (msg) {
+      setConfirmMessage(msg);
+      setConfirmPending(true);
+      return;
+    }
+
+    void doSave();
+  }
+
+  async function doSave() {
+    setConfirmPending(false);
+    setSaving(true);
     try {
+      const normalizedSchedules =
+        activityType === 'ANNUAL'
+          ? annualSchedules.map((d) => ({
+              weekday: Number(d.weekday),
+              schedule: d.schedule.trim(),
+              description: d.description.trim() || undefined,
+              groupId: d.groupId || undefined,
+              geoLocation: d.geoLocation.trim(),
+              latitude: d.coordinates!.latitude,
+              longitude: d.coordinates!.longitude,
+            }))
+          : [];
+
       const res = await fetch(`/api/activities/${activity.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -130,175 +270,340 @@ export default function EditActivityForm({
           price: Number(price),
           capacity: capacity ? Number(capacity) : undefined,
           professorIds,
+          annualSchedules: normalizedSchedules,
         }),
       });
-      if (!res.ok) throw new Error('Request failed');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || 'No se pudo actualizar la actividad');
+      }
       setSuccess('Actividad actualizada');
       setTimeout(() => {
         router.push('/activities');
         router.refresh();
       }, 1000);
-    } catch (e) {
-      setError('No se pudo actualizar la actividad');
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'No se pudo actualizar la actividad'
+      );
+    } finally {
+      setSaving(false);
     }
-  };
+  }
 
   return (
-    <Form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="text"
-        placeholder="Nombre de la actividad"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className={inputClass}
-        required
-      />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Fecha de inicio</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={inputClass}
-            required
-          />
+    <>
+      {confirmPending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 max-w-md rounded-lg bg-background p-6 shadow-lg">
+            <p className="mb-6 text-sm">{confirmMessage}</p>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmPending(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void doSave()}
+              >
+                Confirmar
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Fecha de fin</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className={inputClass}
-            required
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-medium">Tipo de actividad</label>
-        <select
-          value={activityType}
-          onChange={(e) =>
-            setActivityType(e.target.value as 'TEMPORARY' | 'ANNUAL')
-          }
-          className={inputClass}
-        >
-          <option value="TEMPORARY">Temporal</option>
-          <option value="ANNUAL">Anual</option>
-        </select>
-      </div>
-      <textarea
-        placeholder="Descripción"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className={`${inputClass} min-h-[80px] resize-y`}
-      />
-      <input
-        type="number"
-        placeholder="Precio"
-        value={price}
-        onChange={(e) => setPrice(e.target.value)}
-        className={inputClass}
-      />
-      <input
-        type="number"
-        min={1}
-        placeholder="Cupo de inscripciones (opcional)"
-        value={capacity}
-        onChange={(e) => setCapacity(e.target.value)}
-        className={inputClass}
-      />
-      <ProfessorPicker
-        professors={professors}
-        value={professorIds}
-        onChange={setProfessorIds}
-      />
-      {activityType === 'ANNUAL' && (
-        <p className="text-xs text-muted-foreground">
-          Cambiar fechas o tipo no regenera automáticamente las sesiones ya
-          creadas para esta actividad.
-        </p>
       )}
 
-      <div className="space-y-3 rounded-lg border bg-background p-4">
-        <p className="text-sm font-semibold">Grupos</p>
+      <Form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Nombre de la actividad"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={inputClass}
+          required
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Fecha de inicio</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Fecha de fin</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Tipo de actividad</label>
+          <select
+            value={activityType}
+            onChange={(e) =>
+              setActivityType(e.target.value as 'TEMPORARY' | 'ANNUAL')
+            }
+            className={inputClass}
+          >
+            <option value="TEMPORARY">Temporal</option>
+            <option value="ANNUAL">Anual</option>
+          </select>
+        </div>
+        <textarea
+          placeholder="Descripción"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className={`${inputClass} min-h-[80px] resize-y`}
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            type="number"
+            placeholder="Precio"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className={inputClass}
+            min={0}
+            required
+          />
+          <input
+            type="number"
+            min={1}
+            placeholder="Cupo de inscripciones (opcional)"
+            value={capacity}
+            onChange={(e) => setCapacity(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <ProfessorPicker
+          professors={professors}
+          value={professorIds}
+          onChange={setProfessorIds}
+        />
 
-        {existingGroups.length > 0 ? (
-          <ul className="space-y-2">
-            {existingGroups.map((group) => (
-              <li
-                key={group.id}
-                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-              >
-                <span>
-                  {group.name}
-                  {group.description && (
-                    <span className="ml-2 text-muted-foreground">
-                      — {group.description}
+        {activityType === 'ANNUAL' && (
+          <div className="space-y-4 rounded-lg border bg-background p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold">Sesiones semanales</p>
+                <p className="text-xs text-muted-foreground">
+                  Configurá las sesiones para regenerarlas. Si no agregás
+                  ninguna, las sesiones existentes no se modifican.
+                  {existingDayCount > 0 && (
+                    <span className="ml-1 font-medium text-amber-600">
+                      Hay {existingDayCount} sesiones existentes.
                     </span>
                   )}
-                </span>
-                <button
-                  type="button"
-                  disabled={deletingGroupId === group.id}
-                  onClick={() => handleDeleteGroup(group.id)}
-                  className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
-                >
-                  {deletingGroupId === group.id ? 'Eliminando...' : 'Eliminar'}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addScheduleDraft}
+              >
+                Agregar sesión
+              </Button>
+            </div>
+
+            {annualSchedules.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay sesiones nuevas configuradas.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {annualSchedules.map((draft, index) => (
+                  <div
+                    key={draft.tempId}
+                    className="space-y-3 rounded-lg border p-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm font-medium">Sesión {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeScheduleDraft(draft.tempId)}
+                        className="text-xs text-destructive hover:text-destructive/80"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <select
+                        value={draft.weekday}
+                        onChange={(e) =>
+                          updateScheduleDraft(draft.tempId, {
+                            weekday: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        {WEEKDAY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="Horario"
+                        value={draft.schedule}
+                        onChange={(e) =>
+                          updateScheduleDraft(draft.tempId, {
+                            schedule: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Grupo</label>
+                      <select
+                        value={draft.groupId}
+                        onChange={(e) =>
+                          updateScheduleDraft(draft.tempId, {
+                            groupId: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        <option value="">Sin grupo</option>
+                        {existingGroups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Nombre o referencia del lugar"
+                      value={draft.geoLocation}
+                      onChange={(e) =>
+                        updateScheduleDraft(draft.tempId, {
+                          geoLocation: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                    />
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Punto en el mapa</p>
+                      <LocationMapPicker
+                        value={draft.coordinates}
+                        onChange={(coordinates) =>
+                          updateScheduleDraft(draft.tempId, { coordinates })
+                        }
+                      />
+                    </div>
+
+                    <textarea
+                      placeholder="Descripción de la sesión (opcional)"
+                      value={draft.description}
+                      onChange={(e) =>
+                        updateScheduleDraft(draft.tempId, {
+                          description: e.target.value,
+                        })
+                      }
+                      className={`${inputClass} min-h-[90px] resize-y`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
-          <input
-            type="text"
-            placeholder="Nombre del grupo"
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            className={inputClass}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCreateGroup();
-              }
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Descripción (opcional)"
-            value={newGroupDesc}
-            onChange={(e) => setNewGroupDesc(e.target.value)}
-            className={inputClass}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCreateGroup();
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={creatingGroup}
-            onClick={handleCreateGroup}
-          >
-            {creatingGroup ? 'Creando...' : 'Agregar'}
-          </Button>
+        <div className="space-y-3 rounded-lg border bg-background p-4">
+          <p className="text-sm font-semibold">Grupos</p>
+
+          {existingGroups.length > 0 ? (
+            <ul className="space-y-2">
+              {existingGroups.map((group) => (
+                <li
+                  key={group.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                >
+                  <span>
+                    {group.name}
+                    {group.description && (
+                      <span className="ml-2 text-muted-foreground">
+                        — {group.description}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={deletingGroupId === group.id}
+                    onClick={() => handleDeleteGroup(group.id)}
+                    className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
+                  >
+                    {deletingGroupId === group.id ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
+          )}
+
+          <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
+            <input
+              type="text"
+              placeholder="Nombre del grupo"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              className={inputClass}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleCreateGroup();
+                }
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Descripción (opcional)"
+              value={newGroupDesc}
+              onChange={(e) => setNewGroupDesc(e.target.value)}
+              className={inputClass}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleCreateGroup();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={creatingGroup}
+              onClick={() => void handleCreateGroup()}
+            >
+              {creatingGroup ? 'Creando...' : 'Agregar'}
+            </Button>
+          </div>
+
+          {groupError && <p className="text-xs text-destructive">{groupError}</p>}
         </div>
 
-        {groupError && <p className="text-xs text-destructive">{groupError}</p>}
-      </div>
-
-      {error && <p className="text-destructive text-sm">{error}</p>}
-      {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">
-        Guardar
-      </Button>
-    </Form>
+        {error && <p className="text-destructive text-sm">{error}</p>}
+        {success && <p className="text-success text-sm">{success}</p>}
+        <Button type="submit" className="w-full" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar'}
+        </Button>
+      </Form>
+    </>
   );
 }

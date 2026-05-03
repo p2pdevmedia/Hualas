@@ -25,27 +25,29 @@ export default async function EditActivityPage({
     redirect('/activities');
   }
 
-  const [professors, groups, activityProfessorAssignments] = await Promise.all([
-    prisma.user.findMany({
-      where: { role: 'PROFESSOR', isActive: true },
-      select: {
-        id: true,
-        name: true,
-        lastName: true,
-        email: true,
-      },
-      orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
-    }),
-    prisma.activityGroup.findMany({
-      where: { activityId: params.id },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, description: true },
-    }),
-    prisma.activityProfessor.findMany({
-      where: { activityId: params.id },
-      select: { userId: true },
-    }),
-  ]);
+  const [professors, groups, activityProfessorAssignments, existingDayCount] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: { role: 'PROFESSOR', isActive: true },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          email: true,
+        },
+        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+      }),
+      prisma.activityGroup.findMany({
+        where: { activityId: params.id },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, description: true },
+      }),
+      prisma.activityProfessor.findMany({
+        where: { activityId: params.id },
+        select: { userId: true },
+      }),
+      prisma.activityDay.count({ where: { activityId: params.id } }),
+    ]);
 
   return (
     <main className="p-4">
@@ -66,6 +68,7 @@ export default async function EditActivityPage({
         }}
         professors={professors}
         initialGroups={groups}
+        existingDayCount={existingDayCount}
       />
       <div className="mt-8 border-t pt-8">
         <h2 className="mb-4 text-xl font-semibold">Imagen de la actividad</h2>

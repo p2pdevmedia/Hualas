@@ -31,6 +31,16 @@ const annualScheduleSchema = z.object({
   longitude: z.number(),
 });
 
+const annualScheduleEditSchema = z.object({
+  weekday: z.number().int().min(0).max(6),
+  schedule: z.string().min(1),
+  description: z.string().optional(),
+  groupId: z.string().min(1).optional(),
+  geoLocation: z.string().min(1),
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
 const activityGroupDraftSchema = z.object({
   tempId: z.string().min(1),
   name: z.string().min(1),
@@ -94,8 +104,11 @@ export const activityCreateSchema = activityBaseSchema
     }
   });
 
-export const activityUpdateSchema = activityBaseSchema.superRefine(
-  (data, ctx) => {
+export const activityUpdateSchema = activityBaseSchema
+  .extend({
+    annualSchedules: z.array(annualScheduleEditSchema).optional().default([]),
+  })
+  .superRefine((data, ctx) => {
     if (data.endDate < data.date) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -114,8 +127,27 @@ export const activityUpdateSchema = activityBaseSchema.superRefine(
         path: ['professorIds'],
       });
     }
-  }
-);
+
+    if (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0) {
+      for (let i = 0; i < data.annualSchedules.length; i++) {
+        const s = data.annualSchedules[i];
+        if (!s.schedule.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Completá el horario de la sesión ${i + 1}`,
+            path: ['annualSchedules', i, 'schedule'],
+          });
+        }
+        if (!s.geoLocation.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Completá la ubicación de la sesión ${i + 1}`,
+            path: ['annualSchedules', i, 'geoLocation'],
+          });
+        }
+      }
+    }
+  });
 
 export const activityGroupCreateSchema = z.object({
   name: z.string().min(1),

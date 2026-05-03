@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { buildAnnualActivityDays } from '@/lib/activities/annual-schedule';
 import { activityUpdateSchema } from '@/lib/validations/activity';
 
 export async function PUT(
@@ -66,6 +67,59 @@ export async function PUT(
             userId,
           })),
         });
+      }
+
+      const shouldDeleteDays =
+        data.activityType === 'TEMPORARY' ||
+        (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0);
+
+      if (shouldDeleteDays) {
+        await tx.activityDay.deleteMany({ where: { activityId } });
+      }
+
+      if (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0) {
+        const annualDays = buildAnnualActivityDays(
+          data.date,
+          data.endDate,
+          data.annualSchedules.map((s) => ({
+            weekday: s.weekday,
+            schedule: s.schedule,
+            description: s.description,
+            geoLocation: s.geoLocation,
+            latitude: s.latitude,
+            longitude: s.longitude,
+          }))
+        );
+
+        for (const day of annualDays) {
+          const schedule = data.annualSchedules.find(
+            (s) => s.weekday === day.weekday && s.schedule === day.schedule && s.geoLocation === day.geoLocation
+          );
+          const activityGroupId = schedule?.groupId ?? null;
+
+          const activityDay = await tx.activityDay.create({
+            data: {
+              activityId,
+              createdById: session.user.id,
+              date: day.date,
+              schedule: day.schedule,
+              description: day.description,
+              activityGroupId,
+              geoLocation: day.geoLocation,
+              latitude: day.latitude,
+              longitude: day.longitude,
+            },
+          });
+
+          if (professorIds.length > 0) {
+            await tx.activityDayProfessor.createMany({
+              data: professorIds.map((userId) => ({
+                activityDayId: activityDay.id,
+                userId,
+              })),
+            });
+          }
+        }
       }
 
       return { id: activityId };
