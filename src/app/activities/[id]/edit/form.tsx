@@ -32,6 +32,7 @@ type AnnualScheduleDraft = {
   weekday: string;
   schedule: string;
   groupId: string;
+  professorIds: string[];
 };
 
 type AnnualSharedDraft = {
@@ -83,6 +84,7 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     weekday: '1',
     schedule: '',
     groupId: '',
+    professorIds: [],
   };
 }
 
@@ -250,6 +252,10 @@ export default function EditActivityForm({
           setError(`Completá el horario de la sesión ${i + 1}`);
           return;
         }
+        if (draft.professorIds.length === 0) {
+          setError(`Seleccioná al menos un profesor en la sesión ${i + 1}`);
+          return;
+        }
       }
     }
 
@@ -274,6 +280,7 @@ export default function EditActivityForm({
               weekday: Number(d.weekday),
               schedule: d.schedule.trim(),
               groupId: d.groupId || undefined,
+              professorIds: d.professorIds,
             }))
           : [];
 
@@ -665,6 +672,38 @@ export default function EditActivityForm({
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">
+                        Profesores de esta sesión
+                      </label>
+                      <div className="max-h-28 space-y-1 overflow-auto rounded border p-2">
+                        {professors.map((professor) => (
+                          <label
+                            key={professor.id}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={draft.professorIds.includes(
+                                professor.id
+                              )}
+                              onChange={(e) =>
+                                updateScheduleDraft(draft.tempId, {
+                                  professorIds: e.target.checked
+                                    ? [...draft.professorIds, professor.id]
+                                    : draft.professorIds.filter(
+                                        (id) => id !== professor.id
+                                      ),
+                                })
+                              }
+                            />
+                            {professor.name ?? 'Sin nombre'}{' '}
+                            {professor.lastName ?? ''}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
