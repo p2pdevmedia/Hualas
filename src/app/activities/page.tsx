@@ -1,20 +1,16 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivitiesHeading from '@/components/activities-heading';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { authOptions } from '@/lib/auth';
+import { gateAdmin } from '@/lib/role-guards';
 import ActivitiesTabs from './activities-tabs';
 
 export default async function ActivitiesPage() {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  const block = gateAdmin(session);
+  if (block) return block;
 
   let activities: Awaited<
     ReturnType<typeof listActivitiesWithParticipantCount>

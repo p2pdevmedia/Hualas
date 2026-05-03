@@ -48,12 +48,7 @@ export default async function ViewUserPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
 
   const user = await prisma.user.findUnique({
     where: { id: params.id },
@@ -329,11 +324,11 @@ export default async function ViewUserPage({
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Hijos</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Infancias</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {user.children.length > 0
-                ? `${user.children.length} hijo${user.children.length === 1 ? '' : 's'} registrado${user.children.length === 1 ? '' : 's'}`
-                : 'Sin hijos registrados.'}
+                ? `${user.children.length} infancia${user.children.length === 1 ? '' : 's'} registrada${user.children.length === 1 ? '' : 's'}`
+                : 'Sin infancias registradas.'}
             </p>
           </div>
           <Link

@@ -21,13 +21,13 @@ export default async function ProfessorsAccountingPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole((session?.user as any)?.role)) redirect('/');
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const q = searchParams.q?.trim() ?? '';
   const professors = await prisma.user.findMany({
     where: {
-      role: 'PROFESSOR',
+      roleAssignments: { some: { role: 'PROFESSOR' } },
       isActive: true,
       ...(q
         ? {

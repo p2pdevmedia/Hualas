@@ -23,7 +23,7 @@ export const translations = {
     actions: {
       view: 'Ver',
       edit: 'Editar',
-      myChildren: 'Mis Hijos',
+      myChildren: 'Infancias',
       addChild: 'Agregar hijo',
       childEnrollment: 'Agregar hijo',
       resetPassword: 'Restablecer contraseña',

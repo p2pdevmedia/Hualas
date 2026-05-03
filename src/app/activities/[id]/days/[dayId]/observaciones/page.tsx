@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { gateActiveRole } from '@/lib/role-guards';
 import Link from 'next/link';
 import DayNotesForm from './day-notes-form';
 
@@ -11,13 +12,11 @@ export default async function DayObservacionesPage({
   params: { id: string; dayId: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session) redirect('/login');
+  const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
+  if (block) return block;
 
-  const isAdmin =
-    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-  const isProfessor = session.user.role === 'PROFESSOR';
-
-  if (!isAdmin && !isProfessor) redirect('/');
+  const isAdmin = session!.user.role === 'ADMIN';
+  const isProfessor = session!.user.role === 'PROFESSOR';
 
   const day = await prisma.activityDay.findUnique({
     where: { id: params.dayId },
@@ -32,7 +31,7 @@ export default async function DayObservacionesPage({
 
   if (
     isProfessor &&
-    !day.professors.some((p) => p.userId === session.user.id)
+    !day.professors.some((p) => p.userId === session!.user.id)
   ) {
     redirect('/my-activities');
   }

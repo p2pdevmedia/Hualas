@@ -19,6 +19,10 @@ export const userUpdateSchema = z.object({
   role: z
     .enum(['ADMIN', 'COUNTER', 'MEMBER', 'PROFESSOR', 'SUPER_ADMIN'])
     .optional(),
+  // Elevated capability assignments. MEMBER is implicit and rejected here.
+  roles: z
+    .array(z.enum(['PROFESSOR', 'COUNTER', 'ADMIN', 'SUPER_ADMIN']))
+    .optional(),
   observations: z.string().optional(),
   allergies: z.string().optional(),
   regularMedication: z.string().optional(),

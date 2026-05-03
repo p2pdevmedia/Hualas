@@ -5,10 +5,8 @@ import { isAccountingRole } from '@/lib/accounting';
 import ReportsClient from './reports-client';
 
 export default async function ReportsPage() {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   return <ReportsClient />;
 }

@@ -10,12 +10,7 @@ export default async function EditChildPage({
   params: { id: string; childId: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
 
   const child = await prisma.child.findFirst({
     where: {

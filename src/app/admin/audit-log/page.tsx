@@ -1,13 +1,13 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { gateSuperAdmin } from '@/lib/role-guards';
 import AuditLogTable from './audit-log-table';
 
 export default async function AuditLogPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'SUPER_ADMIN') {
-    redirect('/');
-  }
+  const block = gateSuperAdmin(session);
+  if (block) return block;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-4">

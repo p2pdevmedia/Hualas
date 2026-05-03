@@ -9,12 +9,7 @@ export default async function FormResponsesPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
   const form = await prisma.form.findUnique({
     where: { id: params.id },
     select: {

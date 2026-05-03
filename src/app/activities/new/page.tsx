@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { gateAdmin } from '@/lib/role-guards';
 import CreateActivityPageClient from './page-client';
 
 type ProfessorOption = {
@@ -13,15 +13,14 @@ type ProfessorOption = {
 
 export default async function CreateActivityPage() {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  const block = gateAdmin(session);
+  if (block) return block;
 
   const professors = await prisma.user.findMany({
-    where: { role: 'PROFESSOR', isActive: true },
+    where: {
+      roleAssignments: { some: { role: 'PROFESSOR' } },
+      isActive: true,
+    },
     select: {
       id: true,
       name: true,

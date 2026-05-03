@@ -17,10 +17,8 @@ export default async function ManualPaymentsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const page = Math.max(Number(searchParams.page ?? '1') || 1, 1);
   const limit = Math.min(

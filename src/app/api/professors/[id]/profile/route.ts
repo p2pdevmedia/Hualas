@@ -66,8 +66,11 @@ export async function PUT(
     );
   }
 
-  const professor = await prisma.user.findUnique({
-    where: { id: params.id, role: 'PROFESSOR' },
+  const professor = await prisma.user.findFirst({
+    where: {
+      id: params.id,
+      roleAssignments: { some: { role: 'PROFESSOR' } },
+    },
     select: { id: true },
   });
   if (!professor) {

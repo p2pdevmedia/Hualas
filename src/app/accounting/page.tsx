@@ -48,10 +48,8 @@ export default async function AccountingDashboardPage({
 }: {
   searchParams?: { q?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const now = new Date();
   const monthStart = startOfMonth(now);

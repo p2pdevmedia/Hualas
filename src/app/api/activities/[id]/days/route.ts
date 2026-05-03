@@ -52,7 +52,7 @@ export async function POST(
   const validProfessors = await prisma.user.findMany({
     where: {
       id: { in: professorIds },
-      role: 'PROFESSOR',
+      roleAssignments: { some: { role: 'PROFESSOR' } },
       isActive: true,
     },
     select: { id: true },

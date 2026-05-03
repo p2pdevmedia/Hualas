@@ -5,12 +5,7 @@ import NewUserForm from './form';
 
 export default async function NewUserPage() {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">

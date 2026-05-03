@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { gateActiveRole } from '@/lib/role-guards';
 import ActivityGroupMembersManager from './group-members-manager';
 
 interface ActivityGroupPageProps {
@@ -25,9 +26,8 @@ export default async function ActivityGroupPage({
   params,
 }: ActivityGroupPageProps) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect('/');
-  }
+  const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
+  if (block) return block;
 
   const [activity, activityProfessors] = await Promise.all([
     prisma.activity.findUnique({
@@ -58,12 +58,11 @@ export default async function ActivityGroupPage({
     );
   }
 
-  const isAdmin =
-    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+  const isAdmin = session!.user.role === 'ADMIN';
   const canManageGroup =
     isAdmin ||
     activityProfessors.some(
-      (assignment) => assignment.userId === session.user.id
+      (assignment) => assignment.userId === session!.user.id
     );
 
   if (!canManageGroup) {

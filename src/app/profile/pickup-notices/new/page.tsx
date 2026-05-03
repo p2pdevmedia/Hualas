@@ -32,9 +32,7 @@ export default async function CreatePickupNoticePage() {
   });
 
   const rawUsers = await prisma.user.findMany({
-    where: {
-      OR: [{ role: 'MEMBER' }, { role: 'PROFESSOR' }],
-    },
+    where: { isActive: true },
     select: {
       id: true,
       name: true,

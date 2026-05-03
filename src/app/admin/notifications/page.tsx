@@ -1,13 +1,13 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { gateSuperAdmin } from '@/lib/role-guards';
 import { prisma } from '@/lib/prisma';
 
 export default async function NotificationsPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'SUPER_ADMIN') {
-    redirect('/');
-  }
+  const block = gateSuperAdmin(session);
+  if (block) return block;
 
   const notifications = await prisma.mercadoPagoNotification.findMany({
     orderBy: { createdAt: 'desc' },

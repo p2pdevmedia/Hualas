@@ -10,12 +10,7 @@ export default async function EditUserPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     select: {
@@ -41,6 +36,7 @@ export default async function EditUserPage({
       bloodGroup: true,
       primaryDoctor: true,
       doctorPhone: true,
+      roleAssignments: { select: { role: true } },
     },
   });
   if (!user) {
@@ -57,6 +53,7 @@ export default async function EditUserPage({
             birthDate: user.birthDate
               ? user.birthDate.toISOString().split('T')[0]
               : null,
+            roles: user.roleAssignments.map((a) => a.role),
           }}
         />
       </div>

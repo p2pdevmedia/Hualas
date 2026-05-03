@@ -4,6 +4,30 @@ import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
+import type { Role } from '@prisma/client';
+
+async function loadRoleState(userId: string): Promise<{
+  roles: Role[];
+  activeRole: Role;
+}> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      activeRole: true,
+      roleAssignments: { select: { role: true } },
+    },
+  });
+
+  // MEMBER is implicit: every user can act as a parent/member without an
+  // explicit assignment. Elevated roles come from UserRoleAssignment rows.
+  const elevated = user?.roleAssignments.map((a) => a.role) ?? [];
+  const roles = Array.from(new Set<Role>(['MEMBER', ...elevated]));
+  const activeRole: Role =
+    user?.activeRole && roles.includes(user.activeRole)
+      ? user.activeRole
+      : 'MEMBER';
+  return { roles, activeRole };
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,6 +55,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          activeRole: user.activeRole,
+          roles: [],
         };
       },
     }),
@@ -73,6 +99,7 @@ export const authOptions: NextAuthOptions = {
         if (!existingUser.isActive) return false;
         user.id = existingUser.id;
         (user as any).role = existingUser.role;
+        (user as any).activeRole = existingUser.activeRole;
       }
 
       const now = new Date();
@@ -99,17 +126,30 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = (user as any).role;
+        const state = await loadRoleState(user.id!);
+        token.roles = state.roles;
+        token.activeRole = state.activeRole;
+        token.role = state.activeRole;
       }
-      if (trigger === 'update' && session) {
-        token.updatedAt = (session as any).updatedAt;
+      // Refresh roles + activeRole from DB whenever the client requests an
+      // update (e.g. after switching active profile).
+      if (trigger === 'update' && token.sub) {
+        const state = await loadRoleState(token.sub);
+        token.roles = state.roles;
+        token.activeRole = state.activeRole;
+        token.role = state.activeRole;
+        if (session && (session as any).updatedAt) {
+          token.updatedAt = (session as any).updatedAt;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
-        (session.user as any).role = token.role;
+        (session.user as any).roles = token.roles ?? ['MEMBER'];
+        (session.user as any).activeRole = token.activeRole ?? 'MEMBER';
+        (session.user as any).role = token.activeRole ?? token.role ?? 'MEMBER';
         (session.user as any).updatedAt = token.updatedAt;
       }
       return session;

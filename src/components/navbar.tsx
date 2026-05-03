@@ -18,6 +18,7 @@ import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import NotificationBell from './notifications/notification-bell';
 import PushManager from './notifications/push-manager';
 import { useNotifications } from './notifications/notifications-context';
+import ProfileSwitcher from './profile-switcher';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
 const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
@@ -49,9 +50,13 @@ function initials(name: string | null | undefined) {
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = session?.user.role;
-  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
-  const isSuperAdmin = role === 'SUPER_ADMIN';
+  // role mirrors activeRole — visibility decisions follow the active profile,
+  // not raw capabilities. SUPER_ADMIN extras are gated by capability AND
+  // activeRole === 'ADMIN' (super-admin "boosts" admin view).
+  const role = session?.user.activeRole ?? session?.user.role;
+  const capabilities = session?.user.roles ?? [];
+  const isAdmin = role === 'ADMIN';
+  const isSuperAdmin = isAdmin && capabilities.includes('SUPER_ADMIN');
   const isCounter = isCounterRole(role);
   const isAccounting = role === 'COUNTER' || isAdmin;
   const isProfessor = role === 'PROFESSOR';
@@ -283,6 +288,7 @@ export default function Navbar() {
           )}
           {session ? (
             <div className="flex items-center gap-3">
+              <ProfileSwitcher />
               {isMemberRole && (
                 <Link
                   href="/activities/cart"
@@ -541,6 +547,7 @@ export default function Navbar() {
                   {session.user.name || 'Usuario'}
                 </span>
               </div>
+              <ProfileSwitcher className="self-start" />
               <Link
                 href="/profile"
                 className={navLinkClass('/profile')}

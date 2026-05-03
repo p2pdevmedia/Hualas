@@ -32,6 +32,7 @@ model User {
   maritalStatus         String?
   password              String
   role                  Role                      @default(MEMBER)
+  activeRole            Role                      @default(MEMBER)
   isActive              Boolean                   @default(true)
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
@@ -60,6 +61,23 @@ model User {
   notificationPreferences    NotificationPreference[]
   professorProfile           ProfessorProfile?
   professorPaymentsCreated   ProfessorPayment[] @relation("ProfessorPaymentCreatedBy")
+  roleAssignments            UserRoleAssignment[] @relation("UserRoleAssignmentUser")
+  roleAssignmentsGranted     UserRoleAssignment[] @relation("UserRoleAssignmentAssignedBy")
+}
+
+model UserRoleAssignment {
+  id           String   @id @default(cuid())
+  userId       String
+  role         Role
+  assignedAt   DateTime @default(now())
+  assignedById String?
+  notes        String?
+  user         User     @relation("UserRoleAssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy   User?    @relation("UserRoleAssignmentAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role])
 }
 
 

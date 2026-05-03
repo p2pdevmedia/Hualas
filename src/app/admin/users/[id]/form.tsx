@@ -6,12 +6,22 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 
+type ElevatedRole = 'PROFESSOR' | 'COUNTER' | 'ADMIN' | 'SUPER_ADMIN';
+
+const ELEVATED_ROLE_LABELS: Record<ElevatedRole, string> = {
+  PROFESSOR: 'Profesor',
+  COUNTER: 'Contaduría',
+  ADMIN: 'Administrador',
+  SUPER_ADMIN: 'Super Admin',
+};
+
 type User = {
   id: string;
   name: string | null;
   lastName: string | null;
   email: string;
   role: string;
+  roles: string[];
   dni: string | null;
   birthDate: string | null;
   gender: string | null;
@@ -43,7 +53,11 @@ export default function EditUserForm({ user }: { user: User }) {
   const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
-  const [role, setRole] = useState(user.role);
+  const [roles, setRoles] = useState<ElevatedRole[]>(
+    user.roles.filter((r): r is ElevatedRole =>
+      ['PROFESSOR', 'COUNTER', 'ADMIN', 'SUPER_ADMIN'].includes(r)
+    )
+  );
   const [observations, setObservations] = useState(user.observations ?? '');
   const [allergies, setAllergies] = useState(user.allergies ?? '');
   const [regularMedication, setRegularMedication] = useState(
@@ -97,7 +111,7 @@ export default function EditUserForm({ user }: { user: User }) {
         primaryDoctor,
         doctorPhone,
       };
-      if (canEditRole) body.role = role;
+      if (canEditRole) body.roles = roles;
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -255,17 +269,43 @@ export default function EditUserForm({ user }: { user: User }) {
         Usuario activo
       </label>
       {canEditRole && (
-        <select
-          className={inputClass}
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="ADMIN">ADMIN</option>
-          <option value="COUNTER">COUNTER</option>
-          <option value="MEMBER">MEMBER</option>
-          <option value="PROFESSOR">PROFESSOR</option>
-          <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-        </select>
+        <fieldset className="rounded-lg border bg-muted/20 p-4 space-y-2">
+          <legend className="px-1 text-sm font-semibold">
+            Capacidades del usuario
+          </legend>
+          <p className="text-xs text-muted-foreground">
+            Todo usuario es socio (MEMBER) por defecto. Marcá las capacidades
+            adicionales que tenga; el usuario podrá cambiar de perfil para
+            usarlas.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {(
+              ['PROFESSOR', 'COUNTER', 'ADMIN', 'SUPER_ADMIN'] as ElevatedRole[]
+            ).map((r) => {
+              const checked = roles.includes(r);
+              return (
+                <label
+                  key={r}
+                  className="flex items-center gap-2 text-sm text-foreground"
+                >
+                  <input
+                    type="checkbox"
+                    className="accent-primary"
+                    checked={checked}
+                    onChange={(e) => {
+                      setRoles((prev) =>
+                        e.target.checked
+                          ? Array.from(new Set([...prev, r]))
+                          : prev.filter((x) => x !== r)
+                      );
+                    }}
+                  />
+                  {ELEVATED_ROLE_LABELS[r]}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
       )}
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}

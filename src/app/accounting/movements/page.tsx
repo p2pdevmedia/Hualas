@@ -21,10 +21,8 @@ export default async function MovementsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const type =
     searchParams.type === 'INCOME' || searchParams.type === 'EXPENSE'

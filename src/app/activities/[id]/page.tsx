@@ -156,7 +156,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     prisma.user
       .findMany({
         where: {
-          role: 'PROFESSOR',
+          roleAssignments: { some: { role: 'PROFESSOR' } },
           isActive: true,
         },
         select: {

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
+import { gateAdmin } from '@/lib/role-guards';
 import EditActivityForm from './form';
 import ActivityImageUpload from '../../activity-image-upload';
 
@@ -14,12 +15,8 @@ export default async function EditActivityPage({
   params,
 }: EditActivityPageProps) {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  const block = gateAdmin(session);
+  if (block) return block;
   const activity = await getActivityBaseRecordById(params.id);
   if (!activity) {
     redirect('/activities');
@@ -28,7 +25,10 @@ export default async function EditActivityPage({
   const [professors, groups, activityProfessorAssignments, existingDayCount] =
     await Promise.all([
       prisma.user.findMany({
-        where: { role: 'PROFESSOR', isActive: true },
+        where: {
+          roleAssignments: { some: { role: 'PROFESSOR' } },
+          isActive: true,
+        },
         select: {
           id: true,
           name: true,

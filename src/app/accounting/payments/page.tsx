@@ -31,10 +31,8 @@ export default async function PaymentsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const from = searchParams.from ?? '';
   const to = searchParams.to ?? '';

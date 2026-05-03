@@ -159,7 +159,7 @@ export default function ChildrenManager({
 
   return (
     <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">Hijos</h2>
+      <h2 className="text-lg font-semibold tracking-tight">Infancias</h2>
       {children.length > 0 && (
         <ul className="space-y-1">
           {children.map((c) => (

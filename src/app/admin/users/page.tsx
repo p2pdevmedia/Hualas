@@ -9,12 +9,7 @@ import UsersList from './users-list';
 
 export default async function UsersPage() {
   const session = await getServerSession(authOptions);
-  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-    if (isCounterRole(session?.user?.role)) {
-      redirect('/accounting');
-    }
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
 
   const users = await prisma.user.findMany({
     select: {

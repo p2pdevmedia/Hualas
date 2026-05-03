@@ -77,10 +77,8 @@ export default async function SocialFeePage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const now = new Date();
   const defaultMonth = now.getUTCMonth() + 1;
@@ -96,7 +94,7 @@ export default async function SocialFeePage({
     }),
     prisma.user.findMany({
       where: {
-        role: 'MEMBER',
+        // Every user is implicitly a socio (MEMBER); list all active users.
         isActive: true,
       },
       select: {

@@ -5,10 +5,8 @@ import { isAccountingRole } from '@/lib/accounting';
 import MovementForm from '../movement-form';
 
 export default async function NewMovementPage() {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   return (
     <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-6 shadow-sm">

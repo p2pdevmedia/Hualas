@@ -11,10 +11,8 @@ export default async function EditMovementPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /accounting layout.
+  await getServerSession(authOptions);
 
   const movement = await prisma.accountingMovement.findUnique({
     where: { id: params.id },

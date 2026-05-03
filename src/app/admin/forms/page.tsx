@@ -7,12 +7,7 @@ import FormList from './form-list';
 
 export default async function FormsPage() {
   const session = await getServerSession(authOptions);
-  if (
-    !session ||
-    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
-  ) {
-    redirect('/');
-  }
+  // Auth gating happens in the parent /admin layout.
   const forms = await prisma.form.findMany({
     select: {
       id: true,

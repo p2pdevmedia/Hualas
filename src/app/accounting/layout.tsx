@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { isAccountingRole } from '@/lib/accounting';
+import { gateAccounting } from '@/lib/role-guards';
 
 const links = [
   { href: '/accounting', label: 'Resumen' },
@@ -21,8 +20,9 @@ export default async function AccountingLayout({
   children: ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  if (!isAccountingRole(session?.user?.role)) {
-    redirect('/');
+  const block = gateAccounting(session);
+  if (block) {
+    return <div className="mx-auto max-w-6xl px-4 py-10">{block}</div>;
   }
 
   return (
