@@ -26,6 +26,7 @@ type AnnualScheduleDraft = {
   weekday: string;
   schedule: string;
   groupTempId: string;
+  professorIds: string[];
 };
 
 type AnnualSharedDraft = {
@@ -64,6 +65,7 @@ function createEmptyAnnualScheduleDraft(): AnnualScheduleDraft {
     weekday: '1',
     schedule: '',
     groupTempId: '',
+    professorIds: [],
   };
 }
 
@@ -117,10 +119,10 @@ export default function CreateActivityForm({
     setGroups((current) => current.filter((group) => group.tempId !== tempId));
   }
 
-  function addAnnualScheduleDraft() {
+  function addAnnualScheduleDraft(weekday = '1') {
     setAnnualSchedules((current) => [
       ...current,
-      createEmptyAnnualScheduleDraft(),
+      { ...createEmptyAnnualScheduleDraft(), weekday },
     ]);
   }
 
@@ -180,12 +182,18 @@ export default function CreateActivityForm({
                   `Completá el horario de la sesión ${index + 1}`
                 );
               }
+              if (draft.professorIds.length === 0) {
+                throw new Error(
+                  `Seleccioná al menos un profesor en la sesión ${index + 1}`
+                );
+              }
 
               return {
                 tempId: draft.tempId,
                 weekday: Number(draft.weekday),
                 schedule: draft.schedule.trim(),
                 groupTempId: draft.groupTempId || undefined,
+                professorIds: draft.professorIds,
               };
             })
           : [];
@@ -469,98 +477,111 @@ export default function CreateActivityForm({
             </div>
           </div>
 
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold">Sesiones semanales</p>
-              <p className="text-xs text-muted-foreground">
-                Cada bloque define un día fijo de la semana, un horario y un
-                grupo. La ubicación, el deporte y la descripción son comunes a
-                todas las sesiones.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addAnnualScheduleDraft}
-            >
-              Agregar sesión
-            </Button>
+          <p className="text-sm font-semibold">Calendario semanal</p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {WEEKDAY_OPTIONS.slice(1)
+              .concat(WEEKDAY_OPTIONS[0])
+              .map((day) => {
+                const daySessions = annualSchedules.filter(
+                  (draft) => draft.weekday === day.value
+                );
+                return (
+                  <div
+                    key={day.value}
+                    className="space-y-2 rounded-lg border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{day.label}</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => addAnnualScheduleDraft(day.value)}
+                      >
+                        + Sesión
+                      </Button>
+                    </div>
+                    {daySessions.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Sin sesiones.
+                      </p>
+                    ) : (
+                      daySessions.map((draft) => (
+                        <div
+                          key={draft.tempId}
+                          className="space-y-2 rounded-md border p-2"
+                        >
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeAnnualScheduleDraft(draft.tempId)
+                              }
+                              className="text-xs text-destructive"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Horario"
+                            value={draft.schedule}
+                            onChange={(e) =>
+                              updateAnnualScheduleDraft(draft.tempId, {
+                                schedule: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          />
+                          <select
+                            value={draft.groupTempId}
+                            onChange={(e) =>
+                              updateAnnualScheduleDraft(draft.tempId, {
+                                groupTempId: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          >
+                            <option value="">Sin grupo</option>
+                            {groups.map((group) => (
+                              <option key={group.tempId} value={group.tempId}>
+                                {group.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="max-h-28 space-y-1 overflow-auto rounded border p-2">
+                            {professors.map((professor) => (
+                              <label
+                                key={professor.id}
+                                className="flex items-center gap-2 text-xs"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={draft.professorIds.includes(
+                                    professor.id
+                                  )}
+                                  onChange={(e) =>
+                                    updateAnnualScheduleDraft(draft.tempId, {
+                                      professorIds: e.target.checked
+                                        ? [...draft.professorIds, professor.id]
+                                        : draft.professorIds.filter(
+                                            (id) => id !== professor.id
+                                          ),
+                                    })
+                                  }
+                                />
+                                {professor.name ?? 'Sin nombre'}{' '}
+                                {professor.lastName ?? ''}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })}
           </div>
-
-          {annualSchedules.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No hay sesiones cargadas todavía.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {annualSchedules.map((draft, index) => (
-                <div
-                  key={draft.tempId}
-                  className="space-y-3 rounded-lg border p-4"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-medium">Sesión {index + 1}</p>
-                    <button
-                      type="button"
-                      onClick={() => removeAnnualScheduleDraft(draft.tempId)}
-                      className="text-xs text-destructive hover:text-destructive/80"
-                    >
-                      Quitar
-                    </button>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <select
-                      value={draft.weekday}
-                      onChange={(e) =>
-                        updateAnnualScheduleDraft(draft.tempId, {
-                          weekday: e.target.value,
-                        })
-                      }
-                      className={inputClass}
-                    >
-                      {WEEKDAY_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Horario"
-                      value={draft.schedule}
-                      onChange={(e) =>
-                        updateAnnualScheduleDraft(draft.tempId, {
-                          schedule: e.target.value,
-                        })
-                      }
-                      className={inputClass}
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Grupo</label>
-                    <select
-                      value={draft.groupTempId}
-                      onChange={(e) =>
-                        updateAnnualScheduleDraft(draft.tempId, {
-                          groupTempId: e.target.value,
-                        })
-                      }
-                      className={inputClass}
-                    >
-                      <option value="">Sin grupo</option>
-                      {groups.map((group) => (
-                        <option key={group.tempId} value={group.tempId}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

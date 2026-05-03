@@ -26,6 +26,7 @@ const annualScheduleSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
   groupTempId: z.string().min(1).optional(),
+  professorIds: z.array(z.string().min(1)).min(1),
 });
 
 const annualScheduleEditSchema = z.object({
@@ -33,6 +34,7 @@ const annualScheduleEditSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
   groupId: z.string().min(1).optional(),
+  professorIds: z.array(z.string().min(1)).min(1),
 });
 
 const activityGroupDraftSchema = z.object({

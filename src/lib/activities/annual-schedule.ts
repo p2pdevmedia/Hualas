@@ -4,6 +4,7 @@ type AnnualScheduleTemplate = {
   schedule: string;
   groupTempId?: string;
   groupId?: string;
+  professorIds?: string[];
 };
 
 type AnnualSharedFields = {

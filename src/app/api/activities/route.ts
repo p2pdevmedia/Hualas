@@ -15,16 +15,22 @@ export async function POST(req: Request) {
   }
   const data = activityCreateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds ?? []));
-  if (professorIds.length > 0) {
+  const annualProfessorIds = Array.from(
+    new Set(data.annualSchedules.flatMap((schedule) => schedule.professorIds))
+  );
+  const professorIdsToValidate = Array.from(
+    new Set([...professorIds, ...annualProfessorIds])
+  );
+  if (professorIdsToValidate.length > 0) {
     const validProfessors = await prisma.user.findMany({
       where: {
-        id: { in: professorIds },
+        id: { in: professorIdsToValidate },
         roleAssignments: { some: { role: 'PROFESSOR' } },
         isActive: true,
       },
       select: { id: true },
     });
-    if (validProfessors.length !== professorIds.length) {
+    if (validProfessors.length !== professorIdsToValidate.length) {
       return NextResponse.json(
         { error: 'Uno o más profesores no son válidos' },
         { status: 400 }
@@ -76,6 +82,16 @@ export async function POST(req: Request) {
       }
 
       if (data.activityType === 'ANNUAL') {
+        const annualScheduleProfessorIds = Array.from(
+          new Set(
+            data.annualSchedules.flatMap((schedule) => schedule.professorIds)
+          )
+        );
+        const professorIdsForDays =
+          annualScheduleProfessorIds.length > 0
+            ? annualScheduleProfessorIds
+            : professorIds;
+
         const annualDays = buildAnnualActivityDays(
           data.date,
           data.endDate,
@@ -113,15 +129,22 @@ export async function POST(req: Request) {
           };
         });
 
-        if (professorIds.length > 0) {
+        if (professorIdsForDays.length > 0) {
           const createdDays = await tx.activityDay.createManyAndReturn({
             data: dayData,
             select: { id: true },
           });
           await tx.activityDayProfessor.createMany({
-            data: createdDays.flatMap(({ id: activityDayId }) =>
-              professorIds.map((userId) => ({ activityDayId, userId }))
-            ),
+            data: createdDays.flatMap(({ id: activityDayId }, index) => {
+              const sessionProfessorIds = annualDays[index]?.professorIds
+                ?.length
+                ? annualDays[index].professorIds
+                : professorIdsForDays;
+              return sessionProfessorIds.map((userId) => ({
+                activityDayId,
+                userId,
+              }));
+            }),
           });
         } else {
           await tx.activityDay.createMany({ data: dayData });
