@@ -48,6 +48,12 @@ type PickupNotice = {
   } | null;
 };
 
+type ProfessorAttendanceEntry = {
+  activityParticipantId: string;
+  participantName: string;
+  status: AttendanceStatus;
+};
+
 type ActivityDay = {
   id: string;
   date: string;
@@ -64,6 +70,9 @@ type ActivityDay = {
   } | null;
   assignedProfessors: ProfessorOption[];
   canEdit: boolean;
+  canEditDescription: boolean;
+  canManageAttendance: boolean;
+  fullParticipantList: ProfessorAttendanceEntry[];
   attendances: Array<{
     activityParticipantId: string;
     status: AttendanceStatus;
@@ -89,6 +98,12 @@ const statusLabels: Record<AttendanceStatus, string> = {
   NOT_GOING: 'No voy',
 };
 
+const professorStatusLabels: Record<AttendanceStatus, string> = {
+  PENDING: 'Sin confirmar',
+  GOING: 'Asistió',
+  NOT_GOING: 'No asistió',
+};
+
 export default function ActivityDaysPanel({
   activityId,
   canManageDays,
@@ -101,6 +116,8 @@ export default function ActivityDaysPanel({
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
+  const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
   const [error, setError] = useState('');
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [expandedLists, setExpandedLists] = useState<
@@ -133,6 +150,30 @@ export default function ActivityDaysPanel({
         err instanceof Error
           ? err.message
           : 'No se pudo actualizar la asistencia'
+      );
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  async function saveDescription(dayId: string, description: string) {
+    setError('');
+    setSavingKey(`desc:${dayId}`);
+    try {
+      const res = await fetch(`/api/activity-days/${dayId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || 'No se pudo guardar la descripción');
+      }
+      setEditingDescriptionId(null);
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'No se pudo guardar la descripción'
       );
     } finally {
       setSavingKey(null);
@@ -284,13 +325,60 @@ export default function ActivityDaysPanel({
                         {isEditing ? 'Cerrar edición' : 'Editar sesión'}
                       </button>
                     )}
+                    {day.canEditDescription && !day.canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (editingDescriptionId === day.id) {
+                            setEditingDescriptionId(null);
+                          } else {
+                            setDescriptionDraft(day.description ?? '');
+                            setEditingDescriptionId(day.id);
+                          }
+                        }}
+                        className="text-link hover:underline underline-offset-4"
+                      >
+                        {editingDescriptionId === day.id
+                          ? 'Cancelar'
+                          : 'Editar descripción'}
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {day.description && (
+                {day.description && editingDescriptionId !== day.id && (
                   <p className="mt-3 text-sm text-muted-foreground">
                     {day.description}
                   </p>
+                )}
+
+                {editingDescriptionId === day.id && (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={descriptionDraft}
+                      onChange={(e) => setDescriptionDraft(e.target.value)}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px] resize-y"
+                      placeholder="Descripción de la sesión"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        disabled={savingKey === `desc:${day.id}`}
+                        onClick={() => saveDescription(day.id, descriptionDraft)}
+                      >
+                        {savingKey === `desc:${day.id}`
+                          ? 'Guardando...'
+                          : 'Guardar'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditingDescriptionId(null)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
                 )}
 
                 {isEditing && (
@@ -435,6 +523,60 @@ export default function ActivityDaysPanel({
                     </div>
                   </div>
                 )}
+
+                {day.canManageAttendance &&
+                  day.fullParticipantList.length > 0 && (
+                    <div className="mt-4 space-y-3 border-t pt-4">
+                      <p className="text-sm font-semibold">
+                        Tomar asistencia
+                      </p>
+                      <div className="space-y-2">
+                        {day.fullParticipantList.map((entry) => {
+                          const key = `${day.id}:${entry.activityParticipantId}`;
+                          const isSaving = savingKey === key;
+                          return (
+                            <div
+                              key={entry.activityParticipantId}
+                              className="flex flex-wrap items-center gap-3 rounded-md border bg-card p-3"
+                            >
+                              <p className="flex-1 text-sm font-medium">
+                                {entry.participantName}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {(
+                                  [
+                                    'GOING',
+                                    'NOT_GOING',
+                                    'PENDING',
+                                  ] as AttendanceStatus[]
+                                ).map((status) => (
+                                  <button
+                                    key={status}
+                                    type="button"
+                                    disabled={isSaving}
+                                    onClick={() =>
+                                      updateAttendance(
+                                        day.id,
+                                        entry.activityParticipantId,
+                                        status
+                                      )
+                                    }
+                                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                                      entry.status === status
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'border border-border bg-background text-foreground hover:bg-muted'
+                                    }`}
+                                  >
+                                    {professorStatusLabels[status]}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                 {day.pickupNotices && day.pickupNotices.length > 0 && (
                   <div className="mt-4 space-y-3 border-t pt-4">

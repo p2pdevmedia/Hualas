@@ -5,6 +5,46 @@ import { prisma } from '@/lib/prisma';
 import { activityDayUpdateSchema } from '@/lib/validations/activity';
 import { notifyActivityDayUpdated } from '@/lib/notifications/notification-service';
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: { dayId: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const day = await prisma.activityDay.findUnique({
+    where: { id: params.dayId },
+    include: { professors: { select: { userId: true } } },
+  });
+
+  if (!day) {
+    return NextResponse.json({ error: 'Día no encontrado' }, { status: 404 });
+  }
+
+  const isAdmin =
+    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+  const isProfessorOfDay =
+    session.user.role === 'PROFESSOR' &&
+    day.professors.some((p) => p.userId === session.user.id);
+
+  if (!isAdmin && !isProfessorOfDay) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const description =
+    typeof body.description === 'string' ? body.description || null : null;
+
+  const updatedDay = await prisma.activityDay.update({
+    where: { id: day.id },
+    data: { description },
+  });
+
+  return NextResponse.json(updatedDay);
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { dayId: string } }

@@ -46,9 +46,21 @@ export async function PATCH(
     },
   });
 
-  if (!participant || participant.userId !== session.user.id) {
-    const childUserId = participant?.child?.userId;
-    if (!participant || childUserId !== session.user.id) {
+  if (!participant) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const isSelf = participant.userId === session.user.id;
+  const isParent = participant.child?.userId === session.user.id;
+
+  if (!isSelf && !isParent) {
+    const professorAssignment = await prisma.activityDayProfessor.findUnique({
+      where: {
+        activityDayId_userId: { activityDayId: day.id, userId: session.user.id },
+      },
+      select: { userId: true },
+    });
+    if (!professorAssignment) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
