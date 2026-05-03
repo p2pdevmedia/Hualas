@@ -32,95 +32,105 @@ export async function POST(req: Request) {
     }
   }
 
-  const created = await prisma.$transaction(async (tx) => {
-    const activity = await tx.activity.create({
-      data: {
-        name: data.name,
-        date: data.date,
-        endDate: data.endDate,
-        activityType: data.activityType,
-        frequency: data.frequency,
-        image: data.image ?? null,
-        description: data.description ?? null,
-        price: data.price,
-        capacity: data.capacity ?? null,
-      },
-      select: { id: true },
-    });
-
-    const activityId = activity.id;
-
-    if (professorIds.length > 0) {
-      await tx.activityProfessor.createMany({
-        data: professorIds.map((userId) => ({
-          activityId,
-          userId,
-        })),
+  const created = await prisma.$transaction(
+    async (tx) => {
+      const activity = await tx.activity.create({
+        data: {
+          name: data.name,
+          date: data.date,
+          endDate: data.endDate,
+          activityType: data.activityType,
+          frequency: data.frequency,
+          image: data.image ?? null,
+          description: data.description ?? null,
+          price: data.price,
+          capacity: data.capacity ?? null,
+        },
+        select: { id: true },
       });
-    }
 
-    const groupIdByTempId = new Map<string, string>();
-    if (data.groups.length > 0) {
-      for (const group of data.groups) {
-        const createdGroup = await tx.activityGroup.create({
-          data: {
-            activityId,
-            name: group.name,
-            description: group.description,
-          },
-          select: { id: true },
-        });
-        groupIdByTempId.set(group.tempId, createdGroup.id);
-      }
-    }
-
-    if (data.activityType === 'ANNUAL') {
-      const annualDays = buildAnnualActivityDays(
-        data.date,
-        data.endDate,
-        data.annualSchedules.map((s) => ({
-          ...s,
-          sportIcon: s.sportIcon ?? undefined,
-        }))
-      );
-
-      const dayData = annualDays.map((day) => {
-        const activityGroupId = day.groupTempId
-          ? groupIdByTempId.get(day.groupTempId)
-          : null;
-        if (day.groupTempId && !activityGroupId) {
-          throw new Error('Una sesión anual referencia un grupo inválido');
-        }
-        return {
-          activityId,
-          createdById: session.user.id,
-          date: day.date,
-          schedule: day.schedule,
-          description: day.description ?? null,
-          activityGroupId: activityGroupId ?? null,
-          sportIcon: day.sportIcon ?? null,
-          geoLocation: day.geoLocation,
-          latitude: day.latitude,
-          longitude: day.longitude,
-        };
-      });
+      const activityId = activity.id;
 
       if (professorIds.length > 0) {
-        const createdDays = await tx.activityDay.createManyAndReturn({
-          data: dayData,
-          select: { id: true },
+        await tx.activityProfessor.createMany({
+          data: professorIds.map((userId) => ({
+            activityId,
+            userId,
+          })),
         });
-        await tx.activityDayProfessor.createMany({
-          data: createdDays.flatMap(({ id: activityDayId }) =>
-            professorIds.map((userId) => ({ activityDayId, userId }))
-          ),
-        });
-      } else {
-        await tx.activityDay.createMany({ data: dayData });
       }
-    }
 
-    return { id: activityId };
-  }, { timeout: 30000 });
+      const groupIdByTempId = new Map<string, string>();
+      if (data.groups.length > 0) {
+        for (const group of data.groups) {
+          const createdGroup = await tx.activityGroup.create({
+            data: {
+              activityId,
+              name: group.name,
+              description: group.description,
+            },
+            select: { id: true },
+          });
+          groupIdByTempId.set(group.tempId, createdGroup.id);
+        }
+      }
+
+      if (data.activityType === 'ANNUAL') {
+        const annualDays = buildAnnualActivityDays(
+          data.date,
+          data.endDate,
+          data.annualSchedules.map((s) => ({
+            ...s,
+            groupTempId: s.groupTempId ?? undefined,
+          })),
+          {
+            description: data.description ?? undefined,
+            geoLocation: data.geoLocation!,
+            latitude: data.latitude!,
+            longitude: data.longitude!,
+            sportIcon: data.sportIcon ?? undefined,
+          }
+        );
+
+        const dayData = annualDays.map((day) => {
+          const activityGroupId = day.groupTempId
+            ? groupIdByTempId.get(day.groupTempId)
+            : null;
+          if (day.groupTempId && !activityGroupId) {
+            throw new Error('Una sesión anual referencia un grupo inválido');
+          }
+          return {
+            activityId,
+            createdById: session.user.id,
+            date: day.date,
+            schedule: day.schedule,
+            description: day.description ?? null,
+            activityGroupId: activityGroupId ?? null,
+            sportIcon: day.sportIcon ?? null,
+            geoLocation: day.geoLocation,
+            latitude: day.latitude,
+            longitude: day.longitude,
+          };
+        });
+
+        if (professorIds.length > 0) {
+          const createdDays = await tx.activityDay.createManyAndReturn({
+            data: dayData,
+            select: { id: true },
+          });
+          await tx.activityDayProfessor.createMany({
+            data: createdDays.flatMap(({ id: activityDayId }) =>
+              professorIds.map((userId) => ({ activityDayId, userId }))
+            ),
+          });
+        } else {
+          await tx.activityDay.createMany({ data: dayData });
+        }
+      }
+
+      return { id: activityId };
+    },
+    { timeout: 30000 }
+  );
   return NextResponse.json(created);
 }

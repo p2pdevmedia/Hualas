@@ -31,11 +31,13 @@ type AnnualScheduleDraft = {
   tempId: string;
   weekday: string;
   schedule: string;
-  description: string;
   groupId: string;
-  sportIcon: string;
+};
+
+type AnnualSharedDraft = {
   geoLocation: string;
   coordinates: Coordinates | null;
+  sportIcon: string;
 };
 
 const WEEKDAY_OPTIONS = [
@@ -69,6 +71,7 @@ interface EditActivityFormProps {
     capacity?: number | null;
     professorIds: string[];
   };
+  annualDefaults?: AnnualSharedDraft;
   professors: ProfessorOption[];
   initialGroups: ExistingGroup[];
   existingDayCount: number;
@@ -79,16 +82,13 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     tempId: crypto.randomUUID(),
     weekday: '1',
     schedule: '',
-    description: '',
     groupId: '',
-    sportIcon: '',
-    geoLocation: '',
-    coordinates: null,
   };
 }
 
 export default function EditActivityForm({
   activity,
+  annualDefaults,
   professors,
   initialGroups,
   existingDayCount,
@@ -109,6 +109,13 @@ export default function EditActivityForm({
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
+  const [annualShared, setAnnualShared] = useState<AnnualSharedDraft>(
+    annualDefaults ?? {
+      geoLocation: '',
+      coordinates: null,
+      sportIcon: '',
+    }
+  );
 
   const [existingGroups, setExistingGroups] =
     useState<ExistingGroup[]>(initialGroups);
@@ -117,7 +124,9 @@ export default function EditActivityForm({
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
-  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<string | null>(null);
+  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<
+    string | null
+  >(null);
 
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
@@ -144,9 +153,7 @@ export default function EditActivityForm({
   }
 
   function removeScheduleDraft(tempId: string) {
-    setAnnualSchedules((current) =>
-      current.filter((d) => d.tempId !== tempId)
-    );
+    setAnnualSchedules((current) => current.filter((d) => d.tempId !== tempId));
   }
 
   async function handleCreateGroup() {
@@ -186,9 +193,7 @@ export default function EditActivityForm({
       if (!res.ok) throw new Error('No se pudo eliminar el grupo');
       setExistingGroups((current) => current.filter((g) => g.id !== groupId));
       setAnnualSchedules((current) =>
-        current.map((d) =>
-          d.groupId === groupId ? { ...d, groupId: '' } : d
-        )
+        current.map((d) => (d.groupId === groupId ? { ...d, groupId: '' } : d))
       );
     } catch (err) {
       setGroupError(
@@ -202,12 +207,19 @@ export default function EditActivityForm({
   function buildConfirmMessage(): string | null {
     const willDeleteDays =
       activityType === 'TEMPORARY' ||
-      (activityType === 'ANNUAL' && annualSchedules.length > 0);
+      (activityType === 'ANNUAL' && annualSchedules.length > 0) ||
+      (activityType === 'ANNUAL' &&
+        annualSchedules.length === 0 &&
+        existingDayCount > 0);
 
     if (!willDeleteDays || existingDayCount === 0) return null;
 
     if (activityType === 'TEMPORARY') {
       return `Esta acción borrará las ${existingDayCount} sesiones existentes de la actividad al cambiarla a Temporal. ¿Confirmás?`;
+    }
+
+    if (annualSchedules.length === 0) {
+      return `Esta acción actualizará las ${existingDayCount} sesiones existentes con la ubicación, el deporte y la descripción compartidos. ¿Confirmás?`;
     }
 
     return `Esta acción borrará las ${existingDayCount} sesiones existentes y creará nuevas según la configuración indicada. ¿Confirmás?`;
@@ -219,18 +231,23 @@ export default function EditActivityForm({
     setSuccess('');
 
     if (activityType === 'ANNUAL') {
+      if (!annualShared.geoLocation.trim()) {
+        setError('Completá la ubicación compartida');
+        return;
+      }
+      if (!annualShared.coordinates) {
+        setError('Seleccioná un punto en el mapa compartido');
+        return;
+      }
+      if (!annualShared.sportIcon) {
+        setError('Seleccioná un deporte compartido');
+        return;
+      }
+
       for (let i = 0; i < annualSchedules.length; i++) {
         const draft = annualSchedules[i];
         if (!draft.schedule.trim()) {
           setError(`Completá el horario de la sesión ${i + 1}`);
-          return;
-        }
-        if (!draft.geoLocation.trim()) {
-          setError(`Completá la ubicación de la sesión ${i + 1}`);
-          return;
-        }
-        if (!draft.coordinates) {
-          setError(`Seleccioná un punto en el mapa para la sesión ${i + 1}`);
           return;
         }
       }
@@ -253,14 +270,10 @@ export default function EditActivityForm({
       const normalizedSchedules =
         activityType === 'ANNUAL'
           ? annualSchedules.map((d) => ({
+              tempId: d.tempId,
               weekday: Number(d.weekday),
               schedule: d.schedule.trim(),
-              description: d.description.trim() || undefined,
               groupId: d.groupId || undefined,
-              sportIcon: d.sportIcon || undefined,
-              geoLocation: d.geoLocation.trim(),
-              latitude: d.coordinates!.latitude,
-              longitude: d.coordinates!.longitude,
             }))
           : [];
 
@@ -277,6 +290,22 @@ export default function EditActivityForm({
           capacity: capacity ? Number(capacity) : undefined,
           professorIds,
           annualSchedules: normalizedSchedules,
+          geoLocation:
+            activityType === 'ANNUAL'
+              ? annualShared.geoLocation.trim()
+              : undefined,
+          latitude:
+            activityType === 'ANNUAL'
+              ? annualShared.coordinates!.latitude
+              : undefined,
+          longitude:
+            activityType === 'ANNUAL'
+              ? annualShared.coordinates!.longitude
+              : undefined,
+          sportIcon:
+            activityType === 'ANNUAL'
+              ? annualShared.sportIcon || undefined
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -290,7 +319,9 @@ export default function EditActivityForm({
       }, 1000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'No se pudo actualizar la actividad'
+        err instanceof Error
+          ? err.message
+          : 'No se pudo actualizar la actividad'
       );
     } finally {
       setSaving(false);
@@ -311,10 +342,7 @@ export default function EditActivityForm({
               >
                 Cancelar
               </Button>
-              <Button
-                type="button"
-                onClick={() => void doSave()}
-              >
+              <Button type="button" onClick={() => void doSave()}>
                 Confirmar
               </Button>
             </div>
@@ -399,12 +427,81 @@ export default function EditActivityForm({
 
         {activityType === 'ANNUAL' && (
           <div className="space-y-4 rounded-lg border bg-background p-4">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">
+                  Ubicación compartida
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nombre o referencia del lugar"
+                  value={annualShared.geoLocation}
+                  onChange={(e) =>
+                    setAnnualShared((current) => ({
+                      ...current,
+                      geoLocation: e.target.value,
+                    }))
+                  }
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Punto en el mapa</p>
+                <LocationMapPicker
+                  value={annualShared.coordinates}
+                  onChange={(coordinates) =>
+                    setAnnualShared((current) => ({
+                      ...current,
+                      coordinates,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium">
+                  Deporte compartido
+                </label>
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                  {SPORT_ICONS.map((icon) => (
+                    <button
+                      key={icon.file}
+                      type="button"
+                      onClick={() =>
+                        setAnnualShared((current) => ({
+                          ...current,
+                          sportIcon:
+                            current.sportIcon === icon.file ? '' : icon.file,
+                        }))
+                      }
+                      className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
+                        annualShared.sportIcon === icon.file
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      <Image
+                        src={`/icons/${icon.file}`}
+                        alt={icon.label}
+                        width={40}
+                        height={40}
+                      />
+                      <span>{icon.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold">Sesiones semanales</p>
                 <p className="text-xs text-muted-foreground">
                   Configurá las sesiones para regenerarlas. Si no agregás
-                  ninguna, las sesiones existentes no se modifican.
+                  ninguna, se conservarán los horarios y grupos actuales, pero
+                  se actualizarán la ubicación, el deporte y la descripción
+                  compartidos.
                   {existingDayCount > 0 && (
                     <span className="ml-1 font-medium text-amber-600">
                       Hay {existingDayCount} sesiones existentes.
@@ -473,39 +570,6 @@ export default function EditActivityForm({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-sm font-medium">Deporte</label>
-                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                        {SPORT_ICONS.map((icon) => (
-                          <button
-                            key={icon.file}
-                            type="button"
-                            onClick={() =>
-                              updateScheduleDraft(draft.tempId, {
-                                sportIcon:
-                                  draft.sportIcon === icon.file
-                                    ? ''
-                                    : icon.file,
-                              })
-                            }
-                            className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
-                              draft.sportIcon === icon.file
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                            }`}
-                          >
-                            <Image
-                              src={`/icons/${icon.file}`}
-                              alt={icon.label}
-                              width={40}
-                              height={40}
-                            />
-                            <span>{icon.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
                       <label className="text-sm font-medium">Grupo</label>
                       <select
                         value={draft.groupId}
@@ -524,39 +588,6 @@ export default function EditActivityForm({
                         ))}
                       </select>
                     </div>
-
-                    <input
-                      type="text"
-                      placeholder="Nombre o referencia del lugar"
-                      value={draft.geoLocation}
-                      onChange={(e) =>
-                        updateScheduleDraft(draft.tempId, {
-                          geoLocation: e.target.value,
-                        })
-                      }
-                      className={inputClass}
-                    />
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Punto en el mapa</p>
-                      <LocationMapPicker
-                        value={draft.coordinates}
-                        onChange={(coordinates) =>
-                          updateScheduleDraft(draft.tempId, { coordinates })
-                        }
-                      />
-                    </div>
-
-                    <textarea
-                      placeholder="Descripción de la sesión (opcional)"
-                      value={draft.description}
-                      onChange={(e) =>
-                        updateScheduleDraft(draft.tempId, {
-                          description: e.target.value,
-                        })
-                      }
-                      className={`${inputClass} min-h-[90px] resize-y`}
-                    />
                   </div>
                 ))}
               </div>
@@ -588,7 +619,9 @@ export default function EditActivityForm({
                     onClick={() => setConfirmDeleteGroupId(group.id)}
                     className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
                   >
-                    {deletingGroupId === group.id ? 'Eliminando...' : 'Eliminar'}
+                    {deletingGroupId === group.id
+                      ? 'Eliminando...'
+                      : 'Eliminar'}
                   </button>
                 </li>
               ))}
@@ -634,7 +667,9 @@ export default function EditActivityForm({
             </Button>
           </div>
 
-          {groupError && <p className="text-xs text-destructive">{groupError}</p>}
+          {groupError && (
+            <p className="text-xs text-destructive">{groupError}</p>
+          )}
         </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
@@ -648,7 +683,8 @@ export default function EditActivityForm({
           <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 className="text-lg font-semibold mb-2">Eliminar grupo</h2>
             <p className="text-muted-foreground mb-6">
-              ¿Estás seguro de que querés eliminar este grupo? Esta acción no se puede deshacer.
+              ¿Estás seguro de que querés eliminar este grupo? Esta acción no se
+              puede deshacer.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -660,7 +696,11 @@ export default function EditActivityForm({
               </button>
               <button
                 type="button"
-                onClick={() => { const id = confirmDeleteGroupId; setConfirmDeleteGroupId(null); void handleDeleteGroup(id); }}
+                onClick={() => {
+                  const id = confirmDeleteGroupId;
+                  setConfirmDeleteGroupId(null);
+                  void handleDeleteGroup(id);
+                }}
                 className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
               >
                 Eliminar

@@ -25,11 +25,13 @@ type AnnualScheduleDraft = {
   tempId: string;
   weekday: string;
   schedule: string;
-  description: string;
   groupTempId: string;
-  sportIcon: string;
+};
+
+type AnnualSharedDraft = {
   geoLocation: string;
   coordinates: Coordinates | null;
+  sportIcon: string;
 };
 
 const WEEKDAY_OPTIONS = [
@@ -61,11 +63,7 @@ function createEmptyAnnualScheduleDraft(): AnnualScheduleDraft {
     tempId: crypto.randomUUID(),
     weekday: '1',
     schedule: '',
-    description: '',
     groupTempId: '',
-    sportIcon: '',
-    geoLocation: '',
-    coordinates: null,
   };
 }
 
@@ -89,6 +87,11 @@ export default function CreateActivityForm({
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
+  const [annualShared, setAnnualShared] = useState<AnnualSharedDraft>({
+    geoLocation: '',
+    coordinates: null,
+    sportIcon: '',
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
@@ -151,6 +154,11 @@ export default function CreateActivityForm({
     setNewGroupName('');
     setNewGroupDesc('');
     setAnnualSchedules([]);
+    setAnnualShared({
+      geoLocation: '',
+      coordinates: null,
+      sportIcon: '',
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -172,29 +180,27 @@ export default function CreateActivityForm({
                   `Completá el horario de la sesión ${index + 1}`
                 );
               }
-              if (!draft.geoLocation.trim()) {
-                throw new Error(
-                  `Completá la ubicación de la sesión ${index + 1}`
-                );
-              }
-              if (!draft.coordinates) {
-                throw new Error(
-                  `Seleccioná un punto en el mapa para la sesión ${index + 1}`
-                );
-              }
 
               return {
+                tempId: draft.tempId,
                 weekday: Number(draft.weekday),
                 schedule: draft.schedule.trim(),
-                description: draft.description.trim() || undefined,
                 groupTempId: draft.groupTempId || undefined,
-                sportIcon: draft.sportIcon || undefined,
-                geoLocation: draft.geoLocation.trim(),
-                latitude: draft.coordinates.latitude,
-                longitude: draft.coordinates.longitude,
               };
             })
           : [];
+
+      if (activityType === 'ANNUAL') {
+        if (!annualShared.geoLocation.trim()) {
+          throw new Error('Completá la ubicación compartida');
+        }
+        if (!annualShared.coordinates) {
+          throw new Error('Seleccioná un punto en el mapa compartido');
+        }
+        if (!annualShared.sportIcon) {
+          throw new Error('Seleccioná un deporte compartido');
+        }
+      }
 
       const res = await fetch('/api/activities', {
         method: 'POST',
@@ -214,6 +220,22 @@ export default function CreateActivityForm({
             description: group.description || undefined,
           })),
           annualSchedules: normalizedAnnualSchedules,
+          geoLocation:
+            activityType === 'ANNUAL'
+              ? annualShared.geoLocation.trim()
+              : undefined,
+          latitude:
+            activityType === 'ANNUAL'
+              ? annualShared.coordinates!.latitude
+              : undefined,
+          longitude:
+            activityType === 'ANNUAL'
+              ? annualShared.coordinates!.longitude
+              : undefined,
+          sportIcon:
+            activityType === 'ANNUAL'
+              ? annualShared.sportIcon || undefined
+              : undefined,
         }),
       });
 
@@ -319,12 +341,78 @@ export default function CreateActivityForm({
 
       {activityType === 'ANNUAL' && (
         <div className="space-y-4 rounded-lg border bg-background p-4">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">
+                Ubicación compartida
+              </label>
+              <input
+                type="text"
+                placeholder="Nombre o referencia del lugar"
+                value={annualShared.geoLocation}
+                onChange={(e) =>
+                  setAnnualShared((current) => ({
+                    ...current,
+                    geoLocation: e.target.value,
+                  }))
+                }
+                className={inputClass}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Punto en el mapa</p>
+              <LocationMapPicker
+                value={annualShared.coordinates}
+                onChange={(coordinates) =>
+                  setAnnualShared((current) => ({
+                    ...current,
+                    coordinates,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Deporte compartido</label>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {SPORT_ICONS.map((icon) => (
+                  <button
+                    key={icon.file}
+                    type="button"
+                    onClick={() =>
+                      setAnnualShared((current) => ({
+                        ...current,
+                        sportIcon:
+                          current.sportIcon === icon.file ? '' : icon.file,
+                      }))
+                    }
+                    className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
+                      annualShared.sportIcon === icon.file
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <Image
+                      src={`/icons/${icon.file}`}
+                      alt={icon.label}
+                      width={40}
+                      height={40}
+                    />
+                    <span>{icon.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold">Sesiones semanales</p>
               <p className="text-xs text-muted-foreground">
-                Cada bloque define un día fijo de la semana y se replicará entre
-                la fecha de inicio y la fecha de fin.
+                Cada bloque define un día fijo de la semana, un horario y un
+                grupo. La ubicación, el deporte y la descripción son comunes a
+                todas las sesiones.
               </p>
             </div>
             <Button
@@ -388,37 +476,6 @@ export default function CreateActivityForm({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium">Deporte</label>
-                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                      {SPORT_ICONS.map((icon) => (
-                        <button
-                          key={icon.file}
-                          type="button"
-                          onClick={() =>
-                            updateAnnualScheduleDraft(draft.tempId, {
-                              sportIcon:
-                                draft.sportIcon === icon.file ? '' : icon.file,
-                            })
-                          }
-                          className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
-                            draft.sportIcon === icon.file
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                          }`}
-                        >
-                          <Image
-                            src={`/icons/${icon.file}`}
-                            alt={icon.label}
-                            width={40}
-                            height={40}
-                          />
-                          <span>{icon.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
                     <label className="text-sm font-medium">Grupo</label>
                     <select
                       value={draft.groupTempId}
@@ -437,41 +494,6 @@ export default function CreateActivityForm({
                       ))}
                     </select>
                   </div>
-
-                  <input
-                    type="text"
-                    placeholder="Nombre o referencia del lugar"
-                    value={draft.geoLocation}
-                    onChange={(e) =>
-                      updateAnnualScheduleDraft(draft.tempId, {
-                        geoLocation: e.target.value,
-                      })
-                    }
-                    className={inputClass}
-                  />
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Punto en el mapa</p>
-                    <LocationMapPicker
-                      value={draft.coordinates}
-                      onChange={(coordinates) =>
-                        updateAnnualScheduleDraft(draft.tempId, {
-                          coordinates,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <textarea
-                    placeholder="Descripción de la sesión (opcional)"
-                    value={draft.description}
-                    onChange={(e) =>
-                      updateAnnualScheduleDraft(draft.tempId, {
-                        description: e.target.value,
-                      })
-                    }
-                    className={`${inputClass} min-h-[90px] resize-y`}
-                  />
                 </div>
               ))}
             </div>

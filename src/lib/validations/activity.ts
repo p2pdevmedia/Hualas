@@ -22,25 +22,17 @@ const dateInputSchema = z
   });
 
 const annualScheduleSchema = z.object({
+  tempId: z.string().min(1),
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
-  description: z.string().optional(),
   groupTempId: z.string().min(1).optional(),
-  sportIcon: z.string().optional().nullable(),
-  geoLocation: z.string().min(1),
-  latitude: z.number(),
-  longitude: z.number(),
 });
 
 const annualScheduleEditSchema = z.object({
+  tempId: z.string().min(1),
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
-  description: z.string().optional(),
   groupId: z.string().min(1).optional(),
-  sportIcon: z.string().optional().nullable(),
-  geoLocation: z.string().min(1),
-  latitude: z.number(),
-  longitude: z.number(),
 });
 
 const activityGroupDraftSchema = z.object({
@@ -60,6 +52,10 @@ const activityBaseSchema = z.object({
     .default('ONE_TIME'),
   image: z.string().url().optional(),
   description: z.string().optional(),
+  geoLocation: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  sportIcon: z.string().optional().nullable(),
   price: z.number().int().nonnegative(),
   capacity: z.number().int().positive().optional(),
   professorIds: z.array(z.string()).optional(),
@@ -93,6 +89,30 @@ export const activityCreateSchema = activityBaseSchema
           code: z.ZodIssueCode.custom,
           message: 'Definí al menos una sesión semanal para la actividad anual',
           path: ['annualSchedules'],
+        });
+      }
+
+      if (!data.geoLocation?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Definí una ubicación compartida para la actividad anual',
+          path: ['geoLocation'],
+        });
+      }
+
+      if (data.latitude == null || data.longitude == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Seleccioná un punto en el mapa para la actividad anual',
+          path: ['latitude'],
+        });
+      }
+
+      if (!data.sportIcon?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Seleccioná un deporte para la actividad anual',
+          path: ['sportIcon'],
         });
       }
     }
@@ -130,6 +150,32 @@ export const activityUpdateSchema = activityBaseSchema
       });
     }
 
+    if (data.activityType === 'ANNUAL') {
+      if (!data.geoLocation?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Definí una ubicación compartida para la actividad anual',
+          path: ['geoLocation'],
+        });
+      }
+
+      if (data.latitude == null || data.longitude == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Seleccioná un punto en el mapa para la actividad anual',
+          path: ['latitude'],
+        });
+      }
+
+      if (!data.sportIcon?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Seleccioná un deporte para la actividad anual',
+          path: ['sportIcon'],
+        });
+      }
+    }
+
     if (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0) {
       for (let i = 0; i < data.annualSchedules.length; i++) {
         const s = data.annualSchedules[i];
@@ -138,13 +184,6 @@ export const activityUpdateSchema = activityBaseSchema
             code: z.ZodIssueCode.custom,
             message: `Completá el horario de la sesión ${i + 1}`,
             path: ['annualSchedules', i, 'schedule'],
-          });
-        }
-        if (!s.geoLocation.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Completá la ubicación de la sesión ${i + 1}`,
-            path: ['annualSchedules', i, 'geoLocation'],
           });
         }
       }

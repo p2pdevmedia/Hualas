@@ -22,32 +22,48 @@ export default async function EditActivityPage({
     redirect('/activities');
   }
 
-  const [professors, groups, activityProfessorAssignments, existingDayCount] =
-    await Promise.all([
-      prisma.user.findMany({
-        where: {
-          roleAssignments: { some: { role: 'PROFESSOR' } },
-          isActive: true,
-        },
-        select: {
-          id: true,
-          name: true,
-          lastName: true,
-          email: true,
-        },
-        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
-      }),
-      prisma.activityGroup.findMany({
-        where: { activityId: params.id },
-        orderBy: { createdAt: 'asc' },
-        select: { id: true, name: true, description: true },
-      }),
-      prisma.activityProfessor.findMany({
-        where: { activityId: params.id },
-        select: { userId: true },
-      }),
-      prisma.activityDay.count({ where: { activityId: params.id } }),
-    ]);
+  const [
+    professors,
+    groups,
+    activityProfessorAssignments,
+    existingDayCount,
+    firstAnnualDay,
+  ] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        roleAssignments: { some: { role: 'PROFESSOR' } },
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        email: true,
+      },
+      orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+    }),
+    prisma.activityGroup.findMany({
+      where: { activityId: params.id },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, description: true },
+    }),
+    prisma.activityProfessor.findMany({
+      where: { activityId: params.id },
+      select: { userId: true },
+    }),
+    prisma.activityDay.count({ where: { activityId: params.id } }),
+    prisma.activityDay.findFirst({
+      where: { activityId: params.id },
+      orderBy: { date: 'asc' },
+      select: {
+        geoLocation: true,
+        latitude: true,
+        longitude: true,
+        sportIcon: true,
+        description: true,
+      },
+    }),
+  ]);
 
   return (
     <main className="p-4">
@@ -59,13 +75,30 @@ export default async function EditActivityPage({
           date: activity.date.toISOString().split('T')[0],
           endDate: activity.endDate.toISOString().split('T')[0],
           activityType: activity.activityType,
-          description: activity.description ?? '',
+          description:
+            activity.description ?? firstAnnualDay?.description ?? '',
           price: activity.price,
           capacity: activity.capacity ?? null,
           professorIds: activityProfessorAssignments.map(
             (assignment) => assignment.userId
           ),
         }}
+        annualDefaults={
+          firstAnnualDay
+            ? {
+                geoLocation: firstAnnualDay.geoLocation,
+                coordinates:
+                  firstAnnualDay.latitude != null &&
+                  firstAnnualDay.longitude != null
+                    ? {
+                        latitude: firstAnnualDay.latitude,
+                        longitude: firstAnnualDay.longitude,
+                      }
+                    : null,
+                sportIcon: firstAnnualDay.sportIcon ?? '',
+              }
+            : undefined
+        }
         professors={professors}
         initialGroups={groups}
         existingDayCount={existingDayCount}

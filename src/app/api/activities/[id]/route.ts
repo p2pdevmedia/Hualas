@@ -37,99 +37,112 @@ export async function PUT(
   }
 
   const activity = await prisma
-    .$transaction(async (tx) => {
-      const updatedActivity = await tx.activity.update({
-        where: { id: params.id },
-        data: {
-          name: data.name,
-          date: data.date,
-          endDate: data.endDate,
-          activityType: data.activityType,
-          frequency: data.frequency,
-          ...(data.image !== undefined ? { image: data.image } : {}),
-          description: data.description ?? null,
-          price: data.price,
-          capacity: data.capacity ?? null,
-        },
-        select: { id: true },
-      });
-
-      const activityId = updatedActivity.id;
-
-      await tx.activityProfessor.deleteMany({
-        where: { activityId },
-      });
-
-      if (professorIds.length > 0) {
-        await tx.activityProfessor.createMany({
-          data: professorIds.map((userId) => ({
-            activityId,
-            userId,
-          })),
+    .$transaction(
+      async (tx) => {
+        const updatedActivity = await tx.activity.update({
+          where: { id: params.id },
+          data: {
+            name: data.name,
+            date: data.date,
+            endDate: data.endDate,
+            activityType: data.activityType,
+            frequency: data.frequency,
+            ...(data.image !== undefined ? { image: data.image } : {}),
+            description: data.description ?? null,
+            price: data.price,
+            capacity: data.capacity ?? null,
+          },
+          select: { id: true },
         });
-      }
 
-      const shouldDeleteDays =
-        data.activityType === 'TEMPORARY' ||
-        (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0);
+        const activityId = updatedActivity.id;
 
-      if (shouldDeleteDays) {
-        await tx.activityDay.deleteMany({ where: { activityId } });
-      }
-
-      if (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0) {
-        const annualDays = buildAnnualActivityDays(
-          data.date,
-          data.endDate,
-          data.annualSchedules.map((s) => ({
-            weekday: s.weekday,
-            schedule: s.schedule,
-            description: s.description,
-            sportIcon: s.sportIcon ?? undefined,
-            geoLocation: s.geoLocation,
-            latitude: s.latitude,
-            longitude: s.longitude,
-          }))
-        );
-
-        const dayData = annualDays.map((day) => {
-          const schedule = data.annualSchedules.find(
-            (s) =>
-              s.weekday === day.weekday &&
-              s.schedule === day.schedule &&
-              s.geoLocation === day.geoLocation
-          );
-          return {
-            activityId,
-            createdById: session.user.id,
-            date: day.date,
-            schedule: day.schedule,
-            description: day.description ?? null,
-            activityGroupId: schedule?.groupId ?? null,
-            sportIcon: day.sportIcon ?? null,
-            geoLocation: day.geoLocation,
-            latitude: day.latitude,
-            longitude: day.longitude,
-          };
+        await tx.activityProfessor.deleteMany({
+          where: { activityId },
         });
 
         if (professorIds.length > 0) {
-          const createdDays = await tx.activityDay.createManyAndReturn({
-            data: dayData,
-            select: { id: true },
+          await tx.activityProfessor.createMany({
+            data: professorIds.map((userId) => ({
+              activityId,
+              userId,
+            })),
           });
-          await tx.activityDayProfessor.createMany({
-            data: createdDays.flatMap(({ id: activityDayId }) =>
-              professorIds.map((userId) => ({ activityDayId, userId }))
-            ),
-          });
-        } else {
-          await tx.activityDay.createMany({ data: dayData });
         }
-      }
 
-      return { id: activityId };
-    }, { timeout: 30000 })
+        const shouldDeleteDays =
+          data.activityType === 'TEMPORARY' ||
+          (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0);
+
+        if (shouldDeleteDays) {
+          await tx.activityDay.deleteMany({ where: { activityId } });
+        }
+
+        if (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0) {
+          const annualDays = buildAnnualActivityDays(
+            data.date,
+            data.endDate,
+            data.annualSchedules.map((s) => ({
+              ...s,
+              groupId: s.groupId ?? undefined,
+            })),
+            {
+              description: data.description ?? undefined,
+              geoLocation: data.geoLocation!,
+              latitude: data.latitude!,
+              longitude: data.longitude!,
+              sportIcon: data.sportIcon ?? undefined,
+            }
+          );
+
+          const dayData = annualDays.map((day) => {
+            const schedule = data.annualSchedules.find(
+              (s) => s.tempId === day.tempId
+            );
+            return {
+              activityId,
+              createdById: session.user.id,
+              date: day.date,
+              schedule: day.schedule,
+              description: day.description ?? null,
+              activityGroupId: schedule?.groupId ?? null,
+              sportIcon: day.sportIcon ?? null,
+              geoLocation: day.geoLocation,
+              latitude: day.latitude,
+              longitude: day.longitude,
+            };
+          });
+
+          if (professorIds.length > 0) {
+            const createdDays = await tx.activityDay.createManyAndReturn({
+              data: dayData,
+              select: { id: true },
+            });
+            await tx.activityDayProfessor.createMany({
+              data: createdDays.flatMap(({ id: activityDayId }) =>
+                professorIds.map((userId) => ({ activityDayId, userId }))
+              ),
+            });
+          } else {
+            await tx.activityDay.createMany({ data: dayData });
+          }
+        } else if (data.activityType === 'ANNUAL') {
+          await tx.activityDay.updateMany({
+            where: { activityId },
+            data: {
+              description: data.description ?? null,
+              geoLocation: data.geoLocation!,
+              latitude: data.latitude!,
+              longitude: data.longitude!,
+              sportIcon: data.sportIcon ?? null,
+            },
+          });
+        }
+
+        return { id: activityId };
+      },
+      { timeout: 30000 }
+    )
     .catch((error) => {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

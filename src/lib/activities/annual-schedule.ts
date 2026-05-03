@@ -1,13 +1,23 @@
 type AnnualScheduleTemplate = {
+  tempId?: string;
   weekday: number;
   schedule: string;
-  description?: string;
   groupTempId?: string;
-  sportIcon?: string;
+  groupId?: string;
+};
+
+type AnnualSharedFields = {
+  description?: string;
   geoLocation: string;
   latitude: number;
   longitude: number;
+  sportIcon?: string;
 };
+
+type AnnualScheduledDay = AnnualScheduleTemplate &
+  AnnualSharedFields & {
+    date: Date;
+  };
 
 function startOfUtcDay(date: Date) {
   return new Date(
@@ -24,11 +34,12 @@ function addUtcDays(date: Date, days: number) {
 export function buildAnnualActivityDays(
   startDate: Date,
   endDate: Date,
-  templates: AnnualScheduleTemplate[]
+  templates: AnnualScheduleTemplate[],
+  sharedFields: AnnualSharedFields
 ) {
   const start = startOfUtcDay(startDate);
   const end = startOfUtcDay(endDate);
-  const days: Array<AnnualScheduleTemplate & { date: Date }> = [];
+  const days: AnnualScheduledDay[] = [];
 
   for (let cursor = start; cursor <= end; cursor = addUtcDays(cursor, 1)) {
     const weekday = cursor.getUTCDay();
@@ -37,6 +48,11 @@ export function buildAnnualActivityDays(
       days.push({
         ...template,
         date: new Date(cursor),
+        description: sharedFields.description,
+        geoLocation: sharedFields.geoLocation,
+        latitude: sharedFields.latitude,
+        longitude: sharedFields.longitude,
+        sportIcon: sharedFields.sportIcon,
       });
     }
   }
