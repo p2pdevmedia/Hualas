@@ -410,109 +410,6 @@ export default function Navbar() {
       <PushManager />
       {menuOpen && (
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
-          {session && !isCounter && (
-            <Link
-              href={activitiesHref}
-              className={navLinkClass(activitiesHref)}
-              onClick={() => setMenuOpen(false)}
-            >
-              {isMember ? t.myActivities : t.activities}
-            </Link>
-          )}
-          {isMemberRole && (
-            <Link
-              href="/activities/cart"
-              className={cn(
-                navLinkClass('/activities/cart'),
-                'inline-flex items-center gap-2'
-              )}
-              onClick={() => setMenuOpen(false)}
-            >
-              {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
-              <span>Carrito</span>
-              {cartItemsCount > 0 && renderCartNotificationIcon()}
-            </Link>
-          )}
-          {isAdmin && (
-            <>
-              <Link
-                href="/admin/users"
-                className={navLinkClass('/admin/users')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.users}
-              </Link>
-              <Link
-                href="/admin/forms"
-                className={navLinkClass('/admin/forms')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.forms}
-              </Link>
-              {isSuperAdmin && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium opacity-90">
-                    Administrador
-                  </span>
-                  <Link
-                    href="/admin/notifications"
-                    className={navLinkClass('/admin/notifications')}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Notificaciones
-                  </Link>
-                  <Link
-                    href="/admin/audit-log"
-                    className={navLinkClass('/admin/audit-log')}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Registro de auditoría
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
-          {isAccounting && (
-            <Link
-              href="/accounting"
-              className={navLinkClass('/accounting')}
-              onClick={() => setMenuOpen(false)}
-            >
-              {t.accounting}
-            </Link>
-          )}
-          {(!session || (!isAdmin && !isCounter)) && (
-            <>
-              <Link
-                href="/contact"
-                className={navLinkClass('/contact')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.contact}
-              </Link>
-              <Link
-                href="/faq"
-                className={navLinkClass('/faq')}
-                onClick={() => setMenuOpen(false)}
-              >
-                FAQ
-              </Link>
-            </>
-          )}
-          {session && (
-            <Link
-              href="/chat"
-              className={cn(
-                navLinkClass('/chat'),
-                'inline-flex items-center gap-2'
-              )}
-              onClick={() => setMenuOpen(false)}
-            >
-              {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
-              <span>{t.chat}</span>
-              {hasUnreadMessages && renderUnreadIcon()}
-            </Link>
-          )}
           {session ? (
             <>
               <div className="flex items-center gap-3 py-2">
@@ -550,7 +447,6 @@ export default function Navbar() {
                   {session.user.name || 'Usuario'}
                 </span>
               </div>
-              <ProfileSwitcher className="self-start" />
               <Link
                 href="/profile"
                 className={navLinkClass('/profile')}
@@ -558,6 +454,43 @@ export default function Navbar() {
               >
                 {t.profile}
               </Link>
+              {session && !isCounter && (
+                <Link
+                  href={activitiesHref}
+                  className={navLinkClass(activitiesHref)}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {isMember ? t.myActivities : t.activities}
+                </Link>
+              )}
+              {isMemberRole && (
+                <Link
+                  href="/activities/cart"
+                  className={cn(
+                    navLinkClass('/activities/cart'),
+                    'inline-flex items-center gap-2'
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
+                  <span>Carrito</span>
+                  {cartItemsCount > 0 && renderCartNotificationIcon()}
+                </Link>
+              )}
+              {session && (
+                <Link
+                  href="/chat"
+                  className={cn(
+                    navLinkClass('/chat'),
+                    'inline-flex items-center gap-2'
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
+                  <span>{t.chat}</span>
+                  {hasUnreadMessages && renderUnreadIcon()}
+                </Link>
+              )}
               {canSeeChildrenSection && (
                 <Link
                   href="/profile/children"
@@ -573,7 +506,7 @@ export default function Navbar() {
                   className={navLinkClass('/profile/pickup-notices')}
                   onClick={() => setMenuOpen(false)}
                 >
-                  Avisos de Retiro
+                  Avisos de retiro
                 </Link>
               )}
               <Link
@@ -583,6 +516,68 @@ export default function Navbar() {
               >
                 Historial de pagos
               </Link>
+              <Link
+                href="/contact"
+                className={navLinkClass('/contact')}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.contact}
+              </Link>
+              <Link
+                href="/faq"
+                className={navLinkClass('/faq')}
+                onClick={() => setMenuOpen(false)}
+              >
+                FAQ
+              </Link>
+              {isAdmin && (
+                <>
+                  <Link
+                    href="/admin/users"
+                    className={navLinkClass('/admin/users')}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t.users}
+                  </Link>
+                  <Link
+                    href="/admin/forms"
+                    className={navLinkClass('/admin/forms')}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t.forms}
+                  </Link>
+                  {isSuperAdmin && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-medium opacity-90">
+                        Administrador
+                      </span>
+                      <Link
+                        href="/admin/notifications"
+                        className={navLinkClass('/admin/notifications')}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Notificaciones
+                      </Link>
+                      <Link
+                        href="/admin/audit-log"
+                        className={navLinkClass('/admin/audit-log')}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Registro de auditoría
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+              {isAccounting && (
+                <Link
+                  href="/accounting"
+                  className={navLinkClass('/accounting')}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t.accounting}
+                </Link>
+              )}
               {isProfessor && (
                 <Link
                   href="/my-payments"
@@ -592,6 +587,7 @@ export default function Navbar() {
                   Mis pagos
                 </Link>
               )}
+              <ProfileSwitcher className="self-start" />
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
