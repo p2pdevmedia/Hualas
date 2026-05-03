@@ -67,34 +67,6 @@ function transformAttendanceList(
   });
 }
 
-function buildFullParticipantList(
-  day: {
-    activityGroupId: string | null;
-    attendances: Array<{ activityParticipantId: string; status: string }>;
-  },
-  participants: any[]
-) {
-  return participants
-    .filter(
-      (p) =>
-        !day.activityGroupId ||
-        p.groupMembership?.activityGroupId === day.activityGroupId
-    )
-    .map((p) => {
-      const attendance = day.attendances.find(
-        (a) => a.activityParticipantId === p.id
-      );
-      return {
-        activityParticipantId: p.id,
-        participantName: getParticipantName(p),
-        status: (attendance?.status ?? 'PENDING') as
-          | 'PENDING'
-          | 'GOING'
-          | 'NOT_GOING',
-      };
-    });
-}
-
 export default async function ActivityPage({ params }: ActivityPageProps) {
   const session = await getServerSession(authOptions);
   const isAdmin =
@@ -500,20 +472,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   day.professors.some(
                     (a: { userId: string }) => a.userId === session?.user.id
                   ),
-                canManageAttendance:
-                  isAdmin ||
-                  (isProfessor &&
-                    day.professors.some(
-                      (a: { userId: string }) => a.userId === session?.user.id
-                    )),
-                fullParticipantList:
-                  isAdmin ||
-                  (isProfessor &&
-                    day.professors.some(
-                      (a: { userId: string }) => a.userId === session?.user.id
-                    ))
-                    ? buildFullParticipantList(day, participants)
-                    : [],
                 assignedProfessors: day.professors.map((assignment: any) => ({
                   id: assignment.user.id,
                   name: assignment.user.name,
