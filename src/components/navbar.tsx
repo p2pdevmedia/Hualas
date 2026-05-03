@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, ShoppingCart, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -185,6 +185,18 @@ export default function Navbar() {
     />
   );
 
+  const renderNavIcon = (src: string, alt: string) => (
+    <Image
+      src={src}
+      alt={alt}
+      width={18}
+      height={18}
+      unoptimized
+      className="h-4 w-4 object-contain"
+      aria-hidden="true"
+    />
+  );
+
   return (
     <nav
       className={cn(
@@ -320,7 +332,7 @@ export default function Navbar() {
                     'relative inline-flex items-center gap-1'
                   )}
                 >
-                  <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                  {renderNavIcon('/Inscripcion.png', 'Carrito')}
                   {cartItemsCount > 0 && renderCartNotificationIcon()}
                 </Link>
               )}
@@ -374,6 +386,7 @@ export default function Navbar() {
                       className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                     >
                       <span className="inline-flex items-center gap-2">
+                        {renderNavIcon('/Inscripcion.png', 'Carrito')}
                         <span>Carrito</span>
                         {cartItemsCount > 0 && renderCartNotificationIcon()}
                       </span>
@@ -451,7 +464,7 @@ export default function Navbar() {
               )}
               onClick={() => setMenuOpen(false)}
             >
-              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+              {renderNavIcon('/Inscripcion.png', 'Carrito')}
               <span>Carrito</span>
               {cartItemsCount > 0 && renderCartNotificationIcon()}
             </Link>
@@ -463,10 +476,15 @@ export default function Navbar() {
               </span>
               <Link
                 href="/chat"
-                className={navLinkClass('/chat')}
+                className={cn(
+                  navLinkClass('/chat'),
+                  'inline-flex items-center gap-2'
+                )}
                 onClick={() => setMenuOpen(false)}
               >
-                {t.chat} {hasUnreadMessages && renderUnreadIcon()}
+                {renderNavIcon('/Chat.png', 'Chat')}
+                <span>{t.chat}</span>
+                {hasUnreadMessages && renderUnreadIcon()}
               </Link>
               {isMember && (
                 <Link
