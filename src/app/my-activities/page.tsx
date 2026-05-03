@@ -372,10 +372,10 @@ export default async function MyActivitiesPage() {
                             )}
                             {isProfessor && (
                               <Link
-                                href={`/activities/${activity.id}/days/${s.id}/attendance`}
+                                href={`/activities/${activity.id}/days/${s.id}`}
                                 className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                               >
-                                Asistencia
+                                Ver sesión
                               </Link>
                             )}
                           </li>
