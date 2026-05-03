@@ -3,9 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import AttendanceManager from './attendance-manager';
 
-export default async function DayAttendancePage({
+export default async function DayDescripcionPage({
   params,
 }: {
   params: { id: string; dayId: string };
@@ -25,9 +24,6 @@ export default async function DayAttendancePage({
       activity: { select: { id: true, name: true } },
       activityGroup: { select: { id: true, name: true } },
       professors: { select: { userId: true } },
-      attendances: {
-        select: { activityParticipantId: true, status: true },
-      },
     },
   });
 
@@ -39,40 +35,6 @@ export default async function DayAttendancePage({
   ) {
     redirect('/my-activities');
   }
-
-  const allParticipants = await prisma.activityParticipant.findMany({
-    where: { activityId: params.id },
-    include: {
-      user: { select: { name: true, lastName: true } },
-      child: { select: { name: true, lastName: true } },
-      groupMembership: { select: { activityGroupId: true } },
-    },
-    orderBy: { id: 'asc' },
-  });
-
-  const participants = day.activityGroupId
-    ? allParticipants.filter(
-        (p) => p.groupMembership?.activityGroupId === day.activityGroupId
-      )
-    : allParticipants;
-
-  const attendanceMap = new Map(
-    day.attendances.map((a) => [a.activityParticipantId, a.status])
-  );
-
-  const participantList = participants.map((p) => {
-    const name = p.child
-      ? `${p.child.name}${p.child.lastName ? ` ${p.child.lastName}` : ''}`
-      : `${p.user.name ?? ''}${p.user.lastName ? ` ${p.user.lastName}` : ''}`.trim();
-    return {
-      activityParticipantId: p.id,
-      participantName: name || 'Sin nombre',
-      status: (attendanceMap.get(p.id) ?? 'PENDING') as
-        | 'PENDING'
-        | 'GOING'
-        | 'NOT_GOING',
-    };
-  });
 
   const dateLabel = day.date.toLocaleDateString('es-AR', {
     weekday: 'long',
@@ -95,11 +57,11 @@ export default async function DayAttendancePage({
           {dateLabel}
         </Link>
         <span>→</span>
-        <span className="text-foreground">Asistencia</span>
+        <span className="text-foreground">Descripción</span>
       </nav>
 
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold">Asistencia</h1>
+        <h1 className="font-heading text-2xl font-semibold">Descripción</h1>
         <p className="text-sm text-muted-foreground capitalize">{dateLabel}</p>
         <p className="text-sm text-muted-foreground">
           {day.schedule} · {day.geoLocation}
@@ -111,13 +73,15 @@ export default async function DayAttendancePage({
         )}
       </div>
 
-      {participantList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No hay inscriptos para esta sesión.
-        </p>
-      ) : (
-        <AttendanceManager dayId={day.id} participants={participantList} />
-      )}
+      <div className="rounded-xl border bg-card p-5">
+        {day.description ? (
+          <p className="text-sm whitespace-pre-wrap">{day.description}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">
+            Esta sesión no tiene descripción.
+          </p>
+        )}
+      </div>
     </main>
   );
 }

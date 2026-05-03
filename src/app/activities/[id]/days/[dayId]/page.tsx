@@ -3,8 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import DayNotesForm from './attendance/day-notes-form';
-import AttendanceManager from './attendance/attendance-manager';
 
 export default async function ActivityDayPage({
   params,
@@ -26,9 +24,7 @@ export default async function ActivityDayPage({
       activity: { select: { id: true, name: true } },
       activityGroup: { select: { id: true, name: true } },
       professors: { select: { userId: true } },
-      attendances: {
-        select: { activityParticipantId: true, status: true },
-      },
+      attendances: { select: { status: true } },
     },
   });
 
@@ -41,46 +37,17 @@ export default async function ActivityDayPage({
     redirect('/my-activities');
   }
 
-  const allParticipants = await prisma.activityParticipant.findMany({
-    where: { activityId: params.id },
-    include: {
-      user: { select: { name: true, lastName: true } },
-      child: { select: { name: true, lastName: true } },
-      groupMembership: { select: { activityGroupId: true } },
-    },
-    orderBy: { id: 'asc' },
-  });
-
-  const participants = day.activityGroupId
-    ? allParticipants.filter(
-        (p) => p.groupMembership?.activityGroupId === day.activityGroupId
-      )
-    : allParticipants;
-
-  const attendanceMap = new Map(
-    day.attendances.map((a) => [a.activityParticipantId, a.status])
-  );
-
-  const participantList = participants.map((p) => {
-    const name = p.child
-      ? `${p.child.name}${p.child.lastName ? ` ${p.child.lastName}` : ''}`
-      : `${p.user.name ?? ''}${p.user.lastName ? ` ${p.user.lastName}` : ''}`.trim();
-    return {
-      activityParticipantId: p.id,
-      participantName: name || 'Sin nombre',
-      status: (attendanceMap.get(p.id) ?? 'PENDING') as
-        | 'PENDING'
-        | 'GOING'
-        | 'NOT_GOING',
-    };
-  });
-
   const dateLabel = day.date.toLocaleDateString('es-AR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
+
+  const going = day.attendances.filter((a) => a.status === 'GOING').length;
+  const total = day.attendances.length;
+
+  const base = `/activities/${params.id}/days/${params.dayId}`;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 space-y-6">
@@ -99,7 +66,6 @@ export default async function ActivityDayPage({
         <span className="text-foreground capitalize">{dateLabel}</span>
       </nav>
 
-      {/* Header */}
       <div className="space-y-1">
         <h1 className="font-heading text-2xl font-semibold capitalize">
           {dateLabel}
@@ -114,36 +80,47 @@ export default async function ActivityDayPage({
         )}
       </div>
 
-      {/* Descripción */}
-      {day.description && (
-        <section className="rounded-xl border bg-card p-5 space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Link
+          href={`${base}/descripcion`}
+          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Descripción
-          </h2>
-          <p className="text-sm whitespace-pre-wrap">{day.description}</p>
-        </section>
-      )}
+          </span>
+          <span className="text-sm text-foreground line-clamp-3">
+            {day.description ?? (
+              <span className="italic text-muted-foreground">Sin descripción</span>
+            )}
+          </span>
+        </Link>
 
-      {/* Planificación y Devolución */}
-      <DayNotesForm
-        dayId={day.id}
-        initialPlanificacion={day.planificacion ?? null}
-        initialDevolucion={day.devolucion ?? null}
-      />
+        <Link
+          href={`${base}/observaciones`}
+          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Observaciones
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {day.planificacion || day.devolucion
+              ? 'Ver planificación y devolución'
+              : 'Agregar planificación y devolución'}
+          </span>
+        </Link>
 
-      {/* Asistencia */}
-      <section className="rounded-xl border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Asistencia
-        </h2>
-        {participantList.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No hay inscriptos para esta sesión.
-          </p>
-        ) : (
-          <AttendanceManager dayId={day.id} participants={participantList} />
-        )}
-      </section>
+        <Link
+          href={`${base}/attendance`}
+          className="flex flex-col gap-1 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Asistencia
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {total > 0 ? `${going} de ${total} asistieron` : 'Sin registros aún'}
+          </span>
+        </Link>
+      </div>
     </main>
   );
 }

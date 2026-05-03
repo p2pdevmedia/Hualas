@@ -34,16 +34,22 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const description =
-    typeof body.description === 'string' ? body.description || null : null;
-  const planificacion =
-    typeof body.planificacion === 'string' ? body.planificacion || null : null;
-  const devolucion =
-    typeof body.devolucion === 'string' ? body.devolucion || null : null;
+  const data: Record<string, string | null> = {};
+  if ('description' in body)
+    data.description =
+      typeof body.description === 'string' ? body.description || null : null;
+  if ('planificacion' in body)
+    data.planificacion =
+      typeof body.planificacion === 'string'
+        ? body.planificacion || null
+        : null;
+  if ('devolucion' in body)
+    data.devolucion =
+      typeof body.devolucion === 'string' ? body.devolucion || null : null;
 
   const updatedDay = await prisma.activityDay.update({
     where: { id: day.id },
-    data: { description, planificacion, devolucion },
+    data,
   });
 
   return NextResponse.json(updatedDay);
