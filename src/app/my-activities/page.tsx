@@ -26,7 +26,11 @@ type ActivityParticipantSummary = {
   groupId: string | null;
 };
 
-export default async function MyActivitiesPage() {
+export default async function MyActivitiesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect('/login');
@@ -245,6 +249,19 @@ export default async function MyActivitiesPage() {
     isProfessor: professorActivityIds.has(entry.activity.id),
   }));
 
+  const resolvedSearchParams = await searchParams;
+  const requestedTab = resolvedSearchParams?.tab;
+  const selectedTab = requestedTab === 'old' ? 'old' : 'current';
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+  const currentItems = items.filter(({ sessions }) =>
+    sessions.some((sessionItem) => new Date(sessionItem.date) >= today)
+  );
+  const oldItems = items.filter(
+    ({ sessions }) => !sessions.some((sessionItem) => new Date(sessionItem.date) >= today)
+  );
+  const visibleItems = selectedTab === 'old' ? oldItems : currentItems;
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-6">
@@ -259,14 +276,41 @@ export default async function MyActivitiesPage() {
 
       <ActivityCalendar activityDays={calendarDays} />
 
-      <div className="mt-6">
-        {items.length === 0 ? (
+      <div className="mt-6 space-y-4">
+        <div className="inline-flex rounded-lg border bg-muted/30 p-1">
+          <Link
+            href="/my-activities"
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              selectedTab === 'current'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Actuales ({currentItems.length})
+          </Link>
+          <Link
+            href="/my-activities?tab=old"
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              selectedTab === 'old'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Antiguas ({oldItems.length})
+          </Link>
+        </div>
+
+        {visibleItems.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
-            <p>Todavía no tenés actividades asociadas.</p>
+            <p>
+              {selectedTab === 'old'
+                ? 'No tenés actividades antiguas.'
+                : 'Todavía no tenés actividades actuales.'}
+            </p>
           </div>
         ) : (
           <ul className="space-y-4">
-            {items.map(({ activity, labels, participants, sessions, isProfessor }) => (
+            {visibleItems.map(({ activity, labels, participants, sessions, isProfessor }) => (
               <li
                 key={activity.id}
                 className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
