@@ -233,11 +233,16 @@ export default async function MyActivitiesPage() {
     }
   }
 
+  const professorActivityIds = new Set(
+    professorAssignments.map((a) => a.activity.id)
+  );
+
   const items = Array.from(grouped.values()).map((entry) => ({
     activity: entry.activity,
     labels: Array.from(entry.labels),
     participants: entry.participants,
     sessions: sessionsByActivity.get(entry.activity.id) ?? [],
+    isProfessor: professorActivityIds.has(entry.activity.id),
   }));
 
   return (
@@ -261,19 +266,29 @@ export default async function MyActivitiesPage() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {items.map(({ activity, labels, participants, sessions }) => (
+            {items.map(({ activity, labels, participants, sessions, isProfessor }) => (
               <li
                 key={activity.id}
                 className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
               >
                 {/* Header: nombre + participantes */}
                 <div>
-                  <Link
-                    href={`/activities/${activity.id}`}
-                    className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
-                  >
-                    {activity.name}
-                  </Link>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <Link
+                      href={`/activities/${activity.id}`}
+                      className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
+                    >
+                      {activity.name}
+                    </Link>
+                    {isProfessor && (
+                      <Link
+                        href={`/activities/${activity.id}`}
+                        className="shrink-0 rounded-full border border-primary px-3 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        Tomar asistencia
+                      </Link>
+                    )}
+                  </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {labels.map((label) => (
                       <span

@@ -123,6 +123,9 @@ export default function ActivityDaysPanel({
   const [expandedLists, setExpandedLists] = useState<
     Record<string, { going: boolean; notGoing: boolean }>
   >({});
+  const [expandedAttendance, setExpandedAttendance] = useState<
+    Record<string, boolean>
+  >({});
 
   async function updateAttendance(
     dayId: string,
@@ -526,55 +529,69 @@ export default function ActivityDaysPanel({
 
                 {day.canManageAttendance &&
                   day.fullParticipantList.length > 0 && (
-                    <div className="mt-4 space-y-3 border-t pt-4">
-                      <p className="text-sm font-semibold">
+                    <div className="mt-4 border-t pt-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedAttendance((prev) => ({
+                            ...prev,
+                            [day.id]: !prev[day.id],
+                          }))
+                        }
+                        className="flex items-center gap-2 text-sm font-semibold hover:text-primary transition-colors"
+                      >
                         Tomar asistencia
-                      </p>
-                      <div className="space-y-2">
-                        {day.fullParticipantList.map((entry) => {
-                          const key = `${day.id}:${entry.activityParticipantId}`;
-                          const isSaving = savingKey === key;
-                          return (
-                            <div
-                              key={entry.activityParticipantId}
-                              className="flex flex-wrap items-center gap-3 rounded-md border bg-card p-3"
-                            >
-                              <p className="flex-1 text-sm font-medium">
-                                {entry.participantName}
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {(
-                                  [
-                                    'GOING',
-                                    'NOT_GOING',
-                                    'PENDING',
-                                  ] as AttendanceStatus[]
-                                ).map((status) => (
-                                  <button
-                                    key={status}
-                                    type="button"
-                                    disabled={isSaving}
-                                    onClick={() =>
-                                      updateAttendance(
-                                        day.id,
-                                        entry.activityParticipantId,
-                                        status
-                                      )
-                                    }
-                                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                                      entry.status === status
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'border border-border bg-background text-foreground hover:bg-muted'
-                                    }`}
-                                  >
-                                    {professorStatusLabels[status]}
-                                  </button>
-                                ))}
+                        <span className="text-xs text-muted-foreground">
+                          {expandedAttendance[day.id] ? '▼' : '▶'}
+                        </span>
+                      </button>
+                      {expandedAttendance[day.id] && (
+                        <div className="mt-3 space-y-2">
+                          {day.fullParticipantList.map((entry) => {
+                            const key = `${day.id}:${entry.activityParticipantId}`;
+                            const isSaving = savingKey === key;
+                            return (
+                              <div
+                                key={entry.activityParticipantId}
+                                className="flex flex-wrap items-center gap-3 rounded-md border bg-card p-3"
+                              >
+                                <p className="flex-1 text-sm font-medium">
+                                  {entry.participantName}
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(
+                                    [
+                                      'GOING',
+                                      'NOT_GOING',
+                                      'PENDING',
+                                    ] as AttendanceStatus[]
+                                  ).map((status) => (
+                                    <button
+                                      key={status}
+                                      type="button"
+                                      disabled={isSaving}
+                                      onClick={() =>
+                                        updateAttendance(
+                                          day.id,
+                                          entry.activityParticipantId,
+                                          status
+                                        )
+                                      }
+                                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        entry.status === status
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'border border-border bg-background text-foreground hover:bg-muted'
+                                      }`}
+                                    >
+                                      {professorStatusLabels[status]}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 
