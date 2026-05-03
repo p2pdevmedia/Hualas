@@ -12,6 +12,9 @@ const POLL_HISTORY_MS = 8000;
 type User = {
   id: string;
   name: string | null;
+  lastName: string | null;
+  email: string | null;
+  dni: string | null;
   role: 'ADMIN' | 'COUNTER' | 'MEMBER' | 'PROFESSOR' | 'SUPER_ADMIN';
   profilePhoto: string | null;
   updatedAt: string;
@@ -46,6 +49,10 @@ function avatarColor(id: string) {
     hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   }
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function fullName(user: { name: string | null; lastName: string | null }) {
+  return [user.name, user.lastName].filter(Boolean).join(' ') || 'Sin nombre';
 }
 
 function initials(name: string | null) {
@@ -127,6 +134,7 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [recipient, setRecipient] = useState('');
   const [input, setInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -213,6 +221,17 @@ export default function ChatClient() {
     return items;
   }, [users, history, session]);
 
+  const filteredContacts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return contacts;
+    return contacts.filter(({ user }) =>
+      (user.name ?? '').toLowerCase().includes(q) ||
+      (user.lastName ?? '').toLowerCase().includes(q) ||
+      (user.email ?? '').toLowerCase().includes(q) ||
+      (user.dni ?? '').toLowerCase().includes(q)
+    );
+  }, [contacts, searchQuery]);
+
   const selectedUser = users.find((u) => u.id === recipient) ?? null;
 
   const sendMessage = async () => {
@@ -246,16 +265,22 @@ export default function ChatClient() {
             recipient ? 'hidden' : 'flex'
           )}
         >
-          <div className="border-b px-4 py-4">
+          <div className="border-b px-4 py-4 space-y-3">
             <h1 className="text-xl font-bold tracking-tight">Mensajes</h1>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por nombre, DNI o mail..."
+              className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
           <div className="flex-1 overflow-y-auto">
-            {contacts.length === 0 ? (
+            {filteredContacts.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">
-                No hay contactos disponibles
+                {searchQuery.trim() ? 'Sin resultados' : 'No hay contactos disponibles'}
               </p>
             ) : (
-              contacts.map(({ user, lastMessage, unreadCount }) => {
+              filteredContacts.map(({ user, lastMessage, unreadCount }) => {
                 const isSelected = recipient === user.id;
                 const hasUnread = unreadCount > 0;
                 const previewSender =
@@ -273,14 +298,14 @@ export default function ChatClient() {
                   >
                     <Avatar
                       id={user.id}
-                      name={user.name}
+                      name={fullName(user)}
                       profilePhoto={user.profilePhoto}
                       photoVersion={user.updatedAt}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate font-semibold text-sm">
-                          {user.name ?? 'Sin nombre'}
+                          {fullName(user)}
                         </span>
                         <div className="flex items-center gap-2">
                           {hasUnread && <UnreadIndicator />}
@@ -322,13 +347,13 @@ export default function ChatClient() {
                 </button>
                 <Avatar
                   id={selectedUser.id}
-                  name={selectedUser.name}
+                  name={fullName(selectedUser)}
                   profilePhoto={selectedUser.profilePhoto}
                   photoVersion={selectedUser.updatedAt}
                   size="sm"
                 />
                 <span className="font-semibold">
-                  {selectedUser.name ?? 'Sin nombre'}
+                  {fullName(selectedUser)}
                 </span>
               </div>
 
