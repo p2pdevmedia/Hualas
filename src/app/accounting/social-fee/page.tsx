@@ -15,6 +15,7 @@ import SocialFeePeriodFilter from './social-fee-period-filter';
 type SearchParams = {
   month?: string;
   year?: string;
+  q?: string;
 };
 
 type PersonRecord = {
@@ -86,6 +87,7 @@ export default async function SocialFeePage({
   const defaultYear = now.getUTCFullYear();
   const month = parsePeriod(searchParams.month, defaultMonth, 1, 12);
   const year = parsePeriod(searchParams.year, defaultYear, 2020, 2100);
+  const q = searchParams.q?.trim().toLowerCase() ?? '';
 
   const [concept, members, payments] = await Promise.all([
     prisma.billableConcept.findUnique({
@@ -188,8 +190,24 @@ export default async function SocialFeePage({
     }
   }
 
-  const paidPeople = people.filter((person) => person.status === 'PAID');
-  const pendingPeople = people.filter((person) => person.status === 'PENDING');
+  const filteredPeople = q
+    ? people.filter((person) => {
+        const searchable = [
+          person.name,
+          person.email ?? '',
+          person.payerLabel ?? '',
+        ]
+          .join(' ')
+          .toLowerCase();
+        return searchable.includes(q);
+      })
+    : people;
+  const paidPeople = filteredPeople.filter(
+    (person) => person.status === 'PAID'
+  );
+  const pendingPeople = filteredPeople.filter(
+    (person) => person.status === 'PENDING'
+  );
   const collectedAmount = paidPeople.reduce(
     (sum, person) => sum + person.amount,
     0
@@ -246,7 +264,20 @@ export default async function SocialFeePage({
               </p>
             </div>
 
-            <SocialFeePeriodFilter initialMonth={month} initialYear={year} />
+            <div className="space-y-2">
+              <SocialFeePeriodFilter initialMonth={month} initialYear={year} />
+              <form>
+                <input type="hidden" name="month" value={String(month)} />
+                <input type="hidden" name="year" value={String(year)} />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={searchParams.q ?? ''}
+                  placeholder="Nombre, apellido, actividad o mail"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </form>
+            </div>
           </div>
 
           <div className="space-y-6">

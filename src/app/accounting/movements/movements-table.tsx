@@ -35,12 +35,13 @@ export default function MovementsTable({
   initialFilters,
 }: {
   movements: Movement[];
-  initialFilters: { type: string; from: string; to: string };
+  initialFilters: { type: string; from: string; to: string; q: string };
 }) {
   const router = useRouter();
   const [type, setType] = useState(initialFilters.type);
   const [from, setFrom] = useState(initialFilters.from);
   const [to, setTo] = useState(initialFilters.to);
+  const [q, setQ] = useState(initialFilters.q);
   const [deletingId, setDeletingId] = useState('');
 
   const applyFilters = () => {
@@ -48,6 +49,7 @@ export default function MovementsTable({
     if (type) params.set('type', type);
     if (from) params.set('from', from);
     if (to) params.set('to', to);
+    if (q.trim()) params.set('q', q.trim());
     const query = params.toString();
     router.push(
       query ? `/accounting/movements?${query}` : '/accounting/movements'
@@ -59,6 +61,7 @@ export default function MovementsTable({
     setType('');
     setFrom('');
     setTo('');
+    setQ('');
     router.push('/accounting/movements');
     router.refresh();
   };
@@ -80,7 +83,7 @@ export default function MovementsTable({
     <div className="space-y-4">
       <div className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="grid flex-1 gap-3 sm:grid-cols-3">
+          <div className="grid flex-1 gap-3 sm:grid-cols-4">
             <label className="space-y-1 text-sm">
               <span className="font-medium">Tipo</span>
               <select
@@ -108,6 +111,16 @@ export default function MovementsTable({
                 type="date"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="font-medium">Buscar</span>
+              <input
+                type="text"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Nombre, apellido, actividad o mail"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </label>

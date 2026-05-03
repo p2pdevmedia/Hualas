@@ -12,12 +12,33 @@ import {
 import { Button } from '@/components/ui/button';
 import PersonLink from '@/components/accounting/person-link';
 
-export default async function ProfessorsAccountingPage() {
+type SearchParams = {
+  q?: string;
+};
+
+export default async function ProfessorsAccountingPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const session = await getServerSession(authOptions);
   if (!isAccountingRole((session?.user as any)?.role)) redirect('/');
 
+  const q = searchParams.q?.trim() ?? '';
   const professors = await prisma.user.findMany({
-    where: { role: 'PROFESSOR', isActive: true },
+    where: {
+      role: 'PROFESSOR',
+      isActive: true,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: 'insensitive' } },
+              { lastName: { contains: q, mode: 'insensitive' } },
+              { email: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
     orderBy: [{ lastName: 'asc' }, { name: 'asc' }],
     select: {
       id: true,
@@ -55,6 +76,23 @@ export default async function ProfessorsAccountingPage() {
           </p>
         </div>
       </div>
+      <form className="rounded-2xl border bg-card p-4 shadow-sm">
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Buscar</span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="Nombre, apellido, actividad o mail"
+              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <Button type="submit" variant="outline">
+              Buscar
+            </Button>
+          </div>
+        </label>
+      </form>
 
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-sm">

@@ -43,7 +43,11 @@ type RecentAccountingEntry = {
   personHref?: string | null;
 };
 
-export default async function AccountingDashboardPage() {
+export default async function AccountingDashboardPage({
+  searchParams,
+}: {
+  searchParams?: { q?: string };
+}) {
   const session = await getServerSession(authOptions);
   if (!isAccountingRole(session?.user?.role)) {
     redirect('/');
@@ -190,13 +194,35 @@ export default async function AccountingDashboardPage() {
 
     return entries;
   }, []);
+  const searchTerm = searchParams?.q?.trim().toLowerCase() ?? '';
   const recentAccountingEntries: RecentAccountingEntry[] = [
     ...recentMovementEntries,
     ...recentManualPaymentEntries,
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .filter((entry) =>
+      searchTerm
+        ? [entry.description, entry.category]
+            .join(' ')
+            .toLowerCase()
+            .includes(searchTerm)
+        : true
+    )
     .slice(0, 10);
-  const recentPayments = monthPayments.slice(0, 5);
+  const recentPayments = monthPayments
+    .filter((payment) =>
+      searchTerm
+        ? [
+            payment.activity.name,
+            formatPersonName(payment.child ?? payment.user),
+            '',
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(searchTerm)
+        : true
+    )
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -247,6 +273,15 @@ export default async function AccountingDashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <form className="xl:col-span-2 rounded-2xl border bg-card p-4 shadow-sm">
+          <input
+            type="text"
+            name="q"
+            defaultValue={searchParams?.q ?? ''}
+            placeholder="Buscar por nombre, apellido, actividad o mail"
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </form>
         <article className="rounded-2xl border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
