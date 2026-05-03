@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { gateActiveRole } from '@/lib/role-guards';
 import AddChildForm from '../add-child-form';
 
 export default async function NewChildPage() {
@@ -10,6 +11,8 @@ export default async function NewChildPage() {
   if (!session) {
     redirect('/login');
   }
+  const gate = gateActiveRole(session, 'MEMBER');
+  if (gate) return gate;
 
   const user = await prisma.user.findUnique({
     where: { id: (session.user as any).id },

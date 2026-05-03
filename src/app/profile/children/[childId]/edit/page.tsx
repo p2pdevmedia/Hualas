@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildEditForm from './form';
+import { gateActiveRole } from '@/lib/role-guards';
 
 export default async function EditChildPage({
   params,
@@ -14,6 +15,8 @@ export default async function EditChildPage({
   if (!session) {
     redirect('/login');
   }
+  const gate = gateActiveRole(session, 'MEMBER');
+  if (gate) return gate;
 
   const child = await prisma.child.findUnique({
     where: { id: params.childId },

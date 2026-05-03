@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
+import { gateActiveRole } from '@/lib/role-guards';
 
 export default async function ViewMyChildPage({
   params,
@@ -15,6 +16,8 @@ export default async function ViewMyChildPage({
   if (!session) {
     redirect('/login');
   }
+  const gate = gateActiveRole(session, 'MEMBER');
+  if (gate) return gate;
 
   const child = await prisma.child.findUnique({
     where: { id: params.childId },

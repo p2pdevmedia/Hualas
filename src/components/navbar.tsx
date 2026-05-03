@@ -62,6 +62,7 @@ export default function Navbar() {
   const isProfessor = role === 'PROFESSOR';
   const isMember = !!session && !isAdmin && !isCounter;
   const isMemberRole = role === 'MEMBER';
+  const canSeeChildrenSection = isMemberRole;
   const activitiesHref = isMember ? '/my-activities' : '/activities';
   const translations = useTranslation();
   const t = translations.nav;
@@ -339,12 +340,14 @@ export default function Navbar() {
                   >
                     {t.profile}
                   </Link>
-                  <Link
-                    href="/profile/children"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                  >
-                    {actions.myChildren}
-                  </Link>
+                  {canSeeChildrenSection && (
+                    <Link
+                      href="/profile/children"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                    >
+                      {actions.myChildren}
+                    </Link>
+                  )}
                   {(isMember || isAdmin) && (
                     <Link
                       href="/profile/pickup-notices"
@@ -555,13 +558,15 @@ export default function Navbar() {
               >
                 {t.profile}
               </Link>
-              <Link
-                href="/profile/children"
-                className={navLinkClass('/profile/children')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {actions.myChildren}
-              </Link>
+              {canSeeChildrenSection && (
+                <Link
+                  href="/profile/children"
+                  className={navLinkClass('/profile/children')}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {actions.myChildren}
+                </Link>
+              )}
               {(isMember || isAdmin) && (
                 <Link
                   href="/profile/pickup-notices"
