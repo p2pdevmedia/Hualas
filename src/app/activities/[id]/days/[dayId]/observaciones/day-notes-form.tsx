@@ -2,21 +2,18 @@
 
 import { useState } from 'react';
 
-interface DayNotesFormProps {
-  dayId: string;
-  initialPlanificacion: string | null;
-  initialDevolucion: string | null;
-}
-
-export default function DayNotesForm({
-  dayId,
-  initialPlanificacion,
-  initialDevolucion,
-}: DayNotesFormProps) {
-  const [planificacion, setPlanificacion] = useState(
-    initialPlanificacion ?? ''
-  );
-  const [devolucion, setDevolucion] = useState(initialDevolucion ?? '');
+function NoteCard({
+  label,
+  placeholder,
+  initialValue,
+  onSave,
+}: {
+  label: string;
+  placeholder: string;
+  initialValue: string;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const [value, setValue] = useState(initialValue);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -26,15 +23,7 @@ export default function DayNotesForm({
     setSaved(false);
     setError('');
     try {
-      const res = await fetch(`/api/activity-days/${dayId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planificacion, devolucion }),
-      });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo guardar');
-      }
+      await onSave(value);
       setSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar');
@@ -44,51 +33,20 @@ export default function DayNotesForm({
   }
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-5">
+    <div className="rounded-xl border bg-card p-5 space-y-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Planificación y devolución
+        {label}
       </h2>
-
-      <div className="space-y-2">
-        <label
-          htmlFor="planificacion"
-          className="block text-sm font-medium"
-        >
-          Planificación
-        </label>
-        <textarea
-          id="planificacion"
-          rows={4}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Describí lo que planificaste para esta sesión…"
-          value={planificacion}
-          onChange={(e) => {
-            setPlanificacion(e.target.value);
-            setSaved(false);
-          }}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label
-          htmlFor="devolucion"
-          className="block text-sm font-medium"
-        >
-          Devolución
-        </label>
-        <textarea
-          id="devolucion"
-          rows={4}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Anotá cómo resultó la sesión, observaciones, etc…"
-          value={devolucion}
-          onChange={(e) => {
-            setDevolucion(e.target.value);
-            setSaved(false);
-          }}
-        />
-      </div>
-
+      <textarea
+        rows={5}
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setSaved(false);
+        }}
+      />
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -105,6 +63,59 @@ export default function DayNotesForm({
         )}
         {error && <span className="text-sm text-destructive">{error}</span>}
       </div>
+    </div>
+  );
+}
+
+interface DayNotesFormProps {
+  dayId: string;
+  initialPlanificacion: string | null;
+  initialDevolucion: string | null;
+}
+
+export default function DayNotesForm({
+  dayId,
+  initialPlanificacion,
+  initialDevolucion,
+}: DayNotesFormProps) {
+  async function savePlanificacion(value: string) {
+    const res = await fetch(`/api/activity-days/${dayId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planificacion: value }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No se pudo guardar');
+    }
+  }
+
+  async function saveObservacion(value: string) {
+    const res = await fetch(`/api/activity-days/${dayId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ devolucion: value }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No se pudo guardar');
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <NoteCard
+        label="Planificación"
+        placeholder="Describí lo que planificaste para esta sesión…"
+        initialValue={initialPlanificacion ?? ''}
+        onSave={savePlanificacion}
+      />
+      <NoteCard
+        label="Observación"
+        placeholder="Anotá observaciones sobre cómo resultó la sesión…"
+        initialValue={initialDevolucion ?? ''}
+        onSave={saveObservacion}
+      />
     </div>
   );
 }
