@@ -249,13 +249,37 @@ export default async function MyActivitiesPage({
     professorAssignments.map((a) => a.activity.id)
   );
 
-  const items = Array.from(grouped.values()).map((entry) => ({
-    activity: entry.activity,
-    labels: Array.from(entry.labels),
-    participants: entry.participants,
-    sessions: sessionsByActivity.get(entry.activity.id) ?? [],
-    isProfessor: professorActivityIds.has(entry.activity.id),
-  }));
+  const items = Array.from(grouped.values()).map((entry) => {
+    const isProfessor = professorActivityIds.has(entry.activity.id);
+    const rawSessions = sessionsByActivity.get(entry.activity.id) ?? [];
+
+    const groupIds = new Set(
+      entry.participants
+        .map((participant) => participant.groupId)
+        .filter((groupId): groupId is string => Boolean(groupId))
+    );
+    const hasUngroupedParticipant = entry.participants.some(
+      (participant) => participant.groupId === null
+    );
+
+    const sessions = isProfessor
+      ? rawSessions
+      : rawSessions.filter((sessionItem) => {
+          if (sessionItem.activityGroupId === null) {
+            return hasUngroupedParticipant;
+          }
+
+          return groupIds.has(sessionItem.activityGroupId);
+        });
+
+    return {
+      activity: entry.activity,
+      labels: Array.from(entry.labels),
+      participants: entry.participants,
+      sessions,
+      isProfessor,
+    };
+  });
 
   const resolvedSearchParams = await searchParams;
   const requestedTab = resolvedSearchParams?.tab;
