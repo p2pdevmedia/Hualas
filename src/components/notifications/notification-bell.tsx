@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell } from 'lucide-react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import NotificationPanel, { type NotificationRow } from './notification-panel';
 
@@ -118,7 +118,7 @@ export default function NotificationBell() {
         aria-label="Notificaciones"
         aria-expanded={open}
       >
-        <Bell className="h-5 w-5" />
+        <Image src="/Notificacion.png" alt="Notificaciones" width={20} height={20} unoptimized />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
