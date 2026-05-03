@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import DescriptionForm from './description-form';
 
 export default async function DayDescripcionPage({
   params,
@@ -73,15 +74,7 @@ export default async function DayDescripcionPage({
         )}
       </div>
 
-      <div className="rounded-xl border bg-card p-5">
-        {day.description ? (
-          <p className="text-sm whitespace-pre-wrap">{day.description}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground italic">
-            Esta sesión no tiene descripción.
-          </p>
-        )}
-      </div>
+      <DescriptionForm dayId={day.id} initialDescription={day.description ?? null} />
     </main>
   );
 }
