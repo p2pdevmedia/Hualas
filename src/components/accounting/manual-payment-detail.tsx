@@ -135,19 +135,19 @@ export default function ManualPaymentDetail({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <article className="rounded-xl border bg-muted/20 p-4">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Monto
               </p>
-              <p className="mt-1 text-lg font-semibold">
+              <p className="mt-1 break-words text-lg font-semibold leading-tight">
                 {formatPesos(payment.amount / 100, payment.currency)}
               </p>
             </article>
-            <article className="rounded-xl border bg-muted/20 p-4">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Fecha de pago
               </p>
-              <p className="mt-1 text-lg font-semibold">
+              <p className="mt-1 break-words text-lg font-semibold leading-tight">
                 {(payment.paidAt ?? payment.createdAt).toLocaleDateString(
                   'es-AR'
                 )}
