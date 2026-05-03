@@ -117,7 +117,7 @@ export default function Navbar() {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [isMember, session]);
+  }, [isMember, isMemberRole, session]);
   useEffect(() => {
     if (!session) {
       setHasUnreadMessages(false);
