@@ -81,39 +81,42 @@ export async function POST(req: Request) {
         data.annualSchedules
       );
 
-      for (const day of annualDays) {
+      const dayData = annualDays.map((day) => {
         const activityGroupId = day.groupTempId
           ? groupIdByTempId.get(day.groupTempId)
           : null;
-
         if (day.groupTempId && !activityGroupId) {
           throw new Error('Una sesión anual referencia un grupo inválido');
         }
+        return {
+          activityId,
+          createdById: session.user.id,
+          date: day.date,
+          schedule: day.schedule,
+          description: day.description ?? null,
+          activityGroupId: activityGroupId ?? null,
+          geoLocation: day.geoLocation,
+          latitude: day.latitude,
+          longitude: day.longitude,
+        };
+      });
 
-        const activityDay = await tx.activityDay.create({
-          data: {
-            activityId,
-            createdById: session.user.id,
-            date: day.date,
-            schedule: day.schedule,
-            description: day.description,
-            activityGroupId,
-            geoLocation: day.geoLocation,
-            latitude: day.latitude,
-            longitude: day.longitude,
-          },
+      if (professorIds.length > 0) {
+        const createdDays = await tx.activityDay.createManyAndReturn({
+          data: dayData,
+          select: { id: true },
         });
-
         await tx.activityDayProfessor.createMany({
-          data: professorIds.map((userId) => ({
-            activityDayId: activityDay.id,
-            userId,
-          })),
+          data: createdDays.flatMap(({ id: activityDayId }) =>
+            professorIds.map((userId) => ({ activityDayId, userId }))
+          ),
         });
+      } else {
+        await tx.activityDay.createMany({ data: dayData });
       }
     }
 
     return { id: activityId };
-  });
+  }, { timeout: 30000 });
   return NextResponse.json(created);
 }

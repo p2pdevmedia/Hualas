@@ -91,39 +91,43 @@ export async function PUT(
           }))
         );
 
-        for (const day of annualDays) {
+        const dayData = annualDays.map((day) => {
           const schedule = data.annualSchedules.find(
-            (s) => s.weekday === day.weekday && s.schedule === day.schedule && s.geoLocation === day.geoLocation
+            (s) =>
+              s.weekday === day.weekday &&
+              s.schedule === day.schedule &&
+              s.geoLocation === day.geoLocation
           );
-          const activityGroupId = schedule?.groupId ?? null;
+          return {
+            activityId,
+            createdById: session.user.id,
+            date: day.date,
+            schedule: day.schedule,
+            description: day.description ?? null,
+            activityGroupId: schedule?.groupId ?? null,
+            geoLocation: day.geoLocation,
+            latitude: day.latitude,
+            longitude: day.longitude,
+          };
+        });
 
-          const activityDay = await tx.activityDay.create({
-            data: {
-              activityId,
-              createdById: session.user.id,
-              date: day.date,
-              schedule: day.schedule,
-              description: day.description,
-              activityGroupId,
-              geoLocation: day.geoLocation,
-              latitude: day.latitude,
-              longitude: day.longitude,
-            },
+        if (professorIds.length > 0) {
+          const createdDays = await tx.activityDay.createManyAndReturn({
+            data: dayData,
+            select: { id: true },
           });
-
-          if (professorIds.length > 0) {
-            await tx.activityDayProfessor.createMany({
-              data: professorIds.map((userId) => ({
-                activityDayId: activityDay.id,
-                userId,
-              })),
-            });
-          }
+          await tx.activityDayProfessor.createMany({
+            data: createdDays.flatMap(({ id: activityDayId }) =>
+              professorIds.map((userId) => ({ activityDayId, userId }))
+            ),
+          });
+        } else {
+          await tx.activityDay.createMany({ data: dayData });
         }
       }
 
       return { id: activityId };
-    })
+    }, { timeout: 30000 })
     .catch((error) => {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
