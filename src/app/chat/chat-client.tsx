@@ -32,6 +32,14 @@ type Conversation = {
   unreadCount?: number;
 };
 
+type ActiveChat = {
+  conversationId: string;
+  user: User;
+  lastMessage: Message | null;
+  lastAt: number;
+  unreadCount: number;
+};
+
 type ProfessorChatPerson = {
   userId: string;
   label: string;
@@ -73,6 +81,30 @@ type ProfessorChatContext = {
 type SelectedGroup = {
   activityId: string;
   groupId: string;
+};
+
+type NewChatTab = 'people' | 'groups';
+
+type PersonOption = {
+  userId: string;
+  label: string;
+  subtitle: string;
+  activityNames: string[];
+  profilePhoto: string | null;
+  updatedAt: string;
+};
+
+type GroupOption = {
+  activityId: string;
+  activityName: string;
+  groupId: string;
+  groupName: string;
+  description: string | null;
+  memberCount: number;
+  members: {
+    userId: string;
+    label: string;
+  }[];
 };
 
 const AVATAR_COLORS = [
@@ -195,6 +227,9 @@ export default function ChatClient() {
   const [selectedGroup, setSelectedGroup] = useState<SelectedGroup | null>(
     null
   );
+  const [newChatOpen, setNewChatOpen] = useState(false);
+  const [newChatTab, setNewChatTab] = useState<NewChatTab>('people');
+  const [newChatQuery, setNewChatQuery] = useState('');
   const [professorContext, setProfessorContext] =
     useState<ProfessorChatContext | null>(null);
   const [input, setInput] = useState('');
@@ -269,59 +304,132 @@ export default function ChatClient() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  const contacts = useMemo(() => {
+  const sessionRoles =
+    ((session?.user as any)?.roles as string[] | undefined) ?? [];
+  const hasProfessorCapability =
+    sessionRoles.includes('PROFESSOR') ||
+    session?.user.role === 'PROFESSOR' ||
+    session?.user.activeRole === 'PROFESSOR';
+
+  const activeChats = useMemo(() => {
     if (!session) return [];
-    const isAdmin =
-      session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-    const isCounter = session.user.role === 'COUNTER';
-    const selectable = isAdmin
-      ? users.filter((u) => u.id !== session.user.id)
-      : isCounter
-        ? users.filter((u) => u.id !== session.user.id)
-        : users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
 
-    type Contact = {
-      user: User;
-      lastMessage: Message | null;
-      lastAt: number;
-      unreadCount: number;
-    };
+    return history
+      .map<ActiveChat | null>((conversation) => {
+        const otherParticipant =
+          conversation.participants.find(
+            (participant) => participant.id !== session.user.id
+          ) ?? conversation.participants[0];
+        if (!otherParticipant) {
+          return null;
+        }
 
-    const items: Contact[] = selectable.map((u) => {
-      const conv = history.find((c) =>
-        c.participants.some((p) => p.id === u.id)
-      );
-      const last = conv?.messages[conv.messages.length - 1] ?? null;
-      const lastAt = last?.createdAt ? new Date(last.createdAt).getTime() : 0;
-      return {
-        user: u,
-        lastMessage: last,
-        lastAt,
-        unreadCount: conv?.unreadCount ?? 0,
-      };
-    });
+        const user = users.find((item) => item.id === otherParticipant.id);
+        if (!user) {
+          return null;
+        }
 
-    items.sort((a, b) => {
-      if (a.lastAt && b.lastAt) return b.lastAt - a.lastAt;
-      if (a.lastAt) return -1;
-      if (b.lastAt) return 1;
-      return (a.user.name ?? '').localeCompare(b.user.name ?? '');
-    });
+        const lastMessage = conversation.messages.at(-1) ?? null;
+        return {
+          conversationId: conversation.id,
+          user,
+          lastMessage,
+          lastAt: lastMessage?.createdAt
+            ? new Date(lastMessage.createdAt).getTime()
+            : 0,
+          unreadCount: conversation.unreadCount ?? 0,
+        };
+      })
+      .filter((item): item is ActiveChat => item !== null)
+      .sort((a, b) => {
+        if (a.lastAt && b.lastAt) return b.lastAt - a.lastAt;
+        if (a.lastAt) return -1;
+        if (b.lastAt) return 1;
+        return fullName(a.user).localeCompare(fullName(b.user), 'es');
+      });
+  }, [history, session, users]);
 
-    return items;
-  }, [users, history, session]);
-
-  const filteredContacts = useMemo(() => {
+  const visibleActiveChats = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return contacts;
-    return contacts.filter(
-      ({ user }) =>
-        (user.name ?? '').toLowerCase().includes(q) ||
-        (user.lastName ?? '').toLowerCase().includes(q) ||
-        (user.email ?? '').toLowerCase().includes(q) ||
-        (user.dni ?? '').toLowerCase().includes(q)
+    if (!q) return activeChats;
+    return activeChats.filter(
+      (chat) =>
+        fullName(chat.user).toLowerCase().includes(q) ||
+        (chat.user.email ?? '').toLowerCase().includes(q) ||
+        (chat.user.dni ?? '').toLowerCase().includes(q)
     );
-  }, [contacts, searchQuery]);
+  }, [activeChats, searchQuery]);
+
+  const pickerPeople = useMemo<PersonOption[]>(() => {
+    if (!session) return [];
+
+    if (hasProfessorCapability && professorContext) {
+      const map = new Map<string, PersonOption>();
+      for (const activity of professorContext.activities) {
+        for (const person of activity.participants) {
+          const existing = map.get(person.userId);
+          if (existing) {
+            existing.activityNames = Array.from(
+              new Set([...existing.activityNames, activity.name])
+            ).sort((a, b) => a.localeCompare(b, 'es'));
+            continue;
+          }
+
+          const match = users.find((user) => user.id === person.userId);
+          map.set(person.userId, {
+            userId: person.userId,
+            label: person.label,
+            subtitle: person.subtitle,
+            activityNames: [activity.name],
+            profilePhoto: match?.profilePhoto ?? null,
+            updatedAt: match?.updatedAt ?? new Date().toISOString(),
+          });
+        }
+      }
+
+      return Array.from(map.values()).sort((a, b) =>
+        a.label.localeCompare(b.label, 'es')
+      );
+    }
+
+    return users
+      .filter((user) => user.id !== session.user.id)
+      .filter((user) => {
+        const isAdmin =
+          session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+        const isCounter = session.user.role === 'COUNTER';
+        if (isAdmin || isCounter) return true;
+        return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+      })
+      .map((user) => ({
+        userId: user.id,
+        label: fullName(user),
+        subtitle: user.email ?? 'Sin correo',
+        activityNames: [],
+        profilePhoto: user.profilePhoto,
+        updatedAt: user.updatedAt,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }, [hasProfessorCapability, professorContext, session, users]);
+
+  const pickerGroups = useMemo<GroupOption[]>(() => {
+    if (!hasProfessorCapability || !professorContext) return [];
+
+    return professorContext.activities.flatMap((activity) =>
+      activity.groups.map((group) => ({
+        activityId: activity.id,
+        activityName: activity.name,
+        groupId: group.id,
+        groupName: group.name,
+        description: group.description,
+        memberCount: group.memberCount,
+        members: group.members.map((member) => ({
+          userId: member.userId,
+          label: member.label,
+        })),
+      }))
+    );
+  }, [hasProfessorCapability, professorContext]);
 
   const selectedUser = users.find((u) => u.id === recipient) ?? null;
   const selectedActivity = professorContext?.activities.find(
@@ -333,6 +441,55 @@ export default function ChatClient() {
   const canUseProfessorTools = professorContext != null;
 
   const selectedGroupMessageCount = selectedGroupData?.memberCount ?? 0;
+
+  const filteredPickerPeople = useMemo(() => {
+    const q = newChatQuery.trim().toLowerCase();
+    if (!q) return pickerPeople;
+    return pickerPeople.filter((person) => {
+      return (
+        person.label.toLowerCase().includes(q) ||
+        person.subtitle.toLowerCase().includes(q) ||
+        person.activityNames.some((name) => name.toLowerCase().includes(q))
+      );
+    });
+  }, [newChatQuery, pickerPeople]);
+
+  const filteredPickerGroups = useMemo(() => {
+    const q = newChatQuery.trim().toLowerCase();
+    if (!q) return pickerGroups;
+    return pickerGroups.filter((group) => {
+      return (
+        group.groupName.toLowerCase().includes(q) ||
+        group.activityName.toLowerCase().includes(q) ||
+        (group.description ?? '').toLowerCase().includes(q) ||
+        group.members.some((member) => member.label.toLowerCase().includes(q))
+      );
+    });
+  }, [newChatQuery, pickerGroups]);
+
+  const openNewChat = () => {
+    setNewChatOpen(true);
+    setNewChatTab('people');
+    setNewChatQuery('');
+  };
+
+  const startDirectChat = (userId: string) => {
+    setSelectedGroup(null);
+    setRecipient(userId);
+    setMessages([]);
+    setInput('');
+    setGroupSendStatus('');
+    setNewChatOpen(false);
+  };
+
+  const startGroupChat = (activityId: string, groupId: string) => {
+    setRecipient('');
+    setMessages([]);
+    setInput('');
+    setGroupSendStatus('');
+    setSelectedGroup({ activityId, groupId });
+    setNewChatOpen(false);
+  };
 
   const sendMessage = async () => {
     if (!recipient || !session || !input.trim()) return;
@@ -391,200 +548,46 @@ export default function ChatClient() {
           )}
         >
           <div className="border-b px-4 py-4 space-y-3">
-            <h1 className="text-xl font-bold tracking-tight">Mensajes</h1>
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-xl font-bold tracking-tight">Chats</h1>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewChatOpen(true);
+                  setNewChatTab('people');
+                  setNewChatQuery('');
+                }}
+                className="rounded-full border border-primary px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+              >
+                Nuevo chat
+              </button>
+            </div>
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por nombre, DNI o mail..."
+              placeholder="Buscar chats activos..."
               className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          {canUseProfessorTools && professorContext && (
-            <div className="border-b px-4 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Actividades
-                </h2>
-                <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                  {professorContext.activities.length}{' '}
-                  {professorContext.activities.length === 1
-                    ? 'actividad'
-                    : 'actividades'}
-                </span>
-              </div>
-
-              {professorContext.sharedParticipants.length > 0 && (
-                <div className="mt-4 rounded-lg border bg-background p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Personas en común
-                  </p>
-                  <div className="mt-2 space-y-2">
-                    {professorContext.sharedParticipants.map((person) => (
-                      <div
-                        key={person.userId}
-                        className="rounded-md border bg-card px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">
-                              {person.label}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {person.subtitle}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                            {person.activityCount} actividades
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-4 space-y-3">
-                {professorContext.activities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No tenés actividades asignadas todavía.
-                  </p>
-                ) : (
-                  professorContext.activities.map((activity) => {
-                    const isSelectedActivity =
-                      selectedActivity?.id === activity.id;
-                    return (
-                      <article
-                        key={activity.id}
-                        className={cn(
-                          'rounded-lg border bg-background p-3',
-                          isSelectedActivity && 'border-primary/60 bg-primary/5'
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold">
-                              {activity.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatActivityRange(
-                                activity.date,
-                                activity.endDate
-                              )}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                            {activity.groups.length} grupo
-                            {activity.groups.length === 1 ? '' : 's'}
-                          </span>
-                        </div>
-
-                        {activity.description && (
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {activity.description}
-                          </p>
-                        )}
-
-                        {activity.participants.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                              Personas
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {activity.participants
-                                .slice(0, 5)
-                                .map((person) => (
-                                  <span
-                                    key={person.activityParticipantId}
-                                    className="rounded-full border bg-card px-2 py-1 text-xs"
-                                  >
-                                    {person.label}
-                                  </span>
-                                ))}
-                              {activity.participants.length > 5 && (
-                                <span className="rounded-full border bg-card px-2 py-1 text-xs text-muted-foreground">
-                                  +{activity.participants.length - 5}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {activity.groups.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            {activity.groups.map((group) => {
-                              const isSelected =
-                                selectedGroup?.groupId === group.id;
-                              return (
-                                <button
-                                  key={group.id}
-                                  onClick={() => {
-                                    setRecipient('');
-                                    setInput('');
-                                    setGroupSendStatus('');
-                                    setSelectedGroup({
-                                      activityId: activity.id,
-                                      groupId: group.id,
-                                    });
-                                  }}
-                                  className={cn(
-                                    'w-full rounded-md border px-3 py-2 text-left transition-colors',
-                                    isSelected
-                                      ? 'border-primary bg-primary/5'
-                                      : 'hover:bg-muted/50'
-                                  )}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <p className="truncate text-sm font-medium">
-                                        {group.name}
-                                      </p>
-                                      {group.description && (
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                          {group.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                                      {group.memberCount}
-                                    </span>
-                                  </div>
-
-                                  <div className="mt-2 flex flex-wrap gap-1">
-                                    {group.members.slice(0, 4).map((person) => (
-                                      <span
-                                        key={person.activityParticipantId}
-                                        className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
-                                      >
-                                        {person.label}
-                                      </span>
-                                    ))}
-                                    {group.members.length > 4 && (
-                                      <span className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-                                        +{group.members.length - 4}
-                                      </span>
-                                    )}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </article>
-                    );
-                  })
-                )}
-              </div>
+          <div className="border-b px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Chats activos
+              </h2>
+              <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                {activeChats.length}
+              </span>
             </div>
-          )}
+          </div>
           <div className="flex-1 overflow-y-auto">
-            {filteredContacts.length === 0 ? (
+            {visibleActiveChats.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">
                 {searchQuery.trim()
                   ? 'Sin resultados'
-                  : 'No hay contactos disponibles'}
+                  : 'Todavía no tenés chats activos'}
               </p>
             ) : (
-              filteredContacts.map(({ user, lastMessage, unreadCount }) => {
+              visibleActiveChats.map(({ user, lastMessage, unreadCount }) => {
                 const isSelected = recipient === user.id;
                 const hasUnread = unreadCount > 0;
                 const previewSender =
@@ -807,6 +810,172 @@ export default function ChatClient() {
           )}
         </section>
       </div>
+
+      {newChatOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+          <div className="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border bg-card shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b px-4 py-4">
+              <div>
+                <h2 className="text-lg font-semibold">Nuevo chat</h2>
+                <p className="text-sm text-muted-foreground">
+                  Elegí una persona o un grupo de actividad.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewChatOpen(false)}
+                className="rounded-full border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="border-b px-4 py-3">
+              <div className="inline-flex rounded-lg border bg-muted/30 p-1">
+                <button
+                  type="button"
+                  onClick={() => setNewChatTab('people')}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    newChatTab === 'people'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Personas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewChatTab('groups')}
+                  disabled={
+                    !hasProfessorCapability || pickerGroups.length === 0
+                  }
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    newChatTab === 'groups'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                    (!hasProfessorCapability || pickerGroups.length === 0) &&
+                      'cursor-not-allowed opacity-40'
+                  )}
+                >
+                  Grupos
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <input
+                value={newChatQuery}
+                onChange={(e) => setNewChatQuery(e.target.value)}
+                placeholder="Buscar por nombre, actividad o grupo..."
+                className="mb-4 w-full rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              {newChatTab === 'people' ? (
+                filteredPickerPeople.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    No se encontraron personas.
+                  </p>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {filteredPickerPeople.map((person) => (
+                      <button
+                        key={person.userId}
+                        type="button"
+                        onClick={() => startDirectChat(person.userId)}
+                        className="rounded-xl border bg-background p-4 text-left transition-colors hover:border-primary hover:bg-primary/5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            id={person.userId}
+                            name={person.label}
+                            profilePhoto={person.profilePhoto}
+                            photoVersion={person.updatedAt}
+                            size="sm"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">
+                              {person.label}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {person.subtitle}
+                            </p>
+                          </div>
+                        </div>
+                        {person.activityNames.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {person.activityNames.map((activityName) => (
+                              <span
+                                key={activityName}
+                                className="rounded-full border px-2 py-1 text-xs text-muted-foreground"
+                              >
+                                {activityName}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )
+              ) : filteredPickerGroups.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  No se encontraron grupos.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredPickerGroups.map((group) => (
+                    <button
+                      key={group.groupId}
+                      type="button"
+                      onClick={() =>
+                        startGroupChat(group.activityId, group.groupId)
+                      }
+                      className="w-full rounded-xl border bg-background p-4 text-left transition-colors hover:border-primary hover:bg-primary/5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">
+                            {group.groupName}
+                          </p>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {group.activityName}
+                          </p>
+                          {group.description && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {group.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className="shrink-0 rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                          {group.memberCount} miembros
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {group.members.slice(0, 5).map((member) => (
+                          <span
+                            key={member.userId}
+                            className="rounded-full border px-2 py-1 text-xs text-muted-foreground"
+                          >
+                            {member.label}
+                          </span>
+                        ))}
+                        {group.members.length > 5 && (
+                          <span className="rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                            +{group.members.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

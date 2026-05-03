@@ -114,11 +114,34 @@ export async function POST(
   }
 
   const senderRole = session.user.role;
+  const senderRoles =
+    ((session.user as any).roles as string[] | undefined) ?? [];
   const isSenderAdmin = senderRole === 'ADMIN' || senderRole === 'SUPER_ADMIN';
   const isSenderCounter = senderRole === 'COUNTER';
+  const isSenderProfessor =
+    senderRole === 'PROFESSOR' || senderRoles.includes('PROFESSOR');
   const isRecipientAdmin =
     recipient.role === 'ADMIN' || recipient.role === 'SUPER_ADMIN';
-  if (!isSenderAdmin && !isSenderCounter && !isRecipientAdmin) {
+  const sharesAssignedActivity = isSenderProfessor
+    ? Boolean(
+        await prisma.activityParticipant.findFirst({
+          where: {
+            userId: otherUserId,
+            activity: {
+              professors: { some: { userId: session.user.id } },
+            },
+          },
+          select: { id: true },
+        })
+      )
+    : false;
+
+  if (
+    !isSenderAdmin &&
+    !isSenderCounter &&
+    !isRecipientAdmin &&
+    !sharesAssignedActivity
+  ) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
