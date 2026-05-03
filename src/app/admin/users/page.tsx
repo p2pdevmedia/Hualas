@@ -1,15 +1,19 @@
 import { getServerSession } from 'next-auth';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isCounterRole } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import UsersList from './users-list';
 
 export default async function UsersPage() {
   const session = await getServerSession(authOptions);
   // Auth gating happens in the parent /admin layout.
+  const canManageRoles =
+    session?.user.role === 'ADMIN' || session?.user.role === 'SUPER_ADMIN';
+  const canManageSuperAdmin =
+    (session?.user as { roles?: string[] } | undefined)?.roles?.includes(
+      'SUPER_ADMIN'
+    ) ?? false;
 
   const users = await prisma.user.findMany({
     select: {
@@ -19,6 +23,7 @@ export default async function UsersPage() {
       email: true,
       dni: true,
       role: true,
+      roleAssignments: { select: { role: true } },
       profilePhoto: true,
       updatedAt: true,
     },
@@ -37,7 +42,14 @@ export default async function UsersPage() {
         </Button>
       </div>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <UsersList users={users} />
+        <UsersList
+          users={users.map((user) => ({
+            ...user,
+            roles: user.roleAssignments.map((assignment) => assignment.role),
+          }))}
+          canManageRoles={canManageRoles}
+          canManageSuperAdmin={canManageSuperAdmin}
+        />
       </div>
     </div>
   );

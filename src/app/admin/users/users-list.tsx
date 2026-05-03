@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/components/language-provider';
+import UserRolesModal from './user-roles-modal';
 
 interface User {
   id: string;
@@ -14,6 +15,7 @@ interface User {
   email: string;
   dni: string | null;
   role: string;
+  roles: string[];
   profilePhoto: string | null;
   updatedAt: Date;
 }
@@ -21,9 +23,13 @@ interface User {
 export default function UsersList({
   users,
   readOnly = false,
+  canManageRoles = false,
+  canManageSuperAdmin = false,
 }: {
   users: User[];
   readOnly?: boolean;
+  canManageRoles?: boolean;
+  canManageSuperAdmin?: boolean;
 }) {
   const t = useTranslation().actions;
   const router = useRouter();
@@ -31,6 +37,7 @@ export default function UsersList({
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [confirmDeleteId, setConfirmDeleteId] = useState('');
+  const [roleEditorUser, setRoleEditorUser] = useState<User | null>(null);
   const filtered = users.filter((u) => {
     const q = query.toLowerCase();
     return (
@@ -70,7 +77,10 @@ export default function UsersList({
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setPage(1);
+        }}
         placeholder="Buscar por nombre, apellido, correo o DNI"
         className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
       />
@@ -149,6 +159,17 @@ export default function UsersList({
                     >
                       {t.delete}
                     </button>
+                    {canManageRoles &&
+                      (canManageSuperAdmin ||
+                        !u.roles.includes('SUPER_ADMIN')) && (
+                        <button
+                          type="button"
+                          onClick={() => setRoleEditorUser(u)}
+                          className={menuItemClass}
+                        >
+                          Roles
+                        </button>
+                      )}
                   </div>
                 </details>
               </>
@@ -156,12 +177,19 @@ export default function UsersList({
           </li>
         ))}
       </ul>
+      {roleEditorUser && canManageRoles && (
+        <UserRolesModal
+          user={roleEditorUser}
+          onClose={() => setRoleEditorUser(null)}
+        />
+      )}
       {confirmDeleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 className="text-lg font-semibold mb-2">Eliminar usuario</h2>
             <p className="text-muted-foreground mb-6">
-              ¿Estás seguro de que querés eliminar este usuario? Esta acción no se puede deshacer.
+              ¿Estás seguro de que querés eliminar este usuario? Esta acción no
+              se puede deshacer.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -171,7 +199,11 @@ export default function UsersList({
                 Cancelar
               </button>
               <button
-                onClick={() => { const id = confirmDeleteId; setConfirmDeleteId(''); deleteUser(id); }}
+                onClick={() => {
+                  const id = confirmDeleteId;
+                  setConfirmDeleteId('');
+                  deleteUser(id);
+                }}
                 className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
               >
                 Eliminar

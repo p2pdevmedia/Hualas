@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { userUpdateSchema } from '@/lib/validations/user';
-import { hasSuperAdminCapability } from '@/lib/roles';
+import { hasAdminCapability, hasSuperAdminCapability } from '@/lib/roles';
 import type { Role } from '@prisma/client';
 
 export async function PATCH(
@@ -19,9 +19,11 @@ export async function PATCH(
   }
 
   const data = userUpdateSchema.parse(await req.json());
-  // Only SUPER_ADMIN capability can change role assignments (matches the
-  // pre-multi-role behavior — single-role edits were SUPER_ADMIN-only).
-  if ((data.role || data.roles) && !hasSuperAdminCapability(session)) {
+  const roleUpdateRequested =
+    data.role !== undefined || data.roles !== undefined;
+  // Role management is available from the admin users list. SUPER_ADMIN stays
+  // protected so admins cannot grant or remove that capability.
+  if (roleUpdateRequested && !hasAdminCapability(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -79,9 +81,16 @@ export async function PATCH(
   if (data.email !== undefined) updateData.email = data.email;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
+  const rolePriority: Role[] = ['SUPER_ADMIN', 'ADMIN', 'COUNTER', 'PROFESSOR'];
+  const pickLegacyRole = (roles: Role[]): Role => {
+    for (const role of rolePriority) {
+      if (roles.includes(role)) return role;
+    }
+    return 'MEMBER';
+  };
+
   // Sync role assignments when `roles` is provided. We mirror the chosen
-  // capabilities into the legacy `role` column for backward compatibility
-  // (used until Phase F drops it).
+  // capabilities into the legacy `role` column for backward compatibility.
   let nextRoles: Role[] | null = null;
   if (data.roles !== undefined) {
     nextRoles = Array.from(new Set(data.roles)) as Role[];
@@ -90,14 +99,32 @@ export async function PATCH(
   }
 
   if (nextRoles !== null) {
-    const legacyRole: Role = nextRoles.length === 0 ? 'MEMBER' : nextRoles[0];
+    const currentTarget = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: {
+        activeRole: true,
+        roleAssignments: { select: { role: true } },
+      },
+    });
+    const currentRoles =
+      currentTarget?.roleAssignments.map((a) => a.role) ?? [];
+    const currentHasSuperAdmin = currentRoles.includes('SUPER_ADMIN');
+    const requestedHasSuperAdmin = nextRoles.includes('SUPER_ADMIN');
+    if (
+      !hasSuperAdminCapability(session) &&
+      (currentHasSuperAdmin || requestedHasSuperAdmin)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const legacyRole: Role = pickLegacyRole(nextRoles);
     updateData.role = legacyRole;
     // If the user's activeRole would no longer be valid, snap it back to MEMBER.
-    const target = await prisma.user.findUnique({
-      where: { id: params.id },
-      select: { activeRole: true },
-    });
-    if (target && target.activeRole !== 'MEMBER' && !nextRoles.includes(target.activeRole)) {
+    if (
+      currentTarget &&
+      currentTarget.activeRole !== 'MEMBER' &&
+      !nextRoles.includes(currentTarget.activeRole)
+    ) {
       updateData.activeRole = 'MEMBER';
     }
   }
