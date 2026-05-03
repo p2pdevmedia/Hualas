@@ -78,7 +78,10 @@ export async function POST(req: Request) {
       const annualDays = buildAnnualActivityDays(
         data.date,
         data.endDate,
-        data.annualSchedules
+        data.annualSchedules.map((s) => ({
+          ...s,
+          sportIcon: s.sportIcon ?? undefined,
+        }))
       );
 
       const dayData = annualDays.map((day) => {
