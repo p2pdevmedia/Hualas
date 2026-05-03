@@ -110,6 +110,7 @@ export default function ProfessorProfileForm({
   const [newNotes, setNewNotes] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [confirmDeletePaymentId, setConfirmDeletePaymentId] = useState('');
 
   const newAmountCents = useMemo(() => {
     const p = Number(newAmount);
@@ -427,7 +428,7 @@ export default function ProfessorProfileForm({
                           <Button
                             variant="outline"
                             className="text-rose-600 border-rose-200 hover:bg-rose-50 px-3 py-1 text-xs"
-                            onClick={() => deletePayment(payment.id)}
+                            onClick={() => setConfirmDeletePaymentId(payment.id)}
                           >
                             Eliminar
                           </Button>
@@ -441,6 +442,30 @@ export default function ProfessorProfileForm({
           </div>
         )}
       </section>
+      {confirmDeletePaymentId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Eliminar pago</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés eliminar este registro de pago? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeletePaymentId('')}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { const id = confirmDeletePaymentId; setConfirmDeletePaymentId(''); deletePayment(id); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

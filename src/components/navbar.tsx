@@ -17,6 +17,7 @@ import type { Lang } from '@/lib/i18n';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import NotificationBell from './notifications/notification-bell';
 import PushManager from './notifications/push-manager';
+import { useNotifications } from './notifications/notifications-context';
 
 const IPFS_HASH = 'QmToPhMQe1dqt7aVAoPumwkqyRhR2EjnvCmw1stPjCpvq3';
 const defaultLogo = `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}/`;
@@ -62,7 +63,8 @@ export default function Navbar() {
   const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const { chatUnreadCount } = useNotifications();
+  const hasUnreadMessages = chatUnreadCount > 0;
   const [photoFailed, setPhotoFailed] = useState(false);
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -118,38 +120,6 @@ export default function Navbar() {
       window.removeEventListener('storage', handleStorage);
     };
   }, [isMember, isMemberRole, session]);
-  useEffect(() => {
-    if (!session) {
-      setHasUnreadMessages(false);
-      return;
-    }
-
-    let cancelled = false;
-    const fetchUnread = async () => {
-      try {
-        const res = await fetch('/api/messages');
-        if (!res.ok) return;
-        const conversations = (await res.json()) as { unreadCount?: number }[];
-        if (!cancelled) {
-          setHasUnreadMessages(
-            conversations.some((c) => (c.unreadCount ?? 0) > 0)
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setHasUnreadMessages(false);
-        }
-      }
-    };
-
-    fetchUnread();
-    const id = window.setInterval(fetchUnread, 8000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [session]);
-
   const logoUrl = defaultLogo;
 
   const linkClass =

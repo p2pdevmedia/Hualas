@@ -1,61 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import NotificationPanel, { type NotificationRow } from './notification-panel';
-
-const POLL_INTERVAL_MS = 60_000;
-
-type ApiResponse = {
-  notifications: NotificationRow[];
-  unreadCount: number;
-};
+import NotificationPanel from './notification-panel';
+import { useNotifications } from './notifications-context';
 
 export default function NotificationBell() {
   const { status } = useSession();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [items, setItems] = useState<NotificationRow[]>([]);
+  const { items, unreadCount, fetchData, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch('/api/notifications?limit=10');
-      if (!res.ok) return;
-      const data = (await res.json()) as ApiResponse;
-      setItems(data.notifications);
-      setUnreadCount(data.unreadCount);
-    } catch {
-      // ignore network errors
-    }
-  }, []);
-
-  useEffect(() => {
-    if (status !== 'authenticated') {
-      setItems([]);
-      setUnreadCount(0);
-      return;
-    }
-    fetchData();
-    const interval = window.setInterval(fetchData, POLL_INTERVAL_MS);
-    return () => window.clearInterval(interval);
-  }, [status, fetchData]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!('serviceWorker' in navigator)) return;
-    function handleSwMessage(event: MessageEvent) {
-      if (event.data && event.data.type === 'push-received') {
-        fetchData();
-      }
-    }
-    navigator.serviceWorker.addEventListener('message', handleSwMessage);
-    return () => {
-      navigator.serviceWorker.removeEventListener('message', handleSwMessage);
-    };
-  }, [fetchData]);
 
   useEffect(() => {
     if (!open) return;
@@ -78,33 +34,6 @@ export default function NotificationBell() {
       setLoading(false);
     }
     setOpen((prev) => !prev);
-  }
-
-  async function handleItemRead(id: string) {
-    setItems((prev) =>
-      prev.map((n) =>
-        n.id === id && !n.readAt
-          ? { ...n, readAt: new Date().toISOString() }
-          : n
-      )
-    );
-    setUnreadCount((c) => Math.max(0, c - 1));
-    try {
-      await fetch(`/api/notifications/${id}`, { method: 'PATCH' });
-    } catch {
-      // ignore
-    }
-  }
-
-  async function handleMarkAllRead() {
-    const now = new Date().toISOString();
-    setItems((prev) => prev.map((n) => (n.readAt ? n : { ...n, readAt: now })));
-    setUnreadCount(0);
-    try {
-      await fetch('/api/notifications', { method: 'PATCH' });
-    } catch {
-      // ignore
-    }
   }
 
   if (status !== 'authenticated') return null;
@@ -136,8 +65,8 @@ export default function NotificationBell() {
           notifications={items}
           loading={loading}
           onClose={() => setOpen(false)}
-          onMarkAllRead={handleMarkAllRead}
-          onItemRead={handleItemRead}
+          onMarkAllRead={markAllRead}
+          onItemRead={markRead}
         />
       )}
     </div>

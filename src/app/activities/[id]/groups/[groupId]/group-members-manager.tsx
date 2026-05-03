@@ -33,6 +33,7 @@ export default function ActivityGroupMembersManager({
   const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
     null
   );
+  const [confirmRemoveMemberId, setConfirmRemoveMemberId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,9 +187,7 @@ export default function ActivityGroupMembersManager({
                         type="button"
                         variant="ghost"
                         disabled={isSaving}
-                        onClick={() =>
-                          mutateMembership(member.participantId, 'DELETE')
-                        }
+                        onClick={() => setConfirmRemoveMemberId(member.participantId)}
                         className="border-destructive text-destructive hover:bg-destructive/5"
                       >
                         {isSaving ? 'Quitando...' : 'Sacar del grupo'}
@@ -264,6 +263,32 @@ export default function ActivityGroupMembersManager({
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {confirmRemoveMemberId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Sacar del grupo</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés sacar a este participante del grupo?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveMemberId(null)}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { const id = confirmRemoveMemberId; setConfirmRemoveMemberId(null); void mutateMembership(id, 'DELETE'); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Sacar del grupo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

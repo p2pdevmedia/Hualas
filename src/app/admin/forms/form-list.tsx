@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/components/language-provider';
@@ -13,6 +14,7 @@ interface Form {
 export default function FormList({ forms }: { forms: Form[] }) {
   const router = useRouter();
   const t = useTranslation().actions;
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string>('');
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/forms/${id}`, { method: 'DELETE' });
@@ -72,7 +74,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
                     Público
                   </Link>
                   <button
-                    onClick={() => handleDelete(f.id)}
+                    onClick={() => setConfirmDeleteId(f.id)}
                     className="text-sm text-destructive hover:text-destructive/80"
                   >
                     {t.delete}
@@ -83,6 +85,30 @@ export default function FormList({ forms }: { forms: Form[] }) {
           ))}
         </tbody>
       </table>
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Eliminar formulario</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés eliminar este formulario? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId('')}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { const id = confirmDeleteId; setConfirmDeleteId(''); handleDelete(id); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

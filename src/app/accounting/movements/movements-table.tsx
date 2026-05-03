@@ -43,6 +43,7 @@ export default function MovementsTable({
   const [to, setTo] = useState(initialFilters.to);
   const [q, setQ] = useState(initialFilters.q);
   const [deletingId, setDeletingId] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState('');
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -227,7 +228,7 @@ export default function MovementsTable({
                         type="button"
                         variant="ghost"
                         className="px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800"
-                        onClick={() => deleteMovement(movement.id)}
+                        onClick={() => setConfirmDeleteId(movement.id)}
                         disabled={deletingId === movement.id}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -243,6 +244,30 @@ export default function MovementsTable({
           </tbody>
         </table>
       </div>
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Eliminar movimiento</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés eliminar este movimiento? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId('')}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { const id = confirmDeleteId; setConfirmDeleteId(''); deleteMovement(id); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

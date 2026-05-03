@@ -117,6 +117,7 @@ export default function EditActivityForm({
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
+  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<string | null>(null);
 
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
@@ -584,7 +585,7 @@ export default function EditActivityForm({
                   <button
                     type="button"
                     disabled={deletingGroupId === group.id}
-                    onClick={() => handleDeleteGroup(group.id)}
+                    onClick={() => setConfirmDeleteGroupId(group.id)}
                     className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
                   >
                     {deletingGroupId === group.id ? 'Eliminando...' : 'Eliminar'}
@@ -642,6 +643,32 @@ export default function EditActivityForm({
           {saving ? 'Guardando...' : 'Guardar'}
         </Button>
       </Form>
+      {confirmDeleteGroupId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Eliminar grupo</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés eliminar este grupo? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteGroupId(null)}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { const id = confirmDeleteGroupId; setConfirmDeleteGroupId(null); void handleDeleteGroup(id); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

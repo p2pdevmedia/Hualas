@@ -30,6 +30,7 @@ export default function UsersList({
   const PAGE_SIZE = 20;
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [confirmDeleteId, setConfirmDeleteId] = useState('');
   const filtered = users.filter((u) => {
     const q = query.toLowerCase();
     return (
@@ -143,7 +144,7 @@ export default function UsersList({
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteUser(u.id)}
+                      onClick={() => setConfirmDeleteId(u.id)}
                       className={`${menuItemClass} text-red-600 hover:bg-red-50`}
                     >
                       {t.delete}
@@ -155,6 +156,30 @@ export default function UsersList({
           </li>
         ))}
       </ul>
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold mb-2">Eliminar usuario</h2>
+            <p className="text-muted-foreground mb-6">
+              ¿Estás seguro de que querés eliminar este usuario? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId('')}
+                className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { const id = confirmDeleteId; setConfirmDeleteId(''); deleteUser(id); }}
+                className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2 text-sm">
           <span className="text-muted-foreground">

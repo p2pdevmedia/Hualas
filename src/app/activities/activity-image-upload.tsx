@@ -22,6 +22,7 @@ export default function ActivityImageUpload({
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -158,16 +159,44 @@ export default function ActivityImageUpload({
             Seleccionar imagen
           </Button>
           {hasCurrentImage && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDelete}
-              disabled={isUploading}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Eliminar imagen
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isUploading}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar imagen
+              </Button>
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
+                    <h2 className="text-lg font-semibold mb-2">Eliminar imagen</h2>
+                    <p className="text-muted-foreground mb-6">
+                      ¿Estás seguro de que querés eliminar la imagen de la actividad? Esta acción no se puede deshacer.
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        disabled={isUploading}
+                        className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={async () => { setShowDeleteConfirm(false); await handleDelete(); }}
+                        disabled={isUploading}
+                        className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
         <p className="text-xs text-muted-foreground">

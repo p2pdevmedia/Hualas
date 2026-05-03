@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     50
   );
 
-  const [notifications, unreadCount] = await Promise.all([
+  const [notifications, unreadCount, chatUnreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: {
         userId,
@@ -37,9 +37,10 @@ export async function GET(req: Request) {
       },
     }),
     prisma.notification.count({ where: { userId, readAt: null } }),
+    prisma.notification.count({ where: { userId, readAt: null, type: 'CHAT_MESSAGE_NEW' } }),
   ]);
 
-  return NextResponse.json({ notifications, unreadCount });
+  return NextResponse.json({ notifications, unreadCount, chatUnreadCount });
 }
 
 export async function PATCH() {
