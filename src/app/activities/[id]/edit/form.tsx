@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
+import { SPORT_ICONS } from '@/lib/sport-icons';
 import ProfessorPicker from '../../professor-picker';
 
 type ProfessorOption = {
@@ -31,6 +32,7 @@ type AnnualScheduleDraft = {
   schedule: string;
   description: string;
   groupId: string;
+  sportIcon: string;
   geoLocation: string;
   coordinates: Coordinates | null;
 };
@@ -78,6 +80,7 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     schedule: '',
     description: '',
     groupId: '',
+    sportIcon: '',
     geoLocation: '',
     coordinates: null,
   };
@@ -252,6 +255,7 @@ export default function EditActivityForm({
               schedule: d.schedule.trim(),
               description: d.description.trim() || undefined,
               groupId: d.groupId || undefined,
+              sportIcon: d.sportIcon || undefined,
               geoLocation: d.geoLocation.trim(),
               latitude: d.coordinates!.latitude,
               longitude: d.coordinates!.longitude,
@@ -464,6 +468,26 @@ export default function EditActivityForm({
                         }
                         className={inputClass}
                       />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Deporte</label>
+                      <select
+                        value={draft.sportIcon}
+                        onChange={(e) =>
+                          updateScheduleDraft(draft.tempId, {
+                            sportIcon: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        <option value="">Sin ícono</option>
+                        {SPORT_ICONS.map((icon) => (
+                          <option key={icon.file} value={icon.file}>
+                            {icon.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="space-y-1">

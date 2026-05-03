@@ -3,6 +3,7 @@ type AnnualScheduleTemplate = {
   schedule: string;
   description?: string;
   groupTempId?: string;
+  sportIcon?: string;
   geoLocation: string;
   latitude: number;
   longitude: number;

@@ -95,6 +95,7 @@ export async function POST(req: Request) {
           schedule: day.schedule,
           description: day.description ?? null,
           activityGroupId: activityGroupId ?? null,
+          sportIcon: day.sportIcon ?? null,
           geoLocation: day.geoLocation,
           latitude: day.latitude,
           longitude: day.longitude,
