@@ -30,12 +30,14 @@ export default async function ChildrenPage() {
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Infancias</h1>
-        <Link
-          href="/profile/children/new"
-          className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
-        >
-          Agregar hijo
-        </Link>
+        {user.children.length > 0 && (
+          <Link
+            href="/profile/children/new"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+          >
+            Agregar hijo
+          </Link>
+        )}
       </div>
 
       {user.children.length === 0 ? (
