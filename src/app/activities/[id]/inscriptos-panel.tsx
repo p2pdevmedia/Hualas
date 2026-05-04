@@ -47,6 +47,8 @@ export default function InscriptosPanel({
   const [dropTargetGroupId, setDropTargetGroupId] = useState<string | null>(
     null
   );
+  const [selectedParticipantIdForAssign, setSelectedParticipantIdForAssign] =
+    useState<string | null>(null);
 
   useEffect(() => {
     setSelectedGroups(
@@ -121,11 +123,14 @@ export default function InscriptosPanel({
   );
 
   async function handleDropInGroup(targetGroupId: string) {
-    if (!draggingParticipantId || savingId) return;
+    const participantId =
+      draggingParticipantId ?? selectedParticipantIdForAssign;
+    if (!participantId || savingId) return;
 
     setDropTargetGroupId(null);
-    await saveGroup(draggingParticipantId, targetGroupId);
+    await saveGroup(participantId, targetGroupId);
     setDraggingParticipantId(null);
+    setSelectedParticipantIdForAssign(null);
   }
 
   function handleDragStart(participantId: string) {
@@ -136,6 +141,14 @@ export default function InscriptosPanel({
   function handleDragEnd() {
     setDraggingParticipantId(null);
     setDropTargetGroupId(null);
+  }
+
+  function handleParticipantTapToAssign(participantId: string) {
+    if (!canAssignGroups || savingId) return;
+    setError('');
+    setSelectedParticipantIdForAssign((current) =>
+      current === participantId ? null : participantId
+    );
   }
 
   return (
@@ -296,7 +309,8 @@ export default function InscriptosPanel({
                   <div className="rounded-lg border border-dashed bg-muted/20 p-4">
                     <p className="text-sm font-medium">Sin grupo</p>
                     <p className="mt-1 text-xs text-muted-foreground font-body">
-                      Arrastrá un inscripto hacia un grupo para asignarlo.
+                      Arrastrá y soltá (desktop) o tocá participante y luego
+                      grupo (móvil).
                     </p>
                     <ul className="mt-3 space-y-2">
                       {unassignedParticipants.map((participant) => (
@@ -305,7 +319,10 @@ export default function InscriptosPanel({
                           draggable={canAssignGroups && groups.length > 0}
                           onDragStart={() => handleDragStart(participant.id)}
                           onDragEnd={handleDragEnd}
-                          className="cursor-grab rounded-md border bg-background px-3 py-2 active:cursor-grabbing"
+                          onClick={() =>
+                            handleParticipantTapToAssign(participant.id)
+                          }
+                          className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
                         >
                           <p className="font-medium">{participant.name}</p>
                           <p className="text-sm text-muted-foreground font-body">
@@ -332,6 +349,9 @@ export default function InscriptosPanel({
                         }}
                         onDrop={(event) => {
                           event.preventDefault();
+                          void handleDropInGroup(group.id);
+                        }}
+                        onClick={() => {
                           void handleDropInGroup(group.id);
                         }}
                         className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
