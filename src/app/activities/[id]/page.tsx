@@ -330,6 +330,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
   const hideSessionDetails = activity.activityType === 'ANNUAL';
+  const hideSessionList = activity.activityType === 'ANNUAL' || activity.activityType === 'TEMPORARY';
   const activityListHref = isParticipantInActivity
     ? '/my-activities'
     : '/activities';
@@ -459,6 +460,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             activityId={activity.id}
             canManageDays={canManageDays}
             hideSessionDetails={hideSessionDetails}
+            hideSessionList={hideSessionList}
             professors={professorOptions}
             groups={activityGroupOptions}
             defaultProfessorIds={activityProfessorIds}

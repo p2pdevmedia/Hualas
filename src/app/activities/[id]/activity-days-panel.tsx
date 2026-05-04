@@ -82,6 +82,7 @@ interface ActivityDaysPanelProps {
   activityId: string;
   canManageDays: boolean;
   hideSessionDetails?: boolean;
+  hideSessionList?: boolean;
   professors: ProfessorOption[];
   groups: GroupOption[];
   defaultProfessorIds: string[];
@@ -99,6 +100,7 @@ export default function ActivityDaysPanel({
   activityId,
   canManageDays,
   hideSessionDetails = false,
+  hideSessionList = false,
   professors,
   groups,
   defaultProfessorIds,
@@ -117,6 +119,7 @@ export default function ActivityDaysPanel({
   const [expandedLists, setExpandedLists] = useState<
     Record<string, { going: boolean; notGoing: boolean }>
   >({});
+  const [selectedCalendarDayId, setSelectedCalendarDayId] = useState<string | null>(null);
 
   const { currentDays, pastDays } = useMemo(() => {
     const today = new Date();
@@ -220,6 +223,8 @@ export default function ActivityDaysPanel({
 
   const existingDayDates = days.map((day) => day.date.slice(0, 10));
 
+  const editingDay = editingDayId ? days.find((d) => d.id === editingDayId) ?? null : null;
+
   return (
     <>
     {showBulkCreator && (
@@ -265,7 +270,75 @@ export default function ActivityDaysPanel({
 
       {days.length > 0 && (
         <div className="mt-6">
-          <ActivityCalendar activityDays={calendarDays} />
+          <ActivityCalendar
+            activityDays={calendarDays}
+            onDaySelect={canManageDays ? (dayId) => {
+              setSelectedCalendarDayId(dayId);
+              if (dayId !== editingDayId) setEditingDayId(null);
+            } : undefined}
+          />
+          {canManageDays && selectedCalendarDayId && (
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setEditingDayId((prev) =>
+                    prev === selectedCalendarDayId ? null : selectedCalendarDayId
+                  )
+                }
+                className="text-xs text-link hover:underline underline-offset-4 font-medium"
+              >
+                {editingDayId === selectedCalendarDayId ? 'Cerrar edición' : 'Editar sesión'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {editingDay && (
+        <div className="mt-4 rounded-lg border bg-background p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold">
+              Editar sesión —{' '}
+              {new Date(editingDay.date).toLocaleDateString('es-AR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={() => setEditingDayId(null)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Cerrar
+            </button>
+          </div>
+          <ActivityDayForm
+            key={editingDay.id}
+            activityId={activityId}
+            mode="edit"
+            dayId={editingDay.id}
+            professors={professors}
+            groups={groups}
+            defaultProfessorIds={defaultProfessorIds}
+            initialValues={{
+              date: editingDay.date.slice(0, 10),
+              schedule: editingDay.schedule,
+              description: editingDay.description ?? '',
+              geoLocation: editingDay.geoLocation,
+              coordinates:
+                editingDay.latitude != null && editingDay.longitude != null
+                  ? { latitude: editingDay.latitude, longitude: editingDay.longitude }
+                  : null,
+              professorIds: editingDay.assignedProfessors.map((p) => p.id),
+              activityGroupId: editingDay.activityGroupId,
+              sportIcon: editingDay.sportIcon,
+            }}
+            onSaved={() => setEditingDayId(null)}
+            onCancel={() => setEditingDayId(null)}
+          />
         </div>
       )}
 
@@ -273,7 +346,7 @@ export default function ActivityDaysPanel({
         <p className="mt-6 text-sm text-muted-foreground font-body">
           Aún no hay días cargados para esta actividad.
         </p>
-      ) : !hideSessionDetails ? (
+      ) : !hideSessionDetails && !hideSessionList ? (
         <div className="mt-6 space-y-4">
           {visibleDays.map((day) => {
             const goingCount = day.attendances.filter(
