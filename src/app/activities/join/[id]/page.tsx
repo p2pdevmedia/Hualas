@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
 import JoinEnrollmentPanel from './join-enrollment-panel';
@@ -31,10 +33,27 @@ export default async function ActivityJoinPage({
     notFound();
   }
 
-  const [participantCount, groups, sessions] = await Promise.all([
+  const session = await getServerSession(authOptions);
+  const userId = session?.user ? (session.user as any).id as string : null;
+
+  const [participantCount, groups, sessions, userProfile] = await Promise.all([
     prisma.activityParticipant.count({ where: { activityId: activity.id } }),
-    prisma.activityGroup.findMany({ where: { activityId: activity.id }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
-    prisma.activityDay.findMany({ where: { activityId: activity.id, cancelled: false }, select: { id: true, date: true, schedule: true, activityGroupId: true }, orderBy: { date: 'asc' } }),
+    prisma.activityGroup.findMany({
+      where: { activityId: activity.id },
+      select: { id: true, name: true, minAge: true, maxAge: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.activityDay.findMany({
+      where: { activityId: activity.id, cancelled: false },
+      select: { id: true, date: true, schedule: true, activityGroupId: true },
+      orderBy: { date: 'asc' },
+    }),
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { birthDate: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
@@ -154,23 +173,25 @@ export default async function ActivityJoinPage({
         </section>
 
         <JoinEnrollmentPanel
-            activity={{
-              id: activity.id,
-              name: activity.name,
-              price: Number(activity.price),
-              activityType: activity.activityType,
-            }}
-            groups={groups}
-            sessions={sessions.map((session) => ({
-              id: session.id,
-              date: session.date.toISOString(),
-              schedule: session.schedule,
-              activityGroupId: session.activityGroupId,
-            }))}
-            isFull={isFull}
-            hasCapacity={hasCapacity}
-            remainingSpots={remainingSpots}
-          />
+          activity={{
+            id: activity.id,
+            name: activity.name,
+            price: Number(activity.price),
+            activityType: activity.activityType,
+          }}
+          groups={groups}
+          sessions={sessions.map((session) => ({
+            id: session.id,
+            date: session.date.toISOString(),
+            schedule: session.schedule,
+            activityGroupId: session.activityGroupId,
+          }))}
+          isFull={isFull}
+          hasCapacity={hasCapacity}
+          remainingSpots={remainingSpots}
+          userBirthDate={userProfile?.birthDate?.toISOString() ?? null}
+          activityStartDate={activity.date.toISOString()}
+        />
       </div>
     </main>
   );

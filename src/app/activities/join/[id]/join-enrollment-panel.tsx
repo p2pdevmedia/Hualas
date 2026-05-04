@@ -1,11 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import RegisterButton from '@/app/activities/[id]/register-button';
+import { useEffect, useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
+import RegisterButton from '@/components/register-button';
 import GroupScheduleCalendar from './group-schedule-calendar';
 
-type Group = { id: string; name: string };
+type Group = { id: string; name: string; minAge: number | null; maxAge: number | null };
 type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
+type Child = { id: string; name: string; birthDate: string | null };
 
 export default function JoinEnrollmentPanel({
   activity,
@@ -14,6 +18,8 @@ export default function JoinEnrollmentPanel({
   isFull,
   hasCapacity,
   remainingSpots,
+  userBirthDate,
+  activityStartDate,
 }: {
   activity: { id: string; name: string; price: number; activityType: 'ANNUAL' | 'TEMPORARY' };
   groups: Group[];
@@ -21,23 +27,95 @@ export default function JoinEnrollmentPanel({
   isFull: boolean;
   hasCapacity: boolean;
   remainingSpots: number | null;
+  userBirthDate?: string | null;
+  activityStartDate?: string | null;
 }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const isMember = (session?.user as any)?.role === 'MEMBER';
+
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const selectedGroup = useMemo(() => groups.find((group) => group.id === selectedGroupId), [groups, selectedGroupId]);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedPersonId, setSelectedPersonId] = useState('');
+
+  useEffect(() => {
+    if (session && isMember) {
+      fetch('/api/children')
+        .then((res) => res.json())
+        .then((data: any[]) =>
+          setChildren(
+            data.map((c) => ({
+              id: c.id,
+              name: [c.name, c.lastName].filter(Boolean).join(' '),
+              birthDate: c.birthDate ? new Date(c.birthDate).toISOString() : null,
+            }))
+          )
+        );
+    }
+  }, [session, isMember]);
+
+  const people = useMemo(() => {
+    if (!session) return [];
+    return [
+      { id: 'self', label: 'Para mí', birthDate: userBirthDate ?? null },
+      ...children.map((c) => ({ id: c.id, label: c.name, birthDate: c.birthDate })),
+    ];
+  }, [session, children, userBirthDate]);
+
+  const effectivePersonId = people.length === 1 ? people[0].id : selectedPersonId;
+  const selectedPerson = people.find((p) => p.id === effectivePersonId) ?? null;
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+
+  const needsPersonSelection = Boolean(session && people.length > 1 && !selectedPersonId);
+  const needsGroupSelection = groups.length > 0 && !selectedGroupId;
+  const canRegister = !isFull && !needsPersonSelection && !needsGroupSelection;
+
+  const handleRegister = () => {
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+    if (!effectivePersonId) return;
+    const personLabel = selectedPerson?.label ?? 'Para mí';
+    const item: ActivityCartItem = {
+      activityId: activity.id,
+      activityName: activity.name,
+      price: activity.price,
+      target: effectivePersonId,
+      targetLabel: personLabel,
+      groupId: selectedGroupId || undefined,
+      groupName: selectedGroup?.name,
+    };
+    const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
+    const existing = raw ? (JSON.parse(raw) as ActivityCartItem[]) : [];
+    const deduped = existing.filter(
+      (entry) =>
+        !(
+          entry.activityId === item.activityId &&
+          entry.target === item.target &&
+          (entry.groupId ?? '') === (item.groupId ?? '')
+        )
+    );
+    window.localStorage.setItem(ACTIVITY_CART_STORAGE_KEY, JSON.stringify([...deduped, item]));
+    router.push('/activities/cart');
+  };
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8">
       {groups.length > 0 && (
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
-          activityType={activity.activityType}
-          groups={groups}
-          sessions={sessions}
-          selectedGroupId={selectedGroupId}
-          onGroupChange={setSelectedGroupId}
-        />
+            activityType={activity.activityType}
+            groups={groups}
+            sessions={sessions}
+            selectedGroupId={selectedGroupId}
+            onGroupChange={setSelectedGroupId}
+            selectedPersonBirthDate={selectedPerson?.birthDate}
+            activityStartDate={activityStartDate}
+          />
         </div>
       )}
+
       <div className="space-y-4 rounded-xl border bg-card p-5 lg:col-start-2 lg:sticky lg:top-6">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Inscripción</p>
@@ -49,22 +127,44 @@ export default function JoinEnrollmentPanel({
           )}
         </div>
 
+        {session && people.length > 1 && (
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Para quién</p>
+            <select
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={selectedPersonId}
+              onChange={(e) => setSelectedPersonId(e.target.value)}
+            >
+              <option value="" disabled>
+                Seleccioná para quién
+              </option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {session && people.length === 1 && (
+          <p className="text-sm text-muted-foreground font-body">{people[0].label}</p>
+        )}
+
         {isFull ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
             No hay cupos disponibles en este momento.
           </div>
-        ) : groups.length > 0 && !selectedGroupId ? (
+        ) : needsPersonSelection ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
-            Seleccioná un grupo para continuar con la inscripción.
+            Seleccioná para quién es la actividad.
+          </div>
+        ) : needsGroupSelection ? (
+          <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
+            Seleccioná un grupo en el calendario para continuar.
           </div>
         ) : (
-          <RegisterButton
-            activityId={activity.id}
-            activityName={activity.name}
-            activityPrice={Number(activity.price)}
-            groupId={selectedGroupId || undefined}
-            groupName={selectedGroup?.name}
-          />
+          <RegisterButton onClick={handleRegister} disabled={!canRegister} />
         )}
       </div>
     </div>
