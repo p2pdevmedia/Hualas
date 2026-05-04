@@ -65,9 +65,20 @@ export default async function EditActivityPage({
       },
     }),
     prisma.activityDay.findMany({
-      where: { activityId: params.id },
+      where: {
+        activityId: params.id,
+        date: {
+          gte: activity.date,
+          lt: new Date(
+            Date.UTC(
+              activity.date.getUTCFullYear(),
+              activity.date.getUTCMonth(),
+              activity.date.getUTCDate() + 7
+            )
+          ),
+        },
+      },
       orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
-      take: 7,
       select: {
         id: true,
         date: true,
