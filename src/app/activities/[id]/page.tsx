@@ -524,7 +524,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         )}
 
-        {isAdmin && (
+        {(isAdmin || isProfessor) && (
           <InscriptosPanel
             participants={(participants as any[]).map((p) => ({
               id: p.id,
@@ -539,6 +539,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 ? (activityGroupById.get(p.groupMembership.activityGroupId) ??
                   null)
                 : null,
+              whatsappPhone: p.user.phone ?? null,
             }))}
             groups={activityGroupOptions}
             canAssignGroups={isAdmin}
