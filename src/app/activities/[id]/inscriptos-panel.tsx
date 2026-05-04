@@ -14,6 +14,7 @@ type InscriptosParticipant = {
   isChild: boolean;
   groupId: string | null;
   groupName: string | null;
+  age: number | null;
 };
 
 interface InscriptosPanelProps {
@@ -172,6 +173,9 @@ export default function InscriptosPanel({
                   >
                     <p className="font-medium">{participant.name}</p>
                     <p className="text-sm text-muted-foreground font-body">{participant.subtitle}</p>
+                    {participant.age != null && (
+                      <p className="text-xs text-muted-foreground font-body">Edad: {participant.age}</p>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -214,6 +218,9 @@ export default function InscriptosPanel({
                         >
                           <p className="font-medium">{member.name}</p>
                           <p className="text-sm text-muted-foreground font-body">{member.subtitle}</p>
+                          {member.age != null && (
+                            <p className="text-xs text-muted-foreground font-body">Edad: {member.age}</p>
+                          )}
                           {canAssignGroups && (
                             <button
                               type="button"
