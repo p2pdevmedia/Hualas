@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import ActivityDayForm from './activity-day-form';
+import BulkSessionCreator from './bulk-session-creator';
 import AttendanceList, {
   type ParticipantForAttendance,
 } from './attendance-list';
@@ -106,6 +107,7 @@ export default function ActivityDaysPanel({
 }: ActivityDaysPanelProps) {
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [editingDescriptionId, setEditingDescriptionId] = useState<
     string | null
@@ -217,7 +219,20 @@ export default function ActivityDaysPanel({
     }));
   }
 
+  const existingDayDates = days.map((day) => day.date.slice(0, 10));
+
   return (
+    <>
+    {showBulkCreator && (
+      <BulkSessionCreator
+        activityId={activityId}
+        professors={professors}
+        groups={groups}
+        defaultProfessorIds={defaultProfessorIds}
+        existingDayDates={existingDayDates}
+        onClose={() => setShowBulkCreator(false)}
+      />
+    )}
     <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -230,18 +245,29 @@ export default function ActivityDaysPanel({
               : 'El profesor puede programar días y los inscriptos confirman si van a asistir.'}
           </p>
         </div>
-        {canManageDays && !hideSessionDetails && (
+        {canManageDays && (
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
               Administración de días
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateForm((current) => !current)}
-            >
-              {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
-            </Button>
+            {!hideSessionDetails && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateForm((current) => !current)}
+              >
+                {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
+              </Button>
+            )}
+            {hideSessionDetails && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowBulkCreator(true)}
+              >
+                Crear sesiones
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -625,5 +651,6 @@ export default function ActivityDaysPanel({
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
     </section>
+    </>
   );
 }
