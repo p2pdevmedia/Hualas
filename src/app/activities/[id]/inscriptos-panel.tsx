@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 type Group = { id: string; name: string };
@@ -16,6 +17,7 @@ type InscriptosParticipant = {
   groupName: string | null;
   age: number | null;
   whatsappPhone?: string | null;
+  detailHref: string;
 };
 
 function getWhatsAppUrl(phone: string) {
@@ -243,9 +245,9 @@ export default function InscriptosPanel({
                         className={`rounded-md border bg-card px-3 py-1.5 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-medium leading-tight">
+                          <Link href={participant.detailHref} className="text-xs font-medium leading-tight text-link hover:underline" onClick={(event) => event.stopPropagation()}>
                             {participant.name}
-                          </p>
+                          </Link>
                           {participant.age != null && (
                             <p className="text-[11px] text-muted-foreground">
                               {participant.age} años
@@ -309,9 +311,9 @@ export default function InscriptosPanel({
                               )}
                               <div className="flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                  <p className="text-xs font-medium leading-tight">
+                                  <Link href={member.detailHref} className="text-xs font-medium leading-tight text-link hover:underline" onClick={(event) => event.stopPropagation()}>
                                     {member.name}
-                                  </p>
+                                  </Link>
                                   {member.age != null && (
                                     <p className="text-[11px] text-muted-foreground">
                                       {member.age} años
