@@ -8,6 +8,7 @@ type Member = {
   participantId: string;
   label: string;
   subtitle: string;
+  currentGroupId: string | null;
   currentGroupName: string | null;
 };
 
@@ -50,11 +51,8 @@ export default function ActivityGroupMembersManager({
   const [selectedTab, setSelectedTab] = useState<string>('all');
 
   const selectableTabs = useMemo(
-    () => [
-      { id: 'all', name: 'Todos los grupos' },
-      ...allGroups.filter((group) => group.id !== groupId),
-    ],
-    [allGroups, groupId]
+    () => [{ id: 'all', name: 'Todos los grupos' }, ...allGroups],
+    [allGroups]
   );
 
   const visibleParticipantsByTab = useMemo(() => {
@@ -62,12 +60,32 @@ export default function ActivityGroupMembersManager({
       return availableParticipants;
     }
 
+    if (selectedTab === 'ungrouped') {
+      return availableParticipants.filter(
+        (participant) => participant.currentGroupId === null
+      );
+    }
+
     return availableParticipants.filter(
-      (participant) =>
-        participant.currentGroupName === selectedTab ||
-        participant.currentGroupName === null
+      (participant) => participant.currentGroupId === selectedTab
     );
   }, [availableParticipants, selectedTab]);
+
+  const tabCounts = useMemo(() => {
+    const byGroup: Record<string, number> = {};
+    let ungrouped = 0;
+
+    for (const participant of availableParticipants) {
+      if (participant.currentGroupId) {
+        byGroup[participant.currentGroupId] =
+          (byGroup[participant.currentGroupId] ?? 0) + 1;
+      } else {
+        ungrouped += 1;
+      }
+    }
+
+    return { all: availableParticipants.length, ungrouped, byGroup };
+  }, [availableParticipants]);
 
   const filteredAvailableParticipants = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
@@ -238,28 +256,32 @@ export default function ActivityGroupMembersManager({
             Agregar participante
           </h3>
           <div className="flex flex-wrap gap-2">
-            {selectableTabs.map((tab) => {
-              const isActive =
-                selectedTab === tab.name ||
-                (tab.id === 'all' && selectedTab === 'all');
+            {[...selectableTabs, { id: 'ungrouped', name: 'Sin grupo' }].map(
+              (tab) => {
+                const isActive = selectedTab === tab.id;
+                const count =
+                  tab.id === 'all'
+                    ? tabCounts.all
+                    : tab.id === 'ungrouped'
+                      ? tabCounts.ungrouped
+                      : (tabCounts.byGroup[tab.id] ?? 0);
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedTab(tab.id === 'all' ? 'all' : tab.name)
-                  }
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                    isActive
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  {tab.name}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setSelectedTab(tab.id)}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {tab.name} ({count})
+                  </button>
+                );
+              }
+            )}
           </div>
           {visibleParticipantsByTab.length === 0 ? (
             <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
