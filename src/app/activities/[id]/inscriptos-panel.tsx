@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Group = { id: string; name: string };
@@ -32,15 +32,9 @@ export default function InscriptosPanel({
   capacity,
 }: InscriptosPanelProps) {
   const router = useRouter();
-  const [selectedGroups, setSelectedGroups] = useState<Record<string, string>>(
-    {}
-  );
+
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'groups' | 'unassigned'>(
-    'all'
-  );
-
   const [draggingParticipantId, setDraggingParticipantId] = useState<
     string | null
   >(null);
@@ -50,11 +44,6 @@ export default function InscriptosPanel({
   const [selectedParticipantIdForAssign, setSelectedParticipantIdForAssign] =
     useState<string | null>(null);
 
-  useEffect(() => {
-    setSelectedGroups(
-      Object.fromEntries(participants.map((p) => [p.id, p.groupId ?? '']))
-    );
-  }, [participants]);
 
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
@@ -65,7 +54,7 @@ export default function InscriptosPanel({
     const participant = participants.find((p) => p.id === participantId);
     if (!participant) return;
 
-    const nextGroupId = overrideGroupId ?? selectedGroups[participantId] ?? '';
+    const nextGroupId = overrideGroupId ?? '';
     const currentGroupId = participant.groupId ?? '';
     if (nextGroupId === currentGroupId) return;
 
@@ -109,18 +98,6 @@ export default function InscriptosPanel({
 
   const unassignedParticipants = participants.filter((p) => !p.groupId);
 
-  const groupsWithMembers = useMemo(
-    () =>
-      groups
-        .map((group) => ({
-          ...group,
-          members: participants.filter(
-            (participant) => participant.groupId === group.id
-          ),
-        }))
-        .filter((group) => group.members.length > 0),
-    [groups, participants]
-  );
 
   async function handleDropInGroup(targetGroupId: string) {
     const participantId =
@@ -173,200 +150,91 @@ export default function InscriptosPanel({
         </p>
       ) : (
         <>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab('all')}
-              className={`rounded-full border px-3 py-1.5 text-sm font-body transition-colors ${activeTab === 'all' ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
-            >
-              Todos ({participants.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('groups')}
-              className={`rounded-full border px-3 py-1.5 text-sm font-body transition-colors ${activeTab === 'groups' ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
-            >
-              Grupos asignados ({groupsWithMembers.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('unassigned')}
-              className={`rounded-full border px-3 py-1.5 text-sm font-body transition-colors ${activeTab === 'unassigned' ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
-            >
-              Sin grupo ({unassignedParticipants.length})
-            </button>
-          </div>
+          <div className="mt-6 rounded-xl border bg-muted/20 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Canvas de grupos</p>
+              <p className="text-xs text-muted-foreground font-body">
+                Arrastrá y soltá (desktop) o tocá participante y luego destino (móvil).
+              </p>
+            </div>
 
-          {activeTab === 'all' && (
-            <ul className="mt-4 divide-y divide-border">
-              {participants.map((participant) => {
-                const selectedGroupId = selectedGroups[participant.id] ?? '';
-                const currentGroupId = participant.groupId ?? '';
-                const isSaving = savingId === participant.id;
-
-                return (
+            <div className="mt-4 rounded-lg border border-dashed bg-background p-4">
+              <p className="text-sm font-semibold">Sin grupo ({unassignedParticipants.length})</p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {unassignedParticipants.map((participant) => (
                   <li
                     key={participant.id}
-                    className="py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                    draggable={canAssignGroups && groups.length > 0}
+                    onDragStart={() => handleDragStart(participant.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => handleParticipantTapToAssign(participant.id)}
+                    className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium">{participant.name}</p>
-                      <p className="text-sm text-muted-foreground font-body">
-                        {participant.subtitle}
-                      </p>
-                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground font-body">
-                        {participant.receipt && (
-                          <span>Comprobante {participant.receipt}</span>
-                        )}
-                        {participant.receiptDate && (
-                          <span>
-                            {participant.receipt ? '· ' : ''}
-                            Pago aprobado el{' '}
-                            {new Date(
-                              participant.receiptDate
-                            ).toLocaleDateString('es-AR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-sm text-muted-foreground font-body">
-                        {participant.isChild ? 'Hijo/a' : 'Titular'}
-                      </span>
-
-                      {canAssignGroups && groups.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <select
-                            className="rounded-md border bg-background px-2 py-1.5 text-sm"
-                            value={selectedGroupId}
-                            onChange={(e) =>
-                              setSelectedGroups((current) => ({
-                                ...current,
-                                [participant.id]: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="">Sin grupo</option>
-                            {groups.map((group) => (
-                              <option key={group.id} value={group.id}>
-                                {group.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            disabled={
-                              isSaving || selectedGroupId === currentGroupId
-                            }
-                            onClick={() => saveGroup(participant.id)}
-                            className="rounded-md border border-border bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {isSaving ? '...' : 'Guardar'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <p className="font-medium">{participant.name}</p>
+                    <p className="text-sm text-muted-foreground font-body">{participant.subtitle}</p>
                   </li>
-                );
-              })}
-            </ul>
-          )}
-
-          {activeTab === 'groups' && (
-            <div className="mt-4 space-y-4">
-              {groupsWithMembers.length === 0 ? (
-                <p className="text-sm text-muted-foreground font-body">
-                  Todavía no hay inscriptos asignados a grupos.
-                </p>
-              ) : (
-                groupsWithMembers.map((group) => (
-                  <div key={group.id} className="rounded-lg border p-4">
-                    <p className="font-medium">{group.name}</p>
-                    <ul className="mt-2 space-y-1 text-sm text-muted-foreground font-body">
-                      {group.members.map((member) => (
-                        <li key={member.id}>{member.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))
-              )}
+                ))}
+              </ul>
             </div>
-          )}
 
-          {activeTab === 'unassigned' && (
-            <div className="mt-4 space-y-4">
-              {unassignedParticipants.length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground font-body">
-                  Todos los inscriptos ya tienen grupo asignado.
-                </p>
-              ) : (
-                <>
-                  <div className="rounded-lg border border-dashed bg-muted/20 p-4">
-                    <p className="text-sm font-medium">Sin grupo</p>
-                    <p className="mt-1 text-xs text-muted-foreground font-body">
-                      Arrastrá y soltá (desktop) o tocá participante y luego
-                      grupo (móvil).
-                    </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {groups.map((group) => {
+                const members = participants.filter((p) => p.groupId === group.id);
+                return (
+                  <div
+                    key={group.id}
+                    onDragOver={(event) => {
+                      if (!canAssignGroups || savingId) return;
+                      event.preventDefault();
+                      setDropTargetGroupId(group.id);
+                    }}
+                    onDragLeave={() => {
+                      if (dropTargetGroupId === group.id) setDropTargetGroupId(null);
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void handleDropInGroup(group.id);
+                    }}
+                    onClick={() => {
+                      void handleDropInGroup(group.id);
+                    }}
+                    className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                  >
+                    <p className="font-medium">{group.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground font-body">{members.length} integrante{members.length === 1 ? '' : 's'}</p>
                     <ul className="mt-3 space-y-2">
-                      {unassignedParticipants.map((participant) => (
+                      {members.map((member) => (
                         <li
-                          key={participant.id}
-                          draggable={canAssignGroups && groups.length > 0}
-                          onDragStart={() => handleDragStart(participant.id)}
+                          key={member.id}
+                          draggable={canAssignGroups}
+                          onDragStart={() => handleDragStart(member.id)}
                           onDragEnd={handleDragEnd}
-                          onClick={() =>
-                            handleParticipantTapToAssign(participant.id)
-                          }
-                          className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
+                          onClick={() => handleParticipantTapToAssign(member.id)}
+                          className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === member.id ? 'border-primary bg-primary/5' : ''}`}
                         >
-                          <p className="font-medium">{participant.name}</p>
-                          <p className="text-sm text-muted-foreground font-body">
-                            {participant.subtitle}
-                          </p>
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-sm text-muted-foreground font-body">{member.subtitle}</p>
+                          {canAssignGroups && (
+                            <button
+                              type="button"
+                              disabled={savingId === member.id}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void saveGroup(member.id, '');
+                              }}
+                              className="mt-2 text-xs text-link underline underline-offset-2 disabled:opacity-60"
+                            >
+                              Quitar del grupo
+                            </button>
+                          )}
                         </li>
                       ))}
                     </ul>
                   </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {groups.map((group) => (
-                      <div
-                        key={group.id}
-                        onDragOver={(event) => {
-                          if (!canAssignGroups || savingId) return;
-                          event.preventDefault();
-                          setDropTargetGroupId(group.id);
-                        }}
-                        onDragLeave={() => {
-                          if (dropTargetGroupId === group.id) {
-                            setDropTargetGroupId(null);
-                          }
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          void handleDropInGroup(group.id);
-                        }}
-                        onClick={() => {
-                          void handleDropInGroup(group.id);
-                        }}
-                        className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
-                      >
-                        <p className="font-medium">{group.name}</p>
-                        <p className="mt-1 text-xs text-muted-foreground font-body">
-                          Soltar aquí para asignar
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                );
+              })}
             </div>
-          )}
+          </div>
         </>
       )}
 

@@ -621,33 +621,7 @@ export default function ActivityDaysPanel({
         </div>
       ) : null}
 
-      {pastDays.length > 0 && (
-        <details className="mt-6 rounded-lg border bg-background p-4">
-          <summary className="cursor-pointer text-sm font-semibold">
-            Antiguas ({pastDays.length})
-          </summary>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Estas sesiones ya pasaron.
-          </p>
-          <div className="mt-4 space-y-3">
-            {pastDays.map((day) => (
-              <article key={day.id} className="rounded-md border bg-card p-3">
-                <p className="text-sm font-medium">
-                  {new Date(day.date).toLocaleDateString('es-AR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {day.schedule} · {day.geoLocation}
-                </p>
-              </article>
-            ))}
-          </div>
-        </details>
-      )}
+
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
     </section>
