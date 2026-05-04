@@ -134,8 +134,8 @@ export default function ManualPaymentDetail({
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
+          <div className="grid gap-3 sm:grid-cols-4">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Monto
               </p>
@@ -143,7 +143,7 @@ export default function ManualPaymentDetail({
                 {formatPesos(payment.amount / 100, payment.currency)}
               </p>
             </article>
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Fecha de pago
               </p>
@@ -154,7 +154,7 @@ export default function ManualPaymentDetail({
               </p>
             </article>
             {socialFeeAmount > 0 ? (
-              <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
+              <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Cuota social
                 </p>
@@ -171,7 +171,7 @@ export default function ManualPaymentDetail({
             {payment.activities.length > 0 ? (
               <article
                 className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
-                  socialFeeAmount > 0 ? 'xl:col-span-2' : 'xl:col-span-4'
+                  socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
                 }`}
               >
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
