@@ -1,4 +1,5 @@
 import { BillableConceptCode } from '@prisma/client';
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
@@ -9,13 +10,17 @@ import {
   isAccountingRole,
 } from '@/lib/accounting';
 import PersonLink from '@/components/accounting/person-link';
+import { Button } from '@/components/ui/button';
 import SocialFeeSettingsForm from './social-fee-settings-form';
 import SocialFeePeriodFilter from './social-fee-period-filter';
+
+const PAGE_SIZE = 20;
 
 type SearchParams = {
   month?: string;
   year?: string;
   q?: string;
+  page?: string;
 };
 
 type PersonRecord = {
@@ -85,7 +90,9 @@ export default async function SocialFeePage({
   const defaultYear = now.getUTCFullYear();
   const month = parsePeriod(searchParams.month, defaultMonth, 1, 12);
   const year = parsePeriod(searchParams.year, defaultYear, 2020, 2100);
-  const q = searchParams.q?.trim().toLowerCase() ?? '';
+  const rawQ = searchParams.q?.trim() ?? '';
+  const q = rawQ.toLowerCase();
+  const page = Math.max(Number(searchParams.page ?? '1') || 1, 1);
 
   const [concept, members, payments] = await Promise.all([
     prisma.billableConcept.findUnique({
@@ -200,10 +207,22 @@ export default async function SocialFeePage({
         return searchable.includes(q);
       })
     : people;
+  const totalPeople = filteredPeople.length;
+  const totalPages = Math.max(Math.ceil(totalPeople / PAGE_SIZE), 1);
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = totalPeople === 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, totalPeople);
+  const pagePeople = filteredPeople.slice(pageStart, pageEnd);
   const paidPeople = filteredPeople.filter(
     (person) => person.status === 'PAID'
   );
   const pendingPeople = filteredPeople.filter(
+    (person) => person.status === 'PENDING'
+  );
+  const pagePaidPeople = pagePeople.filter(
+    (person) => person.status === 'PAID'
+  );
+  const pagePendingPeople = pagePeople.filter(
     (person) => person.status === 'PENDING'
   );
   const collectedAmount = paidPeople.reduce(
@@ -211,6 +230,24 @@ export default async function SocialFeePage({
     0
   );
   const expectedAmount = people.length * socialFeeAmount;
+  const visibleRangeLabel =
+    totalPeople === 0
+      ? 'Sin resultados'
+      : `Mostrando ${pageStart + 1}-${pageEnd} de ${totalPeople}`;
+
+  function pageHref(nextPage: number) {
+    const params = new URLSearchParams({
+      month: String(month),
+      year: String(year),
+      page: String(nextPage),
+    });
+
+    if (rawQ) {
+      params.set('q', rawQ);
+    }
+
+    return `/accounting/social-fee?${params.toString()}`;
+  }
 
   return (
     <div className="space-y-6">
@@ -267,6 +304,7 @@ export default async function SocialFeePage({
               <form>
                 <input type="hidden" name="month" value={String(month)} />
                 <input type="hidden" name="year" value={String(year)} />
+                <input type="hidden" name="page" value="1" />
                 <input
                   type="text"
                   name="q"
@@ -295,7 +333,7 @@ export default async function SocialFeePage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {paidPeople.length === 0 ? (
+                    {pagePaidPeople.length === 0 ? (
                       <tr>
                         <td
                           colSpan={5}
@@ -305,7 +343,7 @@ export default async function SocialFeePage({
                         </td>
                       </tr>
                     ) : (
-                      paidPeople.map((person) => (
+                      pagePaidPeople.map((person) => (
                         <tr key={person.key} className="align-top">
                           <td className="px-4 py-3">
                             <div className="font-medium">
@@ -368,7 +406,7 @@ export default async function SocialFeePage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {pendingPeople.length === 0 ? (
+                    {pagePendingPeople.length === 0 ? (
                       <tr>
                         <td
                           colSpan={4}
@@ -378,7 +416,7 @@ export default async function SocialFeePage({
                         </td>
                       </tr>
                     ) : (
-                      pendingPeople.map((person) => (
+                      pagePendingPeople.map((person) => (
                         <tr key={person.key} className="align-top">
                           <td className="px-4 py-3">
                             <div className="font-medium">
@@ -409,6 +447,32 @@ export default async function SocialFeePage({
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Página {currentPage} de {totalPages} · {visibleRangeLabel}
+              </span>
+              <div className="flex gap-2">
+                {currentPage <= 1 ? (
+                  <Button type="button" variant="outline" disabled>
+                    Anterior
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline">
+                    <Link href={pageHref(currentPage - 1)}>Anterior</Link>
+                  </Button>
+                )}
+                {currentPage >= totalPages ? (
+                  <Button type="button" variant="outline" disabled>
+                    Siguiente
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline">
+                    <Link href={pageHref(currentPage + 1)}>Siguiente</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>

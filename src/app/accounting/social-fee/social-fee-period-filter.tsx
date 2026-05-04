@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Select } from '@/components/ui/select';
 
 const MONTHS = [
@@ -31,6 +32,7 @@ export default function SocialFeePeriodFilter({
   initialYear: number;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [month, setMonth] = useState(String(initialMonth));
   const [year, setYear] = useState(String(initialYear));
 
@@ -40,10 +42,10 @@ export default function SocialFeePeriodFilter({
   }, [initialMonth, initialYear]);
 
   const navigateToPeriod = (nextMonth: string, nextYear: string) => {
-    const params = new URLSearchParams({
-      month: nextMonth,
-      year: nextYear,
-    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('month', nextMonth);
+    params.set('year', nextYear);
+    params.set('page', '1');
 
     router.replace(`/accounting/social-fee?${params.toString()}`, {
       scroll: false,
