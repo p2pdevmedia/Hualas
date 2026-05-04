@@ -74,6 +74,11 @@ export async function POST(req: Request) {
               activityId,
               name: group.name,
               description: group.description,
+              capacity: group.capacity,
+              minAge: group.minAge,
+              maxAge: group.maxAge,
+              startTime: group.startTime,
+              endTime: group.endTime,
             },
             select: { id: true },
           });

@@ -14,7 +14,16 @@ type ProfessorOption = {
   email: string;
 };
 
-type GroupDraft = { tempId: string; name: string; description: string };
+type GroupDraft = {
+  tempId: string;
+  name: string;
+  description: string;
+  capacity: string;
+  minAge: string;
+  maxAge: string;
+  startTime: string;
+  endTime: string;
+};
 
 type Coordinates = {
   latitude: number;
@@ -86,6 +95,11 @@ export default function CreateActivityForm({
   const [groups, setGroups] = useState<GroupDraft[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [newGroupCapacity, setNewGroupCapacity] = useState('');
+  const [newGroupMinAge, setNewGroupMinAge] = useState('');
+  const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
+  const [newGroupStartTime, setNewGroupStartTime] = useState('');
+  const [newGroupEndTime, setNewGroupEndTime] = useState('');
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
@@ -107,17 +121,50 @@ export default function CreateActivityForm({
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
   function addGroupDraft() {
-    if (!newGroupName.trim()) return;
+    if (
+      !newGroupName.trim() ||
+      !newGroupCapacity ||
+      !newGroupMinAge ||
+      !newGroupMaxAge ||
+      !newGroupStartTime ||
+      !newGroupEndTime
+    ) {
+      setError('Completá nombre, cupo, edades y horario del grupo');
+      return;
+    }
+    if (Number(newGroupCapacity) < 1) {
+      setError('El cupo del grupo debe ser mayor a cero');
+      return;
+    }
+    if (Number(newGroupMaxAge) < Number(newGroupMinAge)) {
+      setError('La edad máxima del grupo debe ser mayor o igual a la mínima');
+      return;
+    }
+    if (newGroupEndTime <= newGroupStartTime) {
+      setError('El horario de fin del grupo debe ser posterior al de inicio');
+      return;
+    }
+    setError('');
     setGroups((current) => [
       ...current,
       {
         tempId: crypto.randomUUID(),
         name: newGroupName.trim(),
         description: newGroupDesc.trim(),
+        capacity: newGroupCapacity,
+        minAge: newGroupMinAge,
+        maxAge: newGroupMaxAge,
+        startTime: newGroupStartTime,
+        endTime: newGroupEndTime,
       },
     ]);
     setNewGroupName('');
     setNewGroupDesc('');
+    setNewGroupCapacity('');
+    setNewGroupMinAge('');
+    setNewGroupMaxAge('');
+    setNewGroupStartTime('');
+    setNewGroupEndTime('');
   }
 
   function removeGroupDraft(tempId: string) {
@@ -169,6 +216,11 @@ export default function CreateActivityForm({
     setGroups([]);
     setNewGroupName('');
     setNewGroupDesc('');
+    setNewGroupCapacity('');
+    setNewGroupMinAge('');
+    setNewGroupMaxAge('');
+    setNewGroupStartTime('');
+    setNewGroupEndTime('');
     setAnnualSchedules([]);
     setAnnualShared({
       geoLocation: '',
@@ -240,6 +292,11 @@ export default function CreateActivityForm({
             tempId: group.tempId,
             name: group.name,
             description: group.description || undefined,
+            capacity: Number(group.capacity),
+            minAge: Number(group.minAge),
+            maxAge: Number(group.maxAge),
+            startTime: group.startTime,
+            endTime: group.endTime,
           })),
           annualSchedules: normalizedAnnualSchedules,
           geoLocation:
@@ -372,6 +429,10 @@ export default function CreateActivityForm({
                       - {group.description}
                     </span>
                   )}
+                  <span className="ml-2 text-muted-foreground">
+                    - Cupo {group.capacity} - {group.minAge} a {group.maxAge}{' '}
+                    años - {group.startTime} a {group.endTime}
+                  </span>
                 </span>
                 <button
                   type="button"
@@ -385,7 +446,7 @@ export default function CreateActivityForm({
           </ul>
         )}
 
-        <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px_auto]">
           <input
             type="text"
             placeholder="Nombre del grupo"
@@ -411,6 +472,44 @@ export default function CreateActivityForm({
                 addGroupDraft();
               }
             }}
+          />
+          <input
+            type="number"
+            min={1}
+            placeholder="Cupo"
+            value={newGroupCapacity}
+            onChange={(e) => setNewGroupCapacity(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="number"
+            min={0}
+            placeholder="Edad mín."
+            value={newGroupMinAge}
+            onChange={(e) => setNewGroupMinAge(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="number"
+            min={0}
+            placeholder="Edad máx."
+            value={newGroupMaxAge}
+            onChange={(e) => setNewGroupMaxAge(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="time"
+            aria-label="Horario desde"
+            value={newGroupStartTime}
+            onChange={(e) => setNewGroupStartTime(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="time"
+            aria-label="Horario hasta"
+            value={newGroupEndTime}
+            onChange={(e) => setNewGroupEndTime(e.target.value)}
+            className={inputClass}
           />
           <Button type="button" variant="outline" onClick={addGroupDraft}>
             Agregar
@@ -539,9 +638,8 @@ export default function CreateActivityForm({
                               ?.name ?? 'Sin grupo';
                           const profNames = selectedProfessors
                             .filter((p) => draft.professorIds.includes(p.id))
-                            .map(
-                              (p) =>
-                                `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
+                            .map((p) =>
+                              `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
                             )
                             .join(', ');
                           return (
@@ -552,13 +650,17 @@ export default function CreateActivityForm({
                               <span className="font-medium">
                                 {draft.schedule || '(sin horario)'}
                               </span>
-                              <span className="mx-1 text-muted-foreground">·</span>
+                              <span className="mx-1 text-muted-foreground">
+                                ·
+                              </span>
                               <span className="text-muted-foreground">
                                 {groupName}
                               </span>
                               {profNames && (
                                 <>
-                                  <span className="mx-1 text-muted-foreground">·</span>
+                                  <span className="mx-1 text-muted-foreground">
+                                    ·
+                                  </span>
                                   <span className="text-muted-foreground">
                                     {profNames}
                                   </span>
@@ -639,7 +741,8 @@ export default function CreateActivityForm({
                             ))}
                             {selectedProfessors.length === 0 && (
                               <p className="text-xs text-muted-foreground">
-                                Seleccioná profesores de la actividad para asignarlos a esta sesión.
+                                Seleccioná profesores de la actividad para
+                                asignarlos a esta sesión.
                               </p>
                             )}
                           </div>

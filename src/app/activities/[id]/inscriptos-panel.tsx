@@ -3,7 +3,15 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Group = { id: string; name: string };
+type Group = {
+  id: string;
+  name: string;
+  capacity: number | null;
+  minAge: number | null;
+  maxAge: number | null;
+  startTime: string | null;
+  endTime: string | null;
+};
 
 type InscriptosParticipant = {
   id: string;
@@ -287,7 +295,19 @@ export default function InscriptosPanel({
                         <p className="mt-1 text-xs text-muted-foreground font-body">
                           {members.length} integrante
                           {members.length === 1 ? '' : 's'}
+                          {group.capacity != null
+                            ? ` de ${group.capacity}`
+                            : ''}
                         </p>
+                        {group.minAge != null &&
+                          group.maxAge != null &&
+                          group.startTime &&
+                          group.endTime && (
+                            <p className="mt-1 text-xs text-muted-foreground font-body">
+                              {group.minAge} a {group.maxAge} años ·{' '}
+                              {group.startTime} a {group.endTime}
+                            </p>
+                          )}
                         <ul className="mt-3 flex flex-wrap gap-2">
                           {members.map((member) => (
                             <li

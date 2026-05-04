@@ -46,7 +46,16 @@ export default async function EditActivityPage({
     prisma.activityGroup.findMany({
       where: { activityId: params.id },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, description: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        capacity: true,
+        minAge: true,
+        maxAge: true,
+        startTime: true,
+        endTime: true,
+      },
     }),
     prisma.activityProfessor.findMany({
       where: { activityId: params.id },

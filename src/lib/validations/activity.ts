@@ -37,11 +37,40 @@ const annualScheduleEditSchema = z.object({
   professorIds: z.array(z.string().min(1)).min(1),
 });
 
-const activityGroupDraftSchema = z.object({
-  tempId: z.string().min(1),
+const activityGroupBaseShape = {
   name: z.string().min(1),
   description: z.string().optional(),
-});
+  capacity: z.number().int().positive(),
+  minAge: z.number().int().nonnegative(),
+  maxAge: z.number().int().nonnegative(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Horario inválido'),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Horario inválido'),
+};
+
+const activityGroupBaseSchema = z
+  .object(activityGroupBaseShape)
+  .refine((data) => data.maxAge >= data.minAge, {
+    message: 'La edad máxima debe ser mayor o igual a la mínima',
+    path: ['maxAge'],
+  })
+  .refine((data) => data.endTime > data.startTime, {
+    message: 'El horario de fin debe ser posterior al de inicio',
+    path: ['endTime'],
+  });
+
+const activityGroupDraftSchema = z
+  .object({
+    tempId: z.string().min(1),
+    ...activityGroupBaseShape,
+  })
+  .refine((data) => data.maxAge >= data.minAge, {
+    message: 'La edad máxima debe ser mayor o igual a la mínima',
+    path: ['maxAge'],
+  })
+  .refine((data) => data.endTime > data.startTime, {
+    message: 'El horario de fin debe ser posterior al de inicio',
+    path: ['endTime'],
+  });
 
 const activityBaseSchema = z.object({
   name: z.string(),
@@ -192,10 +221,7 @@ export const activityUpdateSchema = activityBaseSchema
     }
   });
 
-export const activityGroupCreateSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-});
+export const activityGroupCreateSchema = activityGroupBaseSchema;
 
 export const activityDayCreateSchema = z.object({
   date: z

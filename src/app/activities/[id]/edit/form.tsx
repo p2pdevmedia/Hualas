@@ -20,6 +20,11 @@ type ExistingGroup = {
   id: string;
   name: string;
   description: string | null;
+  capacity: number | null;
+  minAge: number | null;
+  maxAge: number | null;
+  startTime: string | null;
+  endTime: string | null;
 };
 
 type Coordinates = {
@@ -128,6 +133,11 @@ export default function EditActivityForm({
     useState<ExistingGroup[]>(initialGroups);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [newGroupCapacity, setNewGroupCapacity] = useState('');
+  const [newGroupMinAge, setNewGroupMinAge] = useState('');
+  const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
+  const [newGroupStartTime, setNewGroupStartTime] = useState('');
+  const [newGroupEndTime, setNewGroupEndTime] = useState('');
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
@@ -193,7 +203,33 @@ export default function EditActivityForm({
   }
 
   async function handleCreateGroup() {
-    if (!newGroupName.trim()) return;
+    if (
+      !newGroupName.trim() ||
+      !newGroupCapacity ||
+      !newGroupMinAge ||
+      !newGroupMaxAge ||
+      !newGroupStartTime ||
+      !newGroupEndTime
+    ) {
+      setGroupError('Completá nombre, cupo, edades y horario del grupo');
+      return;
+    }
+    if (Number(newGroupCapacity) < 1) {
+      setGroupError('El cupo del grupo debe ser mayor a cero');
+      return;
+    }
+    if (Number(newGroupMaxAge) < Number(newGroupMinAge)) {
+      setGroupError(
+        'La edad máxima del grupo debe ser mayor o igual a la mínima'
+      );
+      return;
+    }
+    if (newGroupEndTime <= newGroupStartTime) {
+      setGroupError(
+        'El horario de fin del grupo debe ser posterior al de inicio'
+      );
+      return;
+    }
     setGroupError('');
     setCreatingGroup(true);
     try {
@@ -203,6 +239,11 @@ export default function EditActivityForm({
         body: JSON.stringify({
           name: newGroupName.trim(),
           description: newGroupDesc.trim() || undefined,
+          capacity: Number(newGroupCapacity),
+          minAge: Number(newGroupMinAge),
+          maxAge: Number(newGroupMaxAge),
+          startTime: newGroupStartTime,
+          endTime: newGroupEndTime,
         }),
       });
       if (!res.ok) throw new Error('No se pudo crear el grupo');
@@ -210,6 +251,11 @@ export default function EditActivityForm({
       setExistingGroups((current) => [...current, group]);
       setNewGroupName('');
       setNewGroupDesc('');
+      setNewGroupCapacity('');
+      setNewGroupMinAge('');
+      setNewGroupMaxAge('');
+      setNewGroupStartTime('');
+      setNewGroupEndTime('');
     } catch (err) {
       setGroupError(
         err instanceof Error ? err.message : 'Error al crear el grupo'
@@ -303,7 +349,8 @@ export default function EditActivityForm({
     setConfirmPending(false);
     setSaving(true);
     try {
-      const datesChanged = date !== activity.date || endDate !== activity.endDate;
+      const datesChanged =
+        date !== activity.date || endDate !== activity.endDate;
       const normalizedSchedules =
         activityType === 'ANNUAL' && (schedulesModified || datesChanged)
           ? annualSchedules.map((d) => ({
@@ -475,6 +522,17 @@ export default function EditActivityForm({
                         — {group.description}
                       </span>
                     )}
+                    {group.capacity != null &&
+                      group.minAge != null &&
+                      group.maxAge != null &&
+                      group.startTime &&
+                      group.endTime && (
+                        <span className="ml-2 text-muted-foreground">
+                          — Cupo {group.capacity} — {group.minAge} a{' '}
+                          {group.maxAge} años — {group.startTime} a{' '}
+                          {group.endTime}
+                        </span>
+                      )}
                   </span>
                   <button
                     type="button"
@@ -493,7 +551,7 @@ export default function EditActivityForm({
             <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
           )}
 
-          <div className="grid gap-2 items-end sm:grid-cols-[1fr_1fr_auto]">
+          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px_auto]">
             <input
               type="text"
               placeholder="Nombre del grupo"
@@ -519,6 +577,44 @@ export default function EditActivityForm({
                   void handleCreateGroup();
                 }
               }}
+            />
+            <input
+              type="number"
+              min={1}
+              placeholder="Cupo"
+              value={newGroupCapacity}
+              onChange={(e) => setNewGroupCapacity(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="number"
+              min={0}
+              placeholder="Edad mín."
+              value={newGroupMinAge}
+              onChange={(e) => setNewGroupMinAge(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="number"
+              min={0}
+              placeholder="Edad máx."
+              value={newGroupMaxAge}
+              onChange={(e) => setNewGroupMaxAge(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="time"
+              aria-label="Horario desde"
+              value={newGroupStartTime}
+              onChange={(e) => setNewGroupStartTime(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="time"
+              aria-label="Horario hasta"
+              value={newGroupEndTime}
+              onChange={(e) => setNewGroupEndTime(e.target.value)}
+              className={inputClass}
             />
             <Button
               type="button"
@@ -612,8 +708,8 @@ export default function EditActivityForm({
 
             <p className="text-sm font-semibold">Calendario semanal</p>
             <p className="text-xs text-muted-foreground">
-              Solo modificá el calendario si querés regenerar las sesiones.
-              Si no tocás nada, las sesiones existentes se conservan tal cual.
+              Solo modificá el calendario si querés regenerar las sesiones. Si
+              no tocás nada, las sesiones existentes se conservan tal cual.
               {existingDayCount > 0 && (
                 <span className="ml-1 font-medium text-amber-600">
                   Hay {existingDayCount} sesiones existentes.
@@ -668,9 +764,8 @@ export default function EditActivityForm({
                                 ?.name ?? 'Sin grupo';
                             const profNames = selectedProfessors
                               .filter((p) => draft.professorIds.includes(p.id))
-                              .map(
-                                (p) =>
-                                  `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
+                              .map((p) =>
+                                `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
                               )
                               .join(', ');
                             return (
@@ -681,13 +776,17 @@ export default function EditActivityForm({
                                 <span className="font-medium">
                                   {draft.schedule || '(sin horario)'}
                                 </span>
-                                <span className="mx-1 text-muted-foreground">·</span>
+                                <span className="mx-1 text-muted-foreground">
+                                  ·
+                                </span>
                                 <span className="text-muted-foreground">
                                   {groupName}
                                 </span>
                                 {profNames && (
                                   <>
-                                    <span className="mx-1 text-muted-foreground">·</span>
+                                    <span className="mx-1 text-muted-foreground">
+                                      ·
+                                    </span>
                                     <span className="text-muted-foreground">
                                       {profNames}
                                     </span>
@@ -706,7 +805,9 @@ export default function EditActivityForm({
                             <div className="flex justify-end">
                               <button
                                 type="button"
-                                onClick={() => removeScheduleDraft(draft.tempId)}
+                                onClick={() =>
+                                  removeScheduleDraft(draft.tempId)
+                                }
                                 className="text-xs text-destructive"
                               >
                                 Quitar
@@ -753,7 +854,10 @@ export default function EditActivityForm({
                                     onChange={(e) =>
                                       updateScheduleDraft(draft.tempId, {
                                         professorIds: e.target.checked
-                                          ? [...draft.professorIds, professor.id]
+                                          ? [
+                                              ...draft.professorIds,
+                                              professor.id,
+                                            ]
                                           : draft.professorIds.filter(
                                               (id) => id !== professor.id
                                             ),
@@ -766,7 +870,8 @@ export default function EditActivityForm({
                               ))}
                               {selectedProfessors.length === 0 && (
                                 <p className="text-xs text-muted-foreground">
-                                  Seleccioná profesores de la actividad para asignarlos a esta sesión.
+                                  Seleccioná profesores de la actividad para
+                                  asignarlos a esta sesión.
                                 </p>
                               )}
                             </div>

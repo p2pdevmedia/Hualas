@@ -36,7 +36,6 @@ function getParticipantName(participant: ActivityParticipantDetail) {
   return `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`;
 }
 
-
 function getAgeFromBirthDate(birthDate: Date | null) {
   if (!birthDate) return null;
 
@@ -330,7 +329,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
   const hideSessionDetails = activity.activityType === 'ANNUAL';
-  const hideSessionList = activity.activityType === 'ANNUAL' || activity.activityType === 'TEMPORARY';
+  const hideSessionList =
+    activity.activityType === 'ANNUAL' || activity.activityType === 'TEMPORARY';
   const activityListHref = isParticipantInActivity
     ? '/my-activities'
     : '/activities';
@@ -345,6 +345,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const activityGroupOptions = activityGroups.map((group: any) => ({
     id: group.id,
     name: group.name,
+    capacity: group.capacity,
+    minAge: group.minAge,
+    maxAge: group.maxAge,
+    startTime: group.startTime,
+    endTime: group.endTime,
   }));
 
   return (
@@ -532,7 +537,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               id: p.id,
               name: getParticipantName(p),
               subtitle: getParticipantSubtitle(p),
-              age: getAgeFromBirthDate(p.child ? p.child.birthDate : p.user.birthDate),
+              age: getAgeFromBirthDate(
+                p.child ? p.child.birthDate : p.user.birthDate
+              ),
               receipt: p.receipt ?? null,
               receiptDate: p.receiptDate ? p.receiptDate.toISOString() : null,
               isChild: !!p.child,

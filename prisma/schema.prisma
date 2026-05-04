@@ -200,6 +200,11 @@ model ActivityGroup {
   activityId  String
   name        String
   description String?
+  capacity    Int?
+  minAge      Int?
+  maxAge      Int?
+  startTime   String?
+  endTime     String?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   activity    Activity             @relation(fields: [activityId], references: [id], onDelete: Cascade)

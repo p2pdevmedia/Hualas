@@ -8,6 +8,23 @@ const membershipSchema = z.object({
   participantId: z.string().min(1),
 });
 
+function getAgeFromBirthDate(birthDate: Date | null) {
+  if (!birthDate) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
+}
+
 async function getAuthorizedParticipant(participantId: string) {
   return prisma.activityParticipant.findUnique({
     where: { id: participantId },
@@ -15,9 +32,15 @@ async function getAuthorizedParticipant(participantId: string) {
       id: true,
       userId: true,
       activityId: true,
+      user: {
+        select: {
+          birthDate: true,
+        },
+      },
       child: {
         select: {
           userId: true,
+          birthDate: true,
         },
       },
     },
@@ -67,6 +90,14 @@ export async function POST(
     select: {
       id: true,
       activityId: true,
+      capacity: true,
+      minAge: true,
+      maxAge: true,
+      _count: {
+        select: {
+          members: true,
+        },
+      },
     },
   });
 
@@ -96,6 +127,55 @@ export async function POST(
   if (participant.activityId !== group.activityId) {
     return NextResponse.json(
       { error: 'El inscripto no pertenece a esta actividad' },
+      { status: 400 }
+    );
+  }
+
+  const currentMembership = await prisma.activityGroupMember.findUnique({
+    where: {
+      activityParticipantId: participant.id,
+    },
+    select: {
+      activityGroupId: true,
+    },
+  });
+
+  if (
+    currentMembership?.activityGroupId !== group.id &&
+    group.capacity != null &&
+    group._count.members >= group.capacity
+  ) {
+    return NextResponse.json(
+      { error: 'El grupo ya alcanzó su cupo' },
+      { status: 400 }
+    );
+  }
+
+  const age = getAgeFromBirthDate(
+    participant.child ? participant.child.birthDate : participant.user.birthDate
+  );
+
+  if (age == null) {
+    return NextResponse.json(
+      { error: 'El inscripto no tiene fecha de nacimiento cargada' },
+      { status: 400 }
+    );
+  }
+
+  if (group.minAge != null && age < group.minAge) {
+    return NextResponse.json(
+      {
+        error: `El inscripto no alcanza la edad mínima del grupo (${group.minAge})`,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (group.maxAge != null && age > group.maxAge) {
+    return NextResponse.json(
+      {
+        error: `El inscripto supera la edad máxima del grupo (${group.maxAge})`,
+      },
       { status: 400 }
     );
   }

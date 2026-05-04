@@ -1,0 +1,6 @@
+ALTER TABLE "ActivityGroup"
+ADD COLUMN "capacity" INTEGER,
+ADD COLUMN "minAge" INTEGER,
+ADD COLUMN "maxAge" INTEGER,
+ADD COLUMN "startTime" TEXT,
+ADD COLUMN "endTime" TEXT;

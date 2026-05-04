@@ -212,6 +212,7 @@ export default async function ActivityGroupPage({
             </p>
             <p className="mt-1 text-2xl font-semibold">
               {group._count.members}
+              {group.capacity != null ? ` / ${group.capacity}` : ''}
             </p>
           </div>
           <div className="rounded-lg border bg-background p-4">
@@ -220,6 +221,26 @@ export default async function ActivityGroupPage({
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {activity.name}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-background p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Edades
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {group.minAge != null && group.maxAge != null
+                ? `${group.minAge} a ${group.maxAge} años`
+                : 'Sin rango cargado'}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-background p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Horario
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {group.startTime && group.endTime
+                ? `${group.startTime} a ${group.endTime}`
+                : 'Sin rango cargado'}
             </p>
           </div>
         </div>

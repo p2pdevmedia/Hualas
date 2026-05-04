@@ -17,12 +17,31 @@ export default function ActivityGroupForm({
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [minAge, setMinAge] = useState('');
+  const [maxAge, setMaxAge] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (Number(capacity) < 1) {
+      setError('El cupo debe ser mayor a cero');
+      return;
+    }
+    if (Number(maxAge) < Number(minAge)) {
+      setError('La edad máxima debe ser mayor o igual a la mínima');
+      return;
+    }
+    if (endTime <= startTime) {
+      setError('El horario de fin debe ser posterior al de inicio');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -32,6 +51,11 @@ export default function ActivityGroupForm({
         body: JSON.stringify({
           name,
           description: description || undefined,
+          capacity: Number(capacity),
+          minAge: Number(minAge),
+          maxAge: Number(maxAge),
+          startTime,
+          endTime,
         }),
       });
 
@@ -42,6 +66,11 @@ export default function ActivityGroupForm({
 
       setName('');
       setDescription('');
+      setCapacity('');
+      setMinAge('');
+      setMaxAge('');
+      setStartTime('');
+      setEndTime('');
       router.refresh();
     } catch (err) {
       setError(
@@ -57,7 +86,7 @@ export default function ActivityGroupForm({
       onSubmit={submitForm}
       className="space-y-3 rounded-lg border bg-background p-4"
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px]">
         <input
           type="text"
           value={name}
@@ -72,6 +101,49 @@ export default function ActivityGroupForm({
           onChange={(e) => setDescription(e.target.value)}
           className={inputClass}
           placeholder="Descripción opcional"
+        />
+        <input
+          type="number"
+          min={1}
+          value={capacity}
+          onChange={(e) => setCapacity(e.target.value)}
+          className={inputClass}
+          placeholder="Cupo"
+          required
+        />
+        <input
+          type="number"
+          min={0}
+          value={minAge}
+          onChange={(e) => setMinAge(e.target.value)}
+          className={inputClass}
+          placeholder="Edad mín."
+          required
+        />
+        <input
+          type="number"
+          min={0}
+          value={maxAge}
+          onChange={(e) => setMaxAge(e.target.value)}
+          className={inputClass}
+          placeholder="Edad máx."
+          required
+        />
+        <input
+          type="time"
+          aria-label="Horario desde"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          className={inputClass}
+          required
+        />
+        <input
+          type="time"
+          aria-label="Horario hasta"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+          className={inputClass}
+          required
         />
       </div>
       <div className="flex items-center justify-between gap-3">

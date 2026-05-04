@@ -49,6 +49,11 @@ export async function POST(
       activityId: activity.id,
       name: data.name,
       description: data.description || null,
+      capacity: data.capacity,
+      minAge: data.minAge,
+      maxAge: data.maxAge,
+      startTime: data.startTime,
+      endTime: data.endTime,
     },
   });
 
