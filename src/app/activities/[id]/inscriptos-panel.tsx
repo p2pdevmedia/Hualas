@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Group = { id: string; name: string };
@@ -41,6 +41,13 @@ export default function InscriptosPanel({
     'all'
   );
 
+  const [draggingParticipantId, setDraggingParticipantId] = useState<
+    string | null
+  >(null);
+  const [dropTargetGroupId, setDropTargetGroupId] = useState<string | null>(
+    null
+  );
+
   useEffect(() => {
     setSelectedGroups(
       Object.fromEntries(participants.map((p) => [p.id, p.groupId ?? '']))
@@ -52,11 +59,11 @@ export default function InscriptosPanel({
     ? Math.max(capacity! - enrolledCount, 0)
     : null;
 
-  async function saveGroup(participantId: string) {
+  async function saveGroup(participantId: string, overrideGroupId?: string) {
     const participant = participants.find((p) => p.id === participantId);
     if (!participant) return;
 
-    const nextGroupId = selectedGroups[participantId] ?? '';
+    const nextGroupId = overrideGroupId ?? selectedGroups[participantId] ?? '';
     const currentGroupId = participant.groupId ?? '';
     if (nextGroupId === currentGroupId) return;
 
@@ -99,14 +106,37 @@ export default function InscriptosPanel({
   }
 
   const unassignedParticipants = participants.filter((p) => !p.groupId);
-  const groupsWithMembers = groups
-    .map((group) => ({
-      ...group,
-      members: participants.filter(
-        (participant) => participant.groupId === group.id
-      ),
-    }))
-    .filter((group) => group.members.length > 0);
+
+  const groupsWithMembers = useMemo(
+    () =>
+      groups
+        .map((group) => ({
+          ...group,
+          members: participants.filter(
+            (participant) => participant.groupId === group.id
+          ),
+        }))
+        .filter((group) => group.members.length > 0),
+    [groups, participants]
+  );
+
+  async function handleDropInGroup(targetGroupId: string) {
+    if (!draggingParticipantId || savingId) return;
+
+    setDropTargetGroupId(null);
+    await saveGroup(draggingParticipantId, targetGroupId);
+    setDraggingParticipantId(null);
+  }
+
+  function handleDragStart(participantId: string) {
+    setError('');
+    setDraggingParticipantId(participantId);
+  }
+
+  function handleDragEnd() {
+    setDraggingParticipantId(null);
+    setDropTargetGroupId(null);
+  }
 
   return (
     <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
@@ -256,22 +286,66 @@ export default function InscriptosPanel({
           )}
 
           {activeTab === 'unassigned' && (
-            <ul className="mt-4 divide-y divide-border">
+            <div className="mt-4 space-y-4">
               {unassignedParticipants.length === 0 ? (
-                <li className="py-4 text-sm text-muted-foreground font-body">
+                <p className="py-4 text-sm text-muted-foreground font-body">
                   Todos los inscriptos ya tienen grupo asignado.
-                </li>
+                </p>
               ) : (
-                unassignedParticipants.map((participant) => (
-                  <li key={participant.id} className="py-4">
-                    <p className="font-medium">{participant.name}</p>
-                    <p className="text-sm text-muted-foreground font-body">
-                      {participant.subtitle}
+                <>
+                  <div className="rounded-lg border border-dashed bg-muted/20 p-4">
+                    <p className="text-sm font-medium">Sin grupo</p>
+                    <p className="mt-1 text-xs text-muted-foreground font-body">
+                      Arrastrá un inscripto hacia un grupo para asignarlo.
                     </p>
-                  </li>
-                ))
+                    <ul className="mt-3 space-y-2">
+                      {unassignedParticipants.map((participant) => (
+                        <li
+                          key={participant.id}
+                          draggable={canAssignGroups && groups.length > 0}
+                          onDragStart={() => handleDragStart(participant.id)}
+                          onDragEnd={handleDragEnd}
+                          className="cursor-grab rounded-md border bg-background px-3 py-2 active:cursor-grabbing"
+                        >
+                          <p className="font-medium">{participant.name}</p>
+                          <p className="text-sm text-muted-foreground font-body">
+                            {participant.subtitle}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {groups.map((group) => (
+                      <div
+                        key={group.id}
+                        onDragOver={(event) => {
+                          if (!canAssignGroups || savingId) return;
+                          event.preventDefault();
+                          setDropTargetGroupId(group.id);
+                        }}
+                        onDragLeave={() => {
+                          if (dropTargetGroupId === group.id) {
+                            setDropTargetGroupId(null);
+                          }
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          void handleDropInGroup(group.id);
+                        }}
+                        className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                      >
+                        <p className="font-medium">{group.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground font-body">
+                          Soltar aquí para asignar
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
-            </ul>
+            </div>
           )}
         </>
       )}
