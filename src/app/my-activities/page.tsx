@@ -112,6 +112,24 @@ export default async function MyActivitiesPage({
     ]),
   ];
 
+  const participantScopeByActivity = new Map<
+    string,
+    { groupIds: Set<string>; hasUngroupedParticipant: boolean }
+  >();
+  for (const participation of participations) {
+    const current = participantScopeByActivity.get(participation.activity.id) ?? {
+      groupIds: new Set<string>(),
+      hasUngroupedParticipant: false,
+    };
+    const groupId = participation.groupMembership?.activityGroupId ?? null;
+    if (groupId) {
+      current.groupIds.add(groupId);
+    } else {
+      current.hasUngroupedParticipant = true;
+    }
+    participantScopeByActivity.set(participation.activity.id, current);
+  }
+
   let calendarDays: CalendarActivityDay[] = [];
   if (activityIds.length > 0) {
     try {
@@ -141,38 +159,12 @@ export default async function MyActivitiesPage({
         },
         orderBy: { date: 'asc' },
       });
-      const participantScopeByActivity = new Map<
-        string,
-        { groupIds: Set<string>; hasUngroupedParticipant: boolean }
-      >();
-
-      for (const participation of participations) {
-        const current = participantScopeByActivity.get(participation.activity.id) ?? {
-          groupIds: new Set<string>(),
-          hasUngroupedParticipant: false,
-        };
-
-        const groupId = participation.groupMembership?.activityGroupId ?? null;
-        if (groupId) {
-          current.groupIds.add(groupId);
-        } else {
-          current.hasUngroupedParticipant = true;
-        }
-
-        participantScopeByActivity.set(participation.activity.id, current);
-      }
-
       calendarDays = raw
         .filter((d) => {
           if (isProfessorView) return true;
-
           const scope = participantScopeByActivity.get(d.activity.id);
           if (!scope) return false;
-
-          if (d.activityGroupId === null) {
-            return scope.hasUngroupedParticipant;
-          }
-
+          if (d.activityGroupId === null) return scope.hasUngroupedParticipant;
           return scope.groupIds.has(d.activityGroupId);
         })
         .map((d) => ({
@@ -215,6 +207,15 @@ export default async function MyActivitiesPage({
         orderBy: { date: 'asc' },
       });
       for (const s of rawSessions) {
+        if (!isProfessorView) {
+          const scope = participantScopeByActivity.get(s.activityId);
+          if (!scope) continue;
+          if (s.activityGroupId === null) {
+            if (!scope.hasUngroupedParticipant) continue;
+          } else if (!scope.groupIds.has(s.activityGroupId)) {
+            continue;
+          }
+        }
         const list = sessionsByActivity.get(s.activityId) ?? [];
         if (list.length < 3) {
           list.push({
