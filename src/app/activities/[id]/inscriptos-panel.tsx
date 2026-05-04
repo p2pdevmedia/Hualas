@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Group = { id: string; name: string };
@@ -69,12 +69,32 @@ export default function InscriptosPanel({
   );
   const [selectedParticipantIdForAssign, setSelectedParticipantIdForAssign] =
     useState<string | null>(null);
-
+  const [search, setSearch] = useState('');
 
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
     ? Math.max(capacity! - enrolledCount, 0)
     : null;
+
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredParticipants = useMemo(() => {
+    if (!normalizedSearch) return participants;
+
+    return participants.filter((participant) =>
+      [
+        participant.name,
+        participant.subtitle,
+        participant.groupName ?? '',
+        participant.age != null ? String(participant.age) : '',
+        participant.whatsappPhone ?? '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch)
+    );
+  }, [normalizedSearch, participants]);
+  const hasFilteredResults =
+    !normalizedSearch || filteredParticipants.length > 0;
 
   async function saveGroup(participantId: string, overrideGroupId?: string) {
     const participant = participants.find((p) => p.id === participantId);
@@ -122,8 +142,7 @@ export default function InscriptosPanel({
     }
   }
 
-  const unassignedParticipants = participants.filter((p) => !p.groupId);
-
+  const unassignedParticipants = filteredParticipants.filter((p) => !p.groupId);
 
   async function handleDropInGroup(targetGroupId: string) {
     const participantId =
@@ -161,13 +180,25 @@ export default function InscriptosPanel({
           <h2 className="font-heading text-2xl font-semibold">Inscriptos</h2>
           <p className="text-sm text-muted-foreground font-body mt-1">
             {enrolledCount} inscripto{enrolledCount === 1 ? '' : 's'}
+            {normalizedSearch
+              ? ` · ${filteredParticipants.length} resultado${filteredParticipants.length === 1 ? '' : 's'}`
+              : ''}
           </p>
         </div>
-        {hasCapacity && (
-          <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-            {remainingSpots} lugares disponibles
-          </div>
-        )}
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+          {hasCapacity && (
+            <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+              {remainingSpots} lugares disponibles
+            </div>
+          )}
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar inscripto"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-64"
+          />
+        </div>
       </div>
 
       {participants.length === 0 ? (
@@ -181,102 +212,133 @@ export default function InscriptosPanel({
               <p className="text-sm font-medium">Canvas de grupos</p>
               {canAssignGroups && (
                 <p className="text-xs text-muted-foreground font-body">
-                  Arrastrá y soltá (desktop) o tocá participante y luego destino (móvil).
+                  Arrastrá y soltá (desktop) o tocá participante y luego destino
+                  (móvil).
                 </p>
               )}
             </div>
 
-            <div className="mt-4 rounded-lg border border-dashed bg-background p-4">
-              <p className="text-sm font-semibold">Sin grupo ({unassignedParticipants.length})</p>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {unassignedParticipants.map((participant) => (
-                  <li
-                    key={participant.id}
-                    draggable={canAssignGroups && groups.length > 0}
-                    onDragStart={() => handleDragStart(participant.id)}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => handleParticipantTapToAssign(participant.id)}
-                    className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium">{participant.name}</p>
-                        <p className="text-sm text-muted-foreground font-body">{participant.subtitle}</p>
-                        {participant.age != null && (
-                          <p className="text-xs text-muted-foreground font-body">Edad: {participant.age}</p>
-                        )}
-                      </div>
-                      {participant.whatsappPhone && (
-                        <WhatsAppButton phone={participant.whatsappPhone} />
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {!hasFilteredResults ? (
+              <p className="mt-4 rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
+                No se encontraron inscriptos con esa búsqueda.
+              </p>
+            ) : null}
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {groups.map((group) => {
-                const members = participants.filter((p) => p.groupId === group.id);
-                return (
-                  <div
-                    key={group.id}
-                    onDragOver={(event) => {
-                      if (!canAssignGroups || savingId) return;
-                      event.preventDefault();
-                      setDropTargetGroupId(group.id);
-                    }}
-                    onDragLeave={() => {
-                      if (dropTargetGroupId === group.id) setDropTargetGroupId(null);
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      void handleDropInGroup(group.id);
-                    }}
-                    onClick={() => {
-                      void handleDropInGroup(group.id);
-                    }}
-                    className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
-                  >
-                    <p className="font-medium">{group.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground font-body">{members.length} integrante{members.length === 1 ? '' : 's'}</p>
-                    <ul className="mt-3 flex flex-wrap gap-2">
-                      {members.map((member) => (
-                        <li
-                          key={member.id}
-                          className="relative rounded-md border bg-background px-3 py-1.5"
-                        >
-                          {canAssignGroups && (
-                            <button
-                              type="button"
-                              disabled={savingId === member.id}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void saveGroup(member.id, '');
-                              }}
-                              className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full border bg-card text-[10px] text-muted-foreground hover:bg-destructive hover:text-white transition-colors disabled:opacity-60"
-                            >
-                              ×
-                            </button>
-                          )}
-                          <div className="flex items-start justify-between gap-1">
-                            <div className="min-w-0">
-                              <p className="text-xs font-medium leading-tight">{member.name}</p>
-                              {member.age != null && (
-                                <p className="text-[11px] text-muted-foreground">{member.age} años</p>
-                              )}
-                            </div>
-                            {member.whatsappPhone && (
-                              <WhatsAppButton phone={member.whatsappPhone} />
+            {hasFilteredResults ? (
+              <>
+                <div className="mt-4 rounded-lg border border-dashed bg-background p-4">
+                  <p className="text-sm font-semibold">
+                    Sin grupo ({unassignedParticipants.length})
+                  </p>
+                  <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {unassignedParticipants.map((participant) => (
+                      <li
+                        key={participant.id}
+                        draggable={canAssignGroups && groups.length > 0}
+                        onDragStart={() => handleDragStart(participant.id)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() =>
+                          handleParticipantTapToAssign(participant.id)
+                        }
+                        className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-medium">{participant.name}</p>
+                            <p className="text-sm text-muted-foreground font-body">
+                              {participant.subtitle}
+                            </p>
+                            {participant.age != null && (
+                              <p className="text-xs text-muted-foreground font-body">
+                                Edad: {participant.age}
+                              </p>
                             )}
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
+                          {participant.whatsappPhone && (
+                            <WhatsAppButton phone={participant.whatsappPhone} />
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {groups.map((group) => {
+                    const members = filteredParticipants.filter(
+                      (p) => p.groupId === group.id
+                    );
+                    return (
+                      <div
+                        key={group.id}
+                        onDragOver={(event) => {
+                          if (!canAssignGroups || savingId) return;
+                          event.preventDefault();
+                          setDropTargetGroupId(group.id);
+                        }}
+                        onDragLeave={() => {
+                          if (dropTargetGroupId === group.id)
+                            setDropTargetGroupId(null);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          void handleDropInGroup(group.id);
+                        }}
+                        onClick={() => {
+                          void handleDropInGroup(group.id);
+                        }}
+                        className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                      >
+                        <p className="font-medium">{group.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground font-body">
+                          {members.length} integrante
+                          {members.length === 1 ? '' : 's'}
+                        </p>
+                        <ul className="mt-3 flex flex-wrap gap-2">
+                          {members.map((member) => (
+                            <li
+                              key={member.id}
+                              className="relative rounded-md border bg-background px-3 py-1.5"
+                            >
+                              {canAssignGroups && (
+                                <button
+                                  type="button"
+                                  disabled={savingId === member.id}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void saveGroup(member.id, '');
+                                  }}
+                                  className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full border bg-card text-[10px] text-muted-foreground hover:bg-destructive hover:text-white transition-colors disabled:opacity-60"
+                                >
+                                  ×
+                                </button>
+                              )}
+                              <div className="flex items-start justify-between gap-1">
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium leading-tight">
+                                    {member.name}
+                                  </p>
+                                  {member.age != null && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {member.age} años
+                                    </p>
+                                  )}
+                                </div>
+                                {member.whatsappPhone && (
+                                  <WhatsAppButton
+                                    phone={member.whatsappPhone}
+                                  />
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
           </div>
         </>
       )}
