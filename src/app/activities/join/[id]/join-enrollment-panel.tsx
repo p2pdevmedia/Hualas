@@ -26,17 +26,19 @@ export default function JoinEnrollmentPanel({
   const selectedGroup = useMemo(() => groups.find((group) => group.id === selectedGroupId), [groups, selectedGroupId]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8">
       {groups.length > 0 && (
-        <GroupScheduleCalendar
+        <div className="lg:col-span-2">
+          <GroupScheduleCalendar
           activityType={activity.activityType}
           groups={groups}
           sessions={sessions}
           selectedGroupId={selectedGroupId}
           onGroupChange={setSelectedGroupId}
         />
+        </div>
       )}
-      <div className="space-y-4 rounded-xl border bg-card p-5">
+      <div className="space-y-4 rounded-xl border bg-card p-5 lg:col-start-2 lg:sticky lg:top-6">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Inscripción</p>
           <p className="font-heading text-2xl font-semibold">${activity.price}</p>
