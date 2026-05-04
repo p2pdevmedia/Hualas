@@ -98,6 +98,10 @@ export default function CreateActivityForm({
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const selectedProfessors = professors.filter((professor) =>
+    professorIds.includes(professor.id)
+  );
+
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
@@ -550,7 +554,7 @@ export default function CreateActivityForm({
                             ))}
                           </select>
                           <div className="max-h-28 space-y-1 overflow-auto rounded border p-2">
-                            {professors.map((professor) => (
+                            {selectedProfessors.map((professor) => (
                               <label
                                 key={professor.id}
                                 className="flex items-center gap-2 text-xs"
@@ -574,6 +578,11 @@ export default function CreateActivityForm({
                                 {professor.lastName ?? ''}
                               </label>
                             ))}
+                            {selectedProfessors.length === 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                Seleccioná profesores de la actividad para asignarlos a esta sesión.
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))
