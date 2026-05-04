@@ -34,13 +34,19 @@ export default async function ActivityJoinPage({
   }
 
   const session = await getServerSession(authOptions);
-  const userId = session?.user ? (session.user as any).id as string : null;
+  const userId = session?.user ? ((session.user as any).id as string) : null;
 
   const [participantCount, groups, sessions, userProfile] = await Promise.all([
     prisma.activityParticipant.count({ where: { activityId: activity.id } }),
     prisma.activityGroup.findMany({
       where: { activityId: activity.id },
-      select: { id: true, name: true, capacity: true, minAge: true, maxAge: true },
+      select: {
+        id: true,
+        name: true,
+        capacity: true,
+        minAge: true,
+        maxAge: true,
+      },
       orderBy: { name: 'asc' },
     }),
     prisma.activityDay.findMany({
@@ -133,52 +139,47 @@ export default async function ActivityJoinPage({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              { label: 'Precio', value: `$${activity.price}` },
-              {
-                label: 'Inscriptos',
-                value: `${participantCount} personas`,
-              },
-              {
-                label: 'Cupo',
-                value: hasCapacity
-                  ? `${capacity} lugares`
-                  : 'Ilimitado',
-              },
-              {
-                label: 'Disponibles',
-                value: hasCapacity
-                  ? isFull
-                    ? 'Sin lugares'
-                    : `${remainingSpots} lugares`
-                  : 'No aplica',
-              },
-            ].map((item) => (
-              <div key={item.label} className="rounded-lg border bg-card p-4">
-                <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground font-body">
-                  {item.label}
-                </p>
-                <p className="font-heading text-lg font-semibold">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground font-body">
+                Precio
+              </p>
+              <p className="font-heading text-lg font-semibold">
+                ${activity.price}
+              </p>
+            </div>
 
-          <div className="rounded-lg border bg-card p-5">
-            <h2 className="font-heading text-lg font-semibold">Qué sigue</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground font-body">
-              Completá la inscripción desde el panel lateral. Si ya estás
-              logueado, se agregará al carrito de actividades; si no, primero te
-              pedirá iniciar sesión.
-            </p>
-            <Link
-              href={`/activities/${activity.id}`}
-              className="mt-4 inline-block text-sm text-link underline underline-offset-4 hover:text-link/80 font-body"
-            >
-              Ver la vista de detalle de mis actividades
-            </Link>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  {
+                    label: 'Inscriptos',
+                    value: `${participantCount} personas`,
+                  },
+                  {
+                    label: 'Cupo',
+                    value: hasCapacity ? `${capacity} lugares` : 'Ilimitado',
+                  },
+                  {
+                    label: 'Disponibles',
+                    value: hasCapacity
+                      ? isFull
+                        ? 'Sin lugares'
+                        : `${remainingSpots} lugares`
+                      : 'No aplica',
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="min-w-0">
+                    <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground font-body">
+                      {item.label}
+                    </p>
+                    <p className="break-words font-heading text-lg font-semibold">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
