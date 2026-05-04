@@ -1,7 +1,26 @@
 import { Prisma } from '@prisma/client';
 
-const SQL_SIMILARITY_THRESHOLD = 0.24;
-const SQL_WORD_SIMILARITY_THRESHOLD = 0.45;
+function readSimilarityThreshold(name: string, fallback: number) {
+  const value = process.env[name];
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export const ACCOUNTING_SIMILARITY_THRESHOLD = readSimilarityThreshold(
+  'ACCOUNTING_SIMILARITY_THRESHOLD',
+  0.24
+);
+
+export const ACCOUNTING_WORD_SIMILARITY_THRESHOLD = readSimilarityThreshold(
+  'ACCOUNTING_WORD_SIMILARITY_THRESHOLD',
+  0.45
+);
 
 function normalizeSearchText(value: string) {
   return value
@@ -129,8 +148,8 @@ export function buildAccountingSimilarityCondition(
       expressions.map(
         (expression) => Prisma.sql`
           unaccent(lower(coalesce(${expression}, ''))) LIKE '%' || unaccent(lower(${normalizedQuery})) || '%'
-          OR similarity(unaccent(lower(coalesce(${expression}, ''))), unaccent(lower(${normalizedQuery}))) >= ${SQL_SIMILARITY_THRESHOLD}
-          OR word_similarity(unaccent(lower(${normalizedQuery})), unaccent(lower(coalesce(${expression}, '')))) >= ${SQL_WORD_SIMILARITY_THRESHOLD}
+          OR similarity(unaccent(lower(coalesce(${expression}, ''))), unaccent(lower(${normalizedQuery}))) >= ${ACCOUNTING_SIMILARITY_THRESHOLD}
+          OR word_similarity(unaccent(lower(${normalizedQuery})), unaccent(lower(coalesce(${expression}, '')))) >= ${ACCOUNTING_WORD_SIMILARITY_THRESHOLD}
         `
       ),
       ' OR '

@@ -134,8 +134,8 @@ export default function ManualPaymentDetail({
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Monto
               </p>
@@ -143,7 +143,7 @@ export default function ManualPaymentDetail({
                 {formatPesos(payment.amount / 100, payment.currency)}
               </p>
             </article>
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4">
+            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Fecha de pago
               </p>
@@ -153,35 +153,38 @@ export default function ManualPaymentDetail({
                 )}
               </p>
             </article>
+            {socialFeeAmount > 0 ? (
+              <article className="min-w-0 rounded-xl border bg-muted/20 p-4 xl:col-span-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Cuota social
+                </p>
+                <p className="mt-1 text-lg font-semibold">
+                  {formatPesos(socialFeeAmount, payment.currency)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {socialFeeParticipants} participante
+                  {socialFeeParticipants === 1 ? '' : 's'}
+                </p>
+              </article>
+            ) : null}
+
+            {payment.activities.length > 0 ? (
+              <article
+                className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
+                  socialFeeAmount > 0 ? 'xl:col-span-2' : 'xl:col-span-4'
+                }`}
+              >
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Actividades
+                </p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {payment.activities.map((activity) => (
+                    <li key={activity.id}>{activity.name}</li>
+                  ))}
+                </ul>
+              </article>
+            ) : null}
           </div>
-
-          {socialFeeAmount > 0 ? (
-            <article className="rounded-xl border bg-muted/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Cuota social
-              </p>
-              <p className="mt-1 text-lg font-semibold">
-                {formatPesos(socialFeeAmount, payment.currency)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {socialFeeParticipants} participante
-                {socialFeeParticipants === 1 ? '' : 's'}
-              </p>
-            </article>
-          ) : null}
-
-          {payment.activities.length > 0 ? (
-            <article className="rounded-xl border bg-muted/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Actividades
-              </p>
-              <ul className="mt-2 space-y-1 text-sm">
-                {payment.activities.map((activity) => (
-                  <li key={activity.id}>{activity.name}</li>
-                ))}
-              </ul>
-            </article>
-          ) : null}
 
           {payment.accountantComments ? (
             <article className="rounded-xl border border-amber-200 bg-amber-50 p-4">
