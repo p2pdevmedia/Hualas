@@ -46,6 +46,7 @@ interface ActivityDayFormProps {
   dayId?: string;
   onSaved?: () => void;
   onCancel?: () => void;
+  redirectOnSave?: string;
 }
 
 const LocationMapPicker = dynamic(() => import('../location-map-picker'), {
@@ -88,6 +89,7 @@ export default function ActivityDayForm({
   dayId,
   onSaved,
   onCancel,
+  redirectOnSave,
 }: ActivityDayFormProps) {
   const router = useRouter();
   const [date, setDate] = useState(
@@ -169,8 +171,12 @@ export default function ActivityDayForm({
       }
 
       if (isEdit) {
-        onSaved?.();
-        router.refresh();
+        if (redirectOnSave) {
+          router.push(redirectOnSave);
+        } else {
+          onSaved?.();
+          router.refresh();
+        }
         return;
       }
 
