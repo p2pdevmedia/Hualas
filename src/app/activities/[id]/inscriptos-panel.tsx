@@ -240,22 +240,16 @@ export default function InscriptosPanel({
                         onClick={() =>
                           handleParticipantTapToAssign(participant.id)
                         }
-                        className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
+                        className={`rounded-md border bg-card px-3 py-1.5 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-medium">{participant.name}</p>
-                            <p className="text-sm text-muted-foreground font-body">
-                              {participant.subtitle}
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium leading-tight">
+                            {participant.name}
+                          </p>
+                          {participant.age != null && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {participant.age} años
                             </p>
-                            {participant.age != null && (
-                              <p className="text-xs text-muted-foreground font-body">
-                                Edad: {participant.age}
-                              </p>
-                            )}
-                          </div>
-                          {participant.whatsappPhone && (
-                            <WhatsAppButton phone={participant.whatsappPhone} />
                           )}
                         </div>
                       </li>
