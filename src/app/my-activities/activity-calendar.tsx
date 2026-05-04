@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useMemo } from 'react';
 
 export type CalendarActivityDay = {
@@ -266,13 +267,21 @@ export default function ActivityCalendar({
                 </div>
               </div>
               {onEdit && (
-                <button
-                  type="button"
-                  onClick={() => onEdit(d.id)}
-                  className="mt-2 text-xs text-link hover:underline underline-offset-4 font-medium"
-                >
-                  Editar sesión
-                </button>
+                <div className="mt-2 flex gap-2">
+                  <Link
+                    href={`/activities/${d.activityId}/days/${d.id}`}
+                    className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    Ver sesión
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(d.id)}
+                    className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    Editar sesión
+                  </button>
+                </div>
               )}
             </div>
           ))}
