@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import {
   MapContainer,
@@ -69,9 +69,58 @@ export default function LocationMapPicker({
   center = DEFAULT_CENTER,
 }: LocationMapPickerProps) {
   const initialCenter = value ?? center;
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const results = await res.json();
+      if (!results.length) {
+        setError('No se encontró la ubicación. Intentá con otro nombre.');
+        return;
+      }
+      onChange({
+        latitude: parseFloat(results[0].lat),
+        longitude: parseFloat(results[0].lon),
+      });
+    } catch {
+      setError('Error al buscar. Verificá tu conexión.');
+    } finally {
+      setSearching(false);
+    }
+  }
 
   return (
     <div className="space-y-2">
+      <form onSubmit={handleSearch} className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar lugar o dirección…"
+          className="flex-1 rounded-md border bg-background px-3 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          type="submit"
+          disabled={searching}
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+        >
+          {searching ? 'Buscando…' : 'Buscar'}
+        </button>
+      </form>
+      {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="overflow-hidden rounded-lg border bg-muted/20">
         <MapContainer
           center={[initialCenter.latitude, initialCenter.longitude]}
@@ -89,7 +138,7 @@ export default function LocationMapPicker({
         </MapContainer>
       </div>
       <p className="text-xs text-muted-foreground">
-        Hacé clic sobre el mapa para elegir el punto exacto.
+        Buscá el lugar o hacé clic sobre el mapa para elegir el punto exacto.
       </p>
       {value && (
         <p className="text-xs font-medium text-foreground">
