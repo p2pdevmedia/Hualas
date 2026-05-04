@@ -15,7 +15,7 @@ export default async function EditActivityDayPage({
   const block = gateAdmin(session);
   if (block) return block;
 
-  const [day, professors, groups, activityProfessors] = await Promise.all([
+  const [day, activityProfessors, groups] = await Promise.all([
     prisma.activityDay.findUnique({
       where: { id: params.dayId },
       select: {
@@ -33,21 +33,23 @@ export default async function EditActivityDayPage({
         professors: { select: { userId: true } },
       },
     }),
-    prisma.user.findMany({
-      where: { roleAssignments: { some: { role: 'PROFESSOR' } }, isActive: true },
-      select: { id: true, name: true, lastName: true, email: true },
-      orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+    prisma.activityProfessor.findMany({
+      where: { activityId: params.id },
+      include: {
+        user: {
+          select: { id: true, name: true, lastName: true, email: true },
+        },
+      },
+      orderBy: [{ user: { name: 'asc' } }],
     }),
     prisma.activityGroup.findMany({
       where: { activityId: params.id },
       orderBy: { createdAt: 'asc' },
       select: { id: true, name: true },
     }),
-    prisma.activityProfessor.findMany({
-      where: { activityId: params.id },
-      select: { userId: true },
-    }),
   ]);
+
+  const professors = activityProfessors.map((ap) => ap.user);
 
   if (!day || day.activityId !== params.id) redirect(`/activities/${params.id}`);
 
