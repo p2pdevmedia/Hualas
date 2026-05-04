@@ -93,6 +93,9 @@ export default function BulkSessionCreator({
   const [saving, setSaving] = useState(false);
 
   const existingSet = new Set(existingDayDates);
+  const activityProfessors = professors.filter((p) =>
+    defaultProfessorIds.includes(p.id)
+  );
 
   function toggleDate(dateStr: string, disabled: boolean) {
     if (disabled) return;
@@ -392,7 +395,7 @@ export default function BulkSessionCreator({
             )}
 
             <ProfessorPicker
-              professors={professors}
+              professors={activityProfessors}
               value={professorIds}
               onChange={setProfessorIds}
             />

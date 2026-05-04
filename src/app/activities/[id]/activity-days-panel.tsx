@@ -106,7 +106,6 @@ export default function ActivityDaysPanel({
   days,
 }: ActivityDaysPanelProps) {
   const router = useRouter();
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [editingDescriptionId, setEditingDescriptionId] = useState<
@@ -251,38 +250,18 @@ export default function ActivityDaysPanel({
               Administración de días
             </div>
             {!hideSessionDetails && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateForm((current) => !current)}
-                >
-                  {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowBulkCreator(true)}
-                >
-                  Crear sesiones
-                </Button>
-              </>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowBulkCreator(true)}
+              >
+                Crear sesiones
+              </Button>
             )}
           </div>
         )}
       </div>
 
-      {canManageDays && !hideSessionDetails && showCreateForm && (
-        <div className="mt-5">
-          <ActivityDayForm
-            activityId={activityId}
-            mode="create"
-            professors={professors}
-            groups={groups}
-            defaultProfessorIds={defaultProfessorIds}
-          />
-        </div>
-      )}
 
       {days.length > 0 && (
         <div className="mt-6">
