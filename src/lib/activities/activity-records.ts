@@ -21,13 +21,14 @@ export type ActivityListRecord = ActivityBaseRecord & {
 };
 
 type ActivityListRow = ActivityBaseRecord & {
-  capacity: number | null;
+  capacity: bigint | number | null;
   participantCount: bigint | number;
 };
 
 function normalizeListRow(row: ActivityListRow): ActivityListRecord {
   return {
     ...row,
+    capacity: row.capacity == null ? null : Number(row.capacity),
     participantCount: Number(row.participantCount),
   };
 }
