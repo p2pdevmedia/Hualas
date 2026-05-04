@@ -28,35 +28,39 @@ type Child = {
   observations: string | null;
 };
 
+const emptyForm = {
+  name: '',
+  lastName: '',
+  documentType: '',
+  documentNumber: '',
+  documentFrontPhoto: '',
+  documentBackPhoto: '',
+  birthDate: '',
+  address: '',
+  sameAddress: false,
+  gender: '',
+  nationality: '',
+  maritalStatus: '',
+  relationshipDeclarationAccepted: false,
+  allergies: '',
+  regularMedication: '',
+  relevantDiseases: '',
+  previousInjuries: '',
+  physicalRestrictions: '',
+  bloodGroup: '',
+  primaryDoctor: '',
+  doctorPhone: '',
+  observations: '',
+};
+
 export default function ChildrenManager({
   userAddress,
 }: {
   userAddress: string;
 }) {
   const [children, setChildren] = useState<Child[]>([]);
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [documentType, setDocumentType] = useState('');
-  const [documentNumber, setDocumentNumber] = useState('');
-  const [documentFrontPhoto, setDocumentFrontPhoto] = useState('');
-  const [documentBackPhoto, setDocumentBackPhoto] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [address, setAddress] = useState('');
-  const [sameAddress, setSameAddress] = useState(false);
-  const [gender, setGender] = useState('');
-  const [nationality, setNationality] = useState('');
-  const [maritalStatus, setMaritalStatus] = useState('');
-  const [relationshipDeclarationAccepted, setRelationshipDeclarationAccepted] =
-    useState(false);
-  const [allergies, setAllergies] = useState('');
-  const [regularMedication, setRegularMedication] = useState('');
-  const [relevantDiseases, setRelevantDiseases] = useState('');
-  const [previousInjuries, setPreviousInjuries] = useState('');
-  const [physicalRestrictions, setPhysicalRestrictions] = useState('');
-  const [bloodGroup, setBloodGroup] = useState('');
-  const [primaryDoctor, setPrimaryDoctor] = useState('');
-  const [doctorPhone, setDoctorPhone] = useState('');
-  const [observations, setObservations] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
@@ -68,8 +72,11 @@ export default function ChildrenManager({
   }, []);
 
   useEffect(() => {
-    if (sameAddress) setAddress(userAddress);
-  }, [sameAddress, userAddress]);
+    if (form.sameAddress) setForm((f) => ({ ...f, address: userAddress }));
+  }, [form.sameAddress, userAddress]);
+
+  const set = (key: keyof typeof emptyForm, value: string | boolean) =>
+    setForm((f) => ({ ...f, [key]: value }));
 
   const toDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -101,59 +108,88 @@ export default function ChildrenManager({
       image.src = URL.createObjectURL(file);
     });
 
-  async function addChild(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await fetch('/api/children', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        lastName,
-        documentType,
-        documentNumber,
-        documentFrontPhoto,
-        documentBackPhoto,
-        birthDate,
-        address,
-        gender: gender || undefined,
-        nationality,
-        maritalStatus,
-        allergies,
-        regularMedication,
-        relevantDiseases,
-        previousInjuries,
-        physicalRestrictions,
-        bloodGroup,
-        primaryDoctor,
-        doctorPhone,
-        observations,
-      }),
+  function startEdit(child: Child) {
+    setEditingId(child.id);
+    setForm({
+      name: child.name,
+      lastName: child.lastName ?? '',
+      documentType: child.documentType ?? '',
+      documentNumber: child.documentNumber ?? '',
+      documentFrontPhoto: child.documentFrontPhoto ?? '',
+      documentBackPhoto: child.documentBackPhoto ?? '',
+      birthDate: child.birthDate
+        ? new Date(child.birthDate).toISOString().slice(0, 10)
+        : '',
+      address: child.address ?? '',
+      sameAddress: false,
+      gender: child.gender ?? '',
+      nationality: child.nationality ?? '',
+      maritalStatus: child.maritalStatus ?? '',
+      relationshipDeclarationAccepted: true,
+      allergies: child.allergies ?? '',
+      regularMedication: child.regularMedication ?? '',
+      relevantDiseases: child.relevantDiseases ?? '',
+      previousInjuries: child.previousInjuries ?? '',
+      physicalRestrictions: child.physicalRestrictions ?? '',
+      bloodGroup: child.bloodGroup ?? '',
+      primaryDoctor: child.primaryDoctor ?? '',
+      doctorPhone: child.doctorPhone ?? '',
+      observations: child.observations ?? '',
     });
-    if (res.ok) {
-      const child = await res.json();
-      setChildren([...children, child]);
-      setName('');
-      setLastName('');
-      setDocumentType('');
-      setDocumentNumber('');
-      setDocumentFrontPhoto('');
-      setDocumentBackPhoto('');
-      setBirthDate('');
-      setAddress('');
-      setSameAddress(false);
-      setGender('');
-      setNationality('');
-      setMaritalStatus('');
-      setRelationshipDeclarationAccepted(false);
-      setAllergies('');
-      setRegularMedication('');
-      setRelevantDiseases('');
-      setPreviousInjuries('');
-      setPhysicalRestrictions('');
-      setBloodGroup('');
-      setPrimaryDoctor('');
-      setDoctorPhone('');
-      setObservations('');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  const payload = () => ({
+    name: form.name,
+    lastName: form.lastName,
+    documentType: form.documentType,
+    documentNumber: form.documentNumber,
+    documentFrontPhoto: form.documentFrontPhoto,
+    documentBackPhoto: form.documentBackPhoto,
+    birthDate: form.birthDate,
+    address: form.address,
+    gender: form.gender || undefined,
+    nationality: form.nationality,
+    maritalStatus: form.maritalStatus,
+    allergies: form.allergies,
+    regularMedication: form.regularMedication,
+    relevantDiseases: form.relevantDiseases,
+    previousInjuries: form.previousInjuries,
+    physicalRestrictions: form.physicalRestrictions,
+    bloodGroup: form.bloodGroup,
+    primaryDoctor: form.primaryDoctor,
+    doctorPhone: form.doctorPhone,
+    observations: form.observations,
+  });
+
+  async function saveChild(e: React.FormEvent) {
+    e.preventDefault();
+    if (editingId) {
+      const res = await fetch(`/api/children/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload()),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setChildren(children.map((c) => (c.id === editingId ? updated : c)));
+        cancelEdit();
+      }
+    } else {
+      const res = await fetch('/api/children', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload()),
+      });
+      if (res.ok) {
+        const child = await res.json();
+        setChildren([...children, child]);
+        setForm(emptyForm);
+      }
     }
   }
 
@@ -163,32 +199,56 @@ export default function ChildrenManager({
       {children.length > 0 && (
         <ul className="space-y-1">
           {children.map((c) => (
-            <li key={c.id} className="text-sm text-muted-foreground">
-              {c.name} {c.lastName}
+            <li
+              key={c.id}
+              className="flex items-center justify-between text-sm text-muted-foreground"
+            >
+              <span>
+                {c.name} {c.lastName}
+              </span>
+              <button
+                type="button"
+                onClick={() => startEdit(c)}
+                className="text-xs text-primary underline hover:no-underline"
+              >
+                Editar
+              </button>
             </li>
           ))}
         </ul>
       )}
-      <Form onSubmit={addChild} className="space-y-3">
+      <Form onSubmit={saveChild} className="space-y-3">
+        {editingId && (
+          <div className="flex items-center justify-between rounded-md bg-muted/30 px-3 py-2 text-sm">
+            <span className="font-medium">Editando hijo</span>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="text-xs text-muted-foreground underline hover:no-underline"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <input
             className={inputClass}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={form.name}
+            onChange={(e) => set('name', e.target.value)}
             placeholder="Nombre"
             required
           />
           <input
             className={inputClass}
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            value={form.lastName}
+            onChange={(e) => set('lastName', e.target.value)}
             placeholder="Apellido"
           />
         </div>
         <select
           className={inputClass}
-          value={documentType}
-          onChange={(e) => setDocumentType(e.target.value)}
+          value={form.documentType}
+          onChange={(e) => set('documentType', e.target.value)}
         >
           <option value="">Tipo de documento</option>
           <option value="DNI">DNI</option>
@@ -197,8 +257,8 @@ export default function ChildrenManager({
         </select>
         <input
           className={inputClass}
-          value={documentNumber}
-          onChange={(e) => setDocumentNumber(e.target.value)}
+          value={form.documentNumber}
+          onChange={(e) => set('documentNumber', e.target.value)}
           placeholder="Número / Código"
         />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -209,13 +269,16 @@ export default function ChildrenManager({
               type="file"
               accept="image/*"
               capture="environment"
-              required={documentType === 'DNI'}
+              required={form.documentType === 'DNI' && !editingId && !form.documentFrontPhoto}
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                setDocumentFrontPhoto(await toDataUrl(file));
+                set('documentFrontPhoto', await toDataUrl(file));
               }}
             />
+            {editingId && form.documentFrontPhoto && (
+              <span className="text-xs text-green-600">Foto cargada</span>
+            )}
           </label>
           <label className="text-sm text-muted-foreground space-y-1">
             <span>Foto trasera DNI</span>
@@ -224,40 +287,43 @@ export default function ChildrenManager({
               type="file"
               accept="image/*"
               capture="environment"
-              required={documentType === 'DNI'}
+              required={form.documentType === 'DNI' && !editingId && !form.documentBackPhoto}
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                setDocumentBackPhoto(await toDataUrl(file));
+                set('documentBackPhoto', await toDataUrl(file));
               }}
             />
+            {editingId && form.documentBackPhoto && (
+              <span className="text-xs text-green-600">Foto cargada</span>
+            )}
           </label>
         </div>
         <input
           className={inputClass}
           type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
+          value={form.birthDate}
+          onChange={(e) => set('birthDate', e.target.value)}
         />
         <input
           className={inputClass}
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={form.address}
+          onChange={(e) => set('address', e.target.value)}
           placeholder="Domicilio"
         />
         <label className="text-sm flex items-center gap-2 text-muted-foreground">
           <input
             type="checkbox"
-            checked={sameAddress}
-            onChange={(e) => setSameAddress(e.target.checked)}
+            checked={form.sameAddress}
+            onChange={(e) => set('sameAddress', e.target.checked)}
             className="accent-primary"
           />
           Mismo domicilio que el usuario
         </label>
         <select
           className={inputClass}
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
+          value={form.gender}
+          onChange={(e) => set('gender', e.target.value)}
         >
           <option value="">Género</option>
           <option value="FEMALE">Femenino</option>
@@ -268,90 +334,92 @@ export default function ChildrenManager({
         </select>
         <input
           className={inputClass}
-          value={nationality}
-          onChange={(e) => setNationality(e.target.value)}
+          value={form.nationality}
+          onChange={(e) => set('nationality', e.target.value)}
           placeholder="Nacionalidad"
         />
         <input
           className={inputClass}
-          value={maritalStatus}
-          onChange={(e) => setMaritalStatus(e.target.value)}
+          value={form.maritalStatus}
+          onChange={(e) => set('maritalStatus', e.target.value)}
           placeholder="Estado Civil"
         />
-        <label className="text-sm flex items-start gap-2 text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={relationshipDeclarationAccepted}
-            onChange={(e) =>
-              setRelationshipDeclarationAccepted(e.target.checked)
-            }
-            className="accent-primary mt-0.5"
-            required
-          />
-          <span>
-            Declaro, bajo carácter de declaración jurada, que soy padre, madre o
-            tutor legal del menor que estoy registrando.
-          </span>
-        </label>
+        {!editingId && (
+          <label className="text-sm flex items-start gap-2 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={form.relationshipDeclarationAccepted}
+              onChange={(e) =>
+                set('relationshipDeclarationAccepted', e.target.checked)
+              }
+              className="accent-primary mt-0.5"
+              required
+            />
+            <span>
+              Declaro, bajo carácter de declaración jurada, que soy padre,
+              madre o tutor legal del menor que estoy registrando.
+            </span>
+          </label>
+        )}
         <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
           <h3 className="text-sm font-semibold">Ficha médica</h3>
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={allergies}
-            onChange={(e) => setAllergies(e.target.value)}
+            value={form.allergies}
+            onChange={(e) => set('allergies', e.target.value)}
             placeholder="Alergias"
           />
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={regularMedication}
-            onChange={(e) => setRegularMedication(e.target.value)}
+            value={form.regularMedication}
+            onChange={(e) => set('regularMedication', e.target.value)}
             placeholder="Medicación habitual"
           />
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={relevantDiseases}
-            onChange={(e) => setRelevantDiseases(e.target.value)}
+            value={form.relevantDiseases}
+            onChange={(e) => set('relevantDiseases', e.target.value)}
             placeholder="Enfermedades relevantes"
           />
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={previousInjuries}
-            onChange={(e) => setPreviousInjuries(e.target.value)}
+            value={form.previousInjuries}
+            onChange={(e) => set('previousInjuries', e.target.value)}
             placeholder="Lesiones previas"
           />
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={physicalRestrictions}
-            onChange={(e) => setPhysicalRestrictions(e.target.value)}
+            value={form.physicalRestrictions}
+            onChange={(e) => set('physicalRestrictions', e.target.value)}
             placeholder="Restricciones físicas"
           />
           <input
             className={inputClass}
-            value={bloodGroup}
-            onChange={(e) => setBloodGroup(e.target.value)}
+            value={form.bloodGroup}
+            onChange={(e) => set('bloodGroup', e.target.value)}
             placeholder="Grupo sanguíneo"
           />
           <input
             className={inputClass}
-            value={primaryDoctor}
-            onChange={(e) => setPrimaryDoctor(e.target.value)}
+            value={form.primaryDoctor}
+            onChange={(e) => set('primaryDoctor', e.target.value)}
             placeholder="Médico de cabecera"
           />
           <input
             className={inputClass}
-            value={doctorPhone}
-            onChange={(e) => setDoctorPhone(e.target.value)}
+            value={form.doctorPhone}
+            onChange={(e) => set('doctorPhone', e.target.value)}
             placeholder="Teléfono médico"
           />
           <textarea
             className={`${inputClass} min-h-[72px] resize-y`}
-            value={observations}
-            onChange={(e) => setObservations(e.target.value)}
+            value={form.observations}
+            onChange={(e) => set('observations', e.target.value)}
             placeholder="Observaciones"
           />
         </div>
         <Button type="submit" className="w-full">
-          Agregar hijo
+          {editingId ? 'Guardar cambios' : 'Agregar hijo'}
         </Button>
       </Form>
     </div>

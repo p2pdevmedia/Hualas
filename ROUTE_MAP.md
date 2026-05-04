@@ -317,6 +317,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/api/children/route.ts`
   - Validation: `src/lib/validations/child.ts`
 
+- `PUT /api/children/[id]` → update child (owner only)
+  - File: `src/app/api/children/[id]/route.ts`
+  - Validation: `src/lib/validations/child.ts`
+
 ### Mercado Pago
 
 - `POST /api/mercadopago/notifications` → webhook
