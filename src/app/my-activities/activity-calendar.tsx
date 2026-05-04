@@ -11,6 +11,7 @@ export type CalendarActivityDay = {
   schedule: string;
   geoLocation: string;
   sportIcon: string | null;
+  cancelled: boolean;
 };
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -135,10 +136,8 @@ export default function ActivityCalendar({
           const isSelected = key === selectedKey;
           const isPast = key < todayKey;
 
-          const icons = activities
-            .map((a) => a.sportIcon)
-            .filter((icon): icon is string => Boolean(icon))
-            .slice(0, 2);
+          const displayActivities = activities.slice(0, 2);
+          const allCancelled = activities.length > 0 && activities.every((a) => a.cancelled);
 
           return (
             <button
@@ -175,22 +174,31 @@ export default function ActivityCalendar({
               </span>
 
               {/* Activity icons */}
-              {icons.length > 0 ? (
+              {displayActivities.some((a) => a.sportIcon) ? (
                 <div className="flex gap-0.5 w-full flex-1 min-h-0 items-center">
-                  {icons.map((icon, idx) => (
-                    <div key={idx} className="flex-1 min-w-0 h-full flex items-center justify-center">
-                      <Image
-                        src={`/icons/${icon}`}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                  ))}
+                  {displayActivities.map((a, idx) =>
+                    a.sportIcon ? (
+                      <div key={idx} className="relative flex-1 min-w-0 h-full flex items-center justify-center">
+                        <Image
+                          src={`/icons/${a.sportIcon}`}
+                          alt=""
+                          width={56}
+                          height={56}
+                          className={`h-full w-full object-contain ${a.cancelled ? 'opacity-30' : ''}`}
+                        />
+                        {a.cancelled && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+                              ✕
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    ) : null
+                  )}
                 </div>
               ) : hasActivity ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" />
+                <span className={`h-1.5 w-1.5 rounded-full mt-1 ${allCancelled ? 'bg-red-400' : 'bg-primary'}`} />
               ) : null}
 
               {/* More indicator */}
@@ -216,19 +224,37 @@ export default function ActivityCalendar({
           </p>
           {selectedActivities.map((d) => (
             <div key={d.id} className="flex items-center gap-3">
-              {d.sportIcon ? (
-                <Image
-                  src={`/icons/${d.sportIcon}`}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 shrink-0 object-contain"
-                />
-              ) : (
-                <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-              )}
+              <div className="relative shrink-0">
+                {d.sportIcon ? (
+                  <Image
+                    src={`/icons/${d.sportIcon}`}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className={`h-16 w-16 object-contain ${d.cancelled ? 'opacity-30' : ''}`}
+                  />
+                ) : (
+                  <span className={`h-2 w-2 rounded-full ${d.cancelled ? 'bg-red-400' : 'bg-primary'}`} />
+                )}
+                {d.cancelled && d.sportIcon && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white leading-none">
+                      ✕
+                    </span>
+                  </span>
+                )}
+              </div>
               <div>
-                <p className="text-sm font-medium">{d.activityName}</p>
+                <div className="flex items-center gap-2">
+                  <p className={`text-sm font-medium ${d.cancelled ? 'line-through text-muted-foreground' : ''}`}>
+                    {d.activityName}
+                  </p>
+                  {d.cancelled && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                      Cancelado
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {d.schedule} · {d.geoLocation}
                 </p>

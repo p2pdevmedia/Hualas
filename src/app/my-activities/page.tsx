@@ -155,6 +155,7 @@ export default async function MyActivitiesPage({
           latitude: true,
           longitude: true,
           activityGroupId: true,
+          cancelled: true,
           activity: { select: { id: true, name: true } },
         },
         orderBy: { date: 'asc' },
@@ -175,6 +176,7 @@ export default async function MyActivitiesPage({
           schedule: d.schedule,
           geoLocation: d.geoLocation,
           sportIcon: d.sportIcon,
+          cancelled: d.cancelled,
         }));
     } catch {
       calendarDays = [];

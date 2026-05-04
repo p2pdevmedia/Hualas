@@ -148,6 +148,7 @@ export default function ActivityDaysPanel({
     schedule: day.schedule,
     geoLocation: day.geoLocation,
     sportIcon: day.sportIcon,
+    cancelled: false,
   }));
 
   async function updateAttendance(
