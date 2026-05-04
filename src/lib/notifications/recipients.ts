@@ -15,6 +15,30 @@ export async function recipientsForActivityDay(
   return [...new Set(participants.map((p) => p.userId))];
 }
 
+export async function recipientsForActivityDayCancellation(
+  dayId: string
+): Promise<string[]> {
+  const day = await prisma.activityDay.findUnique({
+    where: { id: dayId },
+    select: { activityId: true, activityGroupId: true },
+  });
+  if (!day) return [];
+
+  if (day.activityGroupId) {
+    const members = await prisma.activityGroupMember.findMany({
+      where: { activityGroupId: day.activityGroupId },
+      select: { activityParticipant: { select: { userId: true } } },
+    });
+    return [...new Set(members.map((m) => m.activityParticipant.userId))];
+  }
+
+  const participants = await prisma.activityParticipant.findMany({
+    where: { activityId: day.activityId },
+    select: { userId: true },
+  });
+  return [...new Set(participants.map((p) => p.userId))];
+}
+
 export async function recipientsForPickupNotice(
   noticeId: string
 ): Promise<string[]> {

@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { dispatch } from './dispatcher';
 import {
   recipientsForActivityDay,
+  recipientsForActivityDayCancellation,
   recipientsForPickupNotice,
   recipientsForPickupNoticeAcknowledged,
   recipientsForManualMovement,
@@ -81,6 +82,68 @@ export async function notifyActivityDayUpdated(dayId: string): Promise<void> {
     });
   } catch (err) {
     logFailure('notifyActivityDayUpdated', err);
+  }
+}
+
+export async function notifyActivityDayCancelled(
+  dayId: string
+): Promise<void> {
+  try {
+    const day = await prisma.activityDay.findUnique({
+      where: { id: dayId },
+      select: {
+        id: true,
+        date: true,
+        activityId: true,
+        cancellationReason: true,
+        activity: { select: { name: true } },
+      },
+    });
+    if (!day) return;
+    const recipients = await recipientsForActivityDayCancellation(dayId);
+    if (recipients.length === 0) return;
+    const reason = day.cancellationReason
+      ? ` Motivo: ${day.cancellationReason}`
+      : '';
+    await dispatch({
+      type: 'ACTIVITY_DAY_CANCELLED',
+      recipients,
+      title: `Día cancelado — ${day.activity.name}`,
+      body: `El día ${formatDate(day.date)} fue cancelado.${reason}`,
+      url: `/activities/${day.activityId}`,
+      data: { dayId: day.id, activityId: day.activityId } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyActivityDayCancelled', err);
+  }
+}
+
+export async function notifyActivityDayReactivated(
+  dayId: string
+): Promise<void> {
+  try {
+    const day = await prisma.activityDay.findUnique({
+      where: { id: dayId },
+      select: {
+        id: true,
+        date: true,
+        activityId: true,
+        activity: { select: { name: true } },
+      },
+    });
+    if (!day) return;
+    const recipients = await recipientsForActivityDayCancellation(dayId);
+    if (recipients.length === 0) return;
+    await dispatch({
+      type: 'ACTIVITY_DAY_REACTIVATED',
+      recipients,
+      title: `Día reactivado — ${day.activity.name}`,
+      body: `El día ${formatDate(day.date)} vuelve a estar activo.`,
+      url: `/activities/${day.activityId}`,
+      data: { dayId: day.id, activityId: day.activityId } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyActivityDayReactivated', err);
   }
 }
 

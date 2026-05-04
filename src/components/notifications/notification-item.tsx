@@ -4,6 +4,8 @@ import {
   Bell,
   CalendarPlus,
   CalendarClock,
+  CalendarX2,
+  CalendarCheck2,
   UserCheck,
   CheckCircle2,
   Wallet,
@@ -18,6 +20,8 @@ import { cn } from '@/lib/utils';
 const ICONS: Record<NotificationType, typeof Bell> = {
   ACTIVITY_DAY_NEW: CalendarPlus,
   ACTIVITY_DAY_UPDATED: CalendarClock,
+  ACTIVITY_DAY_CANCELLED: CalendarX2,
+  ACTIVITY_DAY_REACTIVATED: CalendarCheck2,
   PICKUP_NOTICE_CREATED: UserCheck,
   PICKUP_NOTICE_ACKNOWLEDGED: CheckCircle2,
   PAYMENT_MANUAL_CREATED: Wallet,

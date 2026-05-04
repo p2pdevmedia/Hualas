@@ -19,6 +19,8 @@ const ALL_ROLES: Role[] = [
 const TYPE_ROLES: Record<NotificationType, Role[]> = {
   ACTIVITY_DAY_NEW: ALL_ROLES,
   ACTIVITY_DAY_UPDATED: ALL_ROLES,
+  ACTIVITY_DAY_CANCELLED: ALL_ROLES,
+  ACTIVITY_DAY_REACTIVATED: ALL_ROLES,
   PICKUP_NOTICE_CREATED: ['MEMBER', 'PROFESSOR', 'ADMIN', 'SUPER_ADMIN'],
   PICKUP_NOTICE_ACKNOWLEDGED: ['MEMBER', 'ADMIN', 'SUPER_ADMIN'],
   PAYMENT_MANUAL_CREATED: ['COUNTER', 'ADMIN', 'SUPER_ADMIN'],
@@ -41,6 +43,14 @@ const TYPE_LABELS: Record<
     title: 'Día de actividad actualizado',
     description:
       'Cuando cambia la fecha, horario o lugar de un día programado.',
+  },
+  ACTIVITY_DAY_CANCELLED: {
+    title: 'Día de actividad cancelado',
+    description: 'Cuando se cancela un día de una actividad en la que estás inscripto.',
+  },
+  ACTIVITY_DAY_REACTIVATED: {
+    title: 'Día de actividad reactivado',
+    description: 'Cuando un día cancelado vuelve a estar activo.',
   },
   PICKUP_NOTICE_CREATED: {
     title: 'Nuevo aviso de retiro',
