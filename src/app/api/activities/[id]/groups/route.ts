@@ -52,8 +52,6 @@ export async function POST(
       capacity: data.capacity,
       minAge: data.minAge,
       maxAge: data.maxAge,
-      startTime: data.startTime,
-      endTime: data.endTime,
     },
   });
 

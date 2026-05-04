@@ -77,8 +77,6 @@ export async function POST(req: Request) {
               capacity: group.capacity,
               minAge: group.minAge,
               maxAge: group.maxAge,
-              startTime: group.startTime,
-              endTime: group.endTime,
             },
             select: { id: true },
           });

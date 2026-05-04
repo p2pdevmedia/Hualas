@@ -53,8 +53,6 @@ export default async function EditActivityPage({
         capacity: true,
         minAge: true,
         maxAge: true,
-        startTime: true,
-        endTime: true,
       },
     }),
     prisma.activityProfessor.findMany({

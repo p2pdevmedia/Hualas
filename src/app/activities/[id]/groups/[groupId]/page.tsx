@@ -233,16 +233,6 @@ export default async function ActivityGroupPage({
                 : 'Sin rango cargado'}
             </p>
           </div>
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Horario
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {group.startTime && group.endTime
-                ? `${group.startTime} a ${group.endTime}`
-                : 'Sin rango cargado'}
-            </p>
-          </div>
         </div>
       </section>
 

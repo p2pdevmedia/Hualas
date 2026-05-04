@@ -13,8 +13,6 @@ type ActivityGroup = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
-  startTime: string | null;
-  endTime: string | null;
   memberCount: number;
   dayCount: number;
 };
@@ -246,13 +244,10 @@ export default function ActivityGroupsPanel({
                           )}
                           {group.capacity != null &&
                             group.minAge != null &&
-                            group.maxAge != null &&
-                            group.startTime &&
-                            group.endTime && (
+                            group.maxAge != null && (
                               <p className="mt-1 text-xs text-muted-foreground">
                                 Cupo {group.capacity} · {group.minAge} a{' '}
-                                {group.maxAge} años · {group.startTime} a{' '}
-                                {group.endTime}
+                                {group.maxAge} años
                               </p>
                             )}
                         </div>

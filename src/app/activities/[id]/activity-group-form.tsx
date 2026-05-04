@@ -20,8 +20,6 @@ export default function ActivityGroupForm({
   const [capacity, setCapacity] = useState('');
   const [minAge, setMinAge] = useState('');
   const [maxAge, setMaxAge] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -37,10 +35,6 @@ export default function ActivityGroupForm({
       setError('La edad máxima debe ser mayor o igual a la mínima');
       return;
     }
-    if (endTime <= startTime) {
-      setError('El horario de fin debe ser posterior al de inicio');
-      return;
-    }
 
     setSaving(true);
 
@@ -54,8 +48,6 @@ export default function ActivityGroupForm({
           capacity: Number(capacity),
           minAge: Number(minAge),
           maxAge: Number(maxAge),
-          startTime,
-          endTime,
         }),
       });
 
@@ -69,8 +61,6 @@ export default function ActivityGroupForm({
       setCapacity('');
       setMinAge('');
       setMaxAge('');
-      setStartTime('');
-      setEndTime('');
       router.refresh();
     } catch (err) {
       setError(
@@ -86,7 +76,7 @@ export default function ActivityGroupForm({
       onSubmit={submitForm}
       className="space-y-3 rounded-lg border bg-background p-4"
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px]">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px]">
         <input
           type="text"
           value={name}
@@ -127,22 +117,6 @@ export default function ActivityGroupForm({
           onChange={(e) => setMaxAge(e.target.value)}
           className={inputClass}
           placeholder="Edad máx."
-          required
-        />
-        <input
-          type="time"
-          aria-label="Horario desde"
-          value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}
-          className={inputClass}
-          required
-        />
-        <input
-          type="time"
-          aria-label="Horario hasta"
-          value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}
-          className={inputClass}
           required
         />
       </div>

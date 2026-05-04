@@ -21,8 +21,6 @@ type GroupDraft = {
   capacity: string;
   minAge: string;
   maxAge: string;
-  startTime: string;
-  endTime: string;
 };
 
 type Coordinates = {
@@ -98,8 +96,6 @@ export default function CreateActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
-  const [newGroupStartTime, setNewGroupStartTime] = useState('');
-  const [newGroupEndTime, setNewGroupEndTime] = useState('');
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
@@ -125,11 +121,9 @@ export default function CreateActivityForm({
       !newGroupName.trim() ||
       !newGroupCapacity ||
       !newGroupMinAge ||
-      !newGroupMaxAge ||
-      !newGroupStartTime ||
-      !newGroupEndTime
+      !newGroupMaxAge
     ) {
-      setError('Completá nombre, cupo, edades y horario del grupo');
+      setError('Completá nombre, cupo y edades del grupo');
       return;
     }
     if (Number(newGroupCapacity) < 1) {
@@ -138,10 +132,6 @@ export default function CreateActivityForm({
     }
     if (Number(newGroupMaxAge) < Number(newGroupMinAge)) {
       setError('La edad máxima del grupo debe ser mayor o igual a la mínima');
-      return;
-    }
-    if (newGroupEndTime <= newGroupStartTime) {
-      setError('El horario de fin del grupo debe ser posterior al de inicio');
       return;
     }
     setError('');
@@ -154,8 +144,6 @@ export default function CreateActivityForm({
         capacity: newGroupCapacity,
         minAge: newGroupMinAge,
         maxAge: newGroupMaxAge,
-        startTime: newGroupStartTime,
-        endTime: newGroupEndTime,
       },
     ]);
     setNewGroupName('');
@@ -163,8 +151,6 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
-    setNewGroupStartTime('');
-    setNewGroupEndTime('');
   }
 
   function removeGroupDraft(tempId: string) {
@@ -219,8 +205,6 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
-    setNewGroupStartTime('');
-    setNewGroupEndTime('');
     setAnnualSchedules([]);
     setAnnualShared({
       geoLocation: '',
@@ -295,8 +279,6 @@ export default function CreateActivityForm({
             capacity: Number(group.capacity),
             minAge: Number(group.minAge),
             maxAge: Number(group.maxAge),
-            startTime: group.startTime,
-            endTime: group.endTime,
           })),
           annualSchedules: normalizedAnnualSchedules,
           geoLocation:
@@ -431,7 +413,7 @@ export default function CreateActivityForm({
                   )}
                   <span className="ml-2 text-muted-foreground">
                     - Cupo {group.capacity} - {group.minAge} a {group.maxAge}{' '}
-                    años - {group.startTime} a {group.endTime}
+                    años
                   </span>
                 </span>
                 <button
@@ -446,7 +428,7 @@ export default function CreateActivityForm({
           </ul>
         )}
 
-        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px_auto]">
+        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_auto]">
           <input
             type="text"
             placeholder="Nombre del grupo"
@@ -495,20 +477,6 @@ export default function CreateActivityForm({
             placeholder="Edad máx."
             value={newGroupMaxAge}
             onChange={(e) => setNewGroupMaxAge(e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="time"
-            aria-label="Horario desde"
-            value={newGroupStartTime}
-            onChange={(e) => setNewGroupStartTime(e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="time"
-            aria-label="Horario hasta"
-            value={newGroupEndTime}
-            onChange={(e) => setNewGroupEndTime(e.target.value)}
             className={inputClass}
           />
           <Button type="button" variant="outline" onClick={addGroupDraft}>

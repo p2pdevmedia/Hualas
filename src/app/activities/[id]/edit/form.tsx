@@ -23,8 +23,6 @@ type ExistingGroup = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
-  startTime: string | null;
-  endTime: string | null;
 };
 
 type Coordinates = {
@@ -136,8 +134,6 @@ export default function EditActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
-  const [newGroupStartTime, setNewGroupStartTime] = useState('');
-  const [newGroupEndTime, setNewGroupEndTime] = useState('');
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
@@ -207,11 +203,9 @@ export default function EditActivityForm({
       !newGroupName.trim() ||
       !newGroupCapacity ||
       !newGroupMinAge ||
-      !newGroupMaxAge ||
-      !newGroupStartTime ||
-      !newGroupEndTime
+      !newGroupMaxAge
     ) {
-      setGroupError('Completá nombre, cupo, edades y horario del grupo');
+      setGroupError('Completá nombre, cupo y edades del grupo');
       return;
     }
     if (Number(newGroupCapacity) < 1) {
@@ -221,12 +215,6 @@ export default function EditActivityForm({
     if (Number(newGroupMaxAge) < Number(newGroupMinAge)) {
       setGroupError(
         'La edad máxima del grupo debe ser mayor o igual a la mínima'
-      );
-      return;
-    }
-    if (newGroupEndTime <= newGroupStartTime) {
-      setGroupError(
-        'El horario de fin del grupo debe ser posterior al de inicio'
       );
       return;
     }
@@ -242,8 +230,6 @@ export default function EditActivityForm({
           capacity: Number(newGroupCapacity),
           minAge: Number(newGroupMinAge),
           maxAge: Number(newGroupMaxAge),
-          startTime: newGroupStartTime,
-          endTime: newGroupEndTime,
         }),
       });
       if (!res.ok) throw new Error('No se pudo crear el grupo');
@@ -254,8 +240,6 @@ export default function EditActivityForm({
       setNewGroupCapacity('');
       setNewGroupMinAge('');
       setNewGroupMaxAge('');
-      setNewGroupStartTime('');
-      setNewGroupEndTime('');
     } catch (err) {
       setGroupError(
         err instanceof Error ? err.message : 'Error al crear el grupo'
@@ -524,13 +508,10 @@ export default function EditActivityForm({
                     )}
                     {group.capacity != null &&
                       group.minAge != null &&
-                      group.maxAge != null &&
-                      group.startTime &&
-                      group.endTime && (
+                      group.maxAge != null && (
                         <span className="ml-2 text-muted-foreground">
                           — Cupo {group.capacity} — {group.minAge} a{' '}
-                          {group.maxAge} años — {group.startTime} a{' '}
-                          {group.endTime}
+                          {group.maxAge} años
                         </span>
                       )}
                   </span>
@@ -551,7 +532,7 @@ export default function EditActivityForm({
             <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
           )}
 
-          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_120px_120px_auto]">
+          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_auto]">
             <input
               type="text"
               placeholder="Nombre del grupo"
@@ -600,20 +581,6 @@ export default function EditActivityForm({
               placeholder="Edad máx."
               value={newGroupMaxAge}
               onChange={(e) => setNewGroupMaxAge(e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="time"
-              aria-label="Horario desde"
-              value={newGroupStartTime}
-              onChange={(e) => setNewGroupStartTime(e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="time"
-              aria-label="Horario hasta"
-              value={newGroupEndTime}
-              onChange={(e) => setNewGroupEndTime(e.target.value)}
               className={inputClass}
             />
             <Button

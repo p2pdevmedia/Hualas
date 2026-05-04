@@ -43,8 +43,6 @@ const activityGroupBaseShape = {
   capacity: z.number().int().positive(),
   minAge: z.number().int().nonnegative(),
   maxAge: z.number().int().nonnegative(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Horario inválido'),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Horario inválido'),
 };
 
 const activityGroupBaseSchema = z
@@ -52,10 +50,6 @@ const activityGroupBaseSchema = z
   .refine((data) => data.maxAge >= data.minAge, {
     message: 'La edad máxima debe ser mayor o igual a la mínima',
     path: ['maxAge'],
-  })
-  .refine((data) => data.endTime > data.startTime, {
-    message: 'El horario de fin debe ser posterior al de inicio',
-    path: ['endTime'],
   });
 
 const activityGroupDraftSchema = z
@@ -66,10 +60,6 @@ const activityGroupDraftSchema = z
   .refine((data) => data.maxAge >= data.minAge, {
     message: 'La edad máxima debe ser mayor o igual a la mínima',
     path: ['maxAge'],
-  })
-  .refine((data) => data.endTime > data.startTime, {
-    message: 'El horario de fin debe ser posterior al de inicio',
-    path: ['endTime'],
   });
 
 const activityBaseSchema = z.object({

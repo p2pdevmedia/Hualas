@@ -348,8 +348,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     capacity: group.capacity,
     minAge: group.minAge,
     maxAge: group.maxAge,
-    startTime: group.startTime,
-    endTime: group.endTime,
   }));
 
   return (

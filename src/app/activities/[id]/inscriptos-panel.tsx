@@ -9,8 +9,6 @@ type Group = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
-  startTime: string | null;
-  endTime: string | null;
 };
 
 type InscriptosParticipant = {
@@ -299,15 +297,11 @@ export default function InscriptosPanel({
                             ? ` de ${group.capacity}`
                             : ''}
                         </p>
-                        {group.minAge != null &&
-                          group.maxAge != null &&
-                          group.startTime &&
-                          group.endTime && (
-                            <p className="mt-1 text-xs text-muted-foreground font-body">
-                              {group.minAge} a {group.maxAge} años ·{' '}
-                              {group.startTime} a {group.endTime}
-                            </p>
-                          )}
+                        {group.minAge != null && group.maxAge != null && (
+                          <p className="mt-1 text-xs text-muted-foreground font-body">
+                            {group.minAge} a {group.maxAge} años
+                          </p>
+                        )}
                         <ul className="mt-3 flex flex-wrap gap-2">
                           {members.map((member) => (
                             <li
