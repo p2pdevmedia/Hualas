@@ -74,8 +74,7 @@ export default function LocationMapPicker({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSearch() {
     const q = query.trim();
     if (!q) return;
     setSearching(true);
@@ -103,23 +102,30 @@ export default function LocationMapPicker({
 
   return (
     <div className="space-y-2">
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="flex gap-2">
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSearch();
+            }
+          }}
           placeholder="Buscar lugar o dirección…"
           className="flex-1 rounded-md border bg-background px-3 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
-          type="submit"
+          type="button"
           disabled={searching}
+          onClick={handleSearch}
           className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
           {searching ? 'Buscando…' : 'Buscar'}
         </button>
-      </form>
+      </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="overflow-hidden rounded-lg border bg-muted/20">
         <MapContainer
