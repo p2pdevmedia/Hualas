@@ -69,7 +69,7 @@ export default async function ActivityGroupPage({
     redirect('/');
   }
 
-  const [group, participants, activityGroups] = await Promise.all([
+  const [group, activityGroups, participants] = await Promise.all([
     prisma.activityGroup.findFirst({
       where: {
         id: params.groupId,
