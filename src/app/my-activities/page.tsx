@@ -19,6 +19,7 @@ type UpcomingSession = {
   latitude: number | null;
   longitude: number | null;
   activityGroupId: string | null;
+  cancelled: boolean;
 };
 
 type ActivityParticipantSummary = {
@@ -205,6 +206,7 @@ export default async function MyActivitiesPage({
           longitude: true,
           activityGroupId: true,
           activityId: true,
+          cancelled: true,
         },
         orderBy: { date: 'asc' },
       });
@@ -229,6 +231,7 @@ export default async function MyActivitiesPage({
             latitude: s.latitude,
             longitude: s.longitude,
             activityGroupId: s.activityGroupId,
+            cancelled: s.cancelled,
           });
           sessionsByActivity.set(s.activityId, list);
         }
@@ -446,7 +449,7 @@ export default async function MyActivitiesPage({
                           return (
                             <li
                               key={s.id}
-                              className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 ${s.cancelled ? 'bg-red-50 border border-red-200' : 'bg-muted/40'}`}
                             >
                               {s.sportIcon ? (
                                 <Image
@@ -454,16 +457,21 @@ export default async function MyActivitiesPage({
                                   alt=""
                                   width={56}
                                   height={56}
-                                  className="h-14 w-14 shrink-0 object-contain"
+                                  className={`h-14 w-14 shrink-0 object-contain ${s.cancelled ? 'opacity-40' : ''}`}
                                 />
                               ) : (
                                 <span className="h-14 w-14 shrink-0" />
                               )}
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <p className="text-sm font-medium leading-tight">
+                                  <p className={`text-sm font-medium leading-tight ${s.cancelled ? 'line-through text-muted-foreground' : ''}`}>
                                     {dateLabel} · {s.schedule}
                                   </p>
+                                  {s.cancelled && (
+                                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                                      Cancelado
+                                    </span>
+                                  )}
                                   {sessionParticipantNames.length > 0 && (
                                     <div className="flex flex-wrap gap-1">
                                       {sessionParticipantNames.map((name) => (
