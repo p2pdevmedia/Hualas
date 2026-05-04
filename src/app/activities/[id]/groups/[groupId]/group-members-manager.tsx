@@ -13,11 +13,17 @@ type Member = {
 
 type AvailableParticipant = Member;
 
+interface GroupTab {
+  id: string;
+  name: string;
+}
+
 interface ActivityGroupMembersManagerProps {
   groupId: string;
   groupName: string;
   members: Member[];
   availableParticipants: AvailableParticipant[];
+  allGroups: GroupTab[];
 }
 
 export default function ActivityGroupMembersManager({
@@ -25,6 +31,7 @@ export default function ActivityGroupMembersManager({
   groupName,
   members,
   availableParticipants,
+  allGroups,
 }: ActivityGroupMembersManagerProps) {
   const router = useRouter();
   const [selectedParticipantId, setSelectedParticipantId] = useState(
@@ -33,22 +40,46 @@ export default function ActivityGroupMembersManager({
   const [savingParticipantId, setSavingParticipantId] = useState<string | null>(
     null
   );
-  const [confirmRemoveMemberId, setConfirmRemoveMemberId] = useState<string | null>(null);
+  const [confirmRemoveMemberId, setConfirmRemoveMemberId] = useState<
+    string | null
+  >(null);
   const [error, setError] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [selectedTab, setSelectedTab] = useState<string>('all');
+
+  const selectableTabs = useMemo(
+    () => [
+      { id: 'all', name: 'Todos los grupos' },
+      ...allGroups.filter((group) => group.id !== groupId),
+    ],
+    [allGroups, groupId]
+  );
+
+  const visibleParticipantsByTab = useMemo(() => {
+    if (selectedTab === 'all') {
+      return availableParticipants;
+    }
+
+    return availableParticipants.filter(
+      (participant) =>
+        participant.currentGroupName === selectedTab ||
+        participant.currentGroupName === null
+    );
+  }, [availableParticipants, selectedTab]);
 
   const filteredAvailableParticipants = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
 
     if (!normalized) {
-      return availableParticipants;
+      return visibleParticipantsByTab;
     }
 
-    return availableParticipants.filter((participant) =>
+    return visibleParticipantsByTab.filter((participant) =>
       participant.label.toLowerCase().includes(normalized)
     );
-  }, [availableParticipants, searchTerm]);
+  }, [visibleParticipantsByTab, searchTerm]);
 
   useEffect(() => {
     if (filteredAvailableParticipants.length === 0) {
@@ -136,7 +167,7 @@ export default function ActivityGroupMembersManager({
             Disponibles
           </p>
           <p className="mt-1 text-2xl font-semibold">
-            {availableParticipants.length}
+            {visibleParticipantsByTab.length}
           </p>
         </div>
         <div className="rounded-lg border bg-background p-4">
@@ -187,7 +218,9 @@ export default function ActivityGroupMembersManager({
                         type="button"
                         variant="ghost"
                         disabled={isSaving}
-                        onClick={() => setConfirmRemoveMemberId(member.participantId)}
+                        onClick={() =>
+                          setConfirmRemoveMemberId(member.participantId)
+                        }
                         className="border-destructive text-destructive hover:bg-destructive/5"
                       >
                         {isSaving ? 'Quitando...' : 'Sacar del grupo'}
@@ -204,9 +237,33 @@ export default function ActivityGroupMembersManager({
           <h3 className="text-sm font-semibold text-foreground">
             Agregar participante
           </h3>
-          {availableParticipants.length === 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {selectableTabs.map((tab) => {
+              const isActive =
+                selectedTab === tab.name ||
+                (tab.id === 'all' && selectedTab === 'all');
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() =>
+                    setSelectedTab(tab.id === 'all' ? 'all' : tab.name)
+                  }
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {tab.name}
+                </button>
+              );
+            })}
+          </div>
+          {visibleParticipantsByTab.length === 0 ? (
             <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-              No hay participantes disponibles para agregar.
+              No hay participantes disponibles para este filtro.
             </p>
           ) : (
             <form
@@ -237,11 +294,12 @@ export default function ActivityGroupMembersManager({
                   </option>
                 ))}
               </select>
-              {filteredAvailableParticipants.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  No se encontraron participantes con esa búsqueda.
-                </p>
-              )}
+              {visibleParticipantsByTab.length > 0 &&
+                filteredAvailableParticipants.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    No se encontraron participantes con esa búsqueda.
+                  </p>
+                )}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Si el participante ya pertenece a otro grupo, se moverá a
@@ -280,7 +338,11 @@ export default function ActivityGroupMembersManager({
               </button>
               <button
                 type="button"
-                onClick={() => { const id = confirmRemoveMemberId; setConfirmRemoveMemberId(null); void mutateMembership(id, 'DELETE'); }}
+                onClick={() => {
+                  const id = confirmRemoveMemberId;
+                  setConfirmRemoveMemberId(null);
+                  void mutateMembership(id, 'DELETE');
+                }}
                 className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
               >
                 Sacar del grupo

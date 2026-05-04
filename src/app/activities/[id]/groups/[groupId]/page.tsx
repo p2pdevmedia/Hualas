@@ -69,7 +69,7 @@ export default async function ActivityGroupPage({
     redirect('/');
   }
 
-  const [group, participants] = await Promise.all([
+  const [group, participants, activityGroups] = await Promise.all([
     prisma.activityGroup.findFirst({
       where: {
         id: params.groupId,
@@ -83,6 +83,11 @@ export default async function ActivityGroupPage({
           },
         },
       },
+    }),
+    prisma.activityGroup.findMany({
+      where: { activityId: activity.id },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
     }),
     prisma.activityParticipant
       .findMany({
@@ -231,6 +236,7 @@ export default async function ActivityGroupPage({
         groupName={group.name}
         members={currentMembers}
         availableParticipants={availableParticipants}
+        allGroups={activityGroups}
       />
     </main>
   );
