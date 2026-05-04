@@ -85,6 +85,7 @@ interface ActivityDaysPanelProps {
   defaultProfessorIds: string[];
   registrations: Registration[];
   days: ActivityDay[];
+  hideSessionDetails?: boolean;
 }
 
 const statusLabels: Record<AttendanceStatus, string> = {
@@ -101,6 +102,7 @@ export default function ActivityDaysPanel({
   defaultProfessorIds,
   registrations,
   days,
+  hideSessionDetails = false,
 }: ActivityDaysPanelProps) {
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -242,7 +244,7 @@ export default function ActivityDaysPanel({
         )}
       </div>
 
-      {canManageDays && showCreateForm && (
+      {canManageDays && showCreateForm && !hideSessionDetails && (
         <div className="mt-5">
           <ActivityDayForm
             activityId={activityId}
@@ -263,6 +265,11 @@ export default function ActivityDaysPanel({
       {days.length === 0 ? (
         <p className="mt-6 text-sm text-muted-foreground font-body">
           Aún no hay días cargados para esta actividad.
+        </p>
+      ) : hideSessionDetails ? (
+        <p className="mt-6 text-sm text-muted-foreground font-body">
+          Las sesiones se visualizan desde el calendario. Hacé click en cada una
+          para ver información y editar según permisos.
         </p>
       ) : (
         <div className="mt-6 space-y-4">
