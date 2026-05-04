@@ -72,7 +72,7 @@ export default async function ActivityJoinPage({
         />
       )}
 
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
+      <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
         <section className="space-y-6">
           <nav className="flex items-center gap-2 text-xs text-muted-foreground font-body">
             <Link href="/" className="hover:text-primary transition-colors">
@@ -153,8 +153,7 @@ export default async function ActivityJoinPage({
           </div>
         </section>
 
-        <aside className="lg:sticky lg:top-6">
-          <JoinEnrollmentPanel
+        <JoinEnrollmentPanel
             activity={{
               id: activity.id,
               name: activity.name,
@@ -172,7 +171,6 @@ export default async function ActivityJoinPage({
             hasCapacity={hasCapacity}
             remainingSpots={remainingSpots}
           />
-        </aside>
       </div>
     </main>
   );
