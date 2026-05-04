@@ -135,7 +135,9 @@ export default function EditActivityForm({
     string | null
   >(null);
 
-  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
+  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(
+    () => new Set(initialAnnualSchedules.map((s) => s.weekday))
+  );
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -156,6 +158,11 @@ export default function EditActivityForm({
       ...current,
       { ...createEmptyScheduleDraft(), weekday },
     ]);
+    setCollapsedDays((current) => {
+      const next = new Set(current);
+      next.delete(weekday);
+      return next;
+    });
   }
 
   function updateScheduleDraft(
