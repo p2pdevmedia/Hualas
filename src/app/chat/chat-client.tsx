@@ -363,7 +363,10 @@ export default function ChatClient() {
   const pickerPeople = useMemo<PersonOption[]>(() => {
     if (!session) return [];
 
-    if (hasProfessorCapability && professorContext) {
+    const isAdmin =
+      session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+
+    if (!isAdmin && hasProfessorCapability && professorContext) {
       const map = new Map<string, PersonOption>();
       for (const activity of professorContext.activities) {
         for (const person of activity.participants) {
@@ -395,8 +398,6 @@ export default function ChatClient() {
     return users
       .filter((user) => user.id !== session.user.id)
       .filter((user) => {
-        const isAdmin =
-          session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
         const isCounter = session.user.role === 'COUNTER';
         if (isAdmin || isCounter) return true;
         return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
