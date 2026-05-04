@@ -36,8 +36,10 @@ function toLocalDateKey(date: Date): string {
 
 export default function ActivityCalendar({
   activityDays,
+  onDaySelect,
 }: {
   activityDays: CalendarActivityDay[];
+  onDaySelect?: (dayId: string | null) => void;
 }) {
   const today = new Date();
   const todayKey = toLocalDateKey(today);
