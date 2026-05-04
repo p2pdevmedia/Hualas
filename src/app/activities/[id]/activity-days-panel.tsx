@@ -251,22 +251,22 @@ export default function ActivityDaysPanel({
               Administración de días
             </div>
             {!hideSessionDetails && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowCreateForm((current) => !current)}
-              >
-                {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
-              </Button>
-            )}
-            {hideSessionDetails && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowBulkCreator(true)}
-              >
-                Crear sesiones
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm((current) => !current)}
+                >
+                  {showCreateForm ? 'Ocultar formulario' : 'Crear sesión'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowBulkCreator(true)}
+                >
+                  Crear sesiones
+                </Button>
+              </>
             )}
           </div>
         )}
