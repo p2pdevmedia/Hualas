@@ -2,8 +2,18 @@
 
 import { useMemo, useState } from 'react';
 
-type Group = { id: string; name: string; minAge: number | null; maxAge: number | null };
-type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
+type Group = {
+  id: string;
+  name: string;
+  minAge: number | null;
+  maxAge: number | null;
+};
+type Session = {
+  id: string;
+  date: string;
+  schedule: string;
+  activityGroupId: string | null;
+};
 
 type Props = {
   activityType: 'ANNUAL' | 'TEMPORARY';
@@ -81,7 +91,9 @@ export default function GroupScheduleCalendar({
 
   const groupColorMap = useMemo(() => {
     const map = new Map<string, (typeof GROUP_COLORS)[number]>();
-    groups.forEach((g, i) => map.set(g.id, GROUP_COLORS[i % GROUP_COLORS.length]));
+    groups.forEach((g, i) =>
+      map.set(g.id, GROUP_COLORS[i % GROUP_COLORS.length])
+    );
     return map;
   }, [groups]);
 
@@ -122,7 +134,9 @@ export default function GroupScheduleCalendar({
     const group = groups.find((g) => g.id === selectedGroupId);
     if (!group || (group.minAge === null && group.maxAge === null)) return null;
     const birthDate = new Date(selectedPersonBirthDate);
-    const refDate = activityStartDate ? new Date(activityStartDate) : new Date();
+    const refDate = activityStartDate
+      ? new Date(activityStartDate)
+      : new Date();
     const age = calculateAge(birthDate, refDate);
     if (group.minAge !== null && age < group.minAge) {
       return `La persona seleccionada tiene ${age} año${age === 1 ? '' : 's'}. Este grupo es para mayores de ${group.minAge} años.`;
@@ -133,7 +147,10 @@ export default function GroupScheduleCalendar({
     return null;
   }, [selectedGroupId, selectedPersonBirthDate, groups, activityStartDate]);
 
-  const title = currentDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  const title = currentDate.toLocaleDateString('es-AR', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   const movePeriod = (delta: number) => {
     const next = new Date(currentDate);
@@ -150,9 +167,12 @@ export default function GroupScheduleCalendar({
   return (
     <section className="rounded-lg border bg-card p-5 space-y-4">
       <div className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Elegí grupo y horarios</h2>
+        <h2 className="font-heading text-lg font-semibold">
+          Elegí grupo y horarios
+        </h2>
         <p className="text-sm text-muted-foreground font-body">
-          Hacé clic en un horario del calendario para elegir el grupo al que querés inscribirte.
+          Hacé clic en un horario del calendario para elegir el grupo al que
+          querés inscribirte.
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -187,24 +207,35 @@ export default function GroupScheduleCalendar({
       </div>
 
       <div className="flex items-center justify-between">
-        <button type="button" className="rounded-md border px-3 py-1 text-sm" onClick={() => movePeriod(-1)}>
+        <button
+          type="button"
+          className="rounded-md border px-3 py-1 text-sm"
+          onClick={() => movePeriod(-1)}
+        >
           ←
         </button>
         <p className="text-sm font-medium capitalize">{title}</p>
-        <button type="button" className="rounded-md border px-3 py-1 text-sm" onClick={() => movePeriod(1)}>
+        <button
+          type="button"
+          className="rounded-md border px-3 py-1 text-sm"
+          onClick={() => movePeriod(1)}
+        >
           →
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <div className="hidden grid-cols-7 gap-1 text-center sm:grid">
         {weekdayLabels.map((label) => (
-          <p key={label} className="text-xs font-medium text-muted-foreground pb-1">
+          <p
+            key={label}
+            className="text-xs font-medium text-muted-foreground pb-1"
+          >
             {label}
           </p>
         ))}
       </div>
 
-      <div className={`grid gap-1 ${activityType === 'ANNUAL' ? 'grid-cols-1 sm:grid-cols-7' : 'grid-cols-7'}`}>
+      <div className="grid grid-cols-1 gap-1 sm:grid-cols-7">
         {daysToRender.map((day) => {
           const key = day.toISOString().slice(0, 10);
           const daySessions = sessionsByDate.get(key) ?? [];
@@ -212,14 +243,22 @@ export default function GroupScheduleCalendar({
           return (
             <div
               key={key}
-              className={`rounded-md border p-1.5 min-h-[56px] ${
-                activityType === 'TEMPORARY' && !isCurrentMonth ? 'opacity-30' : ''
+              className={`min-h-[56px] rounded-md border p-1.5 ${
+                daySessions.length === 0 ? 'hidden sm:block' : ''
+              } ${
+                activityType === 'TEMPORARY' && !isCurrentMonth
+                  ? 'opacity-30'
+                  : ''
               }`}
             >
-              <p className="text-xs font-semibold text-muted-foreground">{day.getDate()}</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                {day.getDate()}
+              </p>
               <div className="mt-1 space-y-0.5">
                 {daySessions.map((session) => {
-                  const group = groups.find((g) => g.id === session.activityGroupId);
+                  const group = groups.find(
+                    (g) => g.id === session.activityGroupId
+                  );
                   if (!group) return null;
                   const colors = groupColorMap.get(group.id)!;
                   const isSelected = group.id === selectedGroupId;
@@ -232,8 +271,12 @@ export default function GroupScheduleCalendar({
                         isSelected ? colors.slotSelected : colors.slot
                       }`}
                     >
-                      <p className="font-medium truncate leading-tight">{group.name}</p>
-                      <p className="leading-tight opacity-80">{session.schedule}</p>
+                      <p className="font-medium truncate leading-tight">
+                        {group.name}
+                      </p>
+                      <p className="leading-tight opacity-80">
+                        {session.schedule}
+                      </p>
                     </button>
                   );
                 })}
