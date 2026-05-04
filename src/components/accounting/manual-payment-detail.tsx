@@ -133,69 +133,6 @@ export default function ManualPaymentDetail({
               </div>
             )}
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-4">
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Monto
-              </p>
-              <p className="mt-1 break-words text-lg font-semibold leading-tight">
-                {formatPesos(payment.amount / 100, payment.currency)}
-              </p>
-            </article>
-            <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Fecha de pago
-              </p>
-              <p className="mt-1 break-words text-lg font-semibold leading-tight">
-                {(payment.paidAt ?? payment.createdAt).toLocaleDateString(
-                  'es-AR'
-                )}
-              </p>
-            </article>
-            {socialFeeAmount > 0 ? (
-              <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Cuota social
-                </p>
-                <p className="mt-1 text-lg font-semibold">
-                  {formatPesos(socialFeeAmount, payment.currency)}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {socialFeeParticipants} participante
-                  {socialFeeParticipants === 1 ? '' : 's'}
-                </p>
-              </article>
-            ) : null}
-
-            {payment.activities.length > 0 ? (
-              <article
-                className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
-                  socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
-                }`}
-              >
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Actividades
-                </p>
-                <ul className="mt-2 space-y-1 text-sm">
-                  {payment.activities.map((activity) => (
-                    <li key={activity.id}>{activity.name}</li>
-                  ))}
-                </ul>
-              </article>
-            ) : null}
-          </div>
-
-          {payment.accountantComments ? (
-            <article className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-amber-700">
-                Último comentario
-              </p>
-              <p className="mt-2 text-sm text-amber-950">
-                {payment.accountantComments}
-              </p>
-            </article>
-          ) : null}
         </div>
 
         <div className="space-y-4">
@@ -258,6 +195,67 @@ export default function ManualPaymentDetail({
           ) : null}
         </div>
       </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Monto
+          </p>
+          <p className="mt-1 break-words text-lg font-semibold leading-tight">
+            {formatPesos(payment.amount / 100, payment.currency)}
+          </p>
+        </article>
+        <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Fecha de pago
+          </p>
+          <p className="mt-1 break-words text-lg font-semibold leading-tight">
+            {(payment.paidAt ?? payment.createdAt).toLocaleDateString('es-AR')}
+          </p>
+        </article>
+        {socialFeeAmount > 0 ? (
+          <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Cuota social
+            </p>
+            <p className="mt-1 text-lg font-semibold">
+              {formatPesos(socialFeeAmount, payment.currency)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {socialFeeParticipants} participante
+              {socialFeeParticipants === 1 ? '' : 's'}
+            </p>
+          </article>
+        ) : null}
+
+        {payment.activities.length > 0 ? (
+          <article
+            className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
+              socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
+            }`}
+          >
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Actividades
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {payment.activities.map((activity) => (
+                <li key={activity.id}>{activity.name}</li>
+              ))}
+            </ul>
+          </article>
+        ) : null}
+      </div>
+
+      {payment.accountantComments ? (
+        <article className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-xs uppercase tracking-wide text-amber-700">
+            Último comentario
+          </p>
+          <p className="mt-2 text-sm text-amber-950">
+            {payment.accountantComments}
+          </p>
+        </article>
+      ) : null}
 
       <section className="space-y-3">
         <h4 className="text-sm font-semibold">Auditoría</h4>

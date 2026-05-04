@@ -163,7 +163,7 @@ export default function ManualPaymentsDashboard({
   const totalPages = Math.max(Math.ceil(total / pageSize), 1);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.6fr)]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(384px,1.08fr)_minmax(0,1.42fr)]">
       <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-sm">
         <div>
           <h2 className="text-lg font-semibold">Pagos manuales</h2>
