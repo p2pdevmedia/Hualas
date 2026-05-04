@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
-import RegisterButton from '@/app/activities/[id]/register-button';
+import JoinEnrollmentPanel from './join-enrollment-panel';
 
 interface ActivityJoinPageProps {
   params: { id: string };
@@ -31,9 +31,11 @@ export default async function ActivityJoinPage({
     notFound();
   }
 
-  const participantCount = await prisma.activityParticipant.count({
-    where: { activityId: activity.id },
-  });
+  const [participantCount, groups, sessions] = await Promise.all([
+    prisma.activityParticipant.count({ where: { activityId: activity.id } }),
+    prisma.activityGroup.findMany({ where: { activityId: activity.id }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+    prisma.activityDay.findMany({ where: { activityId: activity.id, cancelled: false }, select: { id: true, date: true, schedule: true, activityGroupId: true }, orderBy: { date: 'asc' } }),
+  ]);
 
   const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
     TEMPORARY: 'Temporal',
@@ -70,7 +72,7 @@ export default async function ActivityJoinPage({
         />
       )}
 
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
+      <div className="mx-auto grid w-full max-w-none gap-8 px-4 py-8 lg:grid-cols-1">
         <section className="space-y-6">
           <nav className="flex items-center gap-2 text-xs text-muted-foreground font-body">
             <Link href="/" className="hover:text-primary transition-colors">
@@ -151,41 +153,25 @@ export default async function ActivityJoinPage({
           </div>
         </section>
 
-        <aside className="lg:sticky lg:top-6">
-          <div className="space-y-4 rounded-xl border bg-card p-5">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">
-                Inscripción
-              </p>
-              <p className="font-heading text-2xl font-semibold">
-                ${activity.price}
-              </p>
-              {hasCapacity && (
-                <p
-                  className={`text-xs font-body ${
-                    isFull ? 'text-destructive' : 'text-muted-foreground'
-                  }`}
-                >
-                  {isFull
-                    ? 'Cupo completo'
-                    : `${remainingSpots} lugares disponibles`}
-                </p>
-              )}
-            </div>
-
-            {isFull ? (
-              <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
-                No hay cupos disponibles en este momento.
-              </div>
-            ) : (
-              <RegisterButton
-                activityId={activity.id}
-                activityName={activity.name}
-                activityPrice={Number(activity.price)}
-              />
-            )}
-
-          </div>
+        <aside className="w-full">
+          <JoinEnrollmentPanel
+            activity={{
+              id: activity.id,
+              name: activity.name,
+              price: Number(activity.price),
+              activityType: activity.activityType,
+            }}
+            groups={groups}
+            sessions={sessions.map((session) => ({
+              id: session.id,
+              date: session.date.toISOString(),
+              schedule: session.schedule,
+              activityGroupId: session.activityGroupId,
+            }))}
+            isFull={isFull}
+            hasCapacity={hasCapacity}
+            remainingSpots={remainingSpots}
+          />
         </aside>
       </div>
     </main>

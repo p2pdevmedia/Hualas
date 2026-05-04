@@ -12,10 +12,14 @@ export default function ActivityRegisterButton({
   activityId,
   activityName,
   activityPrice,
+  groupId,
+  groupName,
 }: {
   activityId: string;
   activityName: string;
   activityPrice: number;
+  groupId?: string;
+  groupName?: string;
 }) {
   const { data: session } = useSession();
   const isMember = session?.user?.role === 'MEMBER';
@@ -57,12 +61,14 @@ export default function ActivityRegisterButton({
       price: activityPrice,
       target: effectiveTarget,
       targetLabel,
+      groupId,
+      groupName,
     };
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
     const existing = raw ? (JSON.parse(raw) as ActivityCartItem[]) : [];
     const deduped = existing.filter(
       (entry) =>
-        !(entry.activityId === item.activityId && entry.target === item.target)
+        !(entry.activityId === item.activityId && entry.target === item.target && (entry.groupId ?? '') === (item.groupId ?? ''))
     );
     window.localStorage.setItem(
       ACTIVITY_CART_STORAGE_KEY,
