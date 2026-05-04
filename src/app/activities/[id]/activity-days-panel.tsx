@@ -80,6 +80,7 @@ type ActivityDay = {
 interface ActivityDaysPanelProps {
   activityId: string;
   canManageDays: boolean;
+  hideSessionDetails?: boolean;
   professors: ProfessorOption[];
   groups: GroupOption[];
   defaultProfessorIds: string[];
@@ -96,6 +97,7 @@ const statusLabels: Record<AttendanceStatus, string> = {
 export default function ActivityDaysPanel({
   activityId,
   canManageDays,
+  hideSessionDetails = false,
   professors,
   groups,
   defaultProfessorIds,
@@ -222,11 +224,12 @@ export default function ActivityDaysPanel({
             Días de la actividad
           </h2>
           <p className="text-sm text-muted-foreground font-body mt-1">
-            El profesor puede programar días y los inscriptos confirman si van a
-            asistir.
+            {hideSessionDetails
+              ? 'En actividades anuales, las sesiones se visualizan desde el calendario. Al hacer click en una sesión se abre su detalle para ver o editar según permisos.'
+              : 'El profesor puede programar días y los inscriptos confirman si van a asistir.'}
           </p>
         </div>
-        {canManageDays && (
+        {canManageDays && !hideSessionDetails && (
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
               Administración de días
@@ -242,7 +245,7 @@ export default function ActivityDaysPanel({
         )}
       </div>
 
-      {canManageDays && showCreateForm && (
+      {canManageDays && !hideSessionDetails && showCreateForm && (
         <div className="mt-5">
           <ActivityDayForm
             activityId={activityId}
@@ -264,7 +267,7 @@ export default function ActivityDaysPanel({
         <p className="mt-6 text-sm text-muted-foreground font-body">
           Aún no hay días cargados para esta actividad.
         </p>
-      ) : (
+      ) : !hideSessionDetails ? (
         <div className="mt-6 space-y-4">
           {visibleDays.map((day) => {
             const goingCount = day.attendances.filter(
@@ -283,6 +286,11 @@ export default function ActivityDaysPanel({
                   `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`
               )
               .join(', ');
+            const groupMembers = day.activityGroupId
+              ? registrations.filter(
+                  (registration) => registration.groupId === day.activityGroupId
+                )
+              : [];
             const isEditing = editingDayId === day.id;
 
             return (
@@ -311,6 +319,14 @@ export default function ActivityDaysPanel({
                     {day.activityGroup && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Restringida al grupo {day.activityGroup.name}
+                      </p>
+                    )}
+                    {day.activityGroup && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Integrantes asignados:{' '}
+                        {groupMembers.length > 0
+                          ? groupMembers.map((member) => member.label).join(', ')
+                          : 'Sin integrantes asignados.'}
                       </p>
                     )}
                     {mapHref && (
@@ -602,7 +618,7 @@ export default function ActivityDaysPanel({
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {pastDays.length > 0 && (
         <details className="mt-6 rounded-lg border bg-background p-4">
