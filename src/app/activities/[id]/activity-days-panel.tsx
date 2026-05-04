@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ActivityDayForm from './activity-day-form';
 import AttendanceList, {
@@ -262,23 +261,6 @@ export default function ActivityDaysPanel({
       {days.length > 0 && (
         <div className="mt-6">
           <ActivityCalendar activityDays={calendarDays} />
-        </div>
-      )}
-
-      {groups.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-full border border-primary bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Todos
-          </span>
-          {groups.map((group) => (
-            <Link
-              key={group.id}
-              href={`/activities/${activityId}/groups/${group.id}`}
-              className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
-              {group.name}
-            </Link>
-          ))}
         </div>
       )}
 

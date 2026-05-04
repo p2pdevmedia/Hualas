@@ -206,21 +206,12 @@ export default function InscriptosPanel({
                   >
                     <p className="font-medium">{group.name}</p>
                     <p className="mt-1 text-xs text-muted-foreground font-body">{members.length} integrante{members.length === 1 ? '' : 's'}</p>
-                    <ul className="mt-3 space-y-2">
+                    <ul className="mt-3 flex flex-wrap gap-2">
                       {members.map((member) => (
                         <li
                           key={member.id}
-                          draggable={canAssignGroups}
-                          onDragStart={() => handleDragStart(member.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => handleParticipantTapToAssign(member.id)}
-                          className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === member.id ? 'border-primary bg-primary/5' : ''}`}
+                          className="relative rounded-md border bg-background px-3 py-1.5"
                         >
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground font-body">{member.subtitle}</p>
-                          {member.age != null && (
-                            <p className="text-xs text-muted-foreground font-body">Edad: {member.age}</p>
-                          )}
                           {canAssignGroups && (
                             <button
                               type="button"
@@ -229,10 +220,14 @@ export default function InscriptosPanel({
                                 event.stopPropagation();
                                 void saveGroup(member.id, '');
                               }}
-                              className="mt-2 text-xs text-link underline underline-offset-2 disabled:opacity-60"
+                              className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full border bg-card text-[10px] text-muted-foreground hover:bg-destructive hover:text-white transition-colors disabled:opacity-60"
                             >
-                              Quitar del grupo
+                              ×
                             </button>
+                          )}
+                          <p className="text-xs font-medium leading-tight">{member.name}</p>
+                          {member.age != null && (
+                            <p className="text-[11px] text-muted-foreground">{member.age} años</p>
                           )}
                         </li>
                       ))}

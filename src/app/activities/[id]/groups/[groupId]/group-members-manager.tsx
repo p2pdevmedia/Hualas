@@ -173,31 +173,6 @@ export default function ActivityGroupMembersManager({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border bg-background p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Miembros
-          </p>
-          <p className="mt-1 text-2xl font-semibold">{members.length}</p>
-        </div>
-        <div className="rounded-lg border bg-background p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Disponibles
-          </p>
-          <p className="mt-1 text-2xl font-semibold">
-            {visibleParticipantsByTab.length}
-          </p>
-        </div>
-        <div className="rounded-lg border bg-background p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Estado
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Los participantes se mueven entre grupos en el momento.
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">

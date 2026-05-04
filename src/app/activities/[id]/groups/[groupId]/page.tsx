@@ -205,7 +205,7 @@ export default async function ActivityGroupPage({
           </Link>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border bg-background p-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Miembros
@@ -213,12 +213,6 @@ export default async function ActivityGroupPage({
             <p className="mt-1 text-2xl font-semibold">
               {group._count.members}
             </p>
-          </div>
-          <div className="rounded-lg border bg-background p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Sesiones
-            </p>
-            <p className="mt-1 text-2xl font-semibold">{group._count.days}</p>
           </div>
           <div className="rounded-lg border bg-background p-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
