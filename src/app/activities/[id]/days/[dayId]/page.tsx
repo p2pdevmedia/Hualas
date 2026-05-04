@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
 import Link from 'next/link';
 import Image from 'next/image';
+import CancelDayButton from './cancel-day-button';
 
 export default async function ActivityDayPage({
   params,
@@ -20,7 +21,17 @@ export default async function ActivityDayPage({
 
   const day = await prisma.activityDay.findUnique({
     where: { id: params.dayId },
-    include: {
+    select: {
+      id: true,
+      activityId: true,
+      date: true,
+      schedule: true,
+      geoLocation: true,
+      description: true,
+      planificacion: true,
+      devolucion: true,
+      cancelled: true,
+      cancellationReason: true,
       activity: { select: { id: true, name: true } },
       activityGroup: { select: { id: true, name: true } },
       professors: { select: { userId: true } },
@@ -51,6 +62,15 @@ export default async function ActivityDayPage({
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+      {day.cancelled && (
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 space-y-1">
+          <p className="text-sm font-semibold text-red-700">Día cancelado</p>
+          {day.cancellationReason && (
+            <p className="text-sm text-red-600">{day.cancellationReason}</p>
+          )}
+        </div>
+      )}
+
       <nav className="flex items-center gap-1 text-xs text-muted-foreground font-body">
         <Link href="/my-activities" className="hover:text-primary transition-colors">
           Mis actividades
@@ -142,6 +162,13 @@ export default async function ActivityDayPage({
           </span>
         </Link>
       </div>
+
+      <CancelDayButton
+        dayId={params.dayId}
+        activityId={params.id}
+        initialCancelled={day.cancelled}
+        initialReason={day.cancellationReason}
+      />
     </main>
   );
 }
