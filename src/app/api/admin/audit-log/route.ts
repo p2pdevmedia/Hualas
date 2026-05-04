@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hasSuperAdminCapability } from '@/lib/roles';
@@ -20,6 +21,18 @@ function getString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function getSearchTokens(value: string | null): string[] {
+  return Array.from(
+    new Set(
+      (value ?? '')
+        .trim()
+        .split(/\s+/)
+        .map((token) => token.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!hasSuperAdminCapability(session)) {
@@ -28,12 +41,57 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl;
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-  const model = searchParams.get('model') ?? undefined;
-  const action = searchParams.get('action') ?? undefined;
+  const model = getString(searchParams.get('model'));
+  const action = getString(searchParams.get('action'));
+  const user = getString(searchParams.get('user'));
+  const userTokens = getSearchTokens(user);
 
-  const where = {
-    ...(model ? { model } : {}),
-    ...(action ? { action } : {}),
+  const matchedUserIds = userTokens.length
+    ? (
+        await prisma.user.findMany({
+          where: {
+            AND: userTokens.map((token) => ({
+              OR: [
+                { name: { contains: token, mode: 'insensitive' } },
+                { lastName: { contains: token, mode: 'insensitive' } },
+                { email: { contains: token, mode: 'insensitive' } },
+              ],
+            })),
+          },
+          select: { id: true },
+        })
+      ).map((matchedUser) => matchedUser.id)
+    : [];
+
+  const where: Prisma.DbAuditLogWhereInput = {
+    AND: [
+      ...(model
+        ? [{ model: { contains: model, mode: Prisma.QueryMode.insensitive } }]
+        : []),
+      ...(action
+        ? [
+            {
+              action: {
+                contains: action,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            },
+          ]
+        : []),
+      ...(userTokens.length
+        ? [
+            {
+              OR: [
+                { userId: { in: matchedUserIds } },
+                {
+                  model: 'User',
+                  recordId: { in: matchedUserIds },
+                },
+              ],
+            },
+          ]
+        : []),
+    ],
   };
 
   const [logs, total] = await Promise.all([

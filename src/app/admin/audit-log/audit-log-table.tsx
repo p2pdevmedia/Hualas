@@ -162,6 +162,7 @@ export default function AuditLogTable() {
   const [page, setPage] = useState(1);
   const [model, setModel] = useState('');
   const [action, setAction] = useState('');
+  const [user, setUser] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -170,6 +171,7 @@ export default function AuditLogTable() {
     const params = new URLSearchParams({ page: String(page) });
     if (model) params.set('model', model);
     if (action) params.set('action', action);
+    if (user) params.set('user', user);
 
     fetch(`/api/admin/audit-log?${params}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -178,7 +180,7 @@ export default function AuditLogTable() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, model, action]);
+  }, [page, model, action, user]);
 
   const totalPages = data ? Math.ceil(data.total / data.pageSize) : 1;
 
@@ -204,6 +206,16 @@ export default function AuditLogTable() {
             setPage(1);
           }}
           className="rounded-md border px-3 py-1.5 text-sm"
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por nombre, apellido o email"
+          value={user}
+          onChange={(e) => {
+            setUser(e.target.value);
+            setPage(1);
+          }}
+          className="min-w-[260px] rounded-md border px-3 py-1.5 text-sm"
         />
       </div>
 
