@@ -36,6 +36,23 @@ function getParticipantName(participant: ActivityParticipantDetail) {
   return `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`;
 }
 
+
+function getAgeFromBirthDate(birthDate: Date | null) {
+  if (!birthDate) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
+}
 function getParticipantSubtitle(participant: ActivityParticipantDetail) {
   if (participant.child) {
     return `Registrado por ${participant.user.name ?? 'sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`;
@@ -499,6 +516,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               id: p.id,
               name: getParticipantName(p),
               subtitle: getParticipantSubtitle(p),
+              age: getAgeFromBirthDate(p.child ? p.child.birthDate : p.user.birthDate),
               receipt: p.receipt ?? null,
               receiptDate: p.receiptDate ? p.receiptDate.toISOString() : null,
               isChild: !!p.child,
