@@ -27,6 +27,8 @@ export default async function ActivityDayPage({
       date: true,
       schedule: true,
       geoLocation: true,
+      latitude: true,
+      longitude: true,
       description: true,
       planificacion: true,
       devolucion: true,
@@ -93,6 +95,16 @@ export default async function ActivityDayPage({
         <p className="text-sm text-muted-foreground">
           {day.schedule} · {day.geoLocation}
         </p>
+        {day.latitude != null && day.longitude != null && (
+          <a
+            href={`https://www.google.com/maps?q=${day.latitude},${day.longitude}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-block text-xs text-link hover:underline underline-offset-4"
+          >
+            Abrir en Google Maps
+          </a>
+        )}
         {day.activityGroup && (
           <p className="text-xs text-muted-foreground">
             Grupo: {day.activityGroup.name}

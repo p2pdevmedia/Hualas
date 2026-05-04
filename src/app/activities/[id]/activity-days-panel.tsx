@@ -279,7 +279,7 @@ export default function ActivityDaysPanel({
             ).length;
             const mapHref =
               day.latitude != null && day.longitude != null
-                ? `https://www.openstreetmap.org/?mlat=${day.latitude}&mlon=${day.longitude}#map=17/${day.latitude}/${day.longitude}`
+                ? `https://www.google.com/maps?q=${day.latitude},${day.longitude}`
                 : null;
             const professorLabels = day.assignedProfessors
               .map(
@@ -337,7 +337,7 @@ export default function ActivityDaysPanel({
                         rel="noreferrer"
                         className="mt-1 inline-block text-xs text-link hover:underline underline-offset-4"
                       >
-                        Abrir en OpenStreetMap
+                        Abrir en Google Maps
                       </a>
                     )}
                   </div>
