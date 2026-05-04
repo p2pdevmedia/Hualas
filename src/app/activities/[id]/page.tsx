@@ -312,7 +312,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
-  const showSessionsPanel = !(isAdmin && activity.activityType === 'ANNUAL');
+  const showSessionsPanel = activity.activityType !== 'ANNUAL';
   const activityListHref = isParticipantInActivity
     ? '/my-activities'
     : '/activities';
