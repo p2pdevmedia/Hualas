@@ -547,6 +547,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   null)
                 : null,
               whatsappPhone: p.user.phone ?? null,
+              detailHref: `/activities/${activity.id}/participants/${p.id}`,
             }))}
             groups={activityGroupOptions}
             canAssignGroups={isAdmin}
