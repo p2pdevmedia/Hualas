@@ -412,7 +412,14 @@ export default function Navbar() {
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
           {session ? (
             <>
-              <div className="flex items-center gap-3 py-2">
+              <Link
+                href="/profile"
+                className={cn(
+                  navLinkClass('/profile'),
+                  'flex items-center gap-3 py-2'
+                )}
+                onClick={() => setMenuOpen(false)}
+              >
                 <div
                   className={cn(
                     'shrink-0 overflow-hidden rounded-full text-white grid place-items-center font-semibold bg-muted',
@@ -443,16 +450,9 @@ export default function Navbar() {
                     </span>
                   )}
                 </div>
-                <span className="text-sm opacity-80">
+                <span className="text-sm font-medium">
                   {session.user.name || 'Usuario'}
                 </span>
-              </div>
-              <Link
-                href="/profile"
-                className={navLinkClass('/profile')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.profile}
               </Link>
               {session && !isCounter && (
                 <Link
