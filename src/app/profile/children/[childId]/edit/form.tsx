@@ -59,7 +59,7 @@ export default function ChildEditForm({ child }: ChildEditFormProps) {
           body: JSON.stringify({
             name,
             lastName,
-            birthDate: birthDate ? new Date(birthDate) : null,
+            birthDate: birthDate || null,
             documentType,
             documentNumber,
             address,
