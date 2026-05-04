@@ -1,8 +1,8 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { hasSuperAdminCapability } from '@/lib/roles';
 
 const PAGE_SIZE = 25;
 
@@ -22,7 +22,7 @@ function getString(value: unknown): string | null {
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'SUPER_ADMIN') {
+  if (!hasSuperAdminCapability(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
