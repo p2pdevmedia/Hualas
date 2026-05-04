@@ -26,6 +26,9 @@ export default async function UsersPage() {
       roleAssignments: { select: { role: true } },
       profilePhoto: true,
       updatedAt: true,
+      children: {
+        select: { id: true, name: true, lastName: true, birthDate: true },
+      },
     },
   });
   return (

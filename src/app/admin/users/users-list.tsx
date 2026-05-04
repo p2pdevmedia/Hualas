@@ -8,6 +8,13 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/components/language-provider';
 import UserRolesModal from './user-roles-modal';
 
+interface Child {
+  id: string;
+  name: string;
+  lastName: string | null;
+  birthDate: Date | null;
+}
+
 interface User {
   id: string;
   name: string | null;
@@ -18,6 +25,17 @@ interface User {
   roles: string[];
   profilePhoto: string | null;
   updatedAt: Date;
+  children: Child[];
+}
+
+function calcAge(birthDate: Date | null): number | null {
+  if (!birthDate) return null;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
 }
 
 export default function UsersList({
@@ -117,6 +135,22 @@ export default function UsersList({
                 {u.role}
               </span>
             </Link>
+            {u.children.length > 0 && (
+              <div className="w-full pl-13 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                {u.children.map((c) => {
+                  const age = calcAge(c.birthDate);
+                  return (
+                    <span
+                      key={c.id}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {c.name} {c.lastName ?? ''}
+                      {age !== null ? ` · ${age} años` : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             {!readOnly && (
               <>
                 <Link
