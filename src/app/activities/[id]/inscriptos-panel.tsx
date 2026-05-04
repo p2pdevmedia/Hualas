@@ -20,7 +20,8 @@ type InscriptosParticipant = {
 
 function getWhatsAppUrl(phone: string) {
   const cleaned = phone.replace(/\D/g, '');
-  return `https://wa.me/${cleaned}`;
+  const withCountry = cleaned.startsWith('54') ? cleaned : `54${cleaned}`;
+  return `https://wa.me/${withCountry}`;
 }
 
 function WhatsAppButton({ phone }: { phone: string }) {
