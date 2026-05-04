@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
 import PersonLink from '@/components/accounting/person-link';
+import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
 
 const PAGE_SIZE = 20;
 
@@ -24,6 +25,14 @@ type SearchParams = {
   activity?: string;
   q?: string;
   page?: string;
+};
+
+type PaymentIdRow = {
+  id: string;
+};
+
+type CountRow = {
+  count: number;
 };
 
 export default async function PaymentsPage({
@@ -40,50 +49,73 @@ export default async function PaymentsPage({
   const q = searchParams.q?.trim() ?? '';
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
 
-  const where: Prisma.ActivityParticipantWhereInput = {
-    receipt: { not: null },
-  };
+  const filters: Prisma.Sql[] = [Prisma.sql`ap."receipt" IS NOT NULL`];
   if (from || to) {
-    const receiptDate: Prisma.DateTimeFilter = {};
-    if (from) receiptDate.gte = new Date(from);
-    if (to) receiptDate.lte = new Date(to);
-    where.receiptDate = receiptDate;
+    if (from) filters.push(Prisma.sql`ap."receiptDate" >= ${new Date(from)}`);
+    if (to) filters.push(Prisma.sql`ap."receiptDate" <= ${new Date(to)}`);
   }
   if (activity) {
-    where.activity = {
-      name: {
-        contains: activity,
-        mode: 'insensitive',
-      },
-    };
+    filters.push(
+      buildAccountingSimilarityCondition(activity, [Prisma.sql`a."name"`])
+    );
   }
   if (q) {
-    where.OR = [
-      { activity: { name: { contains: q, mode: 'insensitive' } } },
-      { user: { name: { contains: q, mode: 'insensitive' } } },
-      { user: { lastName: { contains: q, mode: 'insensitive' } } },
-      { child: { name: { contains: q, mode: 'insensitive' } } },
-      { child: { lastName: { contains: q, mode: 'insensitive' } } },
-      { user: { email: { contains: q, mode: 'insensitive' } } },
-    ];
+    filters.push(
+      buildAccountingSimilarityCondition(q, [
+        Prisma.sql`a."name"`,
+        Prisma.sql`u."name"`,
+        Prisma.sql`u."lastName"`,
+        Prisma.sql`concat_ws(' ', u."name", u."lastName")`,
+        Prisma.sql`u."email"`,
+        Prisma.sql`c."name"`,
+        Prisma.sql`c."lastName"`,
+        Prisma.sql`concat_ws(' ', c."name", c."lastName")`,
+      ])
+    );
   }
 
-  const [payments, total] = await Promise.all([
-    prisma.activityParticipant.findMany({
-      where,
-      orderBy: { receiptDate: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        activity: { select: { name: true, price: true } },
-        user: { select: { id: true, name: true, lastName: true } },
-        child: {
-          select: { id: true, userId: true, name: true, lastName: true },
-        },
-      },
-    }),
-    prisma.activityParticipant.count({ where }),
+  const [paymentIdRows, countRows] = await Promise.all([
+    prisma.$queryRaw<PaymentIdRow[]>`
+      SELECT ap."id"
+      FROM "ActivityParticipant" ap
+      JOIN "Activity" a ON a."id" = ap."activityId"
+      JOIN "User" u ON u."id" = ap."userId"
+      LEFT JOIN "Child" c ON c."id" = ap."childId"
+      WHERE ${Prisma.join(filters, ' AND ')}
+      ORDER BY ap."receiptDate" DESC NULLS LAST
+      OFFSET ${(page - 1) * PAGE_SIZE}
+      LIMIT ${PAGE_SIZE}
+    `,
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(DISTINCT ap."id")::int AS "count"
+      FROM "ActivityParticipant" ap
+      JOIN "Activity" a ON a."id" = ap."activityId"
+      JOIN "User" u ON u."id" = ap."userId"
+      LEFT JOIN "Child" c ON c."id" = ap."childId"
+      WHERE ${Prisma.join(filters, ' AND ')}
+    `,
   ]);
+  const paymentIds = paymentIdRows.map((row) => row.id);
+  const paymentOrder = new Map(paymentIds.map((id, index) => [id, index]));
+  const payments =
+    paymentIds.length > 0
+      ? (
+          await prisma.activityParticipant.findMany({
+            where: { id: { in: paymentIds } },
+            include: {
+              activity: { select: { name: true, price: true } },
+              user: { select: { id: true, name: true, lastName: true } },
+              child: {
+                select: { id: true, userId: true, name: true, lastName: true },
+              },
+            },
+          })
+        ).sort(
+          (left, right) =>
+            (paymentOrder.get(left.id) ?? 0) - (paymentOrder.get(right.id) ?? 0)
+        )
+      : [];
+  const total = countRows[0]?.count ?? 0;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

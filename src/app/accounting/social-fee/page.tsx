@@ -11,6 +11,7 @@ import {
 } from '@/lib/accounting';
 import PersonLink from '@/components/accounting/person-link';
 import { Button } from '@/components/ui/button';
+import { matchesAccountingSearch } from '@/lib/accounting-search';
 import SocialFeeSettingsForm from './social-fee-settings-form';
 import SocialFeePeriodFilter from './social-fee-period-filter';
 
@@ -197,14 +198,11 @@ export default async function SocialFeePage({
 
   const filteredPeople = q
     ? people.filter((person) => {
-        const searchable = [
+        return matchesAccountingSearch(q, [
           person.name,
           person.email ?? '',
           person.payerLabel ?? '',
-        ]
-          .join(' ')
-          .toLowerCase();
-        return searchable.includes(q);
+        ]);
       })
     : people;
   const totalPeople = filteredPeople.length;

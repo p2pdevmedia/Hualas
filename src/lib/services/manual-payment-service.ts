@@ -15,6 +15,7 @@ import {
 } from '@/lib/manual-payments';
 import type { CartQuote } from '@/lib/cart-checkout';
 import { buildManualPaymentReceiptUrl } from '@/lib/blob-urls';
+import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
 
 type CurrentUser = {
   id: string;
@@ -61,6 +62,14 @@ export type ManualPaymentSummary = {
 type ManualPaymentListResponse = {
   total: number;
   items: ManualPaymentSummary[];
+};
+
+type PaymentIdRow = {
+  id: string;
+};
+
+type CountRow = {
+  count: number;
 };
 
 function currentPeriod() {
@@ -214,72 +223,91 @@ export async function listManualPayments({
   limit,
   offset,
 }: ManualPaymentListQuery): Promise<ManualPaymentListResponse> {
-  const where: Prisma.PaymentWhereInput = {
-    provider: 'MANUAL_TRANSFER',
-    ...(status ? { status } : {}),
-    ...(q
-      ? {
-          OR: [
-            { payerName: { contains: q, mode: 'insensitive' } },
-            { payerEmail: { contains: q, mode: 'insensitive' } },
-            {
-              order: { responsibleName: { contains: q, mode: 'insensitive' } },
-            },
-            {
-              order: { responsibleEmail: { contains: q, mode: 'insensitive' } },
-            },
-            {
-              order: {
-                items: {
-                  some: {
-                    activity: { name: { contains: q, mode: 'insensitive' } },
-                  },
-                },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
+  const filters: Prisma.Sql[] = [
+    Prisma.sql`p."provider"::text = 'MANUAL_TRANSFER'`,
+  ];
 
-  const [total, payments] = await Promise.all([
-    prisma.payment.count({ where }),
-    prisma.payment.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-      include: {
-        order: {
-          select: {
-            responsibleUserId: true,
-            responsibleName: true,
-            responsibleEmail: true,
-            items: {
-              select: {
-                description: true,
-                billableConcept: {
-                  select: {
-                    code: true,
-                  },
-                },
-                activity: {
-                  select: {
-                    id: true,
-                    name: true,
-                    description: true,
+  if (status) {
+    filters.push(Prisma.sql`p."status"::text = ${status}`);
+  }
+
+  if (q) {
+    filters.push(
+      buildAccountingSimilarityCondition(q, [
+        Prisma.sql`p."payerName"`,
+        Prisma.sql`p."payerEmail"`,
+        Prisma.sql`o."responsibleName"`,
+        Prisma.sql`o."responsibleEmail"`,
+        Prisma.sql`a."name"`,
+        Prisma.sql`oi."description"`,
+      ])
+    );
+  }
+
+  const [countRows, paymentIdRows] = await Promise.all([
+    prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(DISTINCT p."id")::int AS "count"
+      FROM "Payment" p
+      JOIN "Order" o ON o."id" = p."orderId"
+      LEFT JOIN "OrderItem" oi ON oi."orderId" = o."id"
+      LEFT JOIN "Activity" a ON a."id" = oi."activityId"
+      WHERE ${Prisma.join(filters, ' AND ')}
+    `,
+    prisma.$queryRaw<PaymentIdRow[]>`
+      SELECT p."id"
+      FROM "Payment" p
+      JOIN "Order" o ON o."id" = p."orderId"
+      LEFT JOIN "OrderItem" oi ON oi."orderId" = o."id"
+      LEFT JOIN "Activity" a ON a."id" = oi."activityId"
+      WHERE ${Prisma.join(filters, ' AND ')}
+      GROUP BY p."id", p."createdAt"
+      ORDER BY p."createdAt" DESC
+      OFFSET ${offset}
+      LIMIT ${limit}
+    `,
+  ]);
+  const paymentIds = paymentIdRows.map((row) => row.id);
+  const paymentOrder = new Map(paymentIds.map((id, index) => [id, index]));
+  const payments =
+    paymentIds.length > 0
+      ? (
+          await prisma.payment.findMany({
+            where: { id: { in: paymentIds } },
+            include: {
+              order: {
+                select: {
+                  responsibleUserId: true,
+                  responsibleName: true,
+                  responsibleEmail: true,
+                  items: {
+                    select: {
+                      description: true,
+                      billableConcept: {
+                        select: {
+                          code: true,
+                        },
+                      },
+                      activity: {
+                        select: {
+                          id: true,
+                          name: true,
+                          description: true,
+                        },
+                      },
+                    },
                   },
                 },
               },
             },
-          },
-        },
-      },
-    }),
-  ]);
+          })
+        ).sort(
+          (left, right) =>
+            (paymentOrder.get(left.id) ?? 0) - (paymentOrder.get(right.id) ?? 0)
+        )
+      : [];
 
   return {
-    total,
+    total: countRows[0]?.count ?? 0,
     items: payments.map(mapPaymentToReview),
   };
 }

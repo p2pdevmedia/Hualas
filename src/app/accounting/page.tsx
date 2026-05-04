@@ -22,6 +22,7 @@ import {
   buildAccountingMovementReceiptUrl,
   buildManualPaymentReceiptUrl,
 } from '@/lib/blob-urls';
+import { matchesAccountingSearch } from '@/lib/accounting-search';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -207,7 +208,7 @@ export default async function AccountingDashboardPage({
 
     return entries;
   }, []);
-  const searchTerm = searchParams?.q?.trim().toLowerCase() ?? '';
+  const searchTerm = searchParams?.q?.trim() ?? '';
   const recentAccountingEntries: RecentAccountingEntry[] = [
     ...recentMovementEntries,
     ...recentManualPaymentEntries,
@@ -215,24 +216,21 @@ export default async function AccountingDashboardPage({
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .filter((entry) =>
       searchTerm
-        ? [entry.description, entry.category]
-            .join(' ')
-            .toLowerCase()
-            .includes(searchTerm)
+        ? matchesAccountingSearch(searchTerm, [
+            entry.description,
+            entry.category,
+          ])
         : true
     )
     .slice(0, 10);
   const recentPayments = monthPayments
     .filter((payment) =>
       searchTerm
-        ? [
+        ? matchesAccountingSearch(searchTerm, [
             payment.activity.name,
             formatPersonName(payment.child ?? payment.user),
             '',
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(searchTerm)
+          ])
         : true
     )
     .slice(0, 5);

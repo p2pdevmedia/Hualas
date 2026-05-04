@@ -8,12 +8,17 @@ import { isAccountingRole } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import MovementsTable from './movements-table';
 import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
+import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
 
 type SearchParams = {
   type?: string;
   from?: string;
   to?: string;
   q?: string;
+};
+
+type MovementIdRow = {
+  id: string;
 };
 
 export default async function MovementsPage({
@@ -32,33 +37,54 @@ export default async function MovementsPage({
   const to = searchParams.to ?? '';
   const q = searchParams.q?.trim() ?? '';
 
-  const where: Prisma.AccountingMovementWhereInput = {};
-  if (type) where.type = type;
+  const filters: Prisma.Sql[] = [];
+  if (type) filters.push(Prisma.sql`m."type"::text = ${type}`);
   if (from || to) {
-    const dateFilter: Prisma.DateTimeFilter = {};
-    if (from) dateFilter.gte = new Date(from);
-    if (to) dateFilter.lte = new Date(to);
-    where.date = dateFilter;
+    if (from) filters.push(Prisma.sql`m."date" >= ${new Date(from)}`);
+    if (to) filters.push(Prisma.sql`m."date" <= ${new Date(to)}`);
   }
   if (q) {
-    where.OR = [
-      { category: { contains: q, mode: 'insensitive' } },
-      { description: { contains: q, mode: 'insensitive' } },
-      { createdBy: { name: { contains: q, mode: 'insensitive' } } },
-      { createdBy: { lastName: { contains: q, mode: 'insensitive' } } },
-      { createdBy: { email: { contains: q, mode: 'insensitive' } } },
-    ];
+    filters.push(
+      buildAccountingSimilarityCondition(q, [
+        Prisma.sql`m."category"`,
+        Prisma.sql`m."description"`,
+        Prisma.sql`m."receiptNumber"`,
+        Prisma.sql`u."name"`,
+        Prisma.sql`u."lastName"`,
+        Prisma.sql`concat_ws(' ', u."name", u."lastName")`,
+        Prisma.sql`u."email"`,
+      ])
+    );
   }
+  const whereSql =
+    filters.length > 0 ? Prisma.join(filters, ' AND ') : Prisma.sql`TRUE`;
 
-  const movements = await prisma.accountingMovement.findMany({
-    where,
-    orderBy: { date: 'desc' },
-    include: {
-      createdBy: {
-        select: { id: true, name: true, lastName: true },
-      },
-    },
-  });
+  const movementIdRows = await prisma.$queryRaw<MovementIdRow[]>`
+    SELECT m."id"
+    FROM "AccountingMovement" m
+    JOIN "User" u ON u."id" = m."createdById"
+    WHERE ${whereSql}
+    ORDER BY m."date" DESC
+  `;
+  const movementIds = movementIdRows.map((row) => row.id);
+  const movementOrder = new Map(movementIds.map((id, index) => [id, index]));
+  const movements =
+    movementIds.length > 0
+      ? (
+          await prisma.accountingMovement.findMany({
+            where: { id: { in: movementIds } },
+            include: {
+              createdBy: {
+                select: { id: true, name: true, lastName: true },
+              },
+            },
+          })
+        ).sort(
+          (left, right) =>
+            (movementOrder.get(left.id) ?? 0) -
+            (movementOrder.get(right.id) ?? 0)
+        )
+      : [];
 
   return (
     <div className="space-y-6">

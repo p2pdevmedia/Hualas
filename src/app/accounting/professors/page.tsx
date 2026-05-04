@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
@@ -11,9 +12,14 @@ import {
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import PersonLink from '@/components/accounting/person-link';
+import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
 
 type SearchParams = {
   q?: string;
+};
+
+type ProfessorIdRow = {
+  id: string;
 };
 
 export default async function ProfessorsAccountingPage({
@@ -25,46 +31,70 @@ export default async function ProfessorsAccountingPage({
   await getServerSession(authOptions);
 
   const q = searchParams.q?.trim() ?? '';
-  const professors = await prisma.user.findMany({
-    where: {
-      roleAssignments: { some: { role: 'PROFESSOR' } },
-      isActive: true,
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: 'insensitive' } },
-              { lastName: { contains: q, mode: 'insensitive' } },
-              { email: { contains: q, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: [{ lastName: 'asc' }, { name: 'asc' }],
-    select: {
-      id: true,
-      name: true,
-      lastName: true,
-      email: true,
-      professorProfile: {
-        select: {
-          monthlySalary: true,
-          cbu: true,
-          alias: true,
-          payments: {
-            orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
-            take: 1,
+  const filters: Prisma.Sql[] = [
+    Prisma.sql`u."isActive" = true`,
+    Prisma.sql`EXISTS (
+      SELECT 1
+      FROM "UserRoleAssignment" ura
+      WHERE ura."userId" = u."id" AND ura."role"::text = 'PROFESSOR'
+    )`,
+  ];
+
+  if (q) {
+    filters.push(
+      buildAccountingSimilarityCondition(q, [
+        Prisma.sql`u."name"`,
+        Prisma.sql`u."lastName"`,
+        Prisma.sql`concat_ws(' ', u."name", u."lastName")`,
+        Prisma.sql`u."email"`,
+      ])
+    );
+  }
+
+  const professorIdRows = await prisma.$queryRaw<ProfessorIdRow[]>`
+    SELECT u."id"
+    FROM "User" u
+    WHERE ${Prisma.join(filters, ' AND ')}
+    ORDER BY u."lastName" ASC NULLS LAST, u."name" ASC NULLS LAST
+  `;
+  const professorIds = professorIdRows.map((row) => row.id);
+  const professorOrder = new Map(professorIds.map((id, index) => [id, index]));
+  const professors =
+    professorIds.length > 0
+      ? (
+          await prisma.user.findMany({
+            where: { id: { in: professorIds } },
             select: {
-              periodMonth: true,
-              periodYear: true,
-              amount: true,
-              status: true,
-              paidAt: true,
+              id: true,
+              name: true,
+              lastName: true,
+              email: true,
+              professorProfile: {
+                select: {
+                  monthlySalary: true,
+                  cbu: true,
+                  alias: true,
+                  payments: {
+                    orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+                    take: 1,
+                    select: {
+                      periodMonth: true,
+                      periodYear: true,
+                      amount: true,
+                      status: true,
+                      paidAt: true,
+                    },
+                  },
+                },
+              },
             },
-          },
-        },
-      },
-    },
-  });
+          })
+        ).sort(
+          (left, right) =>
+            (professorOrder.get(left.id) ?? 0) -
+            (professorOrder.get(right.id) ?? 0)
+        )
+      : [];
 
   return (
     <div className="space-y-6">
