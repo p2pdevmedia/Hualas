@@ -77,6 +77,9 @@ export default function InscriptosPanel({
   );
   const [selectedParticipantIdForAssign, setSelectedParticipantIdForAssign] =
     useState<string | null>(null);
+  const [selectedParticipantIds, setSelectedParticipantIds] = useState<
+    string[]
+  >([]);
   const [search, setSearch] = useState('');
 
   const hasCapacity = capacity != null;
@@ -150,17 +153,74 @@ export default function InscriptosPanel({
     }
   }
 
+  async function saveGroupWithoutRefresh(
+    participantId: string,
+    overrideGroupId?: string
+  ) {
+    const participant = participants.find((p) => p.id === participantId);
+    if (!participant) return;
+
+    const nextGroupId = overrideGroupId ?? '';
+    const currentGroupId = participant.groupId ?? '';
+    if (nextGroupId === currentGroupId) return;
+
+    if (!nextGroupId) {
+      const res = await fetch(`/api/activity-groups/${currentGroupId}/members`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || 'No se pudo quitar del grupo');
+      }
+      return;
+    }
+
+    const res = await fetch(`/api/activity-groups/${nextGroupId}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No se pudo asignar el grupo');
+    }
+  }
+
   const unassignedParticipants = filteredParticipants.filter((p) => !p.groupId);
 
   async function handleDropInGroup(targetGroupId: string) {
-    const participantId =
-      draggingParticipantId ?? selectedParticipantIdForAssign;
-    if (!participantId || savingId) return;
+    const participantId = draggingParticipantId ?? selectedParticipantIdForAssign;
+    if ((!participantId && selectedParticipantIds.length === 0) || savingId) return;
 
     setDropTargetGroupId(null);
-    await saveGroup(participantId, targetGroupId);
-    setDraggingParticipantId(null);
-    setSelectedParticipantIdForAssign(null);
+    if (selectedParticipantIds.length > 0) {
+      setError('');
+      setSavingId('bulk');
+      try {
+        for (const selectedId of selectedParticipantIds) {
+          await saveGroupWithoutRefresh(selectedId, targetGroupId);
+        }
+        setSelectedParticipantIds([]);
+        setDraggingParticipantId(null);
+        setSelectedParticipantIdForAssign(null);
+        router.refresh();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'No se pudo actualizar el grupo'
+        );
+      } finally {
+        setSavingId(null);
+      }
+      return;
+    }
+
+    if (participantId) {
+      await saveGroup(participantId, targetGroupId);
+      setDraggingParticipantId(null);
+      setSelectedParticipantIdForAssign(null);
+    }
   }
 
   function handleDragStart(participantId: string) {
@@ -178,6 +238,15 @@ export default function InscriptosPanel({
     setError('');
     setSelectedParticipantIdForAssign((current) =>
       current === participantId ? null : participantId
+    );
+  }
+
+  function toggleBulkSelection(participantId: string) {
+    if (!canAssignGroups || savingId) return;
+    setSelectedParticipantIds((current) =>
+      current.includes(participantId)
+        ? current.filter((id) => id !== participantId)
+        : [...current, participantId]
     );
   }
 
@@ -225,6 +294,13 @@ export default function InscriptosPanel({
                 </p>
               )}
             </div>
+            {canAssignGroups && selectedParticipantIds.length > 0 && (
+              <div className="mt-3 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground">
+                {selectedParticipantIds.length} seleccionado
+                {selectedParticipantIds.length === 1 ? '' : 's'} · Tocá un grupo
+                para asignarlos juntos.
+              </div>
+            )}
 
             {!hasFilteredResults ? (
               <p className="mt-4 rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
@@ -250,6 +326,20 @@ export default function InscriptosPanel({
                         }
                         className={`rounded-md border bg-card px-3 py-1.5 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
                       >
+                        <div className="flex items-start gap-2">
+                          {canAssignGroups && (
+                            <input
+                              type="checkbox"
+                              checked={selectedParticipantIds.includes(
+                                participant.id
+                              )}
+                              onChange={(event) => {
+                                event.stopPropagation();
+                                toggleBulkSelection(participant.id);
+                              }}
+                              className="mt-0.5 h-3.5 w-3.5 rounded border-input"
+                            />
+                          )}
                         <div className="min-w-0">
                           <Link href={participant.detailHref} className="text-xs font-medium leading-tight text-link hover:underline" onClick={(event) => event.stopPropagation()}>
                             {participant.name}
@@ -259,6 +349,7 @@ export default function InscriptosPanel({
                               {participant.age} años
                             </p>
                           )}
+                        </div>
                         </div>
                       </li>
                     ))}
