@@ -473,7 +473,7 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {renderNavIcon('/Inscripcion.png', 'Carrito', 'h-8 w-8')}
-                  <span>Carrito</span>
+                  <span>Inscripciones</span>
                   {cartItemsCount > 0 && renderCartNotificationIcon()}
                 </Link>
               )}
@@ -515,20 +515,6 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 Historial de pagos
-              </Link>
-              <Link
-                href="/contact"
-                className={navLinkClass('/contact')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.contact}
-              </Link>
-              <Link
-                href="/faq"
-                className={navLinkClass('/faq')}
-                onClick={() => setMenuOpen(false)}
-              >
-                FAQ
               </Link>
               {isAdmin && (
                 <>
