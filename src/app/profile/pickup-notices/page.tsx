@@ -22,7 +22,6 @@ export default async function PickupNoticesPage() {
   let where: any = { deletedAt: null };
 
   if (isMember) {
-    // For members: show own notices + notices for their children
     const userChildren = await prisma.child.findMany({
       where: { userId: (session.user as any).id },
       select: { id: true },
@@ -36,6 +35,20 @@ export default async function PickupNoticesPage() {
         { createdById: (session.user as any).id },
         { childId: { in: childIds } },
       ],
+    };
+  } else if (isProfessor) {
+    const professorActivities = await prisma.activityProfessor.findMany({
+      where: { userId: (session.user as any).id },
+      select: { activityId: true },
+    });
+
+    const activityIds = professorActivities.map((ap) => ap.activityId);
+
+    where = {
+      deletedAt: null,
+      activityDay: {
+        activityId: { in: activityIds },
+      },
     };
   }
 
