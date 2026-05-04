@@ -112,7 +112,7 @@ export default async function ActivityDayPage({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         <Link
           href={`${base}/attendance`}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
@@ -159,7 +159,7 @@ export default async function ActivityDayPage({
         >
           <Image
             src="/1_Informacion.png"
-            alt="Información"
+            alt="Descripción"
             width={52}
             height={52}
             className="h-10 w-10 object-contain"
@@ -171,6 +171,25 @@ export default async function ActivityDayPage({
             {day.description ?? (
               <span className="italic text-muted-foreground">Sin descripción</span>
             )}
+          </span>
+        </Link>
+
+        <Link
+          href={`${base}/informacion`}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <Image
+            src="/Inscripcion.png"
+            alt="Información de contacto"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Información
+          </span>
+          <span className="text-sm text-muted-foreground">
+            Ver datos de contacto del grupo
           </span>
         </Link>
       </div>
