@@ -124,6 +124,9 @@ export default async function MyActivitiesPage({
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lte: sixMonthsLater,
           },
+          ...(isProfessorView
+            ? { professors: { some: { userId } } }
+            : {}),
         },
         select: {
           id: true,
@@ -194,6 +197,9 @@ export default async function MyActivitiesPage({
         where: {
           activityId: { in: activityIds },
           date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+          ...(isProfessorView
+            ? { professors: { some: { userId } } }
+            : {}),
         },
         select: {
           id: true,
