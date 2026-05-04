@@ -30,7 +30,6 @@ export default async function ActivityParticipantFamilyPage({
               name: true,
               lastName: true,
               birthDate: true,
-              phone: true,
             },
           },
         },
@@ -41,7 +40,6 @@ export default async function ActivityParticipantFamilyPage({
           name: true,
           lastName: true,
           birthDate: true,
-          phone: true,
         },
       },
     },
@@ -96,7 +94,6 @@ export default async function ActivityParticipantFamilyPage({
             {participant.user.children.map((child) => (
               <li key={child.id} className="rounded-lg border p-3 text-sm">
                 <p className="font-medium">{child.name} {child.lastName ?? ''}</p>
-                <p className="text-muted-foreground">Teléfono: {child.phone || 'Sin teléfono'}</p>
               </li>
             ))}
           </ul>
