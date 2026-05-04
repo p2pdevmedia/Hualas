@@ -114,6 +114,46 @@ export default async function ActivityDayPage({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Link
+          href={`${base}/attendance`}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <Image
+            src="/1_asistencia.png"
+            alt="Asistencia"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Asistensia
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {total > 0 ? `${going} de ${total} asistieron` : 'Sin registros aún'}
+          </span>
+        </Link>
+
+        <Link
+          href={`${base}/observaciones`}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
+        >
+          <Image
+            src="/1_Observacion.png"
+            alt="Observación"
+            width={52}
+            height={52}
+            className="h-10 w-10 object-contain"
+          />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Observación y planificación
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {day.planificacion || day.devolucion
+              ? 'Ver planificación y devolución'
+              : 'Agregar planificación y devolución'}
+          </span>
+        </Link>
+
+        <Link
           href={`${base}/descripcion`}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
@@ -131,46 +171,6 @@ export default async function ActivityDayPage({
             {day.description ?? (
               <span className="italic text-muted-foreground">Sin descripción</span>
             )}
-          </span>
-        </Link>
-
-        <Link
-          href={`${base}/observaciones`}
-          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
-        >
-          <Image
-            src="/1_Observacion.png"
-            alt="Observación"
-            width={52}
-            height={52}
-            className="h-10 w-10 object-contain"
-          />
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Observaciones
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {day.planificacion || day.devolucion
-              ? 'Ver planificación y devolución'
-              : 'Agregar planificación y devolución'}
-          </span>
-        </Link>
-
-        <Link
-          href={`${base}/attendance`}
-          className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
-        >
-          <Image
-            src="/1_asistencia.png"
-            alt="Asistencia"
-            width={52}
-            height={52}
-            className="h-10 w-10 object-contain"
-          />
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Asistencia
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {total > 0 ? `${going} de ${total} asistieron` : 'Sin registros aún'}
           </span>
         </Link>
       </div>
