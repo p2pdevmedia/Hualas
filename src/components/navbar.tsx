@@ -224,6 +224,14 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
+          {isProfessor && (
+            <Link
+              href="/professor/students"
+              className={navLinkClass('/professor/students')}
+            >
+              Mis alumnos
+            </Link>
+          )}
           {isAdmin && (
             <>
               <Link
@@ -562,6 +570,15 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {t.accounting}
+                </Link>
+              )}
+              {isProfessor && (
+                <Link
+                  href="/professor/students"
+                  className={navLinkClass('/professor/students')}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Mis alumnos
                 </Link>
               )}
               {isProfessor && (
