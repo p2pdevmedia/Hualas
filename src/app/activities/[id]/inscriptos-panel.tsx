@@ -44,7 +44,7 @@ export default function InscriptosPanel({
   );
   const [selectedParticipantIdForAssign, setSelectedParticipantIdForAssign] =
     useState<string | null>(null);
-
+  const [activeTab, setActiveTab] = useState<'groups' | 'unassigned'>('groups');
 
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
@@ -98,7 +98,6 @@ export default function InscriptosPanel({
   }
 
   const unassignedParticipants = participants.filter((p) => !p.groupId);
-
 
   async function handleDropInGroup(targetGroupId: string) {
     const participantId =
@@ -155,92 +154,142 @@ export default function InscriptosPanel({
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Canvas de grupos</p>
               <p className="text-xs text-muted-foreground font-body">
-                Arrastrá y soltá (desktop) o tocá participante y luego destino (móvil).
+                Arrastrá y soltá (desktop) o tocá participante y luego destino
+                (móvil).
               </p>
             </div>
 
-            <div className="mt-4 rounded-lg border border-dashed bg-background p-4">
-              <p className="text-sm font-semibold">Sin grupo ({unassignedParticipants.length})</p>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {unassignedParticipants.map((participant) => (
-                  <li
-                    key={participant.id}
-                    draggable={canAssignGroups && groups.length > 0}
-                    onDragStart={() => handleDragStart(participant.id)}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => handleParticipantTapToAssign(participant.id)}
-                    className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
-                  >
-                    <p className="font-medium">{participant.name}</p>
-                    <p className="text-sm text-muted-foreground font-body">{participant.subtitle}</p>
-                    {participant.age != null && (
-                      <p className="text-xs text-muted-foreground font-body">Edad: {participant.age}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-4 inline-flex rounded-md border bg-background p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('groups')}
+                className={`rounded px-3 py-1 text-sm transition-colors ${
+                  activeTab === 'groups'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Inscriptos por grupo
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('unassigned')}
+                className={`rounded px-3 py-1 text-sm transition-colors ${
+                  activeTab === 'unassigned'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                No asignados ({unassignedParticipants.length})
+              </button>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {groups.map((group) => {
-                const members = participants.filter((p) => p.groupId === group.id);
-                return (
-                  <div
-                    key={group.id}
-                    onDragOver={(event) => {
-                      if (!canAssignGroups || savingId) return;
-                      event.preventDefault();
-                      setDropTargetGroupId(group.id);
-                    }}
-                    onDragLeave={() => {
-                      if (dropTargetGroupId === group.id) setDropTargetGroupId(null);
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      void handleDropInGroup(group.id);
-                    }}
-                    onClick={() => {
-                      void handleDropInGroup(group.id);
-                    }}
-                    className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
-                  >
-                    <p className="font-medium">{group.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground font-body">{members.length} integrante{members.length === 1 ? '' : 's'}</p>
-                    <ul className="mt-3 space-y-2">
-                      {members.map((member) => (
-                        <li
-                          key={member.id}
-                          draggable={canAssignGroups}
-                          onDragStart={() => handleDragStart(member.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => handleParticipantTapToAssign(member.id)}
-                          className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === member.id ? 'border-primary bg-primary/5' : ''}`}
-                        >
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground font-body">{member.subtitle}</p>
-                          {member.age != null && (
-                            <p className="text-xs text-muted-foreground font-body">Edad: {member.age}</p>
-                          )}
-                          {canAssignGroups && (
-                            <button
-                              type="button"
-                              disabled={savingId === member.id}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void saveGroup(member.id, '');
-                              }}
-                              className="mt-2 text-xs text-link underline underline-offset-2 disabled:opacity-60"
-                            >
-                              Quitar del grupo
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
+            {activeTab === 'unassigned' && (
+              <div className="mt-4 rounded-lg border border-dashed bg-background p-4">
+                <p className="text-sm font-semibold">
+                  Sin grupo ({unassignedParticipants.length})
+                </p>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {unassignedParticipants.map((participant) => (
+                    <li
+                      key={participant.id}
+                      draggable={canAssignGroups && groups.length > 0}
+                      onDragStart={() => handleDragStart(participant.id)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() =>
+                        handleParticipantTapToAssign(participant.id)
+                      }
+                      className={`rounded-md border bg-card px-3 py-2 transition-colors ${canAssignGroups && groups.length > 0 ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === participant.id ? 'border-primary bg-primary/5' : ''}`}
+                    >
+                      <p className="font-medium">{participant.name}</p>
+                      <p className="text-sm text-muted-foreground font-body">
+                        {participant.subtitle}
+                      </p>
+                      {participant.age != null && (
+                        <p className="text-xs text-muted-foreground font-body">
+                          Edad: {participant.age}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {activeTab === 'groups' && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {groups.map((group) => {
+                  const members = participants.filter(
+                    (p) => p.groupId === group.id
+                  );
+                  return (
+                    <div
+                      key={group.id}
+                      onDragOver={(event) => {
+                        if (!canAssignGroups || savingId) return;
+                        event.preventDefault();
+                        setDropTargetGroupId(group.id);
+                      }}
+                      onDragLeave={() => {
+                        if (dropTargetGroupId === group.id)
+                          setDropTargetGroupId(null);
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        void handleDropInGroup(group.id);
+                      }}
+                      onClick={() => {
+                        void handleDropInGroup(group.id);
+                      }}
+                      className={`rounded-lg border p-4 transition-colors ${dropTargetGroupId === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                    >
+                      <p className="font-medium">{group.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground font-body">
+                        {members.length} integrante
+                        {members.length === 1 ? '' : 's'}
+                      </p>
+                      <ul className="mt-3 space-y-2">
+                        {members.map((member) => (
+                          <li
+                            key={member.id}
+                            draggable={canAssignGroups}
+                            onDragStart={() => handleDragStart(member.id)}
+                            onDragEnd={handleDragEnd}
+                            onClick={() =>
+                              handleParticipantTapToAssign(member.id)
+                            }
+                            className={`rounded-md border bg-background px-3 py-2 transition-colors ${canAssignGroups ? 'cursor-pointer md:cursor-grab md:active:cursor-grabbing' : ''} ${selectedParticipantIdForAssign === member.id ? 'border-primary bg-primary/5' : ''}`}
+                          >
+                            <p className="font-medium">{member.name}</p>
+                            <p className="text-sm text-muted-foreground font-body">
+                              {member.subtitle}
+                            </p>
+                            {member.age != null && (
+                              <p className="text-xs text-muted-foreground font-body">
+                                Edad: {member.age}
+                              </p>
+                            )}
+                            {canAssignGroups && (
+                              <button
+                                type="button"
+                                disabled={savingId === member.id}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  void saveGroup(member.id, '');
+                                }}
+                                className="mt-2 text-xs text-link underline underline-offset-2 disabled:opacity-60"
+                              >
+                                Quitar del grupo
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </>
       )}
