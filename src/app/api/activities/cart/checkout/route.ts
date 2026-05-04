@@ -12,6 +12,11 @@ import {
   toMercadoPagoItems,
 } from '@/lib/cart-checkout';
 import { createManualPaymentCheckout } from '@/lib/services/manual-payment-service';
+import { prisma } from '@/lib/prisma';
+import {
+  checkUserProfile,
+  checkChildProfile,
+} from '@/lib/participant-profile-check';
 
 type CartItem = {
   activityId: string;
@@ -75,10 +80,78 @@ export async function POST(req: Request) {
       : [];
   }
 
+  const userId = (session.user as { id: string }).id;
+
+  // Validate participant profiles before checkout
+  {
+    const childIds = items
+      .filter((item) => item.target && item.target !== 'self')
+      .map((item) => item.target as string);
+
+    const [userProfile, children] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          name: true,
+          lastName: true,
+          dni: true,
+          birthDate: true,
+          address: true,
+          phone: true,
+        },
+      }),
+      childIds.length > 0
+        ? prisma.child.findMany({
+            where: { id: { in: childIds }, userId },
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              documentNumber: true,
+              birthDate: true,
+              address: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const hasSelfItem = items.some(
+      (item) => !item.target || item.target === 'self'
+    );
+    if (hasSelfItem && userProfile) {
+      const check = checkUserProfile(userProfile);
+      if (!check.valid) {
+        return NextResponse.json(
+          {
+            error: `Para inscribirte completá tu perfil: ${check.missingFields.join(', ')}.`,
+          },
+          { status: 422 }
+        );
+      }
+    }
+
+    const childMap = new Map(children.map((c) => [c.id, c]));
+    for (const item of items) {
+      if (item.target && item.target !== 'self') {
+        const child = childMap.get(item.target);
+        if (!child) continue;
+        const check = checkChildProfile(child, userProfile?.phone ?? null);
+        if (!check.valid) {
+          return NextResponse.json(
+            {
+              error: `Para inscribir a ${child.name} completá: ${check.missingFields.join(', ')}.`,
+            },
+            { status: 422 }
+          );
+        }
+      }
+    }
+  }
+
   let quote;
   try {
     quote = await buildCartQuote({
-      userId: (session.user as { id: string }).id,
+      userId,
       items,
     });
   } catch (error) {

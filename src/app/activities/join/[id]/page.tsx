@@ -51,7 +51,14 @@ export default async function ActivityJoinPage({
     userId
       ? prisma.user.findUnique({
           where: { id: userId },
-          select: { birthDate: true },
+          select: {
+            name: true,
+            lastName: true,
+            dni: true,
+            birthDate: true,
+            address: true,
+            phone: true,
+          },
         })
       : Promise.resolve(null),
   ]);
@@ -190,6 +197,19 @@ export default async function ActivityJoinPage({
           hasCapacity={hasCapacity}
           remainingSpots={remainingSpots}
           userBirthDate={userProfile?.birthDate?.toISOString() ?? null}
+          userPhone={userProfile?.phone ?? null}
+          selfMissingFields={
+            userProfile
+              ? [
+                  !userProfile.name?.trim() ? 'nombre' : null,
+                  !userProfile.lastName?.trim() ? 'apellido' : null,
+                  !userProfile.dni?.trim() ? 'DNI' : null,
+                  !userProfile.birthDate ? 'fecha de nacimiento' : null,
+                  !userProfile.address?.trim() ? 'dirección' : null,
+                  !userProfile.phone?.trim() ? 'teléfono' : null,
+                ].filter((f): f is string => f !== null)
+              : []
+          }
           activityStartDate={activity.date.toISOString()}
         />
       </div>

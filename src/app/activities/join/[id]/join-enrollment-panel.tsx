@@ -3,13 +3,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import RegisterButton from '@/components/register-button';
 import GroupScheduleCalendar from './group-schedule-calendar';
 
 type Group = { id: string; name: string; minAge: number | null; maxAge: number | null };
 type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
-type Child = { id: string; name: string; birthDate: string | null };
+type Child = {
+  id: string;
+  name: string;
+  lastName: string | null;
+  documentNumber: string | null;
+  birthDate: string | null;
+  address: string | null;
+};
+
+function getMissingChildFields(child: Child, parentPhone: string | null): string[] {
+  const missing: string[] = [];
+  if (!child.name?.trim()) missing.push('nombre del menor');
+  if (!child.lastName?.trim()) missing.push('apellido del menor');
+  if (!child.documentNumber?.trim()) missing.push('DNI del menor');
+  if (!child.birthDate) missing.push('fecha de nacimiento del menor');
+  if (!child.address?.trim()) missing.push('dirección del menor');
+  if (!parentPhone?.trim()) missing.push('tu teléfono');
+  return missing;
+}
 
 export default function JoinEnrollmentPanel({
   activity,
@@ -19,6 +38,8 @@ export default function JoinEnrollmentPanel({
   hasCapacity,
   remainingSpots,
   userBirthDate,
+  userPhone,
+  selfMissingFields,
   activityStartDate,
 }: {
   activity: { id: string; name: string; price: number; activityType: 'ANNUAL' | 'TEMPORARY' };
@@ -28,6 +49,8 @@ export default function JoinEnrollmentPanel({
   hasCapacity: boolean;
   remainingSpots: number | null;
   userBirthDate?: string | null;
+  userPhone?: string | null;
+  selfMissingFields?: string[];
   activityStartDate?: string | null;
 }) {
   const { data: session } = useSession();
@@ -46,8 +69,11 @@ export default function JoinEnrollmentPanel({
           setChildren(
             data.map((c) => ({
               id: c.id,
-              name: [c.name, c.lastName].filter(Boolean).join(' '),
+              name: c.name,
+              lastName: c.lastName ?? null,
+              documentNumber: c.documentNumber ?? null,
               birthDate: c.birthDate ? new Date(c.birthDate).toISOString() : null,
+              address: c.address ?? null,
             }))
           )
         );
@@ -58,7 +84,11 @@ export default function JoinEnrollmentPanel({
     if (!session) return [];
     return [
       { id: 'self', label: 'Para mí', birthDate: userBirthDate ?? null },
-      ...children.map((c) => ({ id: c.id, label: c.name, birthDate: c.birthDate })),
+      ...children.map((c) => ({
+        id: c.id,
+        label: [c.name, c.lastName].filter(Boolean).join(' '),
+        birthDate: c.birthDate,
+      })),
     ];
   }, [session, children, userBirthDate]);
 
@@ -66,9 +96,18 @@ export default function JoinEnrollmentPanel({
   const selectedPerson = people.find((p) => p.id === effectivePersonId) ?? null;
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
+  const missingFields = useMemo(() => {
+    if (!effectivePersonId) return [];
+    if (effectivePersonId === 'self') return selfMissingFields ?? [];
+    const child = children.find((c) => c.id === effectivePersonId);
+    if (!child) return [];
+    return getMissingChildFields(child, userPhone ?? null);
+  }, [effectivePersonId, selfMissingFields, children, userPhone]);
+
+  const profileIncomplete = missingFields.length > 0;
   const needsPersonSelection = Boolean(session && people.length > 1 && !selectedPersonId);
   const needsGroupSelection = groups.length > 0 && !selectedGroupId;
-  const canRegister = !isFull && !needsPersonSelection && !needsGroupSelection;
+  const canRegister = !isFull && !needsPersonSelection && !needsGroupSelection && !profileIncomplete;
 
   const handleRegister = () => {
     if (!session) {
@@ -162,6 +201,20 @@ export default function JoinEnrollmentPanel({
         ) : needsGroupSelection ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
             Seleccioná un grupo en el calendario para continuar.
+          </div>
+        ) : profileIncomplete ? (
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">
+            <p className="font-medium">Completá el perfil para inscribirte</p>
+            <p>Faltan: {missingFields.join(', ')}.</p>
+            {effectivePersonId === 'self' ? (
+              <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                Ir a mi perfil
+              </Link>
+            ) : (
+              <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                Completar datos del menor
+              </Link>
+            )}
           </div>
         ) : (
           <RegisterButton onClick={handleRegister} disabled={!canRegister} />

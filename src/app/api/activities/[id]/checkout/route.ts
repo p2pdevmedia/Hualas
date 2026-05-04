@@ -15,6 +15,10 @@ import {
 } from '@/lib/social-fee';
 import { buildCartQuote } from '@/lib/cart-checkout';
 import { createManualPaymentCheckout } from '@/lib/services/manual-payment-service';
+import {
+  checkUserProfile,
+  checkChildProfile,
+} from '@/lib/participant-profile-check';
 
 type CheckoutItem = {
   activityId: string;
@@ -119,6 +123,62 @@ export async function GET(
       { error: 'La actividad ya alcanzó su cupo de inscripciones.' },
       { status: 409 }
     );
+  }
+
+  const userProfile = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+    select: {
+      name: true,
+      lastName: true,
+      dni: true,
+      birthDate: true,
+      address: true,
+      phone: true,
+    },
+  });
+
+  if (childId) {
+    const child = await prisma.child.findUnique({
+      where: { id: childId },
+      select: {
+        name: true,
+        lastName: true,
+        documentNumber: true,
+        birthDate: true,
+        address: true,
+      },
+    });
+    if (!child) {
+      return NextResponse.json(
+        { error: 'Menor no encontrado.' },
+        { status: 404 }
+      );
+    }
+    const check = checkChildProfile(child, userProfile?.phone ?? null);
+    if (!check.valid) {
+      return NextResponse.json(
+        {
+          error: `Para inscribir a este menor completá: ${check.missingFields.join(', ')}.`,
+        },
+        { status: 422 }
+      );
+    }
+  } else {
+    if (!userProfile) {
+      return NextResponse.json(
+        { error: 'Perfil no encontrado.' },
+        { status: 404 }
+      );
+    }
+    const check = checkUserProfile(userProfile);
+    if (!check.valid) {
+      return NextResponse.json(
+        {
+          error: `Para inscribirte completá tu perfil: ${check.missingFields.join(', ')}.`,
+        },
+        { status: 422 }
+      );
+    }
   }
 
   const unitPrice = Number(activity.price);
@@ -313,6 +373,62 @@ export async function POST(
       { error: 'No se recibió el comprobante.' },
       { status: 400 }
     );
+  }
+
+  const postUserProfile = await prisma.user.findUnique({
+    where: { id: (session.user as { id: string }).id },
+    select: {
+      name: true,
+      lastName: true,
+      dni: true,
+      birthDate: true,
+      address: true,
+      phone: true,
+    },
+  });
+
+  if (childId) {
+    const child = await prisma.child.findUnique({
+      where: { id: childId },
+      select: {
+        name: true,
+        lastName: true,
+        documentNumber: true,
+        birthDate: true,
+        address: true,
+      },
+    });
+    if (!child) {
+      return NextResponse.json(
+        { error: 'Menor no encontrado.' },
+        { status: 404 }
+      );
+    }
+    const check = checkChildProfile(child, postUserProfile?.phone ?? null);
+    if (!check.valid) {
+      return NextResponse.json(
+        {
+          error: `Para inscribir a este menor completá: ${check.missingFields.join(', ')}.`,
+        },
+        { status: 422 }
+      );
+    }
+  } else {
+    if (!postUserProfile) {
+      return NextResponse.json(
+        { error: 'Perfil no encontrado.' },
+        { status: 404 }
+      );
+    }
+    const check = checkUserProfile(postUserProfile);
+    if (!check.valid) {
+      return NextResponse.json(
+        {
+          error: `Para inscribirte completá tu perfil: ${check.missingFields.join(', ')}.`,
+        },
+        { status: 422 }
+      );
+    }
   }
 
   const quote = await buildSingleActivityQuote(
