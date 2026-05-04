@@ -98,7 +98,10 @@ export async function GET(
   try {
     activity = await prisma.activity.findUnique({
       where: { id: params.id },
-      include: { participants: true },
+      include: {
+        participants: true,
+        groups: { select: { capacity: true } },
+      },
     });
   } catch (e: any) {
     console.error('[checkout] DB error:', e?.message);
@@ -115,10 +118,12 @@ export async function GET(
     );
   }
 
-  if (
-    activity.capacity != null &&
-    activity.participants.length >= activity.capacity
-  ) {
+  const activityCapacity =
+    activity.groups.length === 0 || activity.groups.some((g: any) => g.capacity == null)
+      ? null
+      : activity.groups.reduce((sum: number, g: any) => sum + g.capacity, 0);
+
+  if (activityCapacity != null && activity.participants.length >= activityCapacity) {
     return NextResponse.json(
       { error: 'La actividad ya alcanzó su cupo de inscripciones.' },
       { status: 409 }

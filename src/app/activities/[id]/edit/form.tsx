@@ -72,7 +72,6 @@ interface EditActivityFormProps {
     activityType: 'TEMPORARY' | 'ANNUAL';
     description?: string | null;
     price: number;
-    capacity?: number | null;
     professorIds: string[];
   };
   annualDefaults?: AnnualSharedDraft;
@@ -108,7 +107,6 @@ export default function EditActivityForm({
   );
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(activity.price));
-  const [capacity, setCapacity] = useState(activity.capacity?.toString() ?? '');
   const [professorIds, setProfessorIds] = useState<string[]>(
     activity.professorIds
   );
@@ -356,7 +354,6 @@ export default function EditActivityForm({
           activityType,
           description: description || undefined,
           price: Number(price),
-          capacity: capacity ? Number(capacity) : undefined,
           professorIds,
           annualSchedules: normalizedSchedules,
           geoLocation:
@@ -469,25 +466,15 @@ export default function EditActivityForm({
           onChange={(e) => setDescription(e.target.value)}
           className={`${inputClass} min-h-[80px] resize-y`}
         />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            type="number"
-            placeholder="Precio"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className={inputClass}
-            min={0}
-            required
-          />
-          <input
-            type="number"
-            min={1}
-            placeholder="Cupo de inscripciones (opcional)"
-            value={capacity}
-            onChange={(e) => setCapacity(e.target.value)}
-            className={inputClass}
-          />
-        </div>
+        <input
+          type="number"
+          placeholder="Precio"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className={inputClass}
+          min={0}
+          required
+        />
 
         <div className="space-y-3 rounded-lg border bg-background p-4">
           <p className="text-sm font-semibold">Grupos</p>

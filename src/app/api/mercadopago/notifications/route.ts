@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       const activity = await prisma.activity.findUnique({
         where: { id: activityId },
         select: {
-          capacity: true,
+          groups: { select: { capacity: true } },
           participants: {
             select: {
               id: true,
@@ -113,10 +113,15 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      const activityCapacity =
+        activity.groups.length === 0 || activity.groups.some((g) => g.capacity == null)
+          ? null
+          : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
+
       if (
-        activity.capacity != null &&
+        activityCapacity != null &&
         !existingParticipant &&
-        activity.participants.length >= activity.capacity
+        activity.participants.length >= activityCapacity
       ) {
         console.warn(
           `[mercadopago] Activity ${activityId} reached capacity, skipping participant upsert`
@@ -154,8 +159,8 @@ export async function POST(req: NextRequest) {
           )
         );
         if (
-          activity.capacity != null &&
-          activity.participants.length + 1 >= activity.capacity
+          activityCapacity != null &&
+          activity.participants.length + 1 >= activityCapacity
         ) {
           notifyActivityCapacityFull(activityId).catch((err) =>
             console.error(

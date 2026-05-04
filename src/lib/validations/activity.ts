@@ -78,7 +78,6 @@ const activityBaseSchema = z.object({
   longitude: z.number().optional(),
   sportIcon: z.string().optional().nullable(),
   price: z.number().int().nonnegative(),
-  capacity: z.number().int().positive().optional(),
   professorIds: z.array(z.string()).optional(),
 });
 

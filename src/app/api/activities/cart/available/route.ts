@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       name: true,
       date: true,
       price: true,
-      capacity: true,
+      groups: { select: { capacity: true } },
       _count: {
         select: { participants: true },
       },
@@ -44,19 +44,20 @@ export async function POST(req: Request) {
   });
 
   const available = activities
-    .filter(
-      (activity) =>
-        activity.capacity == null ||
-        activity._count.participants < activity.capacity
-    )
+    .map((activity) => {
+      const cap =
+        activity.groups.length === 0 || activity.groups.some((g) => g.capacity == null)
+          ? null
+          : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
+      return { ...activity, cap };
+    })
+    .filter((activity) => activity.cap == null || activity._count.participants < activity.cap)
     .map((activity) => ({
       id: activity.id,
       name: activity.name,
       date: activity.date,
       price: activity.price,
-      hasAvailability:
-        activity.capacity == null ||
-        activity._count.participants < activity.capacity,
+      hasAvailability: activity.cap == null || activity._count.participants < activity.cap,
     }));
 
   return NextResponse.json({ activities: available });

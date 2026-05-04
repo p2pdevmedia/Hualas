@@ -295,7 +295,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const activityGroupById = new Map(
     activityGroups.map((group: any) => [group.id, group.name])
   );
-  const capacity = activity.capacity;
+  const capacity =
+    activityGroups.length === 0 || activityGroups.some((g: any) => g.capacity == null)
+      ? null
+      : activityGroups.reduce((sum: number, g: any) => sum + g.capacity, 0);
   const hasCapacity = capacity != null;
   const canManageDays = isAdmin;
 

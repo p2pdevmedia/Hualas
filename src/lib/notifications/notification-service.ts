@@ -348,7 +348,7 @@ export async function notifyActivityCapacityFull(
   try {
     const activity = await prisma.activity.findUnique({
       where: { id: activityId },
-      select: { id: true, name: true, capacity: true },
+      select: { id: true, name: true },
     });
     if (!activity) return;
     const recipients = await recipientsForCapacityFull();
@@ -357,7 +357,7 @@ export async function notifyActivityCapacityFull(
       type: 'ACTIVITY_CAPACITY_FULL',
       recipients,
       title: `Cupo completo — ${activity.name}`,
-      body: `La actividad alcanzó su capacidad${activity.capacity ? ` (${activity.capacity})` : ''}.`,
+      body: `La actividad alcanzó su capacidad máxima.`,
       url: `/activities/${activity.id}`,
       data: { activityId: activity.id } as Prisma.JsonObject,
     });

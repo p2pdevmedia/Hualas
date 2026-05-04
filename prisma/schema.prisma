@@ -158,7 +158,6 @@ model Activity {
   image        String?
   description  String?
   price        Int                   @default(0)
-  capacity     Int?
   participants ActivityParticipant[]
   professors   ActivityProfessor[]
   groups       ActivityGroup[]

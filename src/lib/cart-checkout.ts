@@ -85,7 +85,10 @@ export async function buildCartQuote({
   }
   const activities = await prisma.activity.findMany({
     where: { id: { in: uniqueIds } },
-    include: { participants: { select: { id: true } } },
+    include: {
+      participants: { select: { id: true } },
+      groups: { select: { capacity: true } },
+    },
   });
   const activityById = new Map(
     activities.map((activity) => [activity.id, activity])
@@ -97,10 +100,12 @@ export async function buildCartQuote({
       throw new CartQuoteError(404, 'Una actividad no existe.');
     }
 
-    if (
-      activity.capacity != null &&
-      activity.participants.length >= activity.capacity
-    ) {
+    const activityCapacity =
+      activity.groups.length === 0 || activity.groups.some((g) => g.capacity == null)
+        ? null
+        : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
+
+    if (activityCapacity != null && activity.participants.length >= activityCapacity) {
       throw new CartQuoteError(
         409,
         `La actividad ${activity.name} no tiene cupo.`

@@ -56,7 +56,6 @@ export async function PUT(
             ...(data.image !== undefined ? { image: data.image } : {}),
             description: data.description ?? null,
             price: data.price,
-            capacity: data.capacity ?? null,
           },
           select: { id: true },
         });

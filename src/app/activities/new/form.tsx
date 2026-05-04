@@ -88,7 +88,6 @@ export default function CreateActivityForm({
   );
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [capacity, setCapacity] = useState('');
   const [professorIds, setProfessorIds] = useState<string[]>([]);
   const [groups, setGroups] = useState<GroupDraft[]>([]);
   const [newGroupName, setNewGroupName] = useState('');
@@ -197,7 +196,6 @@ export default function CreateActivityForm({
     setActivityType('TEMPORARY');
     setDescription('');
     setPrice('');
-    setCapacity('');
     setProfessorIds([]);
     setGroups([]);
     setNewGroupName('');
@@ -270,7 +268,6 @@ export default function CreateActivityForm({
           activityType,
           description: description || undefined,
           price: Number(price),
-          capacity: capacity ? Number(capacity) : undefined,
           professorIds,
           groups: groups.map((group) => ({
             tempId: group.tempId,
@@ -374,25 +371,15 @@ export default function CreateActivityForm({
         className={`${inputClass} min-h-[80px] resize-y`}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <input
-          type="number"
-          placeholder="Precio"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className={inputClass}
-          min={0}
-          required
-        />
-        <input
-          type="number"
-          min={1}
-          placeholder="Cupo de inscripciones (opcional)"
-          value={capacity}
-          onChange={(e) => setCapacity(e.target.value)}
-          className={inputClass}
-        />
-      </div>
+      <input
+        type="number"
+        placeholder="Precio"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        className={inputClass}
+        min={0}
+        required
+      />
 
       <div className="space-y-3 rounded-lg border bg-background p-4">
         <p className="text-sm font-semibold">Grupos</p>

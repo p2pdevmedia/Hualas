@@ -122,7 +122,6 @@ export default async function EditActivityPage({
           description:
             activity.description ?? firstAnnualDay?.description ?? '',
           price: activity.price,
-          capacity: activity.capacity ?? null,
           professorIds: activityProfessorAssignments.map(
             (assignment) => assignment.userId
           ),

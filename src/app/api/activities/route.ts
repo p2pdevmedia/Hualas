@@ -50,7 +50,6 @@ export async function POST(req: Request) {
           image: data.image ?? null,
           description: data.description ?? null,
           price: data.price,
-          capacity: data.capacity ?? null,
         },
         select: { id: true },
       });

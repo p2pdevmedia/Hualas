@@ -12,15 +12,16 @@ export type ActivityBaseRecord = {
   image: string | null;
   description: string | null;
   price: number;
-  capacity: number | null;
   createdAt: Date;
 };
 
 export type ActivityListRecord = ActivityBaseRecord & {
+  capacity: number | null;
   participantCount: number;
 };
 
 type ActivityListRow = ActivityBaseRecord & {
+  capacity: number | null;
   participantCount: bigint | number;
 };
 
@@ -43,8 +44,14 @@ export async function listActivitiesWithParticipantCount() {
       a."image",
       a."description",
       a."price",
-      a."capacity",
       a."createdAt",
+      (SELECT
+        CASE
+          WHEN COUNT(ag."id") = 0 THEN NULL
+          WHEN COUNT(CASE WHEN ag."capacity" IS NULL THEN 1 END) > 0 THEN NULL
+          ELSE SUM(ag."capacity")
+        END
+      FROM "ActivityGroup" ag WHERE ag."activityId" = a."id") AS "capacity",
       COUNT(ap."id") AS "participantCount"
     FROM "Activity" a
     LEFT JOIN "ActivityParticipant" ap ON ap."activityId" = a."id"
@@ -58,7 +65,6 @@ export async function listActivitiesWithParticipantCount() {
       a."image",
       a."description",
       a."price",
-      a."capacity",
       a."createdAt"
     ORDER BY a."date" ASC
   `;
@@ -78,7 +84,6 @@ export async function getActivityBaseRecordById(id: string) {
       "image",
       "description",
       "price",
-      "capacity",
       "createdAt"
     FROM "Activity"
     WHERE "id" = ${id}

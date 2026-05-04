@@ -40,7 +40,7 @@ export default async function ActivityJoinPage({
     prisma.activityParticipant.count({ where: { activityId: activity.id } }),
     prisma.activityGroup.findMany({
       where: { activityId: activity.id },
-      select: { id: true, name: true, minAge: true, maxAge: true },
+      select: { id: true, name: true, capacity: true, minAge: true, maxAge: true },
       orderBy: { name: 'asc' },
     }),
     prisma.activityDay.findMany({
@@ -67,7 +67,10 @@ export default async function ActivityJoinPage({
     TEMPORARY: 'Temporal',
     ANNUAL: 'Anual',
   };
-  const capacity = activity.capacity;
+  const capacity =
+    groups.length === 0 || groups.some((g) => g.capacity == null)
+      ? null
+      : groups.reduce((sum, g) => sum + (g.capacity as number), 0);
   const hasCapacity = capacity != null;
   const remainingSpots = hasCapacity
     ? Math.max(capacity - participantCount, 0)
@@ -140,7 +143,7 @@ export default async function ActivityJoinPage({
               {
                 label: 'Cupo',
                 value: hasCapacity
-                  ? `${activity.capacity} lugares`
+                  ? `${capacity} lugares`
                   : 'Ilimitado',
               },
               {
