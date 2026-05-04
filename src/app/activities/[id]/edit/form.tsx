@@ -135,6 +135,8 @@ export default function EditActivityForm({
     string | null
   >(null);
 
+  const [schedulesModified, setSchedulesModified] = useState(false);
+
   const [collapsedDays, setCollapsedDays] = useState<Set<string>>(
     () => new Set(initialAnnualSchedules.map((s) => s.weekday))
   );
@@ -154,6 +156,7 @@ export default function EditActivityForm({
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
   function addAnnualScheduleDraft(weekday = '1') {
+    setSchedulesModified(true);
     setAnnualSchedules((current) => [
       ...current,
       { ...createEmptyScheduleDraft(), weekday },
@@ -169,12 +172,14 @@ export default function EditActivityForm({
     tempId: string,
     updates: Partial<AnnualScheduleDraft>
   ) {
+    setSchedulesModified(true);
     setAnnualSchedules((current) =>
       current.map((d) => (d.tempId === tempId ? { ...d, ...updates } : d))
     );
   }
 
   function removeScheduleDraft(tempId: string) {
+    setSchedulesModified(true);
     setAnnualSchedules((current) => current.filter((d) => d.tempId !== tempId));
   }
 
@@ -236,24 +241,18 @@ export default function EditActivityForm({
   }
 
   function buildConfirmMessage(): string | null {
-    const willDeleteDays =
-      activityType === 'TEMPORARY' ||
-      (activityType === 'ANNUAL' && annualSchedules.length > 0) ||
-      (activityType === 'ANNUAL' &&
-        annualSchedules.length === 0 &&
-        existingDayCount > 0);
-
-    if (!willDeleteDays || existingDayCount === 0) return null;
+    if (existingDayCount === 0) return null;
 
     if (activityType === 'TEMPORARY') {
       return `Esta acción borrará las ${existingDayCount} sesiones existentes de la actividad al cambiarla a Temporal. ¿Confirmás?`;
     }
 
-    if (annualSchedules.length === 0) {
-      return `Esta acción actualizará las ${existingDayCount} sesiones existentes con la ubicación, el deporte y la descripción compartidos. ¿Confirmás?`;
+    const datesChanged = date !== activity.date || endDate !== activity.endDate;
+    if (activityType === 'ANNUAL' && (schedulesModified || datesChanged)) {
+      return `Esta acción borrará las ${existingDayCount} sesiones existentes y creará nuevas según la configuración indicada. ¿Confirmás?`;
     }
 
-    return `Esta acción borrará las ${existingDayCount} sesiones existentes y creará nuevas según la configuración indicada. ¿Confirmás?`;
+    return null;
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -275,15 +274,17 @@ export default function EditActivityForm({
         return;
       }
 
-      for (let i = 0; i < annualSchedules.length; i++) {
-        const draft = annualSchedules[i];
-        if (!draft.schedule.trim()) {
-          setError(`Completá el horario de la sesión ${i + 1}`);
-          return;
-        }
-        if (draft.professorIds.length === 0) {
-          setError(`Seleccioná al menos un profesor en la sesión ${i + 1}`);
-          return;
+      if (schedulesModified) {
+        for (let i = 0; i < annualSchedules.length; i++) {
+          const draft = annualSchedules[i];
+          if (!draft.schedule.trim()) {
+            setError(`Completá el horario de la sesión ${i + 1}`);
+            return;
+          }
+          if (draft.professorIds.length === 0) {
+            setError(`Seleccioná al menos un profesor en la sesión ${i + 1}`);
+            return;
+          }
         }
       }
     }
@@ -302,8 +303,9 @@ export default function EditActivityForm({
     setConfirmPending(false);
     setSaving(true);
     try {
+      const datesChanged = date !== activity.date || endDate !== activity.endDate;
       const normalizedSchedules =
-        activityType === 'ANNUAL'
+        activityType === 'ANNUAL' && (schedulesModified || datesChanged)
           ? annualSchedules.map((d) => ({
               tempId: d.tempId,
               weekday: Number(d.weekday),
@@ -610,10 +612,8 @@ export default function EditActivityForm({
 
             <p className="text-sm font-semibold">Calendario semanal</p>
             <p className="text-xs text-muted-foreground">
-              Configurá las sesiones para regenerarlas. Si no agregás ninguna,
-              se conservarán los horarios y grupos actuales, pero se
-              actualizarán la ubicación, el deporte y la descripción
-              compartidos.
+              Solo modificá el calendario si querés regenerar las sesiones.
+              Si no tocás nada, las sesiones existentes se conservan tal cual.
               {existingDayCount > 0 && (
                 <span className="ml-1 font-medium text-amber-600">
                   Hay {existingDayCount} sesiones existentes.
