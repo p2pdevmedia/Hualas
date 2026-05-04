@@ -437,7 +437,7 @@ export default async function MyActivitiesPage({
                           );
                           const mapHref =
                             s.latitude != null && s.longitude != null
-                              ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`
+                              ? `https://www.google.com/maps?q=${s.latitude},${s.longitude}`
                               : null;
                           const dateLabel = new Date(
                             s.date + 'T12:00:00'
