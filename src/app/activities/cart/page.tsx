@@ -201,6 +201,11 @@ export default function ActivitiesCartPage() {
                   <p className="text-sm text-muted-foreground">
                     Inscripción: {item.targetLabel}
                   </p>
+                  {item.groupName && (
+                    <p className="text-sm text-muted-foreground">
+                      Grupo: {item.groupName}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold">

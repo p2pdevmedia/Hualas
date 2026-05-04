@@ -6,6 +6,8 @@ export type ActivityCartItem = {
   price: number;
   target: CartItemTarget;
   targetLabel: string;
+  groupId?: string;
+  groupName?: string;
 };
 
 export const ACTIVITY_CART_STORAGE_KEY = 'hualas-activity-cart';
