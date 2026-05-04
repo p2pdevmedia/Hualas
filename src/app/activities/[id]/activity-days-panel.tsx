@@ -287,6 +287,11 @@ export default function ActivityDaysPanel({
                   `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`
               )
               .join(', ');
+            const groupMembers = day.activityGroupId
+              ? registrations.filter(
+                  (registration) => registration.groupId === day.activityGroupId
+                )
+              : [];
             const isEditing = editingDayId === day.id;
 
             return (
@@ -315,6 +320,14 @@ export default function ActivityDaysPanel({
                     {day.activityGroup && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Restringida al grupo {day.activityGroup.name}
+                      </p>
+                    )}
+                    {day.activityGroup && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Integrantes asignados:{' '}
+                        {groupMembers.length > 0
+                          ? groupMembers.map((member) => member.label).join(', ')
+                          : 'Sin integrantes asignados.'}
                       </p>
                     )}
                     {mapHref && (
