@@ -135,6 +135,7 @@ export default function EditActivityForm({
     string | null
   >(null);
 
+  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
   const [confirmPending, setConfirmPending] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -168,6 +169,15 @@ export default function EditActivityForm({
 
   function removeScheduleDraft(tempId: string) {
     setAnnualSchedules((current) => current.filter((d) => d.tempId !== tempId));
+  }
+
+  function toggleDayCollapse(dayValue: string) {
+    setCollapsedDays((current) => {
+      const next = new Set(current);
+      if (next.has(dayValue)) next.delete(dayValue);
+      else next.add(dayValue);
+      return next;
+    });
   }
 
   async function handleCreateGroup() {
@@ -611,6 +621,7 @@ export default function EditActivityForm({
                   const daySessions = annualSchedules.filter(
                     (draft) => draft.weekday === day.value
                   );
+                  const isCollapsed = collapsedDays.has(day.value);
                   return (
                     <div
                       key={day.value}
@@ -618,19 +629,67 @@ export default function EditActivityForm({
                     >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">{day.label}</p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => addAnnualScheduleDraft(day.value)}
-                        >
-                          + Sesión
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {daySessions.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => toggleDayCollapse(day.value)}
+                              className="h-7 rounded border px-2 text-xs text-muted-foreground hover:bg-muted"
+                            >
+                              {isCollapsed ? '✏️ Editar' : '👁 Ver'}
+                            </button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => addAnnualScheduleDraft(day.value)}
+                          >
+                            + Sesión
+                          </Button>
+                        </div>
                       </div>
                       {daySessions.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
                           Sin sesiones.
                         </p>
+                      ) : isCollapsed ? (
+                        <ul className="space-y-1">
+                          {daySessions.map((draft) => {
+                            const groupName =
+                              existingGroups.find((g) => g.id === draft.groupId)
+                                ?.name ?? 'Sin grupo';
+                            const profNames = selectedProfessors
+                              .filter((p) => draft.professorIds.includes(p.id))
+                              .map(
+                                (p) =>
+                                  `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
+                              )
+                              .join(', ');
+                            return (
+                              <li
+                                key={draft.tempId}
+                                className="rounded-md bg-muted/40 px-2 py-1.5 text-xs"
+                              >
+                                <span className="font-medium">
+                                  {draft.schedule || '(sin horario)'}
+                                </span>
+                                <span className="mx-1 text-muted-foreground">·</span>
+                                <span className="text-muted-foreground">
+                                  {groupName}
+                                </span>
+                                {profNames && (
+                                  <>
+                                    <span className="mx-1 text-muted-foreground">·</span>
+                                    <span className="text-muted-foreground">
+                                      {profNames}
+                                    </span>
+                                  </>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       ) : (
                         daySessions.map((draft) => (
                           <div
