@@ -37,9 +37,11 @@ function toLocalDateKey(date: Date): string {
 export default function ActivityCalendar({
   activityDays,
   onDaySelect,
+  onEdit,
 }: {
   activityDays: CalendarActivityDay[];
   onDaySelect?: (dayId: string | null) => void;
+  onEdit?: (dayId: string) => void;
 }) {
   const today = new Date();
   const todayKey = toLocalDateKey(today);
@@ -225,42 +227,53 @@ export default function ActivityCalendar({
             })}
           </p>
           {selectedActivities.map((d) => (
-            <div key={d.id} className="flex items-center gap-3">
-              <div className="relative shrink-0">
-                {d.sportIcon ? (
-                  <Image
-                    src={`/icons/${d.sportIcon}`}
-                    alt=""
-                    width={64}
-                    height={64}
-                    className={`h-16 w-16 object-contain ${d.cancelled ? 'opacity-30' : ''}`}
-                  />
-                ) : (
-                  <span className={`h-2 w-2 rounded-full ${d.cancelled ? 'bg-red-400' : 'bg-primary'}`} />
-                )}
-                {d.cancelled && d.sportIcon && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white leading-none">
-                      ✕
-                    </span>
-                  </span>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className={`text-sm font-medium ${d.cancelled ? 'line-through text-muted-foreground' : ''}`}>
-                    {d.activityName}
-                  </p>
-                  {d.cancelled && (
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
-                      Cancelado
+            <div key={d.id}>
+              <div className="flex items-center gap-3">
+                <div className="relative shrink-0">
+                  {d.sportIcon ? (
+                    <Image
+                      src={`/icons/${d.sportIcon}`}
+                      alt=""
+                      width={64}
+                      height={64}
+                      className={`h-16 w-16 object-contain ${d.cancelled ? 'opacity-30' : ''}`}
+                    />
+                  ) : (
+                    <span className={`h-2 w-2 rounded-full ${d.cancelled ? 'bg-red-400' : 'bg-primary'}`} />
+                  )}
+                  {d.cancelled && d.sportIcon && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white leading-none">
+                        ✕
+                      </span>
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {d.schedule} · {d.geoLocation}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium ${d.cancelled ? 'line-through text-muted-foreground' : ''}`}>
+                      {d.activityName}
+                    </p>
+                    {d.cancelled && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                        Cancelado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {d.schedule} · {d.geoLocation}
+                  </p>
+                </div>
               </div>
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(d.id)}
+                  className="mt-2 text-xs text-link hover:underline underline-offset-4 font-medium"
+                >
+                  Editar sesión
+                </button>
+              )}
             </div>
           ))}
         </div>

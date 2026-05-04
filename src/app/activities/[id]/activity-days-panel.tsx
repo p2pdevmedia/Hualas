@@ -119,7 +119,6 @@ export default function ActivityDaysPanel({
   const [expandedLists, setExpandedLists] = useState<
     Record<string, { going: boolean; notGoing: boolean }>
   >({});
-  const [selectedCalendarDayId, setSelectedCalendarDayId] = useState<string | null>(null);
 
   const { currentDays, pastDays } = useMemo(() => {
     const today = new Date();
@@ -272,26 +271,8 @@ export default function ActivityDaysPanel({
         <div className="mt-6">
           <ActivityCalendar
             activityDays={calendarDays}
-            onDaySelect={canManageDays ? (dayId) => {
-              setSelectedCalendarDayId(dayId);
-              if (dayId !== editingDayId) setEditingDayId(null);
-            } : undefined}
+            onEdit={canManageDays ? (dayId) => setEditingDayId((prev) => (prev === dayId ? null : dayId)) : undefined}
           />
-          {canManageDays && selectedCalendarDayId && (
-            <div className="mt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() =>
-                  setEditingDayId((prev) =>
-                    prev === selectedCalendarDayId ? null : selectedCalendarDayId
-                  )
-                }
-                className="text-xs text-link hover:underline underline-offset-4 font-medium"
-              >
-                {editingDayId === selectedCalendarDayId ? 'Cerrar edición' : 'Editar sesión'}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
