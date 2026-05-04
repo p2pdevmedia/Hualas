@@ -73,6 +73,7 @@ interface EditActivityFormProps {
     professorIds: string[];
   };
   annualDefaults?: AnnualSharedDraft;
+  initialAnnualSchedules?: Omit<AnnualScheduleDraft, 'tempId'>[];
   professors: ProfessorOption[];
   initialGroups: ExistingGroup[];
   existingDayCount: number;
@@ -91,6 +92,7 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
 export default function EditActivityForm({
   activity,
   annualDefaults,
+  initialAnnualSchedules = [],
   professors,
   initialGroups,
   existingDayCount,
@@ -109,7 +111,10 @@ export default function EditActivityForm({
   );
 
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
-    []
+    initialAnnualSchedules.map((draft) => ({
+      ...draft,
+      tempId: crypto.randomUUID(),
+    }))
   );
   const [annualShared, setAnnualShared] = useState<AnnualSharedDraft>(
     annualDefaults ?? {

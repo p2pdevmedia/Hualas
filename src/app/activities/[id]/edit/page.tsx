@@ -28,6 +28,7 @@ export default async function EditActivityPage({
     activityProfessorAssignments,
     existingDayCount,
     firstAnnualDay,
+    annualCalendarSample,
   ] = await Promise.all([
     prisma.user.findMany({
       where: {
@@ -63,7 +64,32 @@ export default async function EditActivityPage({
         description: true,
       },
     }),
+    prisma.activityDay.findMany({
+      where: { activityId: params.id },
+      orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
+      take: 7,
+      select: {
+        id: true,
+        date: true,
+        schedule: true,
+        activityGroupId: true,
+        professors: {
+          select: { userId: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    }),
   ]);
+
+  const initialAnnualSchedules =
+    activity.activityType === 'ANNUAL'
+      ? annualCalendarSample.map((day) => ({
+          weekday: String(day.date.getUTCDay()),
+          schedule: day.schedule,
+          groupId: day.activityGroupId ?? '',
+          professorIds: day.professors.map((professor) => professor.userId),
+        }))
+      : [];
 
   return (
     <main className="p-4">
@@ -99,6 +125,7 @@ export default async function EditActivityPage({
               }
             : undefined
         }
+        initialAnnualSchedules={initialAnnualSchedules}
         professors={professors}
         initialGroups={groups}
         existingDayCount={existingDayCount}
