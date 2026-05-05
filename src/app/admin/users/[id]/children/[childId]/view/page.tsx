@@ -42,12 +42,14 @@ export default async function ViewChildPage({
           <div className="flex gap-2">
             <Link
               href={`/admin/users/${params.id}/children/${params.childId}/edit`}
+              prefetch={true}
               className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
             >
               Editar
             </Link>
             <Link
               href={`/admin/users/${params.id}/view`}
+              prefetch={true}
               className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
             >
               ← Volver

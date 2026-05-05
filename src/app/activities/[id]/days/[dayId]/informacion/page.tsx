@@ -69,12 +69,17 @@ export default async function DayGroupInfoPage({
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 space-y-6">
       <nav className="flex items-center gap-1 text-xs text-muted-foreground font-body">
-        <Link href="/my-activities" className="hover:text-primary transition-colors">
+        <Link
+          href="/my-activities"
+          prefetch={true}
+          className="hover:text-primary transition-colors"
+        >
           Mis actividades
         </Link>
         <span>→</span>
         <Link
           href={`/activities/${day.activity.id}/days/${day.id}`}
+          prefetch={true}
           className="hover:text-primary transition-colors capitalize"
         >
           {dateLabel}

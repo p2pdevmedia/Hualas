@@ -304,7 +304,7 @@ export default async function AccountingDashboardPage({
               </p>
             </div>
             <Button asChild variant="outline">
-              <Link href="/accounting/movements">
+              <Link href="/accounting/movements" prefetch={true}>
                 Ver todos
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -398,7 +398,7 @@ export default async function AccountingDashboardPage({
               </p>
             </div>
             <Button asChild variant="outline">
-              <Link href="/accounting/payments">
+              <Link href="/accounting/payments" prefetch={true}>
                 Ver todos
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

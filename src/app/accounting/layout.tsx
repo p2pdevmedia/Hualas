@@ -46,6 +46,7 @@ export default async function AccountingLayout({
             <Link
               key={link.href}
               href={link.href}
+              prefetch={true}
               className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               {link.label}

@@ -68,6 +68,7 @@ export default async function ProfessorAccountingDetailPage({
         <div>
           <Link
             href="/accounting/professors"
+            prefetch={true}
             className="text-sm text-muted-foreground hover:underline"
           >
             ← Profesores

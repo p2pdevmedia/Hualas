@@ -74,12 +74,17 @@ export default async function ActivityDayPage({
       )}
 
       <nav className="flex items-center gap-1 text-xs text-muted-foreground font-body">
-        <Link href="/my-activities" className="hover:text-primary transition-colors">
+        <Link
+          href="/my-activities"
+          prefetch={true}
+          className="hover:text-primary transition-colors"
+        >
           Mis actividades
         </Link>
         <span>→</span>
         <Link
           href={`/activities/${day.activity.id}`}
+          prefetch={true}
           className="hover:text-primary transition-colors"
         >
           {day.activity.name}
@@ -115,6 +120,7 @@ export default async function ActivityDayPage({
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         <Link
           href={`${base}/attendance`}
+          prefetch={true}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
           <Image
@@ -134,6 +140,7 @@ export default async function ActivityDayPage({
 
         <Link
           href={`${base}/observaciones`}
+          prefetch={true}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
           <Image
@@ -155,6 +162,7 @@ export default async function ActivityDayPage({
 
         <Link
           href={`${base}/descripcion`}
+          prefetch={true}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
           <Image
@@ -176,6 +184,7 @@ export default async function ActivityDayPage({
 
         <Link
           href={`${base}/informacion`}
+          prefetch={true}
           className="flex flex-col gap-3 rounded-xl border bg-card p-5 hover:border-primary transition-colors"
         >
           <Image

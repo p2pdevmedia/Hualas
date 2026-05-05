@@ -459,7 +459,9 @@ export default async function SocialFeePage({
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link href={pageHref(currentPage - 1)}>Anterior</Link>
+                    <Link href={pageHref(currentPage - 1)} prefetch={true}>
+                      Anterior
+                    </Link>
                   </Button>
                 )}
                 {currentPage >= totalPages ? (
@@ -468,7 +470,9 @@ export default async function SocialFeePage({
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link href={pageHref(currentPage + 1)}>Siguiente</Link>
+                    <Link href={pageHref(currentPage + 1)} prefetch={true}>
+                      Siguiente
+                    </Link>
                   </Button>
                 )}
               </div>

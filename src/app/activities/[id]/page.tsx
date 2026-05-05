@@ -385,6 +385,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         <nav className="text-xs text-muted-foreground mb-5 font-body flex items-center gap-1">
           <Link
             href={activityListHref}
+            prefetch={true}
             className="hover:text-primary transition-colors"
           >
             {activityListLabel}
@@ -453,6 +454,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             {isAdmin && (
               <Link
                 href={`/activities/${activity.id}/edit`}
+                prefetch={true}
                 className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4 font-body"
               >
                 Editar actividad
@@ -524,6 +526,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               <Link
                 key={group.id}
                 href={`/activities/${activity.id}/groups/${group.id}`}
+                prefetch={true}
                 className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
                 {group.name}

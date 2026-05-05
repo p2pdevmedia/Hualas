@@ -43,7 +43,7 @@ export default async function ActivitiesPage() {
     <main className="mx-auto max-w-4xl px-4 py-6">
       <div className="mb-6 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <ActivitiesHeading />
-        <Link href="/activities/new">
+        <Link href="/activities/new" prefetch={true}>
           <Button>Crear actividad</Button>
         </Link>
       </div>

@@ -139,7 +139,7 @@ export default async function PaymentsPage({
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link href="/accounting/reports">
+          <Link href="/accounting/reports" prefetch={true}>
             Ir a reportes
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
@@ -193,7 +193,9 @@ export default async function PaymentsPage({
             Buscar
           </Button>
           <Button asChild variant="outline">
-            <Link href="/accounting/payments">Limpiar</Link>
+            <Link href="/accounting/payments" prefetch={true}>
+              Limpiar
+            </Link>
           </Button>
         </div>
       </form>
@@ -270,7 +272,9 @@ export default async function PaymentsPage({
           <div className="flex gap-2">
             {page > 1 ? (
               <Button asChild variant="outline">
-                <Link href={pageHref(page - 1)}>Anterior</Link>
+                <Link href={pageHref(page - 1)} prefetch={true}>
+                  Anterior
+                </Link>
               </Button>
             ) : (
               <Button variant="outline" disabled>
@@ -279,7 +283,9 @@ export default async function PaymentsPage({
             )}
             {page < totalPages ? (
               <Button asChild variant="outline">
-                <Link href={pageHref(page + 1)}>Siguiente</Link>
+                <Link href={pageHref(page + 1)} prefetch={true}>
+                  Siguiente
+                </Link>
               </Button>
             ) : (
               <Button variant="outline" disabled>

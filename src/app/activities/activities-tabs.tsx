@@ -37,6 +37,7 @@ function ActivitiesList({ activities }: { activities: ActivityItem[] }) {
           <div>
             <Link
               href={`/activities/${activity.id}`}
+              prefetch={true}
               className="text-base font-semibold hover:text-primary transition-colors"
             >
               {activity.name}
@@ -56,12 +57,14 @@ function ActivitiesList({ activities }: { activities: ActivityItem[] }) {
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <Link
               href={`/activities/${activity.id}`}
+              prefetch={true}
               className="inline-flex items-center justify-center rounded-full border-[1.5px] border-primary px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
             >
               Ver
             </Link>
             <Link
               href={`/activities/${activity.id}/edit`}
+              prefetch={true}
               className="inline-flex items-center justify-center rounded-full border-[1.5px] border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               Editar

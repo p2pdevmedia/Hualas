@@ -142,7 +142,11 @@ export default async function ActivityJoinPage({
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
         <section className="space-y-6">
           <nav className="flex items-center gap-2 text-xs text-muted-foreground font-body">
-            <Link href="/" className="hover:text-primary transition-colors">
+            <Link
+              href="/"
+              prefetch={true}
+              className="hover:text-primary transition-colors"
+            >
               Inicio
             </Link>
             <span>→</span>

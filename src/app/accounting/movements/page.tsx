@@ -96,7 +96,9 @@ export default async function MovementsPage({
           </p>
         </div>
         <Button asChild>
-          <Link href="/accounting/movements/new">Nuevo movimiento</Link>
+          <Link href="/accounting/movements/new" prefetch={true}>
+            Nuevo movimiento
+          </Link>
         </Button>
       </div>
 

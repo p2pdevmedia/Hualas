@@ -25,7 +25,7 @@ export default function PersonLink({
   }
 
   return (
-    <Link href={href} className={className} onClick={onClick}>
+    <Link href={href} prefetch={true} className={className} onClick={onClick}>
       {children}
     </Link>
   );

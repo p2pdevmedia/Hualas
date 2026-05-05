@@ -190,7 +190,9 @@ export default async function ViewUserPage({
               {user.role}
             </span>
             <Button asChild variant="outline" className="h-9 px-4">
-              <Link href={`/admin/users/${user.id}`}>Editar usuario</Link>
+              <Link href={`/admin/users/${user.id}`} prefetch={true}>
+                Editar usuario
+              </Link>
             </Button>
           </div>
         </div>
@@ -353,6 +355,7 @@ export default async function ViewUserPage({
               session?.user?.role === 'SUPER_ADMIN') && (
               <Link
                 href={`/admin/users/${user.id}/add-tutor`}
+                prefetch={true}
                 className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
               >
                 Agregar Tutor
@@ -360,6 +363,7 @@ export default async function ViewUserPage({
             )}
             <Link
               href={`/admin/users/${user.id}/child-enrollment`}
+              prefetch={true}
               className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
             >
               Agregar hijo
@@ -390,6 +394,7 @@ export default async function ViewUserPage({
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/admin/users/${fm.member.id}/view`}
+                        prefetch={true}
                         className="font-medium hover:underline underline-offset-4 text-primary"
                       >
                         {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
@@ -477,12 +482,14 @@ export default async function ViewUserPage({
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <Link
                     href={`/admin/users/${user.id}/children/${child.id}/view`}
+                    prefetch={true}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
                   >
                     Ver
                   </Link>
                   <Link
                     href={`/admin/users/${user.id}/children/${child.id}/edit`}
+                    prefetch={true}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
                   >
                     Editar
@@ -758,6 +765,7 @@ export default async function ViewUserPage({
 
       <Link
         href="/admin/users"
+        prefetch={true}
         className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
       >
         ← Volver a usuarios

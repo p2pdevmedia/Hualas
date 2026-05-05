@@ -190,7 +190,10 @@ export default async function ProfessorsAccountingPage({
                       variant="outline"
                       className="px-3 py-1 text-xs"
                     >
-                      <Link href={`/accounting/professors/${prof.id}`}>
+                      <Link
+                        href={`/accounting/professors/${prof.id}`}
+                        prefetch={true}
+                      >
                         Ver
                       </Link>
                     </Button>

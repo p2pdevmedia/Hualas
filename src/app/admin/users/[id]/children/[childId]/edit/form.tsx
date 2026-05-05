@@ -319,6 +319,7 @@ export default function EditChildForm({
         </Button>
         <Link
           href={`/admin/users/${userId}/view`}
+          prefetch={true}
           className="inline-flex flex-1 items-center justify-center rounded-full border border-border px-5 py-2 text-sm font-medium hover:bg-muted transition-colors"
         >
           Cancelar

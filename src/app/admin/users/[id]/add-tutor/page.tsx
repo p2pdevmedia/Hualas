@@ -49,6 +49,7 @@ export default async function AdminAddTutorPage({
       <div className="flex items-center gap-3">
         <Link
           href={`/admin/users/${params.id}/view`}
+          prefetch={true}
           className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
         >
           ← Volver

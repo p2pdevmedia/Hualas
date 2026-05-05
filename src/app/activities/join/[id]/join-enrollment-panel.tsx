@@ -208,11 +208,19 @@ export default function JoinEnrollmentPanel({
               <p className="font-medium">Completá el perfil para inscribirte</p>
               <p>Faltan: {missingFields.join(', ')}.</p>
               {effectivePersonId === 'self' ? (
-                <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                <Link
+                  href="/profile"
+                  prefetch={true}
+                  className="underline underline-offset-4 hover:text-amber-900"
+                >
                   Ir a mi perfil
                 </Link>
               ) : (
-                <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                <Link
+                  href="/profile"
+                  prefetch={true}
+                  className="underline underline-offset-4 hover:text-amber-900"
+                >
                   Completar datos del menor
                 </Link>
               )}
