@@ -54,7 +54,7 @@ export default function PersonPicker({
       <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">
         Para quién
       </p>
-      <div className="grid gap-2">
+      <div className="flex flex-wrap gap-2">
         {people.map((person) => {
           const selected = value === person.id;
           return (
@@ -62,14 +62,14 @@ export default function PersonPicker({
               key={person.id}
               type="button"
               onClick={() => onChange(person.id)}
-              className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+              className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                 selected
                   ? 'border-primary bg-primary/5'
                   : 'border-border bg-background hover:bg-muted/40'
               }`}
             >
               <Avatar src={person.photoUrl} name={person.label} />
-              <span className={`flex-1 ${selected ? 'font-semibold' : 'font-medium'}`}>
+              <span className={selected ? 'font-semibold' : 'font-medium'}>
                 {person.label}
               </span>
               {selected && (

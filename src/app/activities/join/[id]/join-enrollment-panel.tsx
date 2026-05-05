@@ -163,18 +163,17 @@ export default function JoinEnrollmentPanel({
         </div>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start lg:col-start-2 lg:sticky lg:top-6">
-        {session && people.length > 1 && (
-          <div className="rounded-xl border bg-card p-5 sm:w-52">
-            <PersonPicker
-              people={people}
-              value={selectedPersonId}
-              onChange={setSelectedPersonId}
-            />
-          </div>
-        )}
+      {session && people.length > 1 && (
+        <div className="rounded-xl border bg-card p-5 lg:col-start-1">
+          <PersonPicker
+            people={people}
+            value={selectedPersonId}
+            onChange={setSelectedPersonId}
+          />
+        </div>
+      )}
 
-        <div className="space-y-4 rounded-xl border bg-card p-5 sm:w-64">
+      <div className="space-y-4 rounded-xl border bg-card p-5 sm:w-64 lg:col-start-2 lg:sticky lg:top-6">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Inscripción</p>
             <p className="font-heading text-2xl font-semibold">${activity.price}</p>
@@ -222,7 +221,6 @@ export default function JoinEnrollmentPanel({
             <RegisterButton onClick={handleRegister} disabled={!canRegister} />
           )}
         </div>
-      </div>
     </div>
   );
 }
