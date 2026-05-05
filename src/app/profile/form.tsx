@@ -153,12 +153,16 @@ export default function ProfileForm({
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
+          name="given-name"
+          autoComplete="given-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre"
         />
         <input
           className={inputClass}
+          name="family-name"
+          autoComplete="family-name"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           placeholder="Apellido"
@@ -166,12 +170,16 @@ export default function ProfileForm({
       </div>
       <input
         className={inputClass}
+        name="national-id"
+        autoComplete="off"
         value={dni}
         onChange={(e) => setDni(e.target.value)}
         placeholder="DNI"
       />
       <input
         className={inputClass}
+        name="birth-date"
+        autoComplete="bday"
         type="date"
         value={birthDate}
         onChange={(e) => setBirthDate(e.target.value)}
@@ -190,24 +198,33 @@ export default function ProfileForm({
       </select>
       <input
         className={inputClass}
+        name="street-address"
+        autoComplete="street-address"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="Domicilio"
       />
       <input
         className={inputClass}
+        name="tel"
+        type="tel"
+        autoComplete="tel"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
         placeholder="Teléfono"
       />
       <input
         className={inputClass}
+        name="country"
+        autoComplete="country-name"
         value={nationality}
         onChange={(e) => setNationality(e.target.value)}
         placeholder="Nacionalidad"
       />
       <input
         className={inputClass}
+        name="marital-status"
+        autoComplete="off"
         value={maritalStatus}
         onChange={(e) => setMaritalStatus(e.target.value)}
         placeholder="Estado Civil"
@@ -248,18 +265,25 @@ export default function ProfileForm({
         />
         <input
           className={inputClass}
+          name="blood-group"
+          autoComplete="off"
           value={bloodGroup}
           onChange={(e) => setBloodGroup(e.target.value)}
           placeholder="Grupo sanguíneo"
         />
         <input
           className={inputClass}
+          name="doctor-name"
+          autoComplete="off"
           value={primaryDoctor}
           onChange={(e) => setPrimaryDoctor(e.target.value)}
           placeholder="Médico de cabecera"
         />
         <input
           className={inputClass}
+          name="doctor-tel"
+          type="tel"
+          autoComplete="tel"
           value={doctorPhone}
           onChange={(e) => setDoctorPhone(e.target.value)}
           placeholder="Teléfono médico"

@@ -160,6 +160,8 @@ export default function EditChildForm({
       <div className="grid grid-cols-2 gap-3">
         <input
           className={inputClass}
+          name="given-name"
+          autoComplete="given-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre"
@@ -167,6 +169,8 @@ export default function EditChildForm({
         />
         <input
           className={inputClass}
+          name="family-name"
+          autoComplete="family-name"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           placeholder="Apellido"
@@ -174,6 +178,8 @@ export default function EditChildForm({
       </div>
       <select
         className={inputClass}
+        name="document-type"
+        autoComplete="off"
         value={documentType}
         onChange={(e) => setDocumentType(e.target.value)}
       >
@@ -184,6 +190,8 @@ export default function EditChildForm({
       </select>
       <input
         className={inputClass}
+        name="document-number"
+        autoComplete="off"
         value={documentNumber}
         onChange={(e) => setDocumentNumber(e.target.value)}
         placeholder="Número / Código"
@@ -222,18 +230,24 @@ export default function EditChildForm({
       </div>
       <input
         className={inputClass}
+        name="birth-date"
+        autoComplete="bday"
         type="date"
         value={birthDate}
         onChange={(e) => setBirthDate(e.target.value)}
       />
       <input
         className={inputClass}
+        name="street-address"
+        autoComplete="street-address"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="Domicilio"
       />
       <select
         className={inputClass}
+        name="sex"
+        autoComplete="sex"
         value={gender}
         onChange={(e) => setGender(e.target.value)}
       >
@@ -246,12 +260,16 @@ export default function EditChildForm({
       </select>
       <input
         className={inputClass}
+        name="country"
+        autoComplete="country-name"
         value={nationality}
         onChange={(e) => setNationality(e.target.value)}
         placeholder="Nacionalidad"
       />
       <input
         className={inputClass}
+        name="marital-status"
+        autoComplete="off"
         value={maritalStatus}
         onChange={(e) => setMaritalStatus(e.target.value)}
         placeholder="Estado Civil"
@@ -290,18 +308,25 @@ export default function EditChildForm({
         />
         <input
           className={inputClass}
+          name="blood-group"
+          autoComplete="off"
           value={bloodGroup}
           onChange={(e) => setBloodGroup(e.target.value)}
           placeholder="Grupo sanguíneo"
         />
         <input
           className={inputClass}
+          name="doctor-name"
+          autoComplete="off"
           value={primaryDoctor}
           onChange={(e) => setPrimaryDoctor(e.target.value)}
           placeholder="Médico de cabecera"
         />
         <input
           className={inputClass}
+          name="doctor-tel"
+          type="tel"
+          autoComplete="tel"
           value={doctorPhone}
           onChange={(e) => setDoctorPhone(e.target.value)}
           placeholder="Teléfono médico"
