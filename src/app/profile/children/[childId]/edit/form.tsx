@@ -52,33 +52,30 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(
-        `/api/users/${child.userId}/children/${child.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name,
-            lastName,
-            birthDate: birthDate || null,
-            documentType,
-            documentNumber,
-            address,
-            gender: gender || undefined,
-            nationality,
-            maritalStatus,
-            allergies,
-            regularMedication,
-            relevantDiseases,
-            previousInjuries,
-            physicalRestrictions,
-            bloodGroup,
-            primaryDoctor,
-            doctorPhone,
-            observations,
-          }),
-        }
-      );
+      const res = await fetch(`/api/children/${child.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          lastName,
+          birthDate: birthDate || null,
+          documentType,
+          documentNumber,
+          address,
+          gender: gender || undefined,
+          nationality,
+          maritalStatus,
+          allergies,
+          regularMedication,
+          relevantDiseases,
+          previousInjuries,
+          physicalRestrictions,
+          bloodGroup,
+          primaryDoctor,
+          doctorPhone,
+          observations,
+        }),
+      });
 
       if (res.ok) {
         router.push(returnTo);
