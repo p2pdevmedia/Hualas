@@ -231,38 +231,47 @@ export default function ChildrenManager({
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <input
-            className={inputClass}
-            value={form.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="Nombre"
-            required
-          />
-          <input
-            className={inputClass}
-            value={form.lastName}
-            onChange={(e) => set('lastName', e.target.value)}
-            placeholder="Apellido"
-          />
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Nombre</span>
+            <input
+              className={inputClass}
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              required
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Apellido</span>
+            <input
+              className={inputClass}
+              value={form.lastName}
+              onChange={(e) => set('lastName', e.target.value)}
+            />
+          </label>
         </div>
-        <select
-          className={inputClass}
-          value={form.documentType}
-          onChange={(e) => set('documentType', e.target.value)}
-        >
-          <option value="">Tipo de documento</option>
-          <option value="DNI">DNI</option>
-          <option value="PASAPORTE">Pasaporte</option>
-          <option value="OTRO">Otro</option>
-        </select>
-        <input
-          className={inputClass}
-          value={form.documentNumber}
-          onChange={(e) => set('documentNumber', e.target.value)}
-          placeholder="Número / Código"
-        />
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Tipo de documento</span>
+          <select
+            className={inputClass}
+            value={form.documentType}
+            onChange={(e) => set('documentType', e.target.value)}
+          >
+            <option value="">Seleccionar</option>
+            <option value="DNI">DNI</option>
+            <option value="PASAPORTE">Pasaporte</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Número / Código</span>
+          <input
+            className={inputClass}
+            value={form.documentNumber}
+            onChange={(e) => set('documentNumber', e.target.value)}
+          />
+        </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="text-sm text-muted-foreground space-y-1">
+          <label className="space-y-1 text-sm text-muted-foreground">
             <span>Foto delantera DNI</span>
             <input
               className={inputClass}
@@ -284,7 +293,7 @@ export default function ChildrenManager({
               <span className="text-xs text-green-600">Foto cargada</span>
             )}
           </label>
-          <label className="text-sm text-muted-foreground space-y-1">
+          <label className="space-y-1 text-sm text-muted-foreground">
             <span>Foto trasera DNI</span>
             <input
               className={inputClass}
@@ -307,18 +316,23 @@ export default function ChildrenManager({
             )}
           </label>
         </div>
-        <input
-          className={inputClass}
-          type="date"
-          value={form.birthDate}
-          onChange={(e) => set('birthDate', e.target.value)}
-        />
-        <input
-          className={inputClass}
-          value={form.address}
-          onChange={(e) => set('address', e.target.value)}
-          placeholder="Domicilio"
-        />
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Fecha de nacimiento</span>
+          <input
+            className={inputClass}
+            type="date"
+            value={form.birthDate}
+            onChange={(e) => set('birthDate', e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Domicilio</span>
+          <input
+            className={inputClass}
+            value={form.address}
+            onChange={(e) => set('address', e.target.value)}
+          />
+        </label>
         <label className="text-sm flex items-center gap-2 text-muted-foreground">
           <input
             type="checkbox"
@@ -328,30 +342,37 @@ export default function ChildrenManager({
           />
           Mismo domicilio que el usuario
         </label>
-        <select
-          className={inputClass}
-          value={form.gender}
-          onChange={(e) => set('gender', e.target.value)}
-        >
-          <option value="">Género</option>
-          <option value="FEMALE">Femenino</option>
-          <option value="MALE">Masculino</option>
-          <option value="NON_BINARY">No Binario</option>
-          <option value="UNDISCLOSED">Prefiero no decirlo</option>
-          <option value="OTHER">Otro</option>
-        </select>
-        <input
-          className={inputClass}
-          value={form.nationality}
-          onChange={(e) => set('nationality', e.target.value)}
-          placeholder="Nacionalidad"
-        />
-        <input
-          className={inputClass}
-          value={form.maritalStatus}
-          onChange={(e) => set('maritalStatus', e.target.value)}
-          placeholder="Estado Civil"
-        />
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Género</span>
+          <select
+            className={inputClass}
+            value={form.gender}
+            onChange={(e) => set('gender', e.target.value)}
+          >
+            <option value="">Seleccionar</option>
+            <option value="FEMALE">Femenino</option>
+            <option value="MALE">Masculino</option>
+            <option value="NON_BINARY">No Binario</option>
+            <option value="UNDISCLOSED">Prefiero no decirlo</option>
+            <option value="OTHER">Otro</option>
+          </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Nacionalidad</span>
+          <input
+            className={inputClass}
+            value={form.nationality}
+            onChange={(e) => set('nationality', e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Estado civil</span>
+          <input
+            className={inputClass}
+            value={form.maritalStatus}
+            onChange={(e) => set('maritalStatus', e.target.value)}
+          />
+        </label>
         {!editingId && (
           <label className="text-sm flex items-start gap-2 text-muted-foreground">
             <input
@@ -371,60 +392,80 @@ export default function ChildrenManager({
         )}
         <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
           <h3 className="text-sm font-semibold">Ficha médica</h3>
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.allergies}
-            onChange={(e) => set('allergies', e.target.value)}
-            placeholder="Alergias"
-          />
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.regularMedication}
-            onChange={(e) => set('regularMedication', e.target.value)}
-            placeholder="Medicación habitual"
-          />
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.relevantDiseases}
-            onChange={(e) => set('relevantDiseases', e.target.value)}
-            placeholder="Enfermedades relevantes"
-          />
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.previousInjuries}
-            onChange={(e) => set('previousInjuries', e.target.value)}
-            placeholder="Lesiones previas"
-          />
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.physicalRestrictions}
-            onChange={(e) => set('physicalRestrictions', e.target.value)}
-            placeholder="Restricciones físicas"
-          />
-          <input
-            className={inputClass}
-            value={form.bloodGroup}
-            onChange={(e) => set('bloodGroup', e.target.value)}
-            placeholder="Grupo sanguíneo"
-          />
-          <input
-            className={inputClass}
-            value={form.primaryDoctor}
-            onChange={(e) => set('primaryDoctor', e.target.value)}
-            placeholder="Médico de cabecera"
-          />
-          <input
-            className={inputClass}
-            value={form.doctorPhone}
-            onChange={(e) => set('doctorPhone', e.target.value)}
-            placeholder="Teléfono médico"
-          />
-          <textarea
-            className={`${inputClass} min-h-[72px] resize-y`}
-            value={form.observations}
-            onChange={(e) => set('observations', e.target.value)}
-            placeholder="Observaciones"
-          />
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Alergias</span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.allergies}
+              onChange={(e) => set('allergies', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Medicación habitual</span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.regularMedication}
+              onChange={(e) => set('regularMedication', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">
+              Enfermedades relevantes
+            </span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.relevantDiseases}
+              onChange={(e) => set('relevantDiseases', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Lesiones previas</span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.previousInjuries}
+              onChange={(e) => set('previousInjuries', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Restricciones físicas</span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.physicalRestrictions}
+              onChange={(e) => set('physicalRestrictions', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Grupo sanguíneo</span>
+            <input
+              className={inputClass}
+              value={form.bloodGroup}
+              onChange={(e) => set('bloodGroup', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Médico de cabecera</span>
+            <input
+              className={inputClass}
+              value={form.primaryDoctor}
+              onChange={(e) => set('primaryDoctor', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Teléfono médico</span>
+            <input
+              className={inputClass}
+              value={form.doctorPhone}
+              onChange={(e) => set('doctorPhone', e.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Observaciones</span>
+            <textarea
+              className={`${inputClass} min-h-[72px] resize-y`}
+              value={form.observations}
+              onChange={(e) => set('observations', e.target.value)}
+            />
+          </label>
         </div>
         <Button type="submit" className="w-full">
           {editingId ? 'Guardar cambios' : 'Agregar hijo'}

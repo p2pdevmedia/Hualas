@@ -151,146 +151,184 @@ export default function ProfileForm({
   return (
     <Form onSubmit={submit} className="space-y-3" autoComplete="on">
       <div className="grid grid-cols-2 gap-3">
-        <input
-          className={inputClass}
-          name="given-name"
-          autoComplete="given-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-        />
-        <input
-          className={inputClass}
-          name="family-name"
-          autoComplete="family-name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Apellido"
-        />
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Nombre</span>
+          <input
+            className={inputClass}
+            name="given-name"
+            autoComplete="given-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Apellido</span>
+          <input
+            className={inputClass}
+            name="family-name"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </label>
       </div>
-      <input
-        className={inputClass}
-        name="national-id"
-        autoComplete="off"
-        value={dni}
-        onChange={(e) => setDni(e.target.value)}
-        placeholder="DNI"
-      />
-      <input
-        className={inputClass}
-        name="birth-date"
-        autoComplete="bday"
-        type="date"
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
-      />
-      <select
-        className={inputClass}
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Género</option>
-        <option value="FEMALE">Femenino</option>
-        <option value="MALE">Masculino</option>
-        <option value="NON_BINARY">No Binario</option>
-        <option value="UNDISCLOSED">Prefiero no decirlo</option>
-        <option value="OTHER">Otro</option>
-      </select>
-      <input
-        className={inputClass}
-        name="street-address"
-        autoComplete="street-address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Domicilio"
-      />
-      <input
-        className={inputClass}
-        name="tel"
-        type="tel"
-        autoComplete="tel"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Teléfono"
-      />
-      <input
-        className={inputClass}
-        name="country"
-        autoComplete="country-name"
-        value={nationality}
-        onChange={(e) => setNationality(e.target.value)}
-        placeholder="Nacionalidad"
-      />
-      <input
-        className={inputClass}
-        name="marital-status"
-        autoComplete="off"
-        value={maritalStatus}
-        onChange={(e) => setMaritalStatus(e.target.value)}
-        placeholder="Estado Civil"
-      />
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">DNI</span>
+        <input
+          className={inputClass}
+          name="national-id"
+          autoComplete="off"
+          value={dni}
+          onChange={(e) => setDni(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Fecha de nacimiento</span>
+        <input
+          className={inputClass}
+          name="birth-date"
+          autoComplete="bday"
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Género</span>
+        <select
+          className={inputClass}
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="">Seleccionar</option>
+          <option value="FEMALE">Femenino</option>
+          <option value="MALE">Masculino</option>
+          <option value="NON_BINARY">No Binario</option>
+          <option value="UNDISCLOSED">Prefiero no decirlo</option>
+          <option value="OTHER">Otro</option>
+        </select>
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Domicilio</span>
+        <input
+          className={inputClass}
+          name="street-address"
+          autoComplete="street-address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Teléfono</span>
+        <input
+          className={inputClass}
+          name="tel"
+          type="tel"
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Nacionalidad</span>
+        <input
+          className={inputClass}
+          name="country"
+          autoComplete="country-name"
+          value={nationality}
+          onChange={(e) => setNationality(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Estado civil</span>
+        <input
+          className={inputClass}
+          name="marital-status"
+          autoComplete="off"
+          value={maritalStatus}
+          onChange={(e) => setMaritalStatus(e.target.value)}
+        />
+      </label>
 
       {/* Medical Sheet */}
       <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
         <h3 className="text-sm font-semibold">Ficha médica</h3>
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={allergies}
-          onChange={(e) => setAllergies(e.target.value)}
-          placeholder="Alergias"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={regularMedication}
-          onChange={(e) => setRegularMedication(e.target.value)}
-          placeholder="Medicación habitual"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={relevantDiseases}
-          onChange={(e) => setRelevantDiseases(e.target.value)}
-          placeholder="Enfermedades relevantes"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={previousInjuries}
-          onChange={(e) => setPreviousInjuries(e.target.value)}
-          placeholder="Lesiones previas"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={physicalRestrictions}
-          onChange={(e) => setPhysicalRestrictions(e.target.value)}
-          placeholder="Restricciones físicas"
-        />
-        <input
-          className={inputClass}
-          name="blood-group"
-          autoComplete="off"
-          value={bloodGroup}
-          onChange={(e) => setBloodGroup(e.target.value)}
-          placeholder="Grupo sanguíneo"
-        />
-        <input
-          className={inputClass}
-          name="doctor-name"
-          autoComplete="off"
-          value={primaryDoctor}
-          onChange={(e) => setPrimaryDoctor(e.target.value)}
-          placeholder="Médico de cabecera"
-        />
-        <input
-          className={inputClass}
-          name="doctor-tel"
-          type="tel"
-          autoComplete="tel"
-          value={doctorPhone}
-          onChange={(e) => setDoctorPhone(e.target.value)}
-          placeholder="Teléfono médico"
-        />
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Alergias</span>
+          <textarea
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={allergies}
+            onChange={(e) => setAllergies(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Medicación habitual</span>
+          <textarea
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={regularMedication}
+            onChange={(e) => setRegularMedication(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Enfermedades relevantes</span>
+          <textarea
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={relevantDiseases}
+            onChange={(e) => setRelevantDiseases(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Lesiones previas</span>
+          <textarea
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={previousInjuries}
+            onChange={(e) => setPreviousInjuries(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Restricciones físicas</span>
+          <textarea
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={physicalRestrictions}
+            onChange={(e) => setPhysicalRestrictions(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Grupo sanguíneo</span>
+          <input
+            className={inputClass}
+            name="blood-group"
+            autoComplete="off"
+            value={bloodGroup}
+            onChange={(e) => setBloodGroup(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Médico de cabecera</span>
+          <input
+            className={inputClass}
+            name="doctor-name"
+            autoComplete="off"
+            value={primaryDoctor}
+            onChange={(e) => setPrimaryDoctor(e.target.value)}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Teléfono médico</span>
+          <input
+            className={inputClass}
+            name="doctor-tel"
+            type="tel"
+            autoComplete="tel"
+            value={doctorPhone}
+            onChange={(e) => setDoctorPhone(e.target.value)}
+          />
+        </label>
       </div>
-      <label className="text-sm text-muted-foreground space-y-1">
-        <span>Certificado del médico (imagen)</span>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">
+          Certificado del médico (imagen)
+        </span>
         <input
           className={inputClass}
           type="file"
@@ -303,26 +341,30 @@ export default function ProfileForm({
         />
       </label>
 
-      <input
-        className={inputClass}
-        id="profile-email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        className={inputClass}
-        id="profile-new-password"
-        name="new-password"
-        type="password"
-        autoComplete="new-password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Nueva contraseña"
-      />
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Email</span>
+        <input
+          className={inputClass}
+          id="profile-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted-foreground">Nueva contraseña</span>
+        <input
+          className={inputClass}
+          id="profile-new-password"
+          name="new-password"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </label>
       <input type="hidden" name="username" value={user.email} />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
