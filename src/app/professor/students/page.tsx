@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { summarizeActivitySchedules } from '@/lib/activities/schedule-summary';
 import { prisma } from '@/lib/prisma';
 import StudentsSearch, {
   type ProfessorGroupEntry,
@@ -117,7 +118,7 @@ export default async function ProfessorStudentsPage() {
     where: { id: { in: assignedGroupIds } },
     orderBy: [{ activity: { name: 'asc' } }, { name: 'asc' }],
     include: {
-      activity: { select: { name: true } },
+      activity: { select: { name: true, activityType: true } },
       days: {
         orderBy: { date: 'asc' },
         select: {
@@ -323,11 +324,16 @@ export default async function ProfessorStudentsPage() {
     capacity: group.capacity,
     minAge: group.minAge,
     maxAge: group.maxAge,
-    schedules: group.days.map((day) => ({
+    schedules: summarizeActivitySchedules(
+      group.activity.activityType,
+      group.days
+    ).map((day) => ({
       id: day.id,
       date: day.date.toISOString(),
+      weekday: day.weekday,
       schedule: day.schedule,
       cancelled: day.cancelled,
+      repeatsWeekly: day.repeatsWeekly,
     })),
     participants: group.members
       .map((member) => {
