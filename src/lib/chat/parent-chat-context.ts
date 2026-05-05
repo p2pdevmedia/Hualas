@@ -78,8 +78,6 @@ export type ParentSharedContact = {
   subtitle: string;
   activityCount: number;
   activities: string[];
-  profilePhoto: string | null;
-  updatedAt: string;
 };
 
 export type ParentChatContext = {
