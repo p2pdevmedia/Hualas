@@ -185,14 +185,21 @@ export default function GroupScheduleCalendar({
                 key={group.id}
                 type="button"
                 onClick={() => onGroupChange(group.id)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${
                   isSelected ? colors.pillSelected : colors.pill
                 }`}
               >
-                {group.name}
-                {(group.minAge !== null || group.maxAge !== null) && (
-                  <span className="ml-1 opacity-70">
-                    ({group.minAge ?? '0'}-{group.maxAge ?? '∞'} años)
+                <span className="block leading-tight">
+                  {group.name}
+                  {(group.minAge !== null || group.maxAge !== null) && (
+                    <span className="ml-1 opacity-70">
+                      ({group.minAge ?? '0'}-{group.maxAge ?? '∞'} años)
+                    </span>
+                  )}
+                </span>
+                {group.professors.length > 0 && (
+                  <span className="block leading-tight opacity-75 font-normal mt-0.5">
+                    {group.professors.join(', ')}
                   </span>
                 )}
               </button>
