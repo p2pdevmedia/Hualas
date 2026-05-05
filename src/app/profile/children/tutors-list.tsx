@@ -28,6 +28,7 @@ export default function TutorsList({
   tutors: Tutor[];
   isResponsible: boolean;
 }) {
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function TutorsList({
   async function handleRemove(memberId: string) {
     setError('');
     setRemoving(memberId);
+    setConfirmId(null);
     try {
       const res = await fetch(`/api/family-groups/${familyGroupId}/members`, {
         method: 'DELETE',
@@ -75,15 +77,35 @@ export default function TutorsList({
               {relationshipLabel[tutor.relationship] ?? tutor.relationship}
             </span>
             {isResponsible && (
-              <button
-                type="button"
-                onClick={() => handleRemove(tutor.memberId)}
-                disabled={removing === tutor.memberId}
-                className="flex-shrink-0 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
-                title="Eliminar del grupo"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              confirmId === tutor.memberId ? (
+                <div className="flex flex-shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(tutor.memberId)}
+                    disabled={removing === tutor.memberId}
+                    className="rounded-full bg-destructive px-2 py-0.5 text-xs font-medium text-white hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                  >
+                    {removing === tutor.memberId ? '...' : 'Sí, eliminar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmId(null)}
+                    className="rounded-full border px-2 py-0.5 text-xs font-medium hover:bg-muted transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setError(''); setConfirmId(tutor.memberId); }}
+                  disabled={removing !== null}
+                  className="flex-shrink-0 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                  title="Eliminar del grupo"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )
             )}
           </div>
         ))}
