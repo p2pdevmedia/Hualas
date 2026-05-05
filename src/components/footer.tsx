@@ -18,12 +18,6 @@ export default function Footer() {
               Inicio
             </Link>
             <Link
-              href="/activities"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Actividades
-            </Link>
-            <Link
               href="/contact"
               className="opacity-80 hover:opacity-100 transition-opacity"
             >

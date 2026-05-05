@@ -481,14 +481,14 @@ export default async function ViewUserPage({
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <Link
-                    href={`/admin/users/${user.id}/children/${child.id}/view`}
+                    href={`/admin/users/${child.userId}/children/${child.id}/view`}
                     prefetch={true}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
                   >
                     Ver
                   </Link>
                   <Link
-                    href={`/admin/users/${user.id}/children/${child.id}/edit`}
+                    href={`/admin/users/${child.userId}/children/${child.id}/edit`}
                     prefetch={true}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
                   >

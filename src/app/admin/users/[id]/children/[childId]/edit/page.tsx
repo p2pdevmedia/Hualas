@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditChildForm from './form';
@@ -48,7 +49,16 @@ export default async function EditChildPage({
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Editar hijo</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight">Editar hijo</h1>
+        <Link
+          href={`/admin/users/${params.id}/view`}
+          prefetch={true}
+          className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+        >
+          ← Volver
+        </Link>
+      </div>
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <EditChildForm
           userId={params.id}
