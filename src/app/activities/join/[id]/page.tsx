@@ -87,10 +87,6 @@ export default async function ActivityJoinPage({
     }
   }
 
-  const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
-    TEMPORARY: 'Temporal',
-    ANNUAL: 'Anual',
-  };
   const capacity =
     groups.length === 0 || groups.some((g) => g.capacity == null)
       ? null
@@ -137,9 +133,6 @@ export default async function ActivityJoinPage({
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                {activityTypeLabels[activity.activityType]}
-              </span>
               <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 {activityDateRange}
               </span>

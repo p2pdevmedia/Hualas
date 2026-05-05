@@ -20,11 +20,6 @@ interface ActivitiesTabsProps {
   pastActivities: ActivityItem[];
 }
 
-const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
-  TEMPORARY: 'Temporal',
-  ANNUAL: 'Anual',
-};
-
 function formatDateRange(startDate: string, endDate: string) {
   const start = new Date(startDate).toLocaleDateString('es-AR');
   const end = new Date(endDate).toLocaleDateString('es-AR');
@@ -47,8 +42,6 @@ function ActivitiesList({ activities }: { activities: ActivityItem[] }) {
               {activity.name}
             </Link>
             <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
-              <span>{activityTypeLabels[activity.activityType]}</span>
-              <span>·</span>
               <span>{formatDateRange(activity.date, activity.endDate)}</span>
               <span>·</span>
               <span>${activity.price}</span>

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import RegisterButton from '@/components/register-button';
 import GroupScheduleCalendar from './group-schedule-calendar';
+import PersonPicker, { Avatar } from './person-picker';
 
 type Group = { id: string; name: string; minAge: number | null; maxAge: number | null; professors: string[] };
 type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
@@ -56,6 +57,7 @@ export default function JoinEnrollmentPanel({
   const { data: session } = useSession();
   const router = useRouter();
   const isMember = (session?.user as any)?.role === 'MEMBER';
+  const userId = (session?.user as any)?.id as string | undefined;
 
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [children, setChildren] = useState<Child[]>([]);
@@ -83,14 +85,20 @@ export default function JoinEnrollmentPanel({
   const people = useMemo(() => {
     if (!session) return [];
     return [
-      { id: 'self', label: 'Para mí', birthDate: userBirthDate ?? null },
+      {
+        id: 'self',
+        label: 'Para mí',
+        birthDate: userBirthDate ?? null,
+        photoUrl: userId ? `/api/users/${userId}/photo` : '',
+      },
       ...children.map((c) => ({
         id: c.id,
         label: [c.name, c.lastName].filter(Boolean).join(' '),
         birthDate: c.birthDate,
+        photoUrl: `/api/children/${c.id}/photo`,
       })),
     ];
-  }, [session, children, userBirthDate]);
+  }, [session, children, userBirthDate, userId]);
 
   const effectivePersonId = people.length === 1 ? people[0].id : selectedPersonId;
   const selectedPerson = people.find((p) => p.id === effectivePersonId) ?? null;
@@ -167,27 +175,18 @@ export default function JoinEnrollmentPanel({
         </div>
 
         {session && people.length > 1 && (
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Para quién</p>
-            <select
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={selectedPersonId}
-              onChange={(e) => setSelectedPersonId(e.target.value)}
-            >
-              <option value="" disabled>
-                Seleccioná para quién
-              </option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <PersonPicker
+            people={people}
+            value={selectedPersonId}
+            onChange={setSelectedPersonId}
+          />
         )}
 
         {session && people.length === 1 && (
-          <p className="text-sm text-muted-foreground font-body">{people[0].label}</p>
+          <div className="flex items-center gap-3">
+            <Avatar src={people[0].photoUrl} name={people[0].label} />
+            <p className="text-sm font-medium">{people[0].label}</p>
+          </div>
         )}
 
         {isFull ? (
