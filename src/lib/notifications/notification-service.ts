@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { dispatch } from './dispatcher';
 import {
   recipientsForActivityDay,
+  recipientsForActivityDayUpdate,
   recipientsForActivityDayCancellation,
   recipientsForPickupNotice,
   recipientsForPickupNoticeAcknowledged,
@@ -70,7 +71,7 @@ export async function notifyActivityDayUpdated(dayId: string): Promise<void> {
       },
     });
     if (!day) return;
-    const recipients = await recipientsForActivityDay(dayId);
+    const recipients = await recipientsForActivityDayUpdate(dayId);
     if (recipients.length === 0) return;
     await dispatch({
       type: 'ACTIVITY_DAY_UPDATED',
@@ -306,6 +307,33 @@ export async function notifyManualPaymentApproved(
     });
   } catch (err) {
     logFailure('notifyManualPaymentApproved', err);
+  }
+}
+
+export async function notifyManualPaymentRejected(
+  paymentId: string
+): Promise<void> {
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { id: true, amount: true, orderId: true },
+    });
+    if (!payment) return;
+    const recipients = await recipientsForOrderPayment(paymentId);
+    if (recipients.length === 0) return;
+    await dispatch({
+      type: 'PAYMENT_REJECTED',
+      recipients,
+      title: 'Pago manual rechazado',
+      body: `Tu pago manual de ${formatAmount(payment.amount)} fue rechazado.`,
+      url: `/profile/payments?manual-payment=rejected`,
+      data: {
+        paymentId: payment.id,
+        orderId: payment.orderId,
+      } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyManualPaymentRejected', err);
   }
 }
 

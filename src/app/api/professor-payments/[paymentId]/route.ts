@@ -59,12 +59,12 @@ export async function PATCH(
   });
 
   if (parsed.data.status === 'PAID' && existing.status !== 'PAID') {
-    notifyProfessorPaymentPaid(params.paymentId);
+    await notifyProfessorPaymentPaid(params.paymentId);
   } else if (
     parsed.data.status === 'CANCELLED' &&
     existing.status !== 'CANCELLED'
   ) {
-    notifyProfessorPaymentCancelled(params.paymentId);
+    await notifyProfessorPaymentCancelled(params.paymentId);
   }
 
   return NextResponse.json({ payment });

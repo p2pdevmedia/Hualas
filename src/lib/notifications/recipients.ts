@@ -15,6 +15,54 @@ export async function recipientsForActivityDay(
   return [...new Set(participants.map((p) => p.userId))];
 }
 
+export async function recipientsForActivityDayUpdate(
+  dayId: string
+): Promise<string[]> {
+  const day = await prisma.activityDay.findUnique({
+    where: { id: dayId },
+    select: { activityId: true, activityGroupId: true },
+  });
+  if (!day) return [];
+
+  if (day.activityGroupId) {
+    const [members, professors] = await Promise.all([
+      prisma.activityGroupMember.findMany({
+        where: { activityGroupId: day.activityGroupId },
+        select: { activityParticipant: { select: { userId: true } } },
+      }),
+      prisma.activityDayProfessor.findMany({
+        where: { activityDay: { activityGroupId: day.activityGroupId } },
+        select: { userId: true },
+      }),
+    ]);
+
+    return [
+      ...new Set([
+        ...members.map((m) => m.activityParticipant.userId),
+        ...professors.map((p) => p.userId),
+      ]),
+    ];
+  }
+
+  const [participants, professors] = await Promise.all([
+    prisma.activityParticipant.findMany({
+      where: { activityId: day.activityId },
+      select: { userId: true },
+    }),
+    prisma.activityProfessor.findMany({
+      where: { activityId: day.activityId },
+      select: { userId: true },
+    }),
+  ]);
+
+  return [
+    ...new Set([
+      ...participants.map((p) => p.userId),
+      ...professors.map((p) => p.userId),
+    ]),
+  ];
+}
+
 export async function recipientsForActivityDayCancellation(
   dayId: string
 ): Promise<string[]> {
@@ -25,11 +73,22 @@ export async function recipientsForActivityDayCancellation(
   if (!day) return [];
 
   if (day.activityGroupId) {
-    const members = await prisma.activityGroupMember.findMany({
-      where: { activityGroupId: day.activityGroupId },
-      select: { activityParticipant: { select: { userId: true } } },
-    });
-    return [...new Set(members.map((m) => m.activityParticipant.userId))];
+    const [members, professors] = await Promise.all([
+      prisma.activityGroupMember.findMany({
+        where: { activityGroupId: day.activityGroupId },
+        select: { activityParticipant: { select: { userId: true } } },
+      }),
+      prisma.activityDayProfessor.findMany({
+        where: { activityDay: { activityGroupId: day.activityGroupId } },
+        select: { userId: true },
+      }),
+    ]);
+    return [
+      ...new Set([
+        ...members.map((m) => m.activityParticipant.userId),
+        ...professors.map((p) => p.userId),
+      ]),
+    ];
   }
 
   const participants = await prisma.activityParticipant.findMany({

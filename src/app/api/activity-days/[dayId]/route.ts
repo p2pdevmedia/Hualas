@@ -149,14 +149,9 @@ export async function PUT(
     },
   });
 
-  const dateChanged = day.date.getTime() !== new Date(data.date).getTime();
-  const scheduleChanged = day.schedule !== data.schedule;
-  const geoChanged = day.geoLocation !== data.geoLocation;
-  if (dateChanged || scheduleChanged || geoChanged) {
-    notifyActivityDayUpdated(updatedDay.id).catch((err) =>
-      console.error('[notifications] notifyActivityDayUpdated failed', err)
-    );
-  }
+  notifyActivityDayUpdated(updatedDay.id).catch((err) =>
+    console.error('[notifications] notifyActivityDayUpdated failed', err)
+  );
 
   return NextResponse.json(updatedDay);
 }
