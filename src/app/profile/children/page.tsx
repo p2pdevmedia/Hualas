@@ -249,12 +249,21 @@ export default async function ChildrenPage() {
                 >
                   Ver
                 </Link>
-                <Link
-                  href={`/profile/children/${child.id}/edit?returnTo=/profile/children`}
-                  className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-primary px-3 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
-                >
-                  Editar
-                </Link>
+                {child.userId === userId ? (
+                  <Link
+                    href="/profile?returnTo=/profile/children"
+                    className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-primary px-3 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    Editar perfil
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/profile/children/${child.id}/edit?returnTo=/profile/children`}
+                    className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-primary px-3 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    Editar
+                  </Link>
+                )}
               </div>
             </div>
           ))}

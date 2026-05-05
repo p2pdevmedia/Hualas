@@ -22,6 +22,11 @@ type UpcomingSession = {
   activityGroupId: string | null;
   groupName: string | null;
   cancelled: boolean;
+  professors: Array<{
+    userId: string;
+    name: string | null;
+    lastName: string | null;
+  }>;
 };
 
 type ActivityParticipantSummary = {
@@ -212,6 +217,12 @@ export default async function MyActivitiesPage({
           activityId: true,
           cancelled: true,
           activityGroup: { select: { name: true } },
+          professors: {
+            select: {
+              userId: true,
+              user: { select: { name: true, lastName: true } },
+            },
+          },
         },
         orderBy: { date: 'asc' },
       });
@@ -238,6 +249,11 @@ export default async function MyActivitiesPage({
             activityGroupId: s.activityGroupId,
             groupName: s.activityGroup?.name ?? null,
             cancelled: s.cancelled,
+            professors: s.professors.map((professor) => ({
+              userId: professor.userId,
+              name: professor.user.name,
+              lastName: professor.user.lastName,
+            })),
           });
           sessionsByActivity.set(s.activityId, list);
         }
@@ -446,6 +462,10 @@ export default async function MyActivitiesPage({
                             s.latitude != null && s.longitude != null
                               ? `https://www.google.com/maps?q=${s.latitude},${s.longitude}`
                               : null;
+                          const mapEmbedSrc =
+                            s.latitude != null && s.longitude != null
+                              ? `https://www.google.com/maps?q=${s.latitude},${s.longitude}&z=15&output=embed`
+                              : null;
                           const dateLabel = new Date(
                             s.date + 'T12:00:00'
                           ).toLocaleDateString('es-AR', {
@@ -454,74 +474,139 @@ export default async function MyActivitiesPage({
                             month: 'short',
                           });
                           return (
-                            <li
-                              key={s.id}
-                              className={`flex items-center gap-3 rounded-lg px-3 py-2 ${s.cancelled ? 'bg-red-50 border border-red-200' : 'bg-muted/40'}`}
-                            >
-                              {s.sportIcon ? (
-                                <Image
-                                  src={`/icons/${s.sportIcon}`}
-                                  alt=""
-                                  width={56}
-                                  height={56}
-                                  className={`h-14 w-14 shrink-0 object-contain ${s.cancelled ? 'opacity-40' : ''}`}
-                                />
-                              ) : (
-                                <span className="h-14 w-14 shrink-0" />
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <p
-                                    className={`text-sm font-medium leading-tight ${s.cancelled ? 'line-through text-muted-foreground' : ''}`}
-                                  >
-                                    {dateLabel} · {s.schedule}
-                                  </p>
-                                  {s.groupName && (
-                                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                      {s.groupName}
-                                    </span>
+                            <li key={s.id}>
+                              <details
+                                className={`group rounded-lg border px-3 py-2 ${s.cancelled ? 'border-red-200 bg-red-50' : 'bg-muted/40'}`}
+                              >
+                                <summary className="flex cursor-pointer list-none items-center gap-3">
+                                  {s.sportIcon ? (
+                                    <Image
+                                      src={`/icons/${s.sportIcon}`}
+                                      alt=""
+                                      width={56}
+                                      height={56}
+                                      className={`h-14 w-14 shrink-0 object-contain ${s.cancelled ? 'opacity-40' : ''}`}
+                                    />
+                                  ) : (
+                                    <span className="h-14 w-14 shrink-0" />
                                   )}
-                                  {s.cancelled && (
-                                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
-                                      Cancelado
-                                    </span>
-                                  )}
-                                  {sessionParticipantNames.length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {sessionParticipantNames.map((name) => (
-                                        <span
-                                          key={name}
-                                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                                        >
-                                          {name}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      <p
+                                        className={`text-sm font-medium leading-tight ${s.cancelled ? 'line-through text-muted-foreground' : ''}`}
+                                      >
+                                        {dateLabel} · {s.schedule}
+                                      </p>
+                                      {s.groupName && (
+                                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                          {s.groupName}
                                         </span>
-                                      ))}
+                                      )}
+                                      {s.cancelled && (
+                                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                                          Cancelado
+                                        </span>
+                                      )}
+                                      {sessionParticipantNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-1">
+                                          {sessionParticipantNames.map(
+                                            (name) => (
+                                              <span
+                                                key={name}
+                                                className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                              >
+                                                {name}
+                                              </span>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                    <p className="truncate text-xs text-muted-foreground">
+                                      {s.geoLocation}
+                                    </p>
+                                  </div>
+                                  <span className="text-xs text-link underline-offset-4 group-open:underline">
+                                    Ver detalle
+                                  </span>
+                                </summary>
+
+                                <div className="mt-3 space-y-3 border-t pt-3">
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Profesores del grupo
+                                    </p>
+                                    {s.professors.length > 0 ? (
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {s.professors.map((professor) => {
+                                          const professorName =
+                                            `${professor.name ?? ''}${professor.lastName ? ` ${professor.lastName}` : ''}`.trim() ||
+                                            'Sin nombre';
+                                          return (
+                                            <span
+                                              key={professor.userId}
+                                              className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
+                                            >
+                                              {professorName}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="mt-2 text-xs text-muted-foreground">
+                                        No hay profesores asignados.
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <div className="grid gap-3 md:grid-cols-[1fr_180px] md:items-start">
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Ubicación
+                                      </p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {s.geoLocation}
+                                      </p>
+                                      {mapHref && (
+                                        <a
+                                          href={mapHref}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-block text-xs text-link hover:underline underline-offset-4"
+                                        >
+                                          Abrir en Google Maps
+                                        </a>
+                                      )}
+                                      {isProfessor && (
+                                        <div>
+                                          <Link
+                                            href={`/activities/${activity.id}/days/${s.id}`}
+                                            prefetch={true}
+                                            className="inline-flex rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                                          >
+                                            Ver sesión
+                                          </Link>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {mapEmbedSrc && (
+                                      <div className="overflow-hidden rounded-xl border bg-background">
+                                        <iframe
+                                          title={`Mapa de ${activity.name}`}
+                                          src={mapEmbedSrc}
+                                          width="100%"
+                                          height="160"
+                                          loading="lazy"
+                                          className="block w-full"
+                                          style={{ border: 0 }}
+                                          referrerPolicy="no-referrer-when-downgrade"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {s.geoLocation}
-                                </p>
-                              </div>
-                              {mapHref && (
-                                <a
-                                  href={mapHref}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="shrink-0 text-xs text-link hover:underline underline-offset-4"
-                                >
-                                  Mapa
-                                </a>
-                              )}
-                              {isProfessor && (
-                                <Link
-                                  href={`/activities/${activity.id}/days/${s.id}`}
-                                  prefetch={true}
-                                  className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
-                                >
-                                  Ver sesión
-                                </Link>
-                              )}
+                              </details>
                             </li>
                           );
                         })}
