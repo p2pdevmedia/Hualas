@@ -9,22 +9,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = session.user.id;
+
   const conversations = await prisma.conversation.findMany({
     where: {
       participants: {
-        some: { userId: session.user.id },
+        some: { userId },
       },
     },
-    include: {
+    select: {
+      id: true,
       participants: {
-        include: {
+        select: {
           user: {
             select: { id: true, name: true },
           },
         },
       },
       messages: {
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          senderId: true,
+          body: true,
+          createdAt: true,
+          readAt: true,
+        },
+      },
+      _count: {
+        select: {
+          messages: {
+            where: {
+              senderId: { not: userId },
+              readAt: null,
+            },
+          },
+        },
       },
     },
   });
@@ -41,9 +61,7 @@ export async function GET(req: NextRequest) {
       createdAt: m.createdAt.toISOString(),
       readAt: m.readAt?.toISOString() ?? null,
     })),
-    unreadCount: c.messages.filter(
-      (m) => m.senderId !== session.user.id && m.readAt === null
-    ).length,
+    unreadCount: c._count.messages,
   }));
 
   return NextResponse.json(data);

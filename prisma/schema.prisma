@@ -117,6 +117,9 @@ model Message {
   body           String
   readAt         DateTime?
   createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, senderId, readAt])
 }
 
 model Form {
