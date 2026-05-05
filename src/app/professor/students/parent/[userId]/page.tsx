@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 export default async function ProfessorParentProfilePage({
   params,
@@ -58,36 +59,6 @@ export default async function ProfessorParentProfilePage({
       doctorPhone: true,
       profilePhoto: true,
       updatedAt: true,
-      children: {
-        select: {
-          id: true,
-          name: true,
-          lastName: true,
-          birthDate: true,
-          activityParticipants: {
-            where: {
-              groupMembership: {
-                activityGroup: { activityId: { in: professorActivityIds } },
-              },
-            },
-            include: {
-              activity: { select: { id: true, name: true } },
-              groupMembership: {
-                include: { activityGroup: { select: { name: true } } },
-              },
-            },
-          },
-        },
-        where: {
-          activityParticipants: {
-            some: {
-              groupMembership: {
-                activityGroup: { activityId: { in: professorActivityIds } },
-              },
-            },
-          },
-        },
-      },
       activityParticipants: {
         where: {
           childId: null,
@@ -106,6 +77,39 @@ export default async function ProfessorParentProfilePage({
   });
 
   if (!user) notFound();
+
+  const childOwnerIds = await getAccessibleChildOwnerIds(params.userId);
+  const children = await prisma.child.findMany({
+    where: {
+      userId: { in: childOwnerIds },
+      activityParticipants: {
+        some: {
+          groupMembership: {
+            activityGroup: { activityId: { in: professorActivityIds } },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      birthDate: true,
+      activityParticipants: {
+        where: {
+          groupMembership: {
+            activityGroup: { activityId: { in: professorActivityIds } },
+          },
+        },
+        include: {
+          activity: { select: { id: true, name: true } },
+          groupMembership: {
+            include: { activityGroup: { select: { name: true } } },
+          },
+        },
+      },
+    },
+  });
 
   const medicalFields: [string, string | null | undefined][] = [
     ['Alergias', user.allergies],
@@ -213,13 +217,13 @@ export default async function ProfessorParentProfilePage({
         </div>
       )}
 
-      {user.children.length > 0 && (
+      {children.length > 0 && (
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
           <h2 className="text-lg font-semibold tracking-tight">
             Hijos en tus grupos
           </h2>
           <ul className="divide-y divide-border">
-            {user.children.map((child) => (
+            {children.map((child) => (
               <li key={child.id} className="py-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">

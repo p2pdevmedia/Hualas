@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { formatAccountingDate, formatAmount } from '@/lib/accounting';
 import { getManualPaymentRawData } from '@/lib/manual-payments';
 import { formatManualPaymentStatus } from '@/lib/manual-payment-ui';
+import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import DeleteChildButton from './delete-child-button';
 
 const MONTHS = [
@@ -53,9 +54,6 @@ export default async function ViewUserPage({
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
-      children: {
-        orderBy: { createdAt: 'asc' },
-      },
       professorProfile: {
         include: {
           payments: {
@@ -85,6 +83,25 @@ export default async function ViewUserPage({
   });
 
   if (!user) redirect('/admin/users');
+
+  const allChildren = await prisma.child.findMany({
+    where: await getAccessibleChildrenWhere(user.id),
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const familyGroup = await prisma.familyGroup.findFirst({
+    where: { responsibleUserId: user.id },
+    include: {
+      members: {
+        include: {
+          member: {
+            select: { id: true, name: true, lastName: true, email: true, phone: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  });
 
   const manualPayments = await prisma.payment.findMany({
     where: {
@@ -326,9 +343,9 @@ export default async function ViewUserPage({
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Familia</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {user.children.length > 0
-                ? `${user.children.length} integrante${user.children.length === 1 ? '' : 's'} registrado${user.children.length === 1 ? '' : 's'}`
-                : 'Sin familia registrada.'}
+              {allChildren.length > 0
+                ? `${allChildren.length} hijo${allChildren.length === 1 ? '' : 's'} registrado${allChildren.length === 1 ? '' : 's'}`
+                : 'Sin hijos registrados.'}
             </p>
           </div>
           <Link
@@ -339,9 +356,48 @@ export default async function ViewUserPage({
           </Link>
         </div>
 
-        {user.children.length > 0 && (
+        {familyGroup && familyGroup.members.length > 0 && (
+          <div className="border-t border-border pt-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Tutores y padres del grupo familiar
+            </p>
+            <div className="space-y-2">
+              {familyGroup.members.map((fm) => {
+                const relLabel: Record<string, string> = {
+                  PARENT: 'Madre / Padre',
+                  RESPONSIBLE: 'Responsable',
+                  OTHER: 'Tutor/a',
+                };
+                return (
+                  <div
+                    key={fm.id}
+                    className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2 text-sm"
+                  >
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                      {`${fm.member.name?.[0] ?? ''}${fm.member.lastName?.[0] ?? ''}`.trim() || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/admin/users/${fm.member.id}/view`}
+                        className="font-medium hover:underline underline-offset-4 text-primary"
+                      >
+                        {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
+                      </Link>
+                      <p className="text-xs text-muted-foreground truncate">{fm.member.email}</p>
+                    </div>
+                    <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {relLabel[fm.relationship] ?? fm.relationship}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {allChildren.length > 0 && (
           <ul className="divide-y divide-border">
-            {user.children.map((child) => (
+            {allChildren.map((child) => (
               <li
                 key={child.id}
                 className="py-3 flex items-start justify-between gap-4"
@@ -421,7 +477,7 @@ export default async function ViewUserPage({
                     Editar
                   </Link>
                   <DeleteChildButton
-                    userId={user.id}
+                    userId={child.userId}
                     childId={child.id}
                     childName={`${child.name} ${child.lastName ?? ''}`.trim()}
                   />

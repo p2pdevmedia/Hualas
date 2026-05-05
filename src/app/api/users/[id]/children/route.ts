@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
+import { getAccessibleChildrenWhere } from '@/lib/family-access';
 
 export async function GET(
   req: Request,
@@ -16,7 +17,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const children = await prisma.child.findMany({
-    where: { userId: params.id },
+    where: await getAccessibleChildrenWhere(params.id),
     select: {
       id: true,
       name: true,

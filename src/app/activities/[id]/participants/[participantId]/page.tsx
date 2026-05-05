@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getAccessibleChildrenWhere } from '@/lib/family-access';
 
 export default async function ActivityParticipantFamilyPage({
   params,
@@ -23,16 +24,12 @@ export default async function ActivityParticipantFamilyPage({
     include: {
       activity: { select: { id: true, name: true } },
       user: {
-        include: {
-          children: {
-            orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
-            select: {
-              id: true,
-              name: true,
-              lastName: true,
-              birthDate: true,
-            },
-          },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          email: true,
+          phone: true,
         },
       },
       child: {
@@ -45,6 +42,14 @@ export default async function ActivityParticipantFamilyPage({
       },
     },
   });
+
+  const familyChildren = participant
+    ? await prisma.child.findMany({
+        where: await getAccessibleChildrenWhere(participant.userId),
+        orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
+        select: { id: true, name: true, lastName: true, birthDate: true },
+      })
+    : [];
 
   if (!participant || participant.activityId !== params.id) {
     redirect(`/activities/${params.id}`);
@@ -112,13 +117,13 @@ export default async function ActivityParticipantFamilyPage({
 
       <section className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Familia asociada</h2>
-        {participant.user.children.length === 0 ? (
+        {familyChildren.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
             No hay integrantes asociados a este grupo familiar.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {participant.user.children.map((child) => (
+            {familyChildren.map((child) => (
               <li key={child.id} className="rounded-lg border p-3 text-sm">
                 <p className="font-medium">
                   {child.name} {child.lastName ?? ''}
