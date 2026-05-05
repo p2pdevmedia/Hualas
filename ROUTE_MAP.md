@@ -98,6 +98,9 @@ Agents should check this before searching the codebase.
   - File: `src/app/accounting/social-fee/page.tsx`
   - Related client form: `src/app/accounting/social-fee/social-fee-settings-form.tsx`
 
+- `/accounting/debt-by-family` → Family debt status dashboard
+  - File: `src/app/accounting/debt-by-family/page.tsx`
+
 - `/accounting/movements` → Manual movements list
   - File: `src/app/accounting/movements/page.tsx`
   - Related component: `src/app/accounting/movements/movements-table.tsx`
