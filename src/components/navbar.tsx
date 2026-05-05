@@ -219,9 +219,19 @@ export default function Navbar() {
           {session && !isCounter && (
             <Link
               href={activitiesHref}
-              className={navLinkClass(activitiesHref)}
+              className={cn(
+                navLinkClass(activitiesHref),
+                'inline-flex items-center gap-2'
+              )}
               prefetch={true}
             >
+              {isMember
+                ? renderNavIcon(
+                    '/mis-actividades.png',
+                    'Mis actividades',
+                    'h-8 w-8'
+                  )
+                : null}
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
@@ -457,10 +467,19 @@ export default function Navbar() {
               {session && !isCounter && (
                 <Link
                   href={activitiesHref}
-                  className={navLinkClass(activitiesHref)}
+                  className={cn(
+                    navLinkClass(activitiesHref),
+                    'inline-flex items-center gap-2'
+                  )}
                   onClick={() => setMenuOpen(false)}
                   prefetch={true}
                 >
+                  {isMember &&
+                    renderNavIcon(
+                      '/mis-actividades.png',
+                      'Mis actividades',
+                      'h-8 w-8'
+                    )}
                   {isMember ? t.myActivities : t.activities}
                 </Link>
               )}
@@ -479,14 +498,14 @@ export default function Navbar() {
                 </Link>
               )}
               {session && (
-              <Link
-                href="/chat"
-                className={cn(
-                  navLinkClass('/chat'),
-                  'inline-flex items-center gap-2'
-                )}
-                onClick={() => setMenuOpen(false)}
-              >
+                <Link
+                  href="/chat"
+                  className={cn(
+                    navLinkClass('/chat'),
+                    'inline-flex items-center gap-2'
+                  )}
+                  onClick={() => setMenuOpen(false)}
+                >
                   {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
                   <span>{t.chat}</span>
                   {hasUnreadMessages && renderUnreadIcon()}
@@ -495,9 +514,13 @@ export default function Navbar() {
               {canSeeChildrenSection && (
                 <Link
                   href="/profile/children"
-                  className={navLinkClass('/profile/children')}
+                  className={cn(
+                    navLinkClass('/profile/children'),
+                    'inline-flex items-center gap-2'
+                  )}
                   onClick={() => setMenuOpen(false)}
                 >
+                  {renderNavIcon('/familia.png', 'Familia', 'h-8 w-8')}
                   {actions.myChildren}
                 </Link>
               )}
