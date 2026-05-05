@@ -35,7 +35,10 @@ export async function generateMetadata() {
       title: 'Hualas Club',
       statusBarStyle: 'default',
     },
-    icons: [{ url: `https://gateway.pinata.cloud/ipfs/${IPFS_HASH}` }],
+    icons: [
+      { rel: 'icon', url: '/favico.png', type: 'image/png' },
+      { rel: 'apple-touch-icon', url: '/favico.png', type: 'image/png' },
+    ],
   };
 }
 

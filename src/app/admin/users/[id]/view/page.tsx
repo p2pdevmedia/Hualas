@@ -353,13 +353,24 @@ export default async function ViewUserPage({
           <div className="flex items-center gap-2">
             {(session?.user?.role === 'ADMIN' ||
               session?.user?.role === 'SUPER_ADMIN') && (
-              <Link
-                href={`/admin/users/${user.id}/add-tutor`}
-                prefetch={true}
-                className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
-              >
-                Agregar Tutor
-              </Link>
+              <>
+                <Link
+                  href={`/admin/users/${user.id}/add-tutor`}
+                  prefetch={true}
+                  className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Agregar Tutor
+                </Link>
+                {allChildren.length >= 2 && (
+                  <Link
+                    href={`/admin/users/${user.id}/merge-children`}
+                    prefetch={true}
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    Fusionar Hijos
+                  </Link>
+                )}
+              </>
             )}
             <Link
               href={`/admin/users/${user.id}/child-enrollment`}

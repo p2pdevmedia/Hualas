@@ -149,6 +149,11 @@ Agents should check this before searching the codebase.
   - Related form: `src/app/admin/users/[id]/add-tutor/add-tutor-admin-form.tsx`
   - API: `POST /api/admin/users/[id]/tutors`
 
+- `/admin/users/[id]/merge-children` → Merge two children of a user (ADMIN/SUPER_ADMIN only)
+  - File: `src/app/admin/users/[id]/merge-children/page.tsx`
+  - Related client: `src/app/admin/users/[id]/merge-children/merge-client.tsx`
+  - API: `POST /api/admin/users/[id]/merge-children`
+
 - `/admin/forms` → Forms list
   - File: `src/app/admin/forms/page.tsx`
   - Related components:
