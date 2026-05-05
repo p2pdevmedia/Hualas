@@ -39,10 +39,13 @@ export async function POST(req: Request) {
       activityLines: quote.activityLines,
       discountLines: quote.discountLines,
       socialFeeLines: quote.socialFeeLines,
+      mercadoPagoFeeLines: quote.mercadoPagoFeeLines,
       totalActivityAmount: quote.totalActivityAmount,
       totalDiscountAmount: quote.totalDiscountAmount,
       totalSocialFeeAmount: quote.totalSocialFeeAmount,
+      totalMercadoPagoFeeAmount: quote.totalMercadoPagoFeeAmount,
       totalAmount: quote.totalAmount,
+      totalAmountWithMercadoPagoFee: quote.totalAmountWithMercadoPagoFee,
       socialFeeAmount: quote.socialFeeAmount,
     });
   } catch (error) {

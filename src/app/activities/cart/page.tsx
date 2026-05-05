@@ -28,10 +28,16 @@ type QuoteResponse = {
     amount: number;
     label: string;
   }>;
+  mercadoPagoFeeLines: Array<{
+    amount: number;
+    label: string;
+  }>;
   totalActivityAmount: number;
   totalDiscountAmount: number;
   totalSocialFeeAmount: number;
+  totalMercadoPagoFeeAmount: number;
   totalAmount: number;
+  totalAmountWithMercadoPagoFee: number;
   socialFeeAmount: number;
 };
 
@@ -278,10 +284,26 @@ export default function ActivitiesCartPage() {
                       {formatMoney(quote.totalSocialFeeAmount)}
                     </span>
                   </div>
+                  {paymentMethod === 'MERCADO_PAGO' &&
+                    quote.mercadoPagoFeeLines.map((line, index) => (
+                      <div
+                        key={`mp-fee-${index}`}
+                        className="flex items-center justify-between gap-4 text-orange-700"
+                      >
+                        <span>{line.label}</span>
+                        <span className="font-medium">
+                          +{formatMoney(line.amount)}
+                        </span>
+                      </div>
+                    ))}
                   <div className="border-t pt-2 flex items-center justify-between gap-4 text-base">
                     <span className="font-semibold">Total</span>
                     <span className="font-semibold">
-                      {formatMoney(quote.totalAmount)}
+                      {formatMoney(
+                        paymentMethod === 'MERCADO_PAGO'
+                          ? quote.totalAmountWithMercadoPagoFee
+                          : quote.totalAmount
+                      )}
                     </span>
                   </div>
                 </div>
@@ -346,10 +368,18 @@ export default function ActivitiesCartPage() {
             <div>
               <p className="text-lg font-semibold">
                 Total a pagar:{' '}
-                {quote ? formatMoney(quote.totalAmount) : 'Calculando...'}
+                {quote
+                  ? formatMoney(
+                      paymentMethod === 'MERCADO_PAGO'
+                        ? quote.totalAmountWithMercadoPagoFee
+                        : quote.totalAmount
+                    )
+                  : 'Calculando...'}
               </p>
               <p className="text-sm text-muted-foreground">
-                El importe visible coincide con el checkout de Mercado Pago.
+                {paymentMethod === 'MERCADO_PAGO'
+                  ? 'Incluye 10% de cargos de servicios externos Mercado Libre.'
+                  : 'El importe visible coincide con el comprobante de transferencia.'}
               </p>
             </div>
             {paymentMethod === 'MERCADO_PAGO' ? (

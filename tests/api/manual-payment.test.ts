@@ -84,10 +84,18 @@ function baseQuote(overrides: Partial<CartQuote> = {}): CartQuote {
     ],
     discountLines: [],
     socialFeeLines: [],
+    mercadoPagoFeeLines: [
+      {
+        amount: 500,
+        label: 'Cargos de servicios externos Mercado Libre',
+      },
+    ],
     totalActivityAmount: 5000,
     totalDiscountAmount: 0,
     totalSocialFeeAmount: 0,
+    totalMercadoPagoFeeAmount: 500,
     totalAmount: 5000,
+    totalAmountWithMercadoPagoFee: 5500,
     socialFeeAmount: 0,
     socialFeeParticipants: [],
     validatedItems: [{ activityId: ACTIVITY_ID, target: 'self' }],

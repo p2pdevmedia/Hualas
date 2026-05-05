@@ -33,14 +33,22 @@ type DiscountSummary = {
   label: string;
 };
 
+type MercadoPagoFeeLine = {
+  amount: number;
+  label: string;
+};
+
 export type CartQuote = {
   activityLines: ActivitySummary[];
   discountLines: DiscountSummary[];
   socialFeeLines: SocialFeeSummary[];
+  mercadoPagoFeeLines: MercadoPagoFeeLine[];
   totalActivityAmount: number;
   totalDiscountAmount: number;
   totalSocialFeeAmount: number;
+  totalMercadoPagoFeeAmount: number;
   totalAmount: number;
+  totalAmountWithMercadoPagoFee: number;
   socialFeeAmount: number;
   socialFeeParticipants: SocialFeeParticipant[];
   validatedItems: CartCheckoutItem[];
@@ -263,15 +271,30 @@ export async function buildCartQuote({
     0
   );
 
+  const totalAmount =
+    totalActivityAmount - totalDiscountAmount + totalSocialFeeAmount;
+  const totalMercadoPagoFeeAmount = Math.round(totalAmount * 0.1);
+  const mercadoPagoFeeLines: MercadoPagoFeeLine[] =
+    totalMercadoPagoFeeAmount > 0
+      ? [
+          {
+            amount: totalMercadoPagoFeeAmount,
+            label: 'Cargos de servicios externos Mercado Libre',
+          },
+        ]
+      : [];
+
   return {
     activityLines,
     discountLines,
     socialFeeLines,
+    mercadoPagoFeeLines,
     totalActivityAmount,
     totalDiscountAmount,
     totalSocialFeeAmount,
-    totalAmount:
-      totalActivityAmount - totalDiscountAmount + totalSocialFeeAmount,
+    totalMercadoPagoFeeAmount,
+    totalAmount,
+    totalAmountWithMercadoPagoFee: totalAmount + totalMercadoPagoFeeAmount,
     socialFeeAmount,
     socialFeeParticipants,
     validatedItems: items,
@@ -317,5 +340,14 @@ export function toMercadoPagoItems(quote: CartQuote) {
     category_id: 'services' as const,
   }));
 
-  return [...activityItems, ...discountItems, ...socialFeeItems];
+  const feeItems = quote.mercadoPagoFeeLines.map((line, index) => ({
+    id: `mp-fee:${index}`,
+    title: line.label,
+    quantity: 1,
+    unit_price: line.amount,
+    currency_id: 'ARS' as const,
+    category_id: 'services' as const,
+  }));
+
+  return [...activityItems, ...discountItems, ...socialFeeItems, ...feeItems];
 }

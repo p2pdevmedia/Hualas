@@ -254,6 +254,19 @@ export async function GET(
         category_id: 'services',
       });
     }
+
+    const mpFeeAmount = Math.round((unitPrice + socialFeeAmount) * 0.1);
+    if (mpFeeAmount > 0) {
+      items.push({
+        id: 'mp-fee',
+        title: 'Cargos de servicios externos Mercado Libre',
+        description: 'Cargos de servicios externos Mercado Libre',
+        quantity: 1,
+        unit_price: mpFeeAmount,
+        currency_id: 'ARS',
+        category_id: 'services',
+      });
+    }
     const preferenceExpiresAt = new Date(
       Date.now() + checkoutSettings.expiresInMinutes * 60 * 1000
     );
