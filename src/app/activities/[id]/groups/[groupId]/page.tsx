@@ -203,6 +203,13 @@ export default async function ActivityGroupPage({
           >
             Volver a la actividad
           </Link>
+          <Link
+            href={`/activities/${activity.id}/groups/${group.id}/edit`}
+            prefetch={true}
+            className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Editar grupo
+          </Link>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
