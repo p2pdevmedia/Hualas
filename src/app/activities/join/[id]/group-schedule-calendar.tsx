@@ -134,9 +134,9 @@ export default function GroupScheduleCalendar({
     const group = groups.find((g) => g.id === selectedGroupId);
     if (!group || (group.minAge === null && group.maxAge === null)) return null;
     const birthDate = new Date(selectedPersonBirthDate);
-    const refDate = activityStartDate
-      ? new Date(activityStartDate)
-      : new Date();
+    const today = new Date();
+    const actStart = activityStartDate ? new Date(activityStartDate) : null;
+    const refDate = actStart && actStart > today ? actStart : today;
     const age = calculateAge(birthDate, refDate);
     if (group.minAge !== null && age < group.minAge) {
       return `La persona seleccionada tiene ${age} año${age === 1 ? '' : 's'}. Este grupo es para mayores de ${group.minAge} años.`;
