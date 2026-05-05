@@ -32,9 +32,11 @@ type Child = {
 
 export default function EditChildForm({
   userId,
+  returnToUserId,
   child,
 }: {
   userId: string;
+  returnToUserId: string;
   child: Child;
 }) {
   const router = useRouter();
@@ -145,7 +147,7 @@ export default function EditChildForm({
 
       setSuccess('Hijo actualizado');
       setTimeout(() => {
-        router.push(`/admin/users/${userId}/view`);
+        router.push(`/admin/users/${returnToUserId}/view`);
         router.refresh();
       }, 900);
     } catch (e) {

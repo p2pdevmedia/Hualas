@@ -488,7 +488,7 @@ export default async function ViewUserPage({
                     Ver
                   </Link>
                   <Link
-                    href={`/admin/users/${child.userId}/children/${child.id}/edit`}
+                    href={`/admin/users/${child.userId}/children/${child.id}/edit?returnTo=${user.id}`}
                     prefetch={true}
                     className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
                   >

@@ -7,8 +7,10 @@ import EditChildForm from './form';
 
 export default async function EditChildPage({
   params,
+  searchParams,
 }: {
   params: { id: string; childId: string };
+  searchParams?: { returnTo?: string };
 }) {
   const session = await getServerSession(authOptions);
   // Auth gating happens in the parent /admin layout.
@@ -47,12 +49,14 @@ export default async function EditChildPage({
     redirect(`/admin/users/${params.id}/view`);
   }
 
+  const returnToUserId = searchParams?.returnTo ?? params.id;
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Editar hijo</h1>
         <Link
-          href={`/admin/users/${params.id}/view`}
+          href={`/admin/users/${returnToUserId}/view`}
           prefetch={true}
           className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors shrink-0"
         >
@@ -62,6 +66,7 @@ export default async function EditChildPage({
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <EditChildForm
           userId={params.id}
+          returnToUserId={returnToUserId}
           child={{
             ...child,
             birthDate: child.birthDate
