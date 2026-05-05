@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
+import { childAccessWhere } from '@/lib/child-access';
 
 export default async function PickupNoticesPage() {
   const session = await getServerSession(authOptions);
@@ -23,7 +24,7 @@ export default async function PickupNoticesPage() {
 
   if (isMember) {
     const userChildren = await prisma.child.findMany({
-      where: { userId: (session.user as any).id },
+      where: childAccessWhere((session.user as any).id),
       select: { id: true },
     });
 

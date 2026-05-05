@@ -26,7 +26,7 @@ export default async function NewChildPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Agregar hijo</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Agregar hijo/a</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Completá los datos del menor que deseás registrar.
         </p>
@@ -40,7 +40,7 @@ export default async function NewChildPage() {
         href="/profile/children"
         className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
       >
-        ← Volver a mis hijos
+        ← Volver a Familia
       </Link>
     </div>
   );

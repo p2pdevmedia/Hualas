@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createPickupNoticeSchema } from '@/lib/validations/pickup-notice';
 import { notifyPickupNoticeCreated } from '@/lib/notifications/notification-service';
+import { childIdAccessWhere } from '@/lib/child-access';
 import { z } from 'zod';
 
 export async function POST(
@@ -42,12 +43,12 @@ export async function POST(
       );
     }
 
-    // Verify the child belongs to the current user
-    const child = await prisma.child.findUnique({
-      where: { id: data.childId },
+    // Verify the child belongs to or is shared with the current user
+    const child = await prisma.child.findFirst({
+      where: childIdAccessWhere(session.user.id, data.childId),
     });
 
-    if (!child || child.userId !== session.user.id) {
+    if (!child) {
       return NextResponse.json(
         { error: 'Cannot create notice for this child' },
         { status: 403 }

@@ -11,7 +11,8 @@ export default async function ActivityParticipantFamilyPage({
 }) {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
-  const canAccess = role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'PROFESSOR';
+  const canAccess =
+    role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'PROFESSOR';
 
   if (!session?.user?.id || !canAccess) {
     redirect('/login');
@@ -58,7 +59,9 @@ export default async function ActivityParticipantFamilyPage({
     if (!assignment) redirect('/');
   }
 
-  const fullName = `${participant.user.name ?? ''} ${participant.user.lastName ?? ''}`.trim() || 'Sin nombre';
+  const fullName =
+    `${participant.user.name ?? ''} ${participant.user.lastName ?? ''}`.trim() ||
+    'Sin nombre';
   const participantName = participant.child
     ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
     : fullName;
@@ -66,34 +69,60 @@ export default async function ActivityParticipantFamilyPage({
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 space-y-6">
       <nav className="text-xs text-muted-foreground font-body flex items-center gap-1">
-        <Link href="/my-activities" className="hover:text-primary transition-colors">Mis actividades</Link>
+        <Link
+          href="/my-activities"
+          className="hover:text-primary transition-colors"
+        >
+          Mis actividades
+        </Link>
         <span>→</span>
-        <Link href={`/activities/${params.id}`} className="hover:text-primary transition-colors">{participant.activity.name}</Link>
+        <Link
+          href={`/activities/${params.id}`}
+          className="hover:text-primary transition-colors"
+        >
+          {participant.activity.name}
+        </Link>
         <span>→</span>
         <span className="text-foreground">Grupo familiar</span>
       </nav>
 
       <section className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
-        <h1 className="text-2xl font-semibold">Grupo familiar de {participantName}</h1>
-        <p className="text-sm text-muted-foreground">Información de contacto del responsable y de las infancias asociadas.</p>
+        <h1 className="text-2xl font-semibold">
+          Grupo familiar de {participantName}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Información de contacto del responsable y de la familia asociada.
+        </p>
       </section>
 
       <section className="rounded-xl border bg-card p-6 shadow-sm space-y-2 text-sm">
         <h2 className="text-lg font-semibold">Responsable</h2>
-        <p><span className="text-muted-foreground">Nombre:</span> {fullName}</p>
-        <p><span className="text-muted-foreground">Email:</span> {participant.user.email}</p>
-        <p><span className="text-muted-foreground">Teléfono:</span> {participant.user.phone || 'Sin teléfono'}</p>
+        <p>
+          <span className="text-muted-foreground">Nombre:</span> {fullName}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Email:</span>{' '}
+          {participant.user.email}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Teléfono:</span>{' '}
+          {participant.user.phone || 'Sin teléfono'}
+        </p>
       </section>
 
       <section className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Infancias del grupo familiar</h2>
+        <h2 className="text-lg font-semibold">Familia asociada</h2>
         {participant.user.children.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No hay infancias asociadas a este grupo familiar.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No hay integrantes asociados a este grupo familiar.
+          </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {participant.user.children.map((child) => (
               <li key={child.id} className="rounded-lg border p-3 text-sm">
-                <p className="font-medium">{child.name} {child.lastName ?? ''}</p>
+                <p className="font-medium">
+                  {child.name} {child.lastName ?? ''}
+                </p>
               </li>
             ))}
           </ul>

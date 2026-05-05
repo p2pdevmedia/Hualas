@@ -19,6 +19,7 @@ import {
   checkUserProfile,
   checkChildProfile,
 } from '@/lib/participant-profile-check';
+import { childIdAccessWhere } from '@/lib/child-access';
 
 type CheckoutItem = {
   activityId: string;
@@ -119,11 +120,15 @@ export async function GET(
   }
 
   const activityCapacity =
-    activity.groups.length === 0 || activity.groups.some((g: any) => g.capacity == null)
+    activity.groups.length === 0 ||
+    activity.groups.some((g: any) => g.capacity == null)
       ? null
       : activity.groups.reduce((sum: number, g: any) => sum + g.capacity, 0);
 
-  if (activityCapacity != null && activity.participants.length >= activityCapacity) {
+  if (
+    activityCapacity != null &&
+    activity.participants.length >= activityCapacity
+  ) {
     return NextResponse.json(
       { error: 'La actividad ya alcanzó su cupo de inscripciones.' },
       { status: 409 }
@@ -143,8 +148,8 @@ export async function GET(
   });
 
   if (childId) {
-    const child = await prisma.child.findUnique({
-      where: { id: childId },
+    const child = await prisma.child.findFirst({
+      where: childIdAccessWhere((session.user as any).id, childId),
       select: {
         name: true,
         lastName: true,
@@ -393,8 +398,8 @@ export async function POST(
   });
 
   if (childId) {
-    const child = await prisma.child.findUnique({
-      where: { id: childId },
+    const child = await prisma.child.findFirst({
+      where: childIdAccessWhere((session.user as { id: string }).id, childId),
       select: {
         name: true,
         lastName: true,

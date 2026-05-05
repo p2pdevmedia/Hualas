@@ -85,7 +85,12 @@ export default async function MyActivitiesPage({
     } else {
       participations = await prisma.activityParticipant.findMany({
         where: {
-          OR: [{ userId }, { child: { userId } }],
+          OR: [
+            { userId },
+            {
+              child: { OR: [{ userId }, { guardians: { some: { userId } } }] },
+            },
+          ],
         },
         include: {
           activity: {
@@ -118,7 +123,9 @@ export default async function MyActivitiesPage({
     { groupIds: Set<string>; hasUngroupedParticipant: boolean }
   >();
   for (const participation of participations) {
-    const current = participantScopeByActivity.get(participation.activity.id) ?? {
+    const current = participantScopeByActivity.get(
+      participation.activity.id
+    ) ?? {
       groupIds: new Set<string>(),
       hasUngroupedParticipant: false,
     };
@@ -143,9 +150,7 @@ export default async function MyActivitiesPage({
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lte: sixMonthsLater,
           },
-          ...(isProfessorView
-            ? { professors: { some: { userId } } }
-            : {}),
+          ...(isProfessorView ? { professors: { some: { userId } } } : {}),
         },
         select: {
           id: true,
@@ -192,9 +197,7 @@ export default async function MyActivitiesPage({
         where: {
           activityId: { in: activityIds },
           date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-          ...(isProfessorView
-            ? { professors: { some: { userId } } }
-            : {}),
+          ...(isProfessorView ? { professors: { some: { userId } } } : {}),
         },
         select: {
           id: true,
@@ -351,7 +354,7 @@ export default async function MyActivitiesPage({
         <p className="text-sm text-muted-foreground">
           {isProfessorView
             ? 'Actividades en las que estás asignado como profesor.'
-            : 'Actividades en las que estás inscripto vos o alguno de tus hijos.'}
+            : 'Actividades en las que estás inscripto vos o alguien de tu familia.'}
         </p>
       </div>
 
@@ -464,7 +467,9 @@ export default async function MyActivitiesPage({
                               )}
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <p className={`text-sm font-medium leading-tight ${s.cancelled ? 'line-through text-muted-foreground' : ''}`}>
+                                  <p
+                                    className={`text-sm font-medium leading-tight ${s.cancelled ? 'line-through text-muted-foreground' : ''}`}
+                                  >
                                     {dateLabel} · {s.schedule}
                                   </p>
                                   {s.cancelled && (

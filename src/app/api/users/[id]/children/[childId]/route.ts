@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
+import { childIdAccessWhere } from '@/lib/child-access';
 
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
@@ -29,13 +30,11 @@ export async function PUT(
   const isAdmin =
     session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
 
-  if (sessionUserId !== params.id && !isAdmin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   const child = await prisma.child.findFirst({
-    where: { id: params.childId, userId: params.id },
-    select: { id: true },
+    where: isAdmin
+      ? { id: params.childId, userId: params.id }
+      : childIdAccessWhere(sessionUserId, params.childId),
+    select: { id: true, userId: true },
   });
 
   if (!child) {

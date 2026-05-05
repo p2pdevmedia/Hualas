@@ -46,6 +46,7 @@ model User {
   createdActivityDays   ActivityDay[]             @relation("ActivityDayCreatedBy")
   activityDayProfessors ActivityDayProfessor[]
   children              Child[]
+  childGuardians        ChildGuardian[]
   accountingMovements   AccountingMovement[]
   responsibleFamilyGroups FamilyGroup[]      @relation("FamilyGroupResponsible")
   familyMemberships       FamilyGroupMember[] @relation("FamilyGroupMemberUser")
@@ -348,6 +349,20 @@ model Child {
   activityParticipants ActivityParticipant[]
   socialFeePayments    SocialFeePayment[]
   pickupNotices        PickupNotice[]
+  guardians            ChildGuardian[]
+}
+
+model ChildGuardian {
+  id           String                    @id @default(cuid())
+  childId      String
+  userId       String
+  relationship ChildGuardianRelationship @default(TUTOR)
+  createdAt    DateTime                  @default(now())
+  child        Child                     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  user         User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, userId])
+  @@index([userId])
 }
 
 model SocialFeePayment {
@@ -635,6 +650,12 @@ enum FamilyRelationship {
   PARENT
   RESPONSIBLE
   OTHER
+}
+
+enum ChildGuardianRelationship {
+  MOTHER
+  FATHER
+  TUTOR
 }
 
 enum BillableConceptCode {

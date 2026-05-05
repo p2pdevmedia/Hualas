@@ -195,7 +195,7 @@ export default function ChildrenManager({
 
   return (
     <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">Infancias</h2>
+      <h2 className="text-lg font-semibold tracking-tight">Familia</h2>
       {children.length > 0 && (
         <ul className="space-y-1">
           {children.map((c) => (
@@ -269,7 +269,11 @@ export default function ChildrenManager({
               type="file"
               accept="image/*"
               capture="environment"
-              required={form.documentType === 'DNI' && !editingId && !form.documentFrontPhoto}
+              required={
+                form.documentType === 'DNI' &&
+                !editingId &&
+                !form.documentFrontPhoto
+              }
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -287,7 +291,11 @@ export default function ChildrenManager({
               type="file"
               accept="image/*"
               capture="environment"
-              required={form.documentType === 'DNI' && !editingId && !form.documentBackPhoto}
+              required={
+                form.documentType === 'DNI' &&
+                !editingId &&
+                !form.documentBackPhoto
+              }
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -356,8 +364,8 @@ export default function ChildrenManager({
               required
             />
             <span>
-              Declaro, bajo carácter de declaración jurada, que soy padre,
-              madre o tutor legal del menor que estoy registrando.
+              Declaro, bajo carácter de declaración jurada, que soy padre, madre
+              o tutor legal del menor que estoy registrando.
             </span>
           </label>
         )}

@@ -324,11 +324,11 @@ export default async function ViewUserPage({
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Infancias</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Familia</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {user.children.length > 0
-                ? `${user.children.length} infancia${user.children.length === 1 ? '' : 's'} registrada${user.children.length === 1 ? '' : 's'}`
-                : 'Sin infancias registradas.'}
+                ? `${user.children.length} integrante${user.children.length === 1 ? '' : 's'} registrado${user.children.length === 1 ? '' : 's'}`
+                : 'Sin familia registrada.'}
             </p>
           </div>
           <Link

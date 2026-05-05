@@ -114,10 +114,10 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
       });
 
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Hijo agregado correctamente');
+      setSuccess('Hijo/a agregado correctamente');
       setTimeout(() => router.push('/profile/children'), 1500);
     } catch (e) {
-      setError('No se pudo agregar el hijo');
+      setError('No se pudo agregar el hijo/a');
     }
   }
 
@@ -315,7 +315,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
       <Button type="submit" className="w-full">
-        Agregar hijo
+        Agregar hijo/a
       </Button>
     </Form>
   );

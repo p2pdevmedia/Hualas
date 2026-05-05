@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
+import { childIdAccessWhere } from '@/lib/child-access';
 
 export async function PUT(
   req: Request,
@@ -13,12 +14,12 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const child = await prisma.child.findUnique({
-    where: { id: params.id },
+  const child = await prisma.child.findFirst({
+    where: childIdAccessWhere((session.user as any).id, params.id),
     select: { userId: true },
   });
 
-  if (!child || child.userId !== (session.user as any).id) {
+  if (!child) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

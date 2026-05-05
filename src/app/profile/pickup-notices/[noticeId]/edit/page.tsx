@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import { PickupNoticeForm } from '@/components/pickup-notice/parent-form';
+import { childAccessWhere } from '@/lib/child-access';
 
 export default async function EditPickupNoticePage({
   params,
@@ -43,9 +44,7 @@ export default async function EditPickupNoticePage({
   }
 
   const children = await prisma.child.findMany({
-    where: {
-      userId: (session.user as any).id,
-    },
+    where: childAccessWhere((session.user as any).id),
     select: {
       id: true,
       name: true,

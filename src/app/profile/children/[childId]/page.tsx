@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
 import { gateActiveRole } from '@/lib/role-guards';
+import { childIdAccessWhere } from '@/lib/child-access';
 
 export default async function ViewMyChildPage({
   params,
@@ -19,15 +20,15 @@ export default async function ViewMyChildPage({
   const gate = gateActiveRole(session, 'MEMBER');
   if (gate) return gate;
 
-  const child = await prisma.child.findUnique({
-    where: { id: params.childId },
+  const child = await prisma.child.findFirst({
+    where: childIdAccessWhere((session.user as any).id, params.childId),
     include: {
       user: true,
       activityParticipants: { include: { activity: true } },
     },
   });
 
-  if (!child || child.userId !== (session.user as any).id) {
+  if (!child) {
     redirect('/profile/children');
   }
 

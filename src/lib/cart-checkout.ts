@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
+import { childAccessWhere } from '@/lib/child-access';
 import {
   getSocialFeeAmount,
   hasSocialFeeForCurrentMonth,
@@ -101,11 +102,15 @@ export async function buildCartQuote({
     }
 
     const activityCapacity =
-      activity.groups.length === 0 || activity.groups.some((g) => g.capacity == null)
+      activity.groups.length === 0 ||
+      activity.groups.some((g) => g.capacity == null)
         ? null
         : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
 
-    if (activityCapacity != null && activity.participants.length >= activityCapacity) {
+    if (
+      activityCapacity != null &&
+      activity.participants.length >= activityCapacity
+    ) {
       throw new CartQuoteError(
         409,
         `La actividad ${activity.name} no tiene cupo.`
@@ -125,7 +130,7 @@ export async function buildCartQuote({
     ? await prisma.child.findMany({
         where: {
           id: { in: childTargets },
-          userId,
+          ...childAccessWhere(userId),
         },
         select: {
           id: true,
@@ -140,7 +145,7 @@ export async function buildCartQuote({
     if (!childById.has(target)) {
       throw new CartQuoteError(
         403,
-        'Uno de los hijos seleccionados no pertenece al usuario.'
+        'Una de las personas seleccionadas no pertenece a tu familia.'
       );
     }
   }
@@ -156,7 +161,17 @@ export async function buildCartQuote({
   );
   const existingParticipants = await prisma.activityParticipant.findMany({
     where: {
-      participantKey: { in: participantKeys },
+      OR: [
+        { participantKey: { in: participantKeys } },
+        ...items
+          .map((item) => ({
+            activityId: item.activityId,
+            childId: normalizeTarget(item.target),
+          }))
+          .filter((item): item is { activityId: string; childId: string } =>
+            Boolean(item.childId)
+          ),
+      ],
     },
     select: {
       participantKey: true,

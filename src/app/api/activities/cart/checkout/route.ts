@@ -17,6 +17,7 @@ import {
   checkUserProfile,
   checkChildProfile,
 } from '@/lib/participant-profile-check';
+import { childAccessWhere } from '@/lib/child-access';
 
 type CartItem = {
   activityId: string;
@@ -102,7 +103,7 @@ export async function POST(req: Request) {
       }),
       childIds.length > 0
         ? prisma.child.findMany({
-            where: { id: { in: childIds }, userId },
+            where: { id: { in: childIds }, ...childAccessWhere(userId) },
             select: {
               id: true,
               name: true,

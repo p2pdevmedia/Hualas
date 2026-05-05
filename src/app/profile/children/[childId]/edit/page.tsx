@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildEditForm from './form';
 import { gateActiveRole } from '@/lib/role-guards';
+import { childIdAccessWhere } from '@/lib/child-access';
 
 export default async function EditChildPage({
   params,
@@ -18,12 +19,12 @@ export default async function EditChildPage({
   const gate = gateActiveRole(session, 'MEMBER');
   if (gate) return gate;
 
-  const child = await prisma.child.findUnique({
-    where: { id: params.childId },
+  const child = await prisma.child.findFirst({
+    where: childIdAccessWhere((session.user as any).id, params.childId),
     include: { user: true },
   });
 
-  if (!child || child.userId !== (session.user as any).id) {
+  if (!child) {
     redirect('/profile/children');
   }
 
@@ -35,7 +36,7 @@ export default async function EditChildPage({
             Editar {child.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Actualiza los datos de tu hijo
+            Actualizá los datos de tu hijo/a
           </p>
         </div>
         <Link
