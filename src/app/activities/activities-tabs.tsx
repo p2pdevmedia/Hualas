@@ -48,7 +48,7 @@ function ActivitiesList({ activities }: { activities: ActivityItem[] }) {
               <span>·</span>
               <span>
                 {activity.capacity
-                  ? `${Math.max(activity.capacity - activity.participantCount, 0)} cupos restantes`
+                  ? `${Math.max(Number(activity.capacity) - Number(activity.participantCount), 0)} cupos restantes`
                   : `${activity.participantCount} suscriptos`}
               </span>
             </div>

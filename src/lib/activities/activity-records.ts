@@ -28,6 +28,7 @@ type ActivityListRow = ActivityBaseRecord & {
 function normalizeListRow(row: ActivityListRow): ActivityListRecord {
   return {
     ...row,
+    price: Number(row.price),
     capacity: row.capacity == null ? null : Number(row.capacity),
     participantCount: Number(row.participantCount),
   };

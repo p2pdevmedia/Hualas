@@ -103,7 +103,7 @@ export default async function Home() {
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground font-body">
                         {activity.capacity
-                          ? `${Math.max(activity.capacity - activity.participantCount, 0)} cupos disponibles`
+                          ? `${Math.max(Number(activity.capacity) - Number(activity.participantCount), 0)} cupos disponibles`
                           : `${activity.participantCount} inscriptos`}
                         {' · $'}
                         {activity.price}
