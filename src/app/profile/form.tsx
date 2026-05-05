@@ -28,7 +28,13 @@ type User = {
   doctorCertificate: string | null;
 };
 
-export default function ProfileForm({ user }: { user: User }) {
+export default function ProfileForm({
+  user,
+  returnTo,
+}: {
+  user: User;
+  returnTo?: string | null;
+}) {
   const [name, setName] = useState(user.name ?? '');
   const [lastName, setLastName] = useState(user.lastName ?? '');
   const [dni, setDni] = useState(user.dni ?? '');
@@ -130,7 +136,13 @@ export default function ProfileForm({ user }: { user: User }) {
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Perfil actualizado');
       setPassword('');
-      setTimeout(() => router.refresh(), 1000);
+      setTimeout(() => {
+        if (returnTo && returnTo.startsWith('/')) {
+          router.push(returnTo);
+          return;
+        }
+        router.refresh();
+      }, 1000);
     } catch (e) {
       setError('No se pudo actualizar el perfil');
     }

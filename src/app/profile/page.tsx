@@ -5,7 +5,11 @@ import { prisma } from '@/lib/prisma';
 import ProfileForm from './form';
 import ProfilePhotoUpload from './profile-photo-upload';
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams?: { returnTo?: string };
+}) {
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect('/login');
@@ -39,6 +43,11 @@ export default async function ProfilePage() {
   if (!user) {
     redirect('/');
   }
+  const returnTo =
+    typeof searchParams?.returnTo === 'string' &&
+    searchParams.returnTo.startsWith('/')
+      ? searchParams.returnTo
+      : null;
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="rounded-2xl border bg-card p-6 shadow-sm">
@@ -66,6 +75,7 @@ export default async function ProfilePage() {
               ? user.birthDate.toISOString().split('T')[0]
               : null,
           }}
+          returnTo={returnTo}
         />
       </div>
     </div>

@@ -54,6 +54,10 @@ export default function ActivitiesCartPage() {
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
   const [error, setError] = useState<string | null>(null);
+  const [errorAction, setErrorAction] = useState<{
+    label: string;
+    url: string;
+  } | null>(null);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
@@ -81,6 +85,7 @@ export default function ActivitiesCartPage() {
     if (items.length === 0) {
       setQuote(null);
       setError(null);
+      setErrorAction(null);
       setQuoteLoading(false);
       return;
     }
@@ -89,6 +94,7 @@ export default function ActivitiesCartPage() {
     const fetchQuote = async () => {
       setQuoteLoading(true);
       setError(null);
+      setErrorAction(null);
       try {
         const response = await fetch('/api/activities/cart/quote', {
           method: 'POST',
@@ -107,6 +113,7 @@ export default function ActivitiesCartPage() {
               : 'No se pudo calcular el carrito.';
           setQuote(null);
           setError(message);
+          setErrorAction(null);
           return;
         }
 
@@ -117,6 +124,7 @@ export default function ActivitiesCartPage() {
         }
         setQuote(null);
         setError('No se pudo calcular el carrito.');
+        setErrorAction(null);
       } finally {
         setQuoteLoading(false);
       }
@@ -126,7 +134,6 @@ export default function ActivitiesCartPage() {
 
     return () => controller.abort();
   }, [hydrated, items]);
-
 
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
@@ -139,6 +146,7 @@ export default function ActivitiesCartPage() {
   const handleCheckout = async () => {
     setSubmitting(true);
     setError(null);
+    setErrorAction(null);
 
     try {
       const response = await fetch('/api/activities/cart/checkout', {
@@ -149,10 +157,18 @@ export default function ActivitiesCartPage() {
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
         redirectUrl?: string;
+        actionUrl?: string;
+        actionLabel?: string;
       };
 
       if (!response.ok) {
         setError(data?.error || 'No se pudo iniciar el pago.');
+        if (data.actionUrl) {
+          setErrorAction({
+            label: data.actionLabel || 'Editar perfil',
+            url: data.actionUrl,
+          });
+        }
         return;
       }
 
@@ -162,6 +178,7 @@ export default function ActivitiesCartPage() {
       }
     } catch {
       setError('No se pudo iniciar el pago.');
+      setErrorAction(null);
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +203,9 @@ export default function ActivitiesCartPage() {
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="text-muted-foreground">No hay actividades en el carrito.</p>
+          <p className="text-muted-foreground">
+            No hay actividades en el carrito.
+          </p>
           <Link
             href="/"
             className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -393,7 +412,19 @@ export default function ActivitiesCartPage() {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="space-y-2 text-sm text-red-600">
+              <p>{error}</p>
+              {errorAction && (
+                <Link
+                  href={`${errorAction.url}?returnTo=${encodeURIComponent('/activities/cart')}`}
+                  className="inline-flex underline underline-offset-4 hover:text-red-700"
+                >
+                  {errorAction.label}
+                </Link>
+              )}
+            </div>
+          )}
         </>
       )}
     </main>

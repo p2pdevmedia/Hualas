@@ -19,6 +19,17 @@ import {
 } from '@/lib/participant-profile-check';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 
+function buildProfileIncompleteResponse(message: string) {
+  return NextResponse.json(
+    {
+      error: message,
+      actionUrl: '/profile',
+      actionLabel: 'Editar perfil',
+    },
+    { status: 422 }
+  );
+}
+
 type CartItem = {
   activityId: string;
   target?: string;
@@ -103,7 +114,10 @@ export async function POST(req: Request) {
       }),
       childIds.length > 0
         ? prisma.child.findMany({
-            where: { id: { in: childIds }, ...(await getAccessibleChildrenWhere(userId)) },
+            where: {
+              id: { in: childIds },
+              ...(await getAccessibleChildrenWhere(userId)),
+            },
             select: {
               id: true,
               name: true,
@@ -122,11 +136,8 @@ export async function POST(req: Request) {
     if (hasSelfItem && userProfile) {
       const check = checkUserProfile(userProfile);
       if (!check.valid) {
-        return NextResponse.json(
-          {
-            error: `Para inscribirte completá tu perfil: ${check.missingFields.join(', ')}.`,
-          },
-          { status: 422 }
+        return buildProfileIncompleteResponse(
+          `Para inscribirte completá tu perfil: ${check.missingFields.join(', ')}.`
         );
       }
     }
@@ -138,11 +149,8 @@ export async function POST(req: Request) {
         if (!child) continue;
         const check = checkChildProfile(child, userProfile?.phone ?? null);
         if (!check.valid) {
-          return NextResponse.json(
-            {
-              error: `Para inscribir a ${child.name} completá: ${check.missingFields.join(', ')}.`,
-            },
-            { status: 422 }
+          return buildProfileIncompleteResponse(
+            `Para inscribir a ${child.name} completá: ${check.missingFields.join(', ')}.`
           );
         }
       }
