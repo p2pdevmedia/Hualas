@@ -16,6 +16,7 @@ import {
 import type { CartQuote } from '@/lib/cart-checkout';
 import { buildManualPaymentReceiptUrl } from '@/lib/blob-urls';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
+import { notifyManualPaymentApproved } from '@/lib/notifications/notification-service';
 
 type CurrentUser = {
   id: string;
@@ -609,6 +610,8 @@ export async function approveManualPayment({
       });
     }
   }
+
+  notifyManualPaymentApproved(updatedPayment.id);
 
   return { payment: updatedPayment };
 }

@@ -85,9 +85,7 @@ export async function notifyActivityDayUpdated(dayId: string): Promise<void> {
   }
 }
 
-export async function notifyActivityDayCancelled(
-  dayId: string
-): Promise<void> {
+export async function notifyActivityDayCancelled(dayId: string): Promise<void> {
   try {
     const day = await prisma.activityDay.findUnique({
       where: { id: dayId },
@@ -281,6 +279,33 @@ export async function notifyOrderPaymentApproved(
     });
   } catch (err) {
     logFailure('notifyOrderPaymentApproved', err);
+  }
+}
+
+export async function notifyManualPaymentApproved(
+  paymentId: string
+): Promise<void> {
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { id: true, amount: true, orderId: true },
+    });
+    if (!payment) return;
+    const recipients = await recipientsForOrderPayment(paymentId);
+    if (recipients.length === 0) return;
+    await dispatch({
+      type: 'PAYMENT_APPROVED',
+      recipients,
+      title: 'Pago manual aprobado',
+      body: `Tu pago manual de ${formatAmount(payment.amount)} fue aprobado.`,
+      url: `/profile/payments?manual-payment=approved`,
+      data: {
+        paymentId: payment.id,
+        orderId: payment.orderId,
+      } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyManualPaymentApproved', err);
   }
 }
 
