@@ -5,6 +5,41 @@ import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const userId = (session.user as any).id;
+  const child = await prisma.child.findFirst({
+    where: { id: params.id, userId },
+    select: { id: true, name: true, lastName: true },
+  });
+
+  if (!child) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const inscriptions = await prisma.activityParticipant.count({
+    where: { childId: params.id },
+  });
+
+  if (inscriptions > 0) {
+    return NextResponse.json(
+      { error: 'El menor tiene inscripciones y no puede ser eliminado' },
+      { status: 409 }
+    );
+  }
+
+  await prisma.child.delete({ where: { id: params.id } });
+
+  return NextResponse.json({ success: true });
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }

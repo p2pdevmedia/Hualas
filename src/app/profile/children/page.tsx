@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import TutorsList from './tutors-list';
+import DeleteChildButton from './delete-child-button';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
@@ -265,6 +266,12 @@ export default async function ChildrenPage() {
                   </Link>
                 )}
               </div>
+              {child.userId === userId && (
+                <DeleteChildButton
+                  childId={child.id}
+                  childName={[child.name, child.lastName].filter(Boolean).join(' ')}
+                />
+              )}
             </div>
           ))}
         </div>

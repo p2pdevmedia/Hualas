@@ -37,6 +37,8 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
+  const labelClass = 'text-sm font-medium text-foreground';
+
   const toDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
       const image = new Image();
@@ -122,50 +124,77 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
   }
 
   return (
-    <Form onSubmit={handleSubmit} className="space-y-3">
+    <Form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <input
+        <div className="space-y-1">
+          <label htmlFor="child-name" className={labelClass}>
+            Nombre <span className="text-destructive">*</span>
+          </label>
+          <input
+            id="child-name"
+            className={inputClass}
+            name="given-name"
+            autoComplete="given-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="child-last-name" className={labelClass}>
+            Apellido
+          </label>
+          <input
+            id="child-last-name"
+            className={inputClass}
+            name="family-name"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="child-document-type" className={labelClass}>
+          Tipo de documento
+        </label>
+        <select
+          id="child-document-type"
           className={inputClass}
-          name="given-name"
-          autoComplete="given-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-          required
-        />
+          name="document-type"
+          autoComplete="off"
+          value={documentType}
+          onChange={(e) => setDocumentType(e.target.value)}
+        >
+          <option value="">Seleccioná una opción</option>
+          <option value="DNI">DNI</option>
+          <option value="PASAPORTE">Pasaporte</option>
+          <option value="OTRO">Otro</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="child-document-number" className={labelClass}>
+          Número / Código
+        </label>
         <input
+          id="child-document-number"
           className={inputClass}
-          name="family-name"
-          autoComplete="family-name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Apellido"
+          name="document-number"
+          autoComplete="off"
+          value={documentNumber}
+          onChange={(e) => setDocumentNumber(e.target.value)}
         />
       </div>
-      <select
-        className={inputClass}
-        name="document-type"
-        autoComplete="off"
-        value={documentType}
-        onChange={(e) => setDocumentType(e.target.value)}
-      >
-        <option value="">Tipo de documento</option>
-        <option value="DNI">DNI</option>
-        <option value="PASAPORTE">Pasaporte</option>
-        <option value="OTRO">Otro</option>
-      </select>
-      <input
-        className={inputClass}
-        name="document-number"
-        autoComplete="off"
-        value={documentNumber}
-        onChange={(e) => setDocumentNumber(e.target.value)}
-        placeholder="Número / Código"
-      />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-sm text-muted-foreground space-y-1">
-          <span>Foto delantera DNI</span>
+        <div className="space-y-1">
+          <label htmlFor="child-doc-front" className={labelClass}>
+            Foto delantera DNI
+          </label>
           <input
+            id="child-doc-front"
             className={inputClass}
             type="file"
             accept="image/*"
@@ -176,10 +205,13 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
               setDocumentFrontPhoto(await toDataUrl(file));
             }}
           />
-        </label>
-        <label className="text-sm text-muted-foreground space-y-1">
-          <span>Foto trasera DNI</span>
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="child-doc-back" className={labelClass}>
+            Foto trasera DNI
+          </label>
           <input
+            id="child-doc-back"
             className={inputClass}
             type="file"
             accept="image/*"
@@ -190,24 +222,38 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
               setDocumentBackPhoto(await toDataUrl(file));
             }}
           />
-        </label>
+        </div>
       </div>
-      <input
-        className={inputClass}
-        name="birth-date"
-        autoComplete="bday"
-        type="date"
-        value={birthDate}
-        onChange={(e) => setBirthDate(e.target.value)}
-      />
-      <input
-        className={inputClass}
-        name="street-address"
-        autoComplete="street-address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Domicilio"
-      />
+
+      <div className="space-y-1">
+        <label htmlFor="child-birth-date" className={labelClass}>
+          Fecha de nacimiento
+        </label>
+        <input
+          id="child-birth-date"
+          className={inputClass}
+          name="birth-date"
+          autoComplete="bday"
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="child-address" className={labelClass}>
+          Domicilio
+        </label>
+        <input
+          id="child-address"
+          className={inputClass}
+          name="street-address"
+          autoComplete="street-address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+      </div>
+
       <label className="text-sm flex items-center gap-2 text-muted-foreground">
         <input
           type="checkbox"
@@ -217,36 +263,56 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
         />
         Mismo domicilio que el usuario
       </label>
-      <select
-        className={inputClass}
-        name="sex"
-        autoComplete="sex"
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Género</option>
-        <option value="FEMALE">Femenino</option>
-        <option value="MALE">Masculino</option>
-        <option value="NON_BINARY">No Binario</option>
-        <option value="UNDISCLOSED">Prefiero no decirlo</option>
-        <option value="OTHER">Otro</option>
-      </select>
-      <input
-        className={inputClass}
-        name="country"
-        autoComplete="country-name"
-        value={nationality}
-        onChange={(e) => setNationality(e.target.value)}
-        placeholder="Nacionalidad"
-      />
-      <input
-        className={inputClass}
-        name="marital-status"
-        autoComplete="off"
-        value={maritalStatus}
-        onChange={(e) => setMaritalStatus(e.target.value)}
-        placeholder="Estado Civil"
-      />
+
+      <div className="space-y-1">
+        <label htmlFor="child-gender" className={labelClass}>
+          Género
+        </label>
+        <select
+          id="child-gender"
+          className={inputClass}
+          name="sex"
+          autoComplete="sex"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="">Seleccioná una opción</option>
+          <option value="FEMALE">Femenino</option>
+          <option value="MALE">Masculino</option>
+          <option value="NON_BINARY">No Binario</option>
+          <option value="UNDISCLOSED">Prefiero no decirlo</option>
+          <option value="OTHER">Otro</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="child-nationality" className={labelClass}>
+          Nacionalidad
+        </label>
+        <input
+          id="child-nationality"
+          className={inputClass}
+          name="country"
+          autoComplete="country-name"
+          value={nationality}
+          onChange={(e) => setNationality(e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="child-marital-status" className={labelClass}>
+          Estado Civil
+        </label>
+        <input
+          id="child-marital-status"
+          className={inputClass}
+          name="marital-status"
+          autoComplete="off"
+          value={maritalStatus}
+          onChange={(e) => setMaritalStatus(e.target.value)}
+        />
+      </div>
+
       <label className="text-sm flex items-start gap-2 text-muted-foreground">
         <input
           type="checkbox"
@@ -260,66 +326,119 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           tutor legal del menor que estoy registrando.
         </span>
       </label>
-      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
         <h3 className="text-sm font-semibold">Ficha médica</h3>
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={allergies}
-          onChange={(e) => setAllergies(e.target.value)}
-          placeholder="Alergias"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={regularMedication}
-          onChange={(e) => setRegularMedication(e.target.value)}
-          placeholder="Medicación habitual"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={relevantDiseases}
-          onChange={(e) => setRelevantDiseases(e.target.value)}
-          placeholder="Enfermedades relevantes"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={previousInjuries}
-          onChange={(e) => setPreviousInjuries(e.target.value)}
-          placeholder="Lesiones previas"
-        />
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={physicalRestrictions}
-          onChange={(e) => setPhysicalRestrictions(e.target.value)}
-          placeholder="Restricciones físicas"
-        />
-        <input
-          className={inputClass}
-          name="blood-group"
-          autoComplete="off"
-          value={bloodGroup}
-          onChange={(e) => setBloodGroup(e.target.value)}
-          placeholder="Grupo sanguíneo"
-        />
-        <input
-          className={inputClass}
-          name="doctor-name"
-          autoComplete="off"
-          value={primaryDoctor}
-          onChange={(e) => setPrimaryDoctor(e.target.value)}
-          placeholder="Médico de cabecera"
-        />
-        <input
-          className={inputClass}
-          name="doctor-tel"
-          type="tel"
-          autoComplete="tel"
-          value={doctorPhone}
-          onChange={(e) => setDoctorPhone(e.target.value)}
-          placeholder="Teléfono médico"
-        />
-        <label className="text-sm text-muted-foreground space-y-1">
-          <span>Certificado del médico (imagen)</span>
+
+        <div className="space-y-1">
+          <label htmlFor="child-allergies" className={labelClass}>
+            Alergias
+          </label>
+          <textarea
+            id="child-allergies"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={allergies}
+            onChange={(e) => setAllergies(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-medication" className={labelClass}>
+            Medicación habitual
+          </label>
+          <textarea
+            id="child-medication"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={regularMedication}
+            onChange={(e) => setRegularMedication(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-diseases" className={labelClass}>
+            Enfermedades relevantes
+          </label>
+          <textarea
+            id="child-diseases"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={relevantDiseases}
+            onChange={(e) => setRelevantDiseases(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-injuries" className={labelClass}>
+            Lesiones previas
+          </label>
+          <textarea
+            id="child-injuries"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={previousInjuries}
+            onChange={(e) => setPreviousInjuries(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-restrictions" className={labelClass}>
+            Restricciones físicas
+          </label>
+          <textarea
+            id="child-restrictions"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={physicalRestrictions}
+            onChange={(e) => setPhysicalRestrictions(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-blood-group" className={labelClass}>
+            Grupo sanguíneo
+          </label>
           <input
+            id="child-blood-group"
+            className={inputClass}
+            name="blood-group"
+            autoComplete="off"
+            value={bloodGroup}
+            onChange={(e) => setBloodGroup(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-doctor" className={labelClass}>
+            Médico de cabecera
+          </label>
+          <input
+            id="child-doctor"
+            className={inputClass}
+            name="doctor-name"
+            autoComplete="off"
+            value={primaryDoctor}
+            onChange={(e) => setPrimaryDoctor(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-doctor-phone" className={labelClass}>
+            Teléfono médico
+          </label>
+          <input
+            id="child-doctor-phone"
+            className={inputClass}
+            name="doctor-tel"
+            type="tel"
+            autoComplete="tel"
+            value={doctorPhone}
+            onChange={(e) => setDoctorPhone(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-doctor-cert" className={labelClass}>
+            Certificado del médico (imagen)
+          </label>
+          <input
+            id="child-doctor-cert"
             className={inputClass}
             type="file"
             accept="image/*"
@@ -329,14 +448,21 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
               setDoctorCertificate(await toDataUrl(file));
             }}
           />
-        </label>
-        <textarea
-          className={`${inputClass} min-h-[72px] resize-y`}
-          value={observations}
-          onChange={(e) => setObservations(e.target.value)}
-          placeholder="Observaciones"
-        />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="child-observations" className={labelClass}>
+            Observaciones
+          </label>
+          <textarea
+            id="child-observations"
+            className={`${inputClass} min-h-[72px] resize-y`}
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+          />
+        </div>
       </div>
+
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
       <Button type="submit" className="w-full">

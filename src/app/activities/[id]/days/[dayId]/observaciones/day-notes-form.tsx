@@ -1,6 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { enqueueMutation } from '@/lib/offline/pending-mutations';
+
+async function saveDayField(
+  dayId: string,
+  field: 'planificacion' | 'devolucion',
+  value: string,
+): Promise<{ savedLocally: boolean }> {
+  if (!navigator.onLine) {
+    await enqueueMutation({
+      url: `/api/activity-days/${dayId}`,
+      method: 'PATCH',
+      body: { [field]: value },
+    });
+    return { savedLocally: true };
+  }
+  try {
+    const res = await fetch(`/api/activity-days/${dayId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No se pudo guardar');
+    }
+    return { savedLocally: false };
+  } catch (err) {
+    if (!navigator.onLine) {
+      await enqueueMutation({
+        url: `/api/activity-days/${dayId}`,
+        method: 'PATCH',
+        body: { [field]: value },
+      });
+      return { savedLocally: true };
+    }
+    throw err;
+  }
+}
 
 function NoteCard({
   label,
@@ -11,20 +49,35 @@ function NoteCard({
   label: string;
   placeholder: string;
   initialValue: string;
-  onSave: (value: string) => Promise<void>;
+  onSave: (value: string) => Promise<{ savedLocally: boolean }>;
 }) {
   const [value, setValue] = useState(initialValue);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedLocally, setSavedLocally] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const onSynced = () => {
+      if (savedLocally) setSavedLocally(false);
+    };
+    window.addEventListener('hualas-mutations-synced', onSynced);
+    return () =>
+      window.removeEventListener('hualas-mutations-synced', onSynced);
+  }, [savedLocally]);
 
   async function handleSave() {
     setSaving(true);
     setSaved(false);
+    setSavedLocally(false);
     setError('');
     try {
-      await onSave(value);
-      setSaved(true);
+      const result = await onSave(value);
+      if (result.savedLocally) {
+        setSavedLocally(true);
+      } else {
+        setSaved(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
@@ -45,6 +98,7 @@ function NoteCard({
         onChange={(e) => {
           setValue(e.target.value);
           setSaved(false);
+          setSavedLocally(false);
         }}
       />
       <div className="flex items-center gap-3">
@@ -59,6 +113,11 @@ function NoteCard({
         {saved && (
           <span className="text-sm text-green-600 dark:text-green-400">
             Guardado
+          </span>
+        )}
+        {savedLocally && (
+          <span className="text-sm text-amber-600 dark:text-amber-400">
+            Guardado localmente · se enviará al reconectar
           </span>
         )}
         {error && <span className="text-sm text-destructive">{error}</span>}
@@ -78,43 +137,19 @@ export default function DayNotesForm({
   initialPlanificacion,
   initialDevolucion,
 }: DayNotesFormProps) {
-  async function savePlanificacion(value: string) {
-    const res = await fetch(`/api/activity-days/${dayId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ planificacion: value }),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => null);
-      throw new Error(payload?.error || 'No se pudo guardar');
-    }
-  }
-
-  async function saveObservacion(value: string) {
-    const res = await fetch(`/api/activity-days/${dayId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ devolucion: value }),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => null);
-      throw new Error(payload?.error || 'No se pudo guardar');
-    }
-  }
-
   return (
     <div className="space-y-4">
       <NoteCard
         label="Planificación"
         placeholder="Describí lo que planificaste para esta sesión…"
         initialValue={initialPlanificacion ?? ''}
-        onSave={savePlanificacion}
+        onSave={(value) => saveDayField(dayId, 'planificacion', value)}
       />
       <NoteCard
         label="Observación"
         placeholder="Anotá observaciones sobre cómo resultó la sesión…"
         initialValue={initialDevolucion ?? ''}
-        onSave={saveObservacion}
+        onSave={(value) => saveDayField(dayId, 'devolucion', value)}
       />
     </div>
   );
