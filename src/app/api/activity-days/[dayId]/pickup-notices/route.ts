@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createPickupNoticeSchema } from '@/lib/validations/pickup-notice';
 import { notifyPickupNoticeCreated } from '@/lib/notifications/notification-service';
-import { childIdAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { z } from 'zod';
 
 export async function POST(
@@ -45,7 +45,10 @@ export async function POST(
 
     // Verify the child belongs to or is shared with the current user
     const child = await prisma.child.findFirst({
-      where: childIdAccessWhere(session.user.id, data.childId),
+      where: {
+        id: data.childId,
+        userId: { in: await getAccessibleChildOwnerIds(session.user.id) },
+      },
     });
 
     if (!child) {

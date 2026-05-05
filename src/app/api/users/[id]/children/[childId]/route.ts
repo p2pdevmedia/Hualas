@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
-import { childIdAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
@@ -33,7 +33,10 @@ export async function PUT(
   const child = await prisma.child.findFirst({
     where: isAdmin
       ? { id: params.childId, userId: params.id }
-      : childIdAccessWhere(sessionUserId, params.childId),
+      : {
+          id: params.childId,
+          userId: { in: await getAccessibleChildOwnerIds(sessionUserId) },
+        },
     select: { id: true, userId: true },
   });
 

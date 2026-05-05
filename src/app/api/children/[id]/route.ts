@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { childCreateSchema } from '@/lib/validations/child';
-import { childIdAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 export async function PUT(
   req: Request,
@@ -14,8 +14,9 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const ownerIds = await getAccessibleChildOwnerIds((session.user as any).id);
   const child = await prisma.child.findFirst({
-    where: childIdAccessWhere((session.user as any).id, params.id),
+    where: { id: params.id, userId: { in: ownerIds } },
     select: { userId: true },
   });
 

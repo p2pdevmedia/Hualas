@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import RoleSwitchPrompt from '@/components/role-switch-prompt';
 import { hasProfessorCapability } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import ActivityCalendar, {
   type CalendarActivityDay,
 } from './activity-calendar';
@@ -83,13 +84,12 @@ export default async function MyActivitiesPage({
         orderBy: { activity: { date: 'asc' } },
       });
     } else {
+      const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
       participations = await prisma.activityParticipant.findMany({
         where: {
           OR: [
             { userId },
-            {
-              child: { OR: [{ userId }, { guardians: { some: { userId } } }] },
-            },
+            { child: { userId: { in: accessibleChildOwnerIds } } },
           ],
         },
         include: {

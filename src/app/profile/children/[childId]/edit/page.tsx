@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildEditForm from './form';
 import { gateActiveRole } from '@/lib/role-guards';
-import { childIdAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 export default async function EditChildPage({
   params,
@@ -20,7 +20,10 @@ export default async function EditChildPage({
   if (gate) return gate;
 
   const child = await prisma.child.findFirst({
-    where: childIdAccessWhere((session.user as any).id, params.childId),
+    where: {
+      id: params.childId,
+      userId: { in: await getAccessibleChildOwnerIds((session.user as any).id) },
+    },
     include: { user: true },
   });
 

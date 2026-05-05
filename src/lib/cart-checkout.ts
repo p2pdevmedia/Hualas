@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
-import { childAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import {
   getSocialFeeAmount,
   hasSocialFeeForCurrentMonth,
@@ -130,7 +130,7 @@ export async function buildCartQuote({
     ? await prisma.child.findMany({
         where: {
           id: { in: childTargets },
-          ...childAccessWhere(userId),
+          ...(await getAccessibleChildrenWhere(userId)),
         },
         select: {
           id: true,

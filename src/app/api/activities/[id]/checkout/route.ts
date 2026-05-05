@@ -19,7 +19,7 @@ import {
   checkUserProfile,
   checkChildProfile,
 } from '@/lib/participant-profile-check';
-import { childIdAccessWhere } from '@/lib/child-access';
+import { getAccessibleChildrenWhere } from '@/lib/family-access';
 
 type CheckoutItem = {
   activityId: string;
@@ -149,7 +149,7 @@ export async function GET(
 
   if (childId) {
     const child = await prisma.child.findFirst({
-      where: childIdAccessWhere((session.user as any).id, childId),
+      where: { id: childId, ...(await getAccessibleChildrenWhere((session.user as any).id)) },
       select: {
         name: true,
         lastName: true,
@@ -399,7 +399,10 @@ export async function POST(
 
   if (childId) {
     const child = await prisma.child.findFirst({
-      where: childIdAccessWhere((session.user as { id: string }).id, childId),
+      where: {
+        id: childId,
+        ...(await getAccessibleChildrenWhere((session.user as { id: string }).id)),
+      },
       select: {
         name: true,
         lastName: true,
