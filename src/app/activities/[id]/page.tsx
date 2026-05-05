@@ -296,7 +296,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     activityGroups.map((group: any) => [group.id, group.name])
   );
   const capacity =
-    activityGroups.length === 0 || activityGroups.some((g: any) => g.capacity == null)
+    activityGroups.length === 0 ||
+    activityGroups.some((g: any) => g.capacity == null)
       ? null
       : activityGroups.reduce((sum: number, g: any) => sum + g.capacity, 0);
   const hasCapacity = capacity != null;
@@ -343,7 +344,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   const professorLabels = activityProfessors.map((assignment: any) => {
     const professor = assignment.user;
-    return `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`;
+    const label = `${professor.name ?? 'Sin nombre'}${
+      professor.lastName ? ` ${professor.lastName}` : ''
+    }`;
+    return {
+      id: professor.id,
+      label,
+    };
   });
   const activityGroupOptions = activityGroups.map((group: any) => ({
     id: group.id,
@@ -428,7 +435,20 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 },
                 activityProfessors.length > 0 && {
                   label: 'Profesores',
-                  value: professorLabels.join(', '),
+                  value: (
+                    <div className="flex flex-wrap gap-2">
+                      {professorLabels.map((professor) => (
+                        <Link
+                          key={professor.id}
+                          href={`/professors/${professor.id}`}
+                          prefetch={true}
+                          className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          {professor.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ),
                 },
                 activity.date && {
                   label: 'Período',
@@ -444,9 +464,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                     <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
                       {item.label}
                     </p>
-                    <p className="font-heading text-lg font-semibold">
+                    <div className="font-heading text-lg font-semibold">
                       {item.value}
-                    </p>
+                    </div>
                   </div>
                 ))}
             </div>

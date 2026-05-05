@@ -1,9 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound, redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
+import { notFound } from 'next/navigation';
 import { MessageCircle, Mail, Phone } from 'lucide-react';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 function formatName(user: { name: string | null; lastName: string | null }) {
@@ -15,11 +13,6 @@ export default async function ProfessorPublicProfilePage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect('/login');
-  }
-
   const professor = await prisma.user.findFirst({
     where: {
       id: params.id,
