@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
+import ChildProfilePhotoUpload from './child-profile-photo-upload';
 import { gateActiveRole } from '@/lib/role-guards';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
@@ -31,6 +32,7 @@ export default async function ViewMyChildPage({
     },
   });
 
+
   if (!child) {
     redirect('/profile/children');
   }
@@ -48,7 +50,7 @@ export default async function ViewMyChildPage({
       {/* Header */}
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold tracking-tight">
               {child.name} {child.lastName}
             </h1>
@@ -68,6 +70,14 @@ export default async function ViewMyChildPage({
             </Link>
           </div>
         </div>
+
+        <ChildProfilePhotoUpload
+          childId={params.childId}
+          hasPhoto={!!child.profilePhoto}
+          photoVersion={0}
+          name={child.name}
+          lastName={child.lastName}
+        />
 
         {/* Document info summary */}
         {(child.documentFrontPhoto || child.documentBackPhoto) && (

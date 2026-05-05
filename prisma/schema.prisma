@@ -325,6 +325,7 @@ model Child {
   user                 User                  @relation(fields: [userId], references: [id])
   name                 String
   lastName             String?
+  profilePhoto         String?
   documentType         String?
   documentNumber       String?
   documentFrontPhoto   String?

@@ -1,12 +1,12 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import { familyGroupService } from '@/lib/services/family-group-service';
-import FamilyMemberForm from './family-member-form';
 
 export default async function ChildrenPage() {
   const session = await getServerSession(authOptions);
@@ -57,8 +57,15 @@ export default async function ChildrenPage() {
     orderBy: { createdAt: 'asc' },
   });
 
-  const familyMembers = activeFamilyGroup?.members.map((member) => member.member) ?? [];
+  const familyMembers = activeFamilyGroup?.members ?? [];
   const isResponsible = activeFamilyGroup?.responsibleUserId === userId;
+
+  const relationshipLabel: Record<string, string> = {
+    PARENT: 'Madre / Padre',
+    RESPONSIBLE: 'Responsable',
+    OTHER: 'Tutor/a',
+    CHILD: 'Hijo/a',
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -95,45 +102,79 @@ export default async function ChildrenPage() {
       )}
 
       {activeFamilyGroup && (
-        <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">
-                Grupo familiar
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {isResponsible
-                  ? 'Sumá otro adulto para que vea todos los hijos de la familia.'
-                  : 'Este es el grupo familiar al que estás vinculado.'}
-              </p>
-            </div>
+        <div className="rounded-xl border bg-card p-4 shadow-sm space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Grupo familiar
+            </h2>
+            {isResponsible && (
+              <Link
+                href="/profile/children/add-tutor"
+                className="inline-flex h-8 items-center justify-center rounded-full border border-primary px-4 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+              >
+                + Agregar tutor
+              </Link>
+            )}
           </div>
 
-          {familyMembers.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {familyMembers.map((member) => (
-                <span
-                  key={member.id}
-                  className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {member.name ?? member.email}
-                </span>
-              ))}
+          {/* Responsable principal */}
+          {activeFamilyGroup.responsibleUser && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Responsable principal
+              </p>
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {`${activeFamilyGroup.responsibleUser.name?.[0] ?? ''}${activeFamilyGroup.responsibleUser.lastName?.[0] ?? ''}`.trim() || '?'}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {[activeFamilyGroup.responsibleUser.name, activeFamilyGroup.responsibleUser.lastName].filter(Boolean).join(' ') || activeFamilyGroup.responsibleUser.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {activeFamilyGroup.responsibleUser.email}
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
+          )}
+
+          {/* Tutores / padres adicionales */}
+          {familyMembers.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Tutores y padres
+              </p>
+              <div className="space-y-2">
+                {familyMembers.map((fm) => (
+                  <div
+                    key={fm.id}
+                    className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2"
+                  >
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                      {`${fm.member.name?.[0] ?? ''}${fm.member.lastName?.[0] ?? ''}`.trim() || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {fm.member.email}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {relationshipLabel[fm.relationship] ?? fm.relationship}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {familyMembers.length === 0 && !isResponsible && (
             <p className="text-sm text-muted-foreground">
               No hay integrantes adicionales en este grupo.
             </p>
-          )}
-
-          {isResponsible && (
-            <FamilyMemberForm
-              familyGroupId={activeFamilyGroup.id}
-              members={familyMembers.map((member) => ({
-                id: member.id,
-                label: member.email,
-              }))}
-            />
           )}
         </div>
       )}
@@ -157,28 +198,50 @@ export default async function ChildrenPage() {
               key={child.id}
               className="rounded-xl border bg-card p-4 shadow-sm space-y-3"
             >
-              <div className="space-y-2">
-                <h2 className="font-semibold">
-                  {child.name} {child.lastName}
-                </h2>
-                {child.birthDate && (
-                  <p className="text-xs text-muted-foreground">
-                    {(() => {
-                      const today = new Date();
-                      const birth = new Date(child.birthDate);
-                      let age = today.getFullYear() - birth.getFullYear();
-                      const m = today.getMonth() - birth.getMonth();
-                      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-                      return age;
-                    })()}{' '}
-                    años
-                  </p>
-                )}
-                {child.userId !== userId && (
-                  <p className="text-xs text-muted-foreground">
-                    Ve este hijo como parte de tu grupo familiar.
-                  </p>
-                )}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 h-12 w-12 overflow-hidden rounded-full border bg-muted/30">
+                  {child.profilePhoto ? (
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={`/api/children/${child.id}/photo`}
+                        alt={child.name}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="text-sm font-bold text-muted-foreground">
+                        {`${child.name[0]}${child.lastName?.[0] ?? ''}`.trim()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <h2 className="font-semibold truncate">
+                    {child.name} {child.lastName}
+                  </h2>
+                  {child.birthDate && (
+                    <p className="text-xs text-muted-foreground">
+                      {(() => {
+                        const today = new Date();
+                        const birth = new Date(child.birthDate);
+                        let age = today.getFullYear() - birth.getFullYear();
+                        const m = today.getMonth() - birth.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                        return age;
+                      })()}{' '}
+                      años
+                    </p>
+                  )}
+                  {child.userId !== userId && (
+                    <p className="text-xs text-muted-foreground">
+                      Grupo familiar
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
