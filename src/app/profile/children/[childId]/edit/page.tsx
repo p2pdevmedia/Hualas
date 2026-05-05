@@ -9,8 +9,10 @@ import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 export default async function EditChildPage({
   params,
+  searchParams,
 }: {
   params: { childId: string };
+  searchParams?: { returnTo?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -31,6 +33,12 @@ export default async function EditChildPage({
     redirect('/profile/children');
   }
 
+  const returnTo =
+    typeof searchParams?.returnTo === 'string' &&
+    searchParams.returnTo.startsWith('/')
+      ? searchParams.returnTo
+      : `/profile/children/${params.childId}`;
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start justify-between">
@@ -43,7 +51,8 @@ export default async function EditChildPage({
           </p>
         </div>
         <Link
-          href={`/profile/children/${params.childId}`}
+          href={returnTo}
+          prefetch={true}
           className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
         >
           ← Volver
@@ -51,7 +60,7 @@ export default async function EditChildPage({
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <ChildEditForm child={child} />
+        <ChildEditForm child={child} returnTo={returnTo} />
       </div>
     </div>
   );

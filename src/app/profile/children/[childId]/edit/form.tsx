@@ -7,9 +7,10 @@ import type { Child, User } from '@prisma/client';
 
 interface ChildEditFormProps {
   child: Child & { user: User };
+  returnTo: string;
 }
 
-export default function ChildEditForm({ child }: ChildEditFormProps) {
+export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(child.name);
@@ -80,7 +81,7 @@ export default function ChildEditForm({ child }: ChildEditFormProps) {
       );
 
       if (res.ok) {
-        router.push(`/profile/children/${child.id}`);
+        router.push(returnTo);
       }
     } catch (error) {
       console.error('Error updating child:', error);
