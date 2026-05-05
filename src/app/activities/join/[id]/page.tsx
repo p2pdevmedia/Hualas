@@ -56,6 +56,7 @@ export default async function ActivityJoinPage({
         date: true,
         schedule: true,
         activityGroupId: true,
+        sportIcon: true,
         professors: { select: { user: { select: { name: true, lastName: true } } } },
       },
       orderBy: { date: 'asc' },
@@ -207,6 +208,7 @@ export default async function ActivityJoinPage({
             date: session.date.toISOString(),
             schedule: session.schedule,
             activityGroupId: session.activityGroupId,
+            sportIcon: session.sportIcon ?? null,
           }))}
           isFull={isFull}
           hasCapacity={hasCapacity}

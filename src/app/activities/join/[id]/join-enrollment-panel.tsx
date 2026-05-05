@@ -10,7 +10,7 @@ import GroupScheduleCalendar from './group-schedule-calendar';
 import PersonPicker, { Avatar } from './person-picker';
 
 type Group = { id: string; name: string; minAge: number | null; maxAge: number | null; professors: string[] };
-type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
+type Session = { id: string; date: string; schedule: string; activityGroupId: string | null; sportIcon: string | null };
 type Child = {
   id: string;
   name: string;

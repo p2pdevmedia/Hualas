@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
 type Group = {
@@ -14,6 +15,7 @@ type Session = {
   date: string;
   schedule: string;
   activityGroupId: string | null;
+  sportIcon: string | null;
 };
 
 type Props = {
@@ -279,6 +281,18 @@ export default function GroupScheduleCalendar({
                         isSelected ? colors.slotSelected : colors.slot
                       }`}
                     >
+                      {activityType === 'TEMPORARY' && session.sportIcon && (
+                        <div className="mb-0.5">
+                          <Image
+                            src={`/icons/${session.sportIcon}`}
+                            alt=""
+                            width={20}
+                            height={20}
+                            unoptimized
+                            className="opacity-80"
+                          />
+                        </div>
+                      )}
                       <p className="font-medium truncate leading-tight">
                         {group.name}
                       </p>
