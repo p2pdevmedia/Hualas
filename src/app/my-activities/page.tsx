@@ -20,6 +20,7 @@ type UpcomingSession = {
   latitude: number | null;
   longitude: number | null;
   activityGroupId: string | null;
+  groupName: string | null;
   cancelled: boolean;
 };
 
@@ -210,6 +211,7 @@ export default async function MyActivitiesPage({
           activityGroupId: true,
           activityId: true,
           cancelled: true,
+          activityGroup: { select: { name: true } },
         },
         orderBy: { date: 'asc' },
       });
@@ -234,6 +236,7 @@ export default async function MyActivitiesPage({
             latitude: s.latitude,
             longitude: s.longitude,
             activityGroupId: s.activityGroupId,
+            groupName: s.activityGroup?.name ?? null,
             cancelled: s.cancelled,
           });
           sessionsByActivity.set(s.activityId, list);
@@ -472,6 +475,11 @@ export default async function MyActivitiesPage({
                                   >
                                     {dateLabel} · {s.schedule}
                                   </p>
+                                  {s.groupName && (
+                                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                      {s.groupName}
+                                    </span>
+                                  )}
                                   {s.cancelled && (
                                     <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
                                       Cancelado
