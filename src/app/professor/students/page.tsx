@@ -66,9 +66,23 @@ export default async function ProfessorStudentsPage() {
     );
   }
 
+  const assignedGroupDays = await prisma.activityDay.findMany({
+    where: {
+      activityId: { in: activityIds },
+      activityGroupId: { not: null },
+      professors: { some: { userId: professorId } },
+    },
+    select: { activityGroupId: true },
+    distinct: ['activityGroupId'],
+  });
+
+  const assignedGroupIds = assignedGroupDays
+    .map((day) => day.activityGroupId)
+    .filter((groupId): groupId is string => Boolean(groupId));
+
   const groupMembers = await prisma.activityGroupMember.findMany({
     where: {
-      activityGroup: { activityId: { in: activityIds } },
+      activityGroupId: { in: assignedGroupIds },
     },
     include: {
       activityGroup: { select: { name: true } },
@@ -100,7 +114,7 @@ export default async function ProfessorStudentsPage() {
   });
 
   const activityGroups = await prisma.activityGroup.findMany({
-    where: { activityId: { in: activityIds } },
+    where: { id: { in: assignedGroupIds } },
     orderBy: [{ activity: { name: 'asc' } }, { name: 'asc' }],
     include: {
       activity: { select: { name: true } },
@@ -345,7 +359,7 @@ export default async function ProfessorStudentsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Mis alumnos</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Alumnos y padres en grupos de tus actividades.
+          Alumnos y padres en los grupos que tenés asignados.
         </p>
       </div>
       <StudentsSearch students={students} groups={groups} />
