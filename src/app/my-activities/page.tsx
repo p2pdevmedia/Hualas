@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { MessageCircle } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import RoleSwitchPrompt from '@/components/role-switch-prompt';
 import { hasProfessorCapability } from '@/lib/roles';
@@ -545,9 +546,23 @@ export default async function MyActivitiesPage({
                                           return (
                                             <span
                                               key={professor.userId}
-                                              className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
+                                              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
                                             >
-                                              {professorName}
+                                              <Link
+                                                href={`/professors/${professor.userId}`}
+                                                prefetch={true}
+                                                className="hover:underline underline-offset-4"
+                                              >
+                                                {professorName}
+                                              </Link>
+                                              <Link
+                                                href={`/chat?with=${professor.userId}`}
+                                                prefetch={true}
+                                                aria-label={`Iniciar chat con ${professorName}`}
+                                                className="inline-flex h-5 w-5 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
+                                              >
+                                                <MessageCircle className="h-3.5 w-3.5" />
+                                              </Link>
                                             </span>
                                           );
                                         })}

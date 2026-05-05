@@ -85,6 +85,9 @@ Agents should check this before searching the codebase.
 - `/my-activities` → My activities for members and professors
   - File: `src/app/my-activities/page.tsx`
 
+- `/professors/[id]` → Public professor profile with contact data
+  - File: `src/app/professors/[id]/page.tsx`
+
 ### Accounting
 
 - `/accounting` → Accounting dashboard

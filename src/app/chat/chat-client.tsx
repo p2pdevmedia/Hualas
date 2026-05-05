@@ -64,6 +64,13 @@ type ProfessorChatActivity = {
   endDate: string;
   participants: ProfessorChatPerson[];
   groups: ProfessorChatGroup[];
+  professors?: {
+    userId: string;
+    label: string;
+    subtitle: string;
+    profilePhoto: string | null;
+    updatedAt: string;
+  }[];
 };
 
 type SharedParticipant = {
@@ -261,7 +268,11 @@ export default function ChatClient() {
       roles.includes('PROFESSOR') ||
       session.user.role === 'PROFESSOR' ||
       session.user.activeRole === 'PROFESSOR';
-    if (!isProfessor) {
+    const isMember =
+      roles.includes('MEMBER') ||
+      session.user.role === 'MEMBER' ||
+      session.user.activeRole === 'MEMBER';
+    if (!isProfessor && !isMember) {
       setProfessorContext(null);
       return;
     }
@@ -376,10 +387,22 @@ export default function ChatClient() {
     const isAdmin =
       session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
 
-    if (!isAdmin && hasProfessorCapability && professorContext) {
+    if (
+      (hasProfessorCapability || session.user.role === 'MEMBER') &&
+      professorContext
+    ) {
       const map = new Map<string, PersonOption>();
       for (const activity of professorContext.activities) {
-        for (const person of activity.participants) {
+        const contactPeople = [
+          ...activity.participants,
+          ...(activity.professors ?? []).map((professor) => ({
+            userId: professor.userId,
+            label: professor.label,
+            subtitle: professor.subtitle,
+          })),
+        ];
+
+        for (const person of contactPeople) {
           const existing = map.get(person.userId);
           if (existing) {
             existing.activityNames = Array.from(
