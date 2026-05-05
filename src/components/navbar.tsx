@@ -228,6 +228,7 @@ export default function Navbar() {
             <Link
               href="/professor/students"
               className={navLinkClass('/professor/students')}
+              prefetch={true}
             >
               Mis alumnos
             </Link>
@@ -271,16 +272,6 @@ export default function Navbar() {
             <Link href="/accounting" className={navLinkClass('/accounting')}>
               {t.accounting}
             </Link>
-          )}
-          {(!session || (!isAdmin && !isCounter)) && (
-            <>
-              <Link href="/contact" className={navLinkClass('/contact')}>
-                {t.contact}
-              </Link>
-              <Link href="/faq" className={navLinkClass('/faq')}>
-                FAQ
-              </Link>
-            </>
           )}
           {session && (
             <Link
@@ -486,14 +477,14 @@ export default function Navbar() {
                 </Link>
               )}
               {session && (
-                <Link
-                  href="/chat"
-                  className={cn(
-                    navLinkClass('/chat'),
-                    'inline-flex items-center gap-2'
-                  )}
-                  onClick={() => setMenuOpen(false)}
-                >
+              <Link
+                href="/chat"
+                className={cn(
+                  navLinkClass('/chat'),
+                  'inline-flex items-center gap-2'
+                )}
+                onClick={() => setMenuOpen(false)}
+              >
                   {renderNavIcon('/Chat.png', 'Chat', 'h-8 w-8')}
                   <span>{t.chat}</span>
                   {hasUnreadMessages && renderUnreadIcon()}
@@ -577,6 +568,7 @@ export default function Navbar() {
                   href="/professor/students"
                   className={navLinkClass('/professor/students')}
                   onClick={() => setMenuOpen(false)}
+                  prefetch={true}
                 >
                   Mis alumnos
                 </Link>

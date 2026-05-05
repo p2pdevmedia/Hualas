@@ -317,6 +317,7 @@ export default async function ProfessorParentProfilePage({
       <Link
         href="/professor/students"
         className="inline-block text-sm text-link hover:text-link/80 underline underline-offset-4"
+        prefetch={true}
       >
         ← Volver a mis alumnos
       </Link>
