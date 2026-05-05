@@ -110,7 +110,8 @@ export default function PushManager() {
   if (!showHint) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 max-w-sm rounded-xl border bg-background p-4 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+    <div className="w-full max-w-sm rounded-xl border bg-background p-4 shadow-lg">
       <div className="space-y-2">
         <p className="text-sm font-semibold">Activá PushAlert</p>
         <p className="text-sm text-muted-foreground">
@@ -127,6 +128,7 @@ export default function PushManager() {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }

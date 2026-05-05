@@ -120,9 +120,9 @@ export default function InstallPrompt() {
   if (!mounted || !visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 sm:px-4 sm:pb-4">
-      <div className="mx-auto max-w-lg rounded-t-3xl border border-border/70 border-b-0 bg-background/95 p-4 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:rounded-2xl sm:border-b sm:border-border/70">
-        <div className="flex min-h-[220px] flex-col gap-3 sm:min-h-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border/70 bg-background/95 p-4 shadow-2xl supports-[backdrop-filter]:bg-background/90">
+        <div className="flex flex-col gap-3">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Smartphone className="h-5 w-5" aria-hidden="true" />
