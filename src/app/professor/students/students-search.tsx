@@ -34,6 +34,7 @@ export type StudentEntry =
       phone: string | null;
       email: string;
       dni: string | null;
+      tutors: Tutor[];
       activities: string[];
     };
 
@@ -64,6 +65,11 @@ function matches(student: StudentEntry, query: string): boolean {
   } else {
     if (student.dni && normalize(student.dni).includes(q)) return true;
     if (normalize(student.email).includes(q)) return true;
+    for (const t of student.tutors) {
+      if (normalize(t.name).includes(q)) return true;
+      if (normalize(t.email).includes(q)) return true;
+      if (t.phone && normalize(t.phone).includes(q)) return true;
+    }
   }
 
   return false;
@@ -186,10 +192,28 @@ export default function StudentsSearch({
                         </div>
                       )}
 
-                      {student.type === 'adult' && student.phone && (
-                        <p className="text-sm text-muted-foreground">
-                          {student.phone}
-                        </p>
+                      {student.type === 'adult' && (
+                        <div className="space-y-0.5">
+                          {student.phone && (
+                            <p className="text-sm text-muted-foreground">{student.phone}</p>
+                          )}
+                          {student.tutors.map((t, i) => {
+                            const relLabel: Record<string, string> = {
+                              PARENT: 'Madre/Padre',
+                              RESPONSIBLE: 'Responsable',
+                              OTHER: 'Tutor/a',
+                            };
+                            return (
+                              <p key={i} className="text-sm text-muted-foreground">
+                                <span className="text-xs uppercase tracking-wide mr-1">
+                                  {relLabel[t.relationship] ?? t.relationship}:
+                                </span>
+                                <span className="font-medium text-foreground">{t.name}</span>
+                                {t.phone && <span> · {t.phone}</span>}
+                              </p>
+                            );
+                          })}
+                        </div>
                       )}
 
                       <div className="flex flex-wrap gap-1 mt-1">

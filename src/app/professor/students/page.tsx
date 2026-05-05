@@ -137,11 +137,14 @@ export default async function ProfessorStudentsPage() {
     }
   }
 
-  // Fetch tutors for all children's parents
-  const parentIds = Array.from(new Set(Array.from(childrenMap.values()).map((c) => c.parentId)));
-  const familyGroups = parentIds.length > 0
+  // Fetch tutors for children's parents and adult participants
+  const responsibleIds = Array.from(new Set([
+    ...Array.from(childrenMap.values()).map((c) => c.parentId),
+    ...Array.from(adultsMap.keys()),
+  ]));
+  const familyGroups = responsibleIds.length > 0
     ? await prisma.familyGroup.findMany({
-        where: { responsibleUserId: { in: parentIds } },
+        where: { responsibleUserId: { in: responsibleIds } },
         select: {
           responsibleUserId: true,
           members: {
@@ -155,10 +158,11 @@ export default async function ProfessorStudentsPage() {
       })
     : [];
 
-  const tutorsByParent = new Map<string, Array<{ name: string; phone: string | null; email: string; relationship: string }>>();
+  type TutorEntry = { name: string; phone: string | null; email: string; relationship: string };
+  const tutorsByResponsible = new Map<string, TutorEntry[]>();
   for (const group of familyGroups) {
     if (!group.responsibleUserId) continue;
-    tutorsByParent.set(
+    tutorsByResponsible.set(
       group.responsibleUserId,
       group.members.map((m) => ({
         name: [m.member.name, m.member.lastName].filter(Boolean).join(' ') || m.member.email,
@@ -183,7 +187,7 @@ export default async function ProfessorStudentsPage() {
         parentPhone: c.parentPhone,
         parentEmail: c.parentEmail,
         parentDni: c.parentDni,
-        tutors: tutorsByParent.get(c.parentId) ?? [],
+        tutors: tutorsByResponsible.get(c.parentId) ?? [],
         activities: Array.from(c.activitiesSet),
       })
     ),
@@ -196,6 +200,7 @@ export default async function ProfessorStudentsPage() {
         phone: u.phone,
         email: u.email,
         dni: u.dni,
+        tutors: tutorsByResponsible.get(u.userId) ?? [],
         activities: Array.from(u.activitiesSet),
       })
     ),
