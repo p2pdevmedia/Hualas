@@ -21,8 +21,10 @@ export type ProfessorGroupEntry = {
   schedules: {
     id: string;
     date: string;
+    weekday?: number;
     schedule: string;
     cancelled: boolean;
+    repeatsWeekly: boolean;
   }[];
   participants: {
     id: string;
@@ -38,7 +40,29 @@ function getParticipantAgeLabel(age: number | null) {
   return `${age} año${age === 1 ? '' : 's'}`;
 }
 
-function formatScheduleDay(date: string) {
+const weeklyScheduleLabels = [
+  'domingo',
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+];
+
+function formatScheduleDay({
+  date,
+  weekday,
+  repeatsWeekly,
+}: {
+  date: string;
+  weekday?: number;
+  repeatsWeekly: boolean;
+}) {
+  if (repeatsWeekly && weekday !== undefined) {
+    return weeklyScheduleLabels[weekday] ?? 'Día semanal';
+  }
+
   return new Date(date).toLocaleDateString('es-AR', {
     weekday: 'long',
     day: 'numeric',
@@ -448,7 +472,7 @@ export default function StudentsSearch({
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <span className="font-medium capitalize">
-                                  {formatScheduleDay(day.date)}
+                                  {formatScheduleDay(day)}
                                 </span>
                                 {day.cancelled && (
                                   <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
