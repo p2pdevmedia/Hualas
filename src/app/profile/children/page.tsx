@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import TutorsList from './tutors-list';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
@@ -60,12 +61,6 @@ export default async function ChildrenPage() {
   const familyMembers = activeFamilyGroup?.members ?? [];
   const isResponsible = activeFamilyGroup?.responsibleUserId === userId;
 
-  const relationshipLabel: Record<string, string> = {
-    PARENT: 'Madre / Padre',
-    RESPONSIBLE: 'Responsable',
-    OTHER: 'Tutor/a',
-    CHILD: 'Hijo/a',
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -140,36 +135,17 @@ export default async function ChildrenPage() {
           )}
 
           {/* Tutores / padres adicionales */}
-          {familyMembers.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Tutores y padres
-              </p>
-              <div className="space-y-2">
-                {familyMembers.map((fm) => (
-                  <div
-                    key={fm.id}
-                    className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2"
-                  >
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                      {`${fm.member.name?.[0] ?? ''}${fm.member.lastName?.[0] ?? ''}`.trim() || '?'}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {fm.member.email}
-                      </p>
-                    </div>
-                    <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {relationshipLabel[fm.relationship] ?? fm.relationship}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <TutorsList
+            familyGroupId={activeFamilyGroup.id}
+            isResponsible={isResponsible}
+            tutors={familyMembers.map((fm) => ({
+              id: fm.id,
+              memberId: fm.memberId,
+              name: [fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email,
+              email: fm.member.email,
+              relationship: fm.relationship,
+            }))}
+          />
 
           {familyMembers.length === 0 && !isResponsible && (
             <p className="text-sm text-muted-foreground">

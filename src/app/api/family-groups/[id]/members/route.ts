@@ -6,6 +6,43 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { familyGroupService } from '@/lib/services/family-group-service';
 
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const familyGroup = await familyGroupService.getFamilyGroupByResponsible(
+    session.user.id
+  );
+  if (!familyGroup || familyGroup.id !== params.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const schema = z.object({ memberId: z.string() });
+  const parsed = schema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Datos inválidos.' }, { status: 400 });
+  }
+
+  if (parsed.data.memberId === familyGroup.responsibleUserId) {
+    return NextResponse.json(
+      { error: 'No podés eliminar al responsable principal.' },
+      { status: 400 }
+    );
+  }
+
+  await familyGroupService.removeMemberFromFamilyGroup(
+    params.id,
+    parsed.data.memberId
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
