@@ -16,7 +16,10 @@ export default async function ProfessorPublicProfilePage({
   const professor = await prisma.user.findFirst({
     where: {
       id: params.id,
-      role: 'PROFESSOR',
+      OR: [
+        { role: 'PROFESSOR' },
+        { roleAssignments: { some: { role: 'PROFESSOR' } } },
+      ],
     },
     select: {
       id: true,

@@ -229,7 +229,7 @@ export default function Navbar() {
                 ? renderNavIcon(
                     '/mis-actividades.png',
                     'Mis actividades',
-                    'h-8 w-8'
+                    'h-[38px] w-[38px]'
                   )
                 : null}
               {isMember ? t.myActivities : t.activities}
@@ -478,7 +478,7 @@ export default function Navbar() {
                     renderNavIcon(
                       '/mis-actividades.png',
                       'Mis actividades',
-                      'h-8 w-8'
+                      'h-[38px] w-[38px]'
                     )}
                   {isMember ? t.myActivities : t.activities}
                 </Link>
