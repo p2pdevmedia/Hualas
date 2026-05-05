@@ -220,6 +220,7 @@ export default function Navbar() {
             <Link
               href={activitiesHref}
               className={navLinkClass(activitiesHref)}
+              prefetch={true}
             >
               {isMember ? t.myActivities : t.activities}
             </Link>
@@ -458,6 +459,7 @@ export default function Navbar() {
                   href={activitiesHref}
                   className={navLinkClass(activitiesHref)}
                   onClick={() => setMenuOpen(false)}
+                  prefetch={true}
                 >
                   {isMember ? t.myActivities : t.activities}
                 </Link>
