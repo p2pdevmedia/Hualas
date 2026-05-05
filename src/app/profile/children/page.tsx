@@ -55,6 +55,7 @@ export default async function ChildrenPage() {
     where: await getAccessibleChildrenWhere(userId),
     include: {
       user: { select: { id: true, name: true, lastName: true, email: true } },
+      _count: { select: { activityParticipants: true } },
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -266,7 +267,7 @@ export default async function ChildrenPage() {
                   </Link>
                 )}
               </div>
-              {child.userId === userId && (
+              {child.userId === userId && child._count.activityParticipants === 0 && (
                 <DeleteChildButton
                   childId={child.id}
                   childName={[child.name, child.lastName].filter(Boolean).join(' ')}
