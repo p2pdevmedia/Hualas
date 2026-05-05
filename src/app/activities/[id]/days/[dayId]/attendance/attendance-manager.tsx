@@ -36,6 +36,12 @@ export default function AttendanceManager({
   const [error, setError] = useState('');
 
   async function update(participantId: string, status: AttendanceStatus) {
+    const previous = list;
+    setList((current) =>
+      current.map((p) =>
+        p.activityParticipantId === participantId ? { ...p, status } : p
+      )
+    );
     setSavingId(participantId);
     setError('');
     try {
@@ -48,12 +54,8 @@ export default function AttendanceManager({
         const payload = await res.json().catch(() => null);
         throw new Error(payload?.error || 'No se pudo actualizar');
       }
-      setList((prev) =>
-        prev.map((p) =>
-          p.activityParticipantId === participantId ? { ...p, status } : p
-        )
-      );
     } catch (err) {
+      setList(previous);
       setError(err instanceof Error ? err.message : 'No se pudo actualizar');
     } finally {
       setSavingId(null);
@@ -70,7 +72,9 @@ export default function AttendanceManager({
         <span className="font-medium text-green-700 dark:text-green-400">
           {going} asistieron
         </span>
-        <span className="font-medium text-destructive">{notGoing} no asistieron</span>
+        <span className="font-medium text-destructive">
+          {notGoing} no asistieron
+        </span>
         <span>{pending} sin confirmar</span>
       </div>
 
