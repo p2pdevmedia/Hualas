@@ -104,109 +104,108 @@ export default function UsersList({
       />
       <ul className="divide-y divide-border">
         {paginated.map((u) => (
-          <li key={u.id} className="flex items-center gap-3 py-3 flex-wrap">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
-              {u.profilePhoto ? (
-                <Image
-                  src={`/api/users/${u.id}/photo?v=${new Date(u.updatedAt).getTime()}`}
-                  alt={`Foto de perfil de ${u.name ?? 'usuario'}`}
-                  width={40}
-                  height={40}
-                  unoptimized
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted-foreground">
-                  {(u.name?.[0] ?? '?').toUpperCase()}
+          <li key={u.id} className="py-3 space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border bg-muted">
+                {u.profilePhoto ? (
+                  <Image
+                    src={`/api/users/${u.id}/photo?v=${new Date(u.updatedAt).getTime()}`}
+                    alt={`Foto de perfil de ${u.name ?? 'usuario'}`}
+                    width={40}
+                    height={40}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted-foreground">
+                    {(u.name?.[0] ?? '?').toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <Link
+                href={`/admin/users/${u.id}/view`}
+                className="min-w-0 flex-1 rounded-md text-sm transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                <span className="font-medium">
+                  {u.name} {u.lastName}
+                </span>
+                <span className="text-muted-foreground ml-2">
+                  ({u.email} · {u.dni ?? 'N/A'})
+                </span>
+                <span className="ml-2 text-xs rounded-full bg-muted px-2 py-0.5 font-medium">
+                  {u.role}
+                </span>
+              </Link>
+              {!readOnly && (
+                <div className="flex shrink-0 items-center gap-2">
+                  <Link
+                    href={`/admin/users/${u.id}`}
+                    className={`${linkClass} hidden sm:inline`}
+                  >
+                    {t.edit}
+                  </Link>
+                  <details className="group relative">
+                    <summary
+                      aria-label={t.moreActions}
+                      className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
+                    >
+                      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    </summary>
+                    <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
+                      <Link
+                        href={`/admin/users/${u.id}`}
+                        className={`${menuItemClass} sm:hidden`}
+                      >
+                        {t.edit}
+                      </Link>
+                      <Link
+                        href={`/admin/users/${u.id}/child-enrollment`}
+                        className={menuItemClass}
+                      >
+                        {t.childEnrollment}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => resetPassword(u.id)}
+                        className={menuItemClass}
+                      >
+                        {t.resetPassword}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(u.id)}
+                        className={`${menuItemClass} text-red-600 hover:bg-red-50`}
+                      >
+                        {t.delete}
+                      </button>
+                      {canManageRoles &&
+                        (canManageSuperAdmin ||
+                          !u.roles.includes('SUPER_ADMIN')) && (
+                          <button
+                            type="button"
+                            onClick={() => setRoleEditorUser(u)}
+                            className={menuItemClass}
+                          >
+                            Roles
+                          </button>
+                        )}
+                    </div>
+                  </details>
                 </div>
               )}
             </div>
-            <Link
-              href={`/admin/users/${u.id}/view`}
-              className="flex-1 rounded-md text-sm transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <span className="font-medium">
-                {u.name} {u.lastName}
-              </span>
-              <span className="text-muted-foreground ml-2">
-                ({u.email} · {u.dni ?? 'N/A'})
-              </span>
-              <span className="ml-2 text-xs rounded-full bg-muted px-2 py-0.5 font-medium">
-                {u.role}
-              </span>
-            </Link>
             {u.children.length > 0 && (
-              <div className="w-full pl-13 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+              <div className="pl-[52px] flex flex-wrap gap-x-3 gap-y-0.5">
                 {u.children.map((c) => {
                   const age = calcAge(c.birthDate);
                   return (
-                    <span
-                      key={c.id}
-                      className="text-xs text-muted-foreground"
-                    >
+                    <span key={c.id} className="text-xs text-muted-foreground">
                       {c.name} {c.lastName ?? ''}
                       {age !== null ? ` · ${age} años` : ''}
                     </span>
                   );
                 })}
               </div>
-            )}
-            {!readOnly && (
-              <>
-                <Link
-                  href={`/admin/users/${u.id}`}
-                  className={`${linkClass} hidden sm:inline`}
-                >
-                  {t.edit}
-                </Link>
-                <details className="group relative">
-                  <summary
-                    aria-label={t.moreActions}
-                    className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted [&::-webkit-details-marker]:hidden"
-                  >
-                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                  </summary>
-                  <div className="absolute right-0 z-10 mt-2 w-56 rounded-md border bg-card p-1 shadow-lg">
-                    <Link
-                      href={`/admin/users/${u.id}`}
-                      className={`${menuItemClass} sm:hidden`}
-                    >
-                      {t.edit}
-                    </Link>
-                    <Link
-                      href={`/admin/users/${u.id}/child-enrollment`}
-                      className={menuItemClass}
-                    >
-                      {t.childEnrollment}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => resetPassword(u.id)}
-                      className={menuItemClass}
-                    >
-                      {t.resetPassword}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteId(u.id)}
-                      className={`${menuItemClass} text-red-600 hover:bg-red-50`}
-                    >
-                      {t.delete}
-                    </button>
-                    {canManageRoles &&
-                      (canManageSuperAdmin ||
-                        !u.roles.includes('SUPER_ADMIN')) && (
-                        <button
-                          type="button"
-                          onClick={() => setRoleEditorUser(u)}
-                          className={menuItemClass}
-                        >
-                          Roles
-                        </button>
-                      )}
-                  </div>
-                </details>
-              </>
             )}
           </li>
         ))}
