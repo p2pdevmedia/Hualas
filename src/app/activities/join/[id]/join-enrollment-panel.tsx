@@ -8,7 +8,7 @@ import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import RegisterButton from '@/components/register-button';
 import GroupScheduleCalendar from './group-schedule-calendar';
 
-type Group = { id: string; name: string; minAge: number | null; maxAge: number | null };
+type Group = { id: string; name: string; minAge: number | null; maxAge: number | null; professors: string[] };
 type Session = { id: string; date: string; schedule: string; activityGroupId: string | null };
 type Child = {
   id: string;

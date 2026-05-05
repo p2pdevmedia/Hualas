@@ -7,6 +7,7 @@ type Group = {
   name: string;
   minAge: number | null;
   maxAge: number | null;
+  professors: string[];
 };
 type Session = {
   id: string;

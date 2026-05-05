@@ -51,7 +51,13 @@ export default async function ActivityJoinPage({
     }),
     prisma.activityDay.findMany({
       where: { activityId: activity.id, cancelled: false },
-      select: { id: true, date: true, schedule: true, activityGroupId: true },
+      select: {
+        id: true,
+        date: true,
+        schedule: true,
+        activityGroupId: true,
+        professors: { select: { user: { select: { name: true, lastName: true } } } },
+      },
       orderBy: { date: 'asc' },
     }),
     userId
@@ -68,6 +74,18 @@ export default async function ActivityJoinPage({
         })
       : Promise.resolve(null),
   ]);
+
+  const professorsByGroup: Record<string, string[]> = {};
+  for (const session of sessions) {
+    if (!session.activityGroupId) continue;
+    if (!professorsByGroup[session.activityGroupId]) professorsByGroup[session.activityGroupId] = [];
+    for (const { user } of session.professors) {
+      const fullName = [user.name, user.lastName].filter(Boolean).join(' ');
+      if (!professorsByGroup[session.activityGroupId].includes(fullName)) {
+        professorsByGroup[session.activityGroupId].push(fullName);
+      }
+    }
+  }
 
   const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
     TEMPORARY: 'Temporal',
@@ -190,7 +208,7 @@ export default async function ActivityJoinPage({
             price: Number(activity.price),
             activityType: activity.activityType,
           }}
-          groups={groups}
+          groups={groups.map((g) => ({ ...g, professors: professorsByGroup[g.id] ?? [] }))}
           sessions={sessions.map((session) => ({
             id: session.id,
             date: session.date.toISOString(),
