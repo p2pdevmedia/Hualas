@@ -13,6 +13,7 @@
 ## Task 1: Prisma Migration — Add PickupNotice Models
 
 **Files:**
+
 - Create: `prisma/migrations/[timestamp]_add_pickup_notices/migration.sql`
 - Modify: `prisma/schema.prisma` (add models)
 
@@ -35,18 +36,18 @@ model PickupNotice {
   childId               String
   createdBy             User @relation("PickupNoticeCreator", fields: [createdById], references: [id], onDelete: Restrict)
   createdById           String
-  
+
   alternatePersonUser   User? @relation("PickupNoticeAlternatePerson", fields: [alternatePersonUserId], references: [id], onDelete: SetNull)
   alternatePersonUserId String?
   alternatePersonName   String?
-  
+
   description           String
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   deletedAt             DateTime?
-  
+
   acknowledgments       PickupNoticeAcknowledgment[]
-  
+
   @@unique([activityDayId, childId])
   @@index([childId])
   @@index([createdById])
@@ -67,7 +68,7 @@ model PickupNoticeAcknowledgment {
   acknowledgedById String
   notes           String?
   confirmedAt     DateTime @default(now())
-  
+
   @@unique([pickupNoticeId, acknowledgedById])
   @@index([pickupNoticeId])
   @@index([acknowledgedById])
@@ -131,6 +132,7 @@ git commit -m "feat: add PickupNotice and PickupNoticeAcknowledgment models"
 ## Task 2: Validation Schemas
 
 **Files:**
+
 - Create: `src/lib/validations/pickup-notice.ts`
 
 - [ ] **Step 1: Create validation file**
@@ -138,32 +140,30 @@ git commit -m "feat: add PickupNotice and PickupNoticeAcknowledgment models"
 Create `src/lib/validations/pickup-notice.ts`:
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
-export const createPickupNoticeSchema = z.object({
-  childId: z.string().min(1, "Child is required"),
-  alternatePersonUserId: z.string().optional().nullable(),
-  alternatePersonName: z.string().optional().nullable(),
-  description: z.string().min(1, "Description is required").max(500),
-}).refine(
-  (data) => data.alternatePersonUserId || data.alternatePersonName,
-  {
-    message: "Either select a person or enter a name",
-    path: ["alternatePersonUserId"],
-  }
-);
+export const createPickupNoticeSchema = z
+  .object({
+    childId: z.string().min(1, 'Child is required'),
+    alternatePersonUserId: z.string().optional().nullable(),
+    alternatePersonName: z.string().optional().nullable(),
+    description: z.string().min(1, 'Description is required').max(500),
+  })
+  .refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
+    message: 'Either select a person or enter a name',
+    path: ['alternatePersonUserId'],
+  });
 
-export const updatePickupNoticeSchema = z.object({
-  alternatePersonUserId: z.string().optional().nullable(),
-  alternatePersonName: z.string().optional().nullable(),
-  description: z.string().min(1, "Description is required").max(500),
-}).refine(
-  (data) => data.alternatePersonUserId || data.alternatePersonName,
-  {
-    message: "Either select a person or enter a name",
-    path: ["alternatePersonUserId"],
-  }
-);
+export const updatePickupNoticeSchema = z
+  .object({
+    alternatePersonUserId: z.string().optional().nullable(),
+    alternatePersonName: z.string().optional().nullable(),
+    description: z.string().min(1, 'Description is required').max(500),
+  })
+  .refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
+    message: 'Either select a person or enter a name',
+    path: ['alternatePersonUserId'],
+  });
 
 export const acknowledgePickupNoticeSchema = z.object({
   notes: z.string().optional().nullable().default(null),
@@ -171,7 +171,9 @@ export const acknowledgePickupNoticeSchema = z.object({
 
 export type CreatePickupNoticeInput = z.infer<typeof createPickupNoticeSchema>;
 export type UpdatePickupNoticeInput = z.infer<typeof updatePickupNoticeSchema>;
-export type AcknowledgePickupNoticeInput = z.infer<typeof acknowledgePickupNoticeSchema>;
+export type AcknowledgePickupNoticeInput = z.infer<
+  typeof acknowledgePickupNoticeSchema
+>;
 ```
 
 - [ ] **Step 2: Commit**
@@ -186,6 +188,7 @@ git commit -m "feat: add pickup notice validation schemas"
 ## Task 3: API Endpoint — Create & List Pickup Notices
 
 **Files:**
+
 - Create: `src/app/api/activity-days/[dayId]/pickup-notices/route.ts`
 
 - [ ] **Step 1: Read existing activity day route structure**
@@ -199,11 +202,11 @@ This shows you the pattern. Look at one existing route to understand the structu
 Create `src/app/api/activity-days/[dayId]/pickup-notices/route.ts`:
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { createPickupNoticeSchema } from "@/lib/validations/pickup-notice";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { createPickupNoticeSchema } from '@/lib/validations/pickup-notice';
 
 export async function POST(
   req: NextRequest,
@@ -211,13 +214,10 @@ export async function POST(
 ) {
   const params = await context.params;
   const { dayId } = params;
-  
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -232,14 +232,14 @@ export async function POST(
 
     if (!activityDay) {
       return NextResponse.json(
-        { error: "Activity day not found" },
+        { error: 'Activity day not found' },
         { status: 404 }
       );
     }
 
     if (new Date(activityDay.date) <= new Date()) {
       return NextResponse.json(
-        { error: "Cannot create notice for past activity day" },
+        { error: 'Cannot create notice for past activity day' },
         { status: 400 }
       );
     }
@@ -251,7 +251,7 @@ export async function POST(
 
     if (!child || child.userId !== session.user.id) {
       return NextResponse.json(
-        { error: "Cannot create notice for this child" },
+        { error: 'Cannot create notice for this child' },
         { status: 403 }
       );
     }
@@ -268,7 +268,7 @@ export async function POST(
 
     if (existingNotice && !existingNotice.deletedAt) {
       return NextResponse.json(
-        { error: "A notice already exists for this child on this day" },
+        { error: 'A notice already exists for this child on this day' },
         { status: 400 }
       );
     }
@@ -292,13 +292,13 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error creating pickup notice:", error);
+    console.error('Error creating pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -313,10 +313,7 @@ export async function GET(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -327,7 +324,7 @@ export async function GET(
 
     if (!activityDay) {
       return NextResponse.json(
-        { error: "Activity day not found" },
+        { error: 'Activity day not found' },
         { status: 404 }
       );
     }
@@ -342,7 +339,7 @@ export async function GET(
 
     if (!isAssignedProfessor) {
       return NextResponse.json(
-        { error: "You do not have access to this activity day" },
+        { error: 'You do not have access to this activity day' },
         { status: 403 }
       );
     }
@@ -390,15 +387,15 @@ export async function GET(
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(notices, { status: 200 });
   } catch (error) {
-    console.error("Error fetching pickup notices:", error);
+    console.error('Error fetching pickup notices:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -406,8 +403,9 @@ export async function GET(
 ```
 
 Add this import at the top:
+
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 ```
 
 - [ ] **Step 3: Test the endpoint with curl**
@@ -441,6 +439,7 @@ git commit -m "feat: add POST/GET endpoints for pickup notices"
 ## Task 4: API Endpoint — Update & Delete Pickup Notices
 
 **Files:**
+
 - Create: `src/app/api/pickup-notices/[noticeId]/route.ts`
 
 - [ ] **Step 1: Create the route file**
@@ -448,35 +447,32 @@ git commit -m "feat: add POST/GET endpoints for pickup notices"
 Create `src/app/api/pickup-notices/[noticeId]/route.ts`:
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { updatePickupNoticeSchema } from "@/lib/validations/pickup-notice";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { updatePickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { z } from 'zod';
 
-async function checkNoticeOwnershipAndFuture(
-  noticeId: string,
-  userId: string
-) {
+async function checkNoticeOwnershipAndFuture(noticeId: string, userId: string) {
   const notice = await prisma.pickupNotice.findUnique({
     where: { id: noticeId },
     include: { activityDay: true },
   });
 
   if (!notice) {
-    return { valid: false, status: 404, message: "Notice not found" };
+    return { valid: false, status: 404, message: 'Notice not found' };
   }
 
   if (notice.createdById !== userId) {
-    return { valid: false, status: 403, message: "Cannot modify this notice" };
+    return { valid: false, status: 403, message: 'Cannot modify this notice' };
   }
 
   if (new Date(notice.activityDay.date) <= new Date()) {
     return {
       valid: false,
       status: 400,
-      message: "Cannot modify notices after activity day",
+      message: 'Cannot modify notices after activity day',
     };
   }
 
@@ -492,15 +488,15 @@ export async function PUT(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     // Check ownership and future date
-    const check = await checkNoticeOwnershipAndFuture(noticeId, session.user.id);
+    const check = await checkNoticeOwnershipAndFuture(
+      noticeId,
+      session.user.id
+    );
     if (!check.valid) {
       return NextResponse.json(
         { error: check.message },
@@ -527,13 +523,13 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error updating pickup notice:", error);
+    console.error('Error updating pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -548,15 +544,15 @@ export async function DELETE(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     // Check ownership and future date
-    const check = await checkNoticeOwnershipAndFuture(noticeId, session.user.id);
+    const check = await checkNoticeOwnershipAndFuture(
+      noticeId,
+      session.user.id
+    );
     if (!check.valid) {
       return NextResponse.json(
         { error: check.message },
@@ -574,9 +570,9 @@ export async function DELETE(
 
     return NextResponse.json(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting pickup notice:", error);
+    console.error('Error deleting pickup notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -595,6 +591,7 @@ git commit -m "feat: add PUT/DELETE endpoints for pickup notices"
 ## Task 5: API Endpoint — Acknowledge Pickup Notices
 
 **Files:**
+
 - Create: `src/app/api/pickup-notices/[noticeId]/acknowledgments/route.ts`
 
 - [ ] **Step 1: Create the route file**
@@ -602,12 +599,12 @@ git commit -m "feat: add PUT/DELETE endpoints for pickup notices"
 Create `src/app/api/pickup-notices/[noticeId]/acknowledgments/route.ts`:
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { acknowledgePickupNoticeSchema } from "@/lib/validations/pickup-notice";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { acknowledgePickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
@@ -618,10 +615,7 @@ export async function POST(
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -632,10 +626,7 @@ export async function POST(
     });
 
     if (!notice) {
-      return NextResponse.json(
-        { error: "Notice not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Notice not found' }, { status: 404 });
     }
 
     // Verify the professor is assigned to this activity day
@@ -648,7 +639,7 @@ export async function POST(
 
     if (!isAssigned) {
       return NextResponse.json(
-        { error: "You do not have access to this notice" },
+        { error: 'You do not have access to this notice' },
         { status: 403 }
       );
     }
@@ -687,13 +678,13 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: 'Invalid input', details: error.errors },
         { status: 400 }
       );
     }
-    console.error("Error acknowledging notice:", error);
+    console.error('Error acknowledging notice:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -712,6 +703,7 @@ git commit -m "feat: add POST endpoint for acknowledging pickup notices"
 ## Task 6: Parent UI Component — Pickup Notice Form
 
 **Files:**
+
 - Create: `src/components/pickup-notice/parent-form.tsx`
 
 - [ ] **Step 1: Check existing form patterns**
@@ -1001,6 +993,7 @@ git commit -m "feat: add parent pickup notice form component"
 ## Task 7: Professor UI Component — Pickup Notice List
 
 **Files:**
+
 - Create: `src/components/pickup-notice/professor-list.tsx`
 
 - [ ] **Step 1: Create professor list component**
@@ -1234,6 +1227,7 @@ git commit -m "feat: add professor pickup notice list component"
 ## Task 8: Integration Tests
 
 **Files:**
+
 - Create: `tests/api/pickup-notices.test.ts`
 
 - [ ] **Step 1: Check existing test structure**
@@ -1247,13 +1241,19 @@ Review one existing test file to understand the testing pattern (jest setup, moc
 Create `tests/api/pickup-notices.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import prisma from "@/lib/prisma";
-import { POST as createNotice, GET as listNotices } from "@/app/api/activity-days/[dayId]/pickup-notices/route";
-import { PUT as updateNotice, DELETE as deleteNotice } from "@/app/api/pickup-notices/[noticeId]/route";
-import { POST as acknowledgeNotice } from "@/app/api/pickup-notices/[noticeId]/acknowledgments/route";
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import prisma from '@/lib/prisma';
+import {
+  POST as createNotice,
+  GET as listNotices,
+} from '@/app/api/activity-days/[dayId]/pickup-notices/route';
+import {
+  PUT as updateNotice,
+  DELETE as deleteNotice,
+} from '@/app/api/pickup-notices/[noticeId]/route';
+import { POST as acknowledgeNotice } from '@/app/api/pickup-notices/[noticeId]/acknowledgments/route';
 
-describe("Pickup Notice API", () => {
+describe('Pickup Notice API', () => {
   let testData: {
     userId: string;
     childId: string;
@@ -1266,14 +1266,14 @@ describe("Pickup Notice API", () => {
     const user = await prisma.user.create({
       data: {
         email: `test-${Date.now()}@example.com`,
-        name: "Test Parent",
+        name: 'Test Parent',
       },
     });
 
     // Create test child
     const child = await prisma.child.create({
       data: {
-        name: "Test Child",
+        name: 'Test Child',
         userId: user.id,
       },
     });
@@ -1281,8 +1281,8 @@ describe("Pickup Notice API", () => {
     // Create test activity
     const activity = await prisma.activity.create({
       data: {
-        name: "Test Activity",
-        description: "Test",
+        name: 'Test Activity',
+        description: 'Test',
       },
     });
 
@@ -1294,7 +1294,7 @@ describe("Pickup Notice API", () => {
       data: {
         activityId: activity.id,
         date: futureDate,
-        location: "Test Location",
+        location: 'Test Location',
       },
     });
 
@@ -1321,33 +1321,33 @@ describe("Pickup Notice API", () => {
     await prisma.activity.deleteMany();
   });
 
-  it("should create a pickup notice", async () => {
+  it('should create a pickup notice', async () => {
     const notice = await prisma.pickupNotice.create({
       data: {
         activityDayId: testData.activityDayId,
         childId: testData.childId,
         createdById: testData.userId,
-        alternatePersonName: "Tía María",
-        description: "She will pick up",
+        alternatePersonName: 'Tía María',
+        description: 'She will pick up',
       },
     });
 
     testData.noticeId = notice.id;
 
     expect(notice.id).toBeDefined();
-    expect(notice.alternatePersonName).toBe("Tía María");
+    expect(notice.alternatePersonName).toBe('Tía María');
     expect(notice.childId).toBe(testData.childId);
   });
 
-  it("should not allow duplicate notices for same child+day", async () => {
+  it('should not allow duplicate notices for same child+day', async () => {
     // Create first notice
     const notice1 = await prisma.pickupNotice.create({
       data: {
         activityDayId: testData.activityDayId,
         childId: testData.childId,
         createdById: testData.userId,
-        alternatePersonName: "Tía María",
-        description: "First notice",
+        alternatePersonName: 'Tía María',
+        description: 'First notice',
       },
     });
 
@@ -1360,8 +1360,8 @@ describe("Pickup Notice API", () => {
           activityDayId: testData.activityDayId,
           childId: testData.childId,
           createdById: testData.userId,
-          alternatePersonName: "Tío Juan",
-          description: "Duplicate",
+          alternatePersonName: 'Tío Juan',
+          description: 'Duplicate',
         },
       });
       expect(true).toBe(false); // Should have thrown
@@ -1370,14 +1370,14 @@ describe("Pickup Notice API", () => {
     }
   });
 
-  it("should allow professor to acknowledge notice", async () => {
+  it('should allow professor to acknowledge notice', async () => {
     const notice = await prisma.pickupNotice.create({
       data: {
         activityDayId: testData.activityDayId,
         childId: testData.childId,
         createdById: testData.userId,
-        alternatePersonName: "Tía María",
-        description: "Pick up notice",
+        alternatePersonName: 'Tía María',
+        description: 'Pick up notice',
       },
     });
 
@@ -1387,8 +1387,8 @@ describe("Pickup Notice API", () => {
     const professor = await prisma.user.create({
       data: {
         email: `prof-${Date.now()}@example.com`,
-        name: "Test Professor",
-        role: "PROFESSOR",
+        name: 'Test Professor',
+        role: 'PROFESSOR',
       },
     });
 
@@ -1397,22 +1397,22 @@ describe("Pickup Notice API", () => {
       data: {
         pickupNoticeId: notice.id,
         acknowledgedById: professor.id,
-        notes: "Conforme",
+        notes: 'Conforme',
       },
     });
 
     expect(ack.acknowledgedById).toBe(professor.id);
-    expect(ack.notes).toBe("Conforme");
+    expect(ack.notes).toBe('Conforme');
   });
 
-  it("should soft delete pickup notice", async () => {
+  it('should soft delete pickup notice', async () => {
     const notice = await prisma.pickupNotice.create({
       data: {
         activityDayId: testData.activityDayId,
         childId: testData.childId,
         createdById: testData.userId,
-        alternatePersonName: "Tía María",
-        description: "To delete",
+        alternatePersonName: 'Tía María',
+        description: 'To delete',
       },
     });
 
@@ -1459,6 +1459,7 @@ git commit -m "test: add pickup notice API integration tests"
 ## Task 9: Build & Verify
 
 **Files:**
+
 - None (verification step)
 
 - [ ] **Step 1: Run build**
@@ -1492,6 +1493,7 @@ pnpm prisma studio
 ```
 
 Open in browser and verify:
+
 - `PickupNotice` table exists with correct schema
 - `PickupNoticeAcknowledgment` table exists
 - Relations are set up correctly
@@ -1511,6 +1513,7 @@ Verify all pickup notice commits are present. Done!
 **Spec coverage check:**
 
 ✅ **Functional requirements:**
+
 - ✅ Parent creates notice (Task 3: POST endpoint, Task 6: form)
 - ✅ Professor views notices (Task 3: GET endpoint, Task 7: list component)
 - ✅ Professor acknowledges (Task 5: acknowledge endpoint, Task 7: confirm button)
@@ -1540,4 +1543,3 @@ Verify all pickup notice commits are present. Done!
 - **Soft deletes:** Using `deletedAt` field to preserve audit trail
 - **Error messages:** Match spec requirements exactly (400/403/404 status codes)
 - **Spanish-friendly:** UI supports Spanish descriptions and field labels
-

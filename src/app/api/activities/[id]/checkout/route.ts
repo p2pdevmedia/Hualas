@@ -149,7 +149,10 @@ export async function GET(
 
   if (childId) {
     const child = await prisma.child.findFirst({
-      where: { id: childId, ...(await getAccessibleChildrenWhere((session.user as any).id)) },
+      where: {
+        id: childId,
+        ...(await getAccessibleChildrenWhere((session.user as any).id)),
+      },
       select: {
         name: true,
         lastName: true,
@@ -414,7 +417,9 @@ export async function POST(
     const child = await prisma.child.findFirst({
       where: {
         id: childId,
-        ...(await getAccessibleChildrenWhere((session.user as { id: string }).id)),
+        ...(await getAccessibleChildrenWhere(
+          (session.user as { id: string }).id
+        )),
       },
       select: {
         name: true,

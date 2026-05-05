@@ -138,34 +138,49 @@ export default async function ProfessorStudentsPage() {
   }
 
   // Fetch tutors for children's parents and adult participants
-  const responsibleIds = Array.from(new Set([
-    ...Array.from(childrenMap.values()).map((c) => c.parentId),
-    ...Array.from(adultsMap.keys()),
-  ]));
-  const familyGroups = responsibleIds.length > 0
-    ? await prisma.familyGroup.findMany({
-        where: { responsibleUserId: { in: responsibleIds } },
-        select: {
-          responsibleUserId: true,
-          members: {
-            include: {
-              member: {
-                select: { name: true, lastName: true, phone: true, email: true },
+  const responsibleIds = Array.from(
+    new Set([
+      ...Array.from(childrenMap.values()).map((c) => c.parentId),
+      ...Array.from(adultsMap.keys()),
+    ])
+  );
+  const familyGroups =
+    responsibleIds.length > 0
+      ? await prisma.familyGroup.findMany({
+          where: { responsibleUserId: { in: responsibleIds } },
+          select: {
+            responsibleUserId: true,
+            members: {
+              include: {
+                member: {
+                  select: {
+                    name: true,
+                    lastName: true,
+                    phone: true,
+                    email: true,
+                  },
+                },
               },
             },
           },
-        },
-      })
-    : [];
+        })
+      : [];
 
-  type TutorEntry = { name: string; phone: string | null; email: string; relationship: string };
+  type TutorEntry = {
+    name: string;
+    phone: string | null;
+    email: string;
+    relationship: string;
+  };
   const tutorsByResponsible = new Map<string, TutorEntry[]>();
   for (const group of familyGroups) {
     if (!group.responsibleUserId) continue;
     tutorsByResponsible.set(
       group.responsibleUserId,
       group.members.map((m) => ({
-        name: [m.member.name, m.member.lastName].filter(Boolean).join(' ') || m.member.email,
+        name:
+          [m.member.name, m.member.lastName].filter(Boolean).join(' ') ||
+          m.member.email,
         phone: m.member.phone ?? null,
         email: m.member.email,
         relationship: m.relationship,

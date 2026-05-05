@@ -49,8 +49,8 @@ function stripTags(value) {
 function parseSharedStrings() {
   try {
     const sharedXml = readZipEntry('xl/sharedStrings.xml');
-    return [...sharedXml.matchAll(/<si[^>]*>([\s\S]*?)<\/si>/g)].map(([, inner]) =>
-      stripTags(inner).replace(/\s+/g, ' ').trim()
+    return [...sharedXml.matchAll(/<si[^>]*>([\s\S]*?)<\/si>/g)].map(
+      ([, inner]) => stripTags(inner).replace(/\s+/g, ' ').trim()
     );
   } catch {
     return [];
@@ -62,9 +62,11 @@ function getWorkbookSheetPath(sheetName) {
   const relsXml = readZipEntry('xl/_rels/workbook.xml.rels');
 
   const relTargets = new Map(
-    [...relsXml.matchAll(/<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g)].map(
-      ([, id, target]) => [id, target]
-    )
+    [
+      ...relsXml.matchAll(
+        /<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g
+      ),
+    ].map(([, id, target]) => [id, target])
   );
 
   const sheetMatch = new RegExp(
@@ -77,7 +79,9 @@ function getWorkbookSheetPath(sheetName) {
 
   const target = relTargets.get(sheetMatch[1]);
   if (!target) {
-    throw new Error(`No se pudo resolver la relación de la hoja "${sheetName}".`);
+    throw new Error(
+      `No se pudo resolver la relación de la hoja "${sheetName}".`
+    );
   }
 
   return `xl/${target}`;
@@ -110,10 +114,14 @@ function parseRows(sheetName) {
   let headerRowNumber = null;
   let headers = null;
 
-  for (const rowMatch of sheetXml.matchAll(/<row[^>]+r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g)) {
+  for (const rowMatch of sheetXml.matchAll(
+    /<row[^>]+r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g
+  )) {
     const rowNumber = Number(rowMatch[1]);
     const values = {};
-    const cells = [...rowMatch[2].matchAll(/<c[^>]+r="([A-Z]+)\d+"[^>]*>[\s\S]*?<\/c>/g)];
+    const cells = [
+      ...rowMatch[2].matchAll(/<c[^>]+r="([A-Z]+)\d+"[^>]*>[\s\S]*?<\/c>/g),
+    ];
 
     for (const cellMatch of cells) {
       const refMatch = /r="([A-Z]+)\d+"/.exec(cellMatch[0]);
@@ -127,7 +135,9 @@ function parseRows(sheetName) {
       );
       const hasName = lowerValues.includes('nombre');
       const hasLastName = lowerValues.includes('apellido');
-      const hasMail = lowerValues.some((value) => value === 'mail' || value === 'mail 2');
+      const hasMail = lowerValues.some(
+        (value) => value === 'mail' || value === 'mail 2'
+      );
 
       if (hasName && hasLastName && hasMail) {
         headerRowNumber = rowNumber;
@@ -149,7 +159,9 @@ function parseRows(sheetName) {
   }
 
   if (!headers) {
-    throw new Error(`No se pudo detectar el encabezado de la hoja "${sheetName}".`);
+    throw new Error(
+      `No se pudo detectar el encabezado de la hoja "${sheetName}".`
+    );
   }
 
   return { headers, rows };
@@ -208,7 +220,11 @@ function splitName(value) {
 }
 
 function headerColumn(headers, matcher) {
-  return Object.entries(headers).find(([, value]) => matcher(normalizeKey(value)))?.[0] ?? null;
+  return (
+    Object.entries(headers).find(([, value]) =>
+      matcher(normalizeKey(value))
+    )?.[0] ?? null
+  );
 }
 
 function columnIndex(column) {
@@ -220,14 +236,18 @@ function columnIndex(column) {
 }
 
 function emailColumns(row, headers) {
-  const cols = Object.keys(headers).sort((a, b) => columnIndex(a) - columnIndex(b));
+  const cols = Object.keys(headers).sort(
+    (a, b) => columnIndex(a) - columnIndex(b)
+  );
   return cols
     .map((col) => normalize(row[col]))
     .filter((value) => value.includes('@'));
 }
 
 function isChildRow(row, headers) {
-  const roleCol = headerColumn(headers, (value) => value.includes('carácter de socio'));
+  const roleCol = headerColumn(headers, (value) =>
+    value.includes('carácter de socio')
+  );
   const ageCol = headerColumn(headers, (value) => value === 'edad');
   const role = roleCol ? normalizeKey(row[roleCol]) : '';
   if (/cadete|menor/.test(role)) return true;
@@ -245,12 +265,24 @@ function getParticipantFields(row, headers) {
   const nameCol = headerColumn(headers, (value) => value === 'nombre');
   const lastNameCol = headerColumn(headers, (value) => value === 'apellido');
   const dniCol = headerColumn(headers, (value) => value === 'dni');
-  const birthCol = headerColumn(headers, (value) => value.includes('fecha de nacimiento') || value === 'fecha');
-  const genderCol = headerColumn(headers, (value) => value === 'género' || value === 'genero');
+  const birthCol = headerColumn(
+    headers,
+    (value) => value.includes('fecha de nacimiento') || value === 'fecha'
+  );
+  const genderCol = headerColumn(
+    headers,
+    (value) => value === 'género' || value === 'genero'
+  );
   const addressCol = headerColumn(headers, (value) => value === 'domicilio');
-  const nationalityCol = headerColumn(headers, (value) => value === 'nacionalidad');
+  const nationalityCol = headerColumn(
+    headers,
+    (value) => value === 'nacionalidad'
+  );
   const maritalCol = headerColumn(headers, (value) => value === 'estado civil');
-  const observationsCol = headerColumn(headers, (value) => value === 'observaciones');
+  const observationsCol = headerColumn(
+    headers,
+    (value) => value === 'observaciones'
+  );
   const emailCol = headerColumn(headers, (value) => value === 'mail');
 
   return {
@@ -268,12 +300,19 @@ function getParticipantFields(row, headers) {
 }
 
 function getResponsibleFields(row, headers) {
-  const nameCol = headerColumn(headers, (value) => value.includes('nombre y apellido'));
-  const phoneCol = headerColumn(headers, (value) => value === 'teléfono' || value === 'telefono');
+  const nameCol = headerColumn(headers, (value) =>
+    value.includes('nombre y apellido')
+  );
+  const phoneCol = headerColumn(
+    headers,
+    (value) => value === 'teléfono' || value === 'telefono'
+  );
   const mail2Col = headerColumn(headers, (value) => value === 'mail 2');
   const emails = emailColumns(row, headers);
 
-  const candidateEmail = mail2Col ? normalize(row[mail2Col]).toLowerCase() : emails.at(-1) ?? '';
+  const candidateEmail = mail2Col
+    ? normalize(row[mail2Col]).toLowerCase()
+    : (emails.at(-1) ?? '');
   return {
     name: nameCol ? normalize(row[nameCol]) : '',
     phone: phoneCol ? cleanDigits(row[phoneCol]) : '',
@@ -343,7 +382,11 @@ function activityBlueprint(sheetName, rows) {
   return {
     name: SHEET_TO_ACTIVITY.get(sheetName),
     date: firstTimestamp ?? new Date(),
-    frequency: isEdm ? 'DAILY' : sheetName === 'Jornadas' ? 'ONE_TIME' : 'WEEKLY',
+    frequency: isEdm
+      ? 'DAILY'
+      : sheetName === 'Jornadas'
+        ? 'ONE_TIME'
+        : 'WEEKLY',
     price: 1,
     capacity: null,
     description: `Importado desde ${WORKBOOK_PATH} (${sheetName}).`,
@@ -420,7 +463,10 @@ async function upsertUserFromPayload(payload) {
 async function upsertChildFromPayload(payload) {
   const existing = payload.documentNumber
     ? await prisma.child.findFirst({
-        where: { userId: payload.userId, documentNumber: payload.documentNumber },
+        where: {
+          userId: payload.userId,
+          documentNumber: payload.documentNumber,
+        },
       })
     : await prisma.child.findFirst({
         where: {
@@ -577,7 +623,11 @@ async function main() {
 
         const participantBefore = await prisma.activityParticipant.findUnique({
           where: {
-            participantKey: getActivityParticipantKey(activity.id, parentUser.id, child.id),
+            participantKey: getActivityParticipantKey(
+              activity.id,
+              parentUser.id,
+              child.id
+            ),
           },
           select: { id: true },
         });
@@ -599,7 +649,11 @@ async function main() {
 
         const participantBefore = await prisma.activityParticipant.findUnique({
           where: {
-            participantKey: getActivityParticipantKey(activity.id, user.id, null),
+            participantKey: getActivityParticipantKey(
+              activity.id,
+              user.id,
+              null
+            ),
           },
           select: { id: true },
         });

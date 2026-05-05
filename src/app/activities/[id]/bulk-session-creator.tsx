@@ -47,8 +47,18 @@ const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
 const MONTH_NAMES: string[] = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 function getCalendarGrid(year: number, month: number): (number | null)[] {
@@ -85,7 +95,8 @@ export default function BulkSessionCreator({
   const [schedule, setSchedule] = useState('');
   const [geoLocation, setGeoLocation] = useState('');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const [professorIds, setProfessorIds] = useState<string[]>(defaultProfessorIds);
+  const [professorIds, setProfessorIds] =
+    useState<string[]>(defaultProfessorIds);
   const [activityGroupId, setActivityGroupId] = useState<string | null>(null);
   const [sportIcon, setSportIcon] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -296,7 +307,9 @@ export default function BulkSessionCreator({
             <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
               <span>
                 {selectedDates.size}{' '}
-                {selectedDates.size === 1 ? 'día seleccionado' : 'días seleccionados'}
+                {selectedDates.size === 1
+                  ? 'día seleccionado'
+                  : 'días seleccionados'}
               </span>
               {existingDayDates.length > 0 && (
                 <span className="flex items-center gap-1">
@@ -338,7 +351,10 @@ export default function BulkSessionCreator({
 
             <div className="space-y-2">
               <p className="text-sm font-medium">Punto en el mapa</p>
-              <LocationMapPicker value={coordinates} onChange={setCoordinates} />
+              <LocationMapPicker
+                value={coordinates}
+                onChange={setCoordinates}
+              />
             </div>
 
             <div className="space-y-1">
@@ -349,9 +365,7 @@ export default function BulkSessionCreator({
                     key={icon.file}
                     type="button"
                     onClick={() =>
-                      setSportIcon(
-                        sportIcon === icon.file ? null : icon.file
-                      )
+                      setSportIcon(sportIcon === icon.file ? null : icon.file)
                     }
                     className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors ${
                       sportIcon === icon.file
@@ -379,9 +393,7 @@ export default function BulkSessionCreator({
                 <p className="text-sm font-medium">Grupo de la sesión</p>
                 <select
                   value={activityGroupId ?? ''}
-                  onChange={(e) =>
-                    setActivityGroupId(e.target.value || null)
-                  }
+                  onChange={(e) => setActivityGroupId(e.target.value || null)}
                   className={inputClass}
                 >
                   <option value="">Sin restricción de grupo</option>

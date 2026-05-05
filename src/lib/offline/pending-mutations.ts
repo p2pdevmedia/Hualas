@@ -29,7 +29,7 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 export async function enqueueMutation(
-  mutation: Omit<PendingMutation, 'id' | 'createdAt'>,
+  mutation: Omit<PendingMutation, 'id' | 'createdAt'>
 ): Promise<string> {
   const db = await openDb();
   const item: PendingMutation = {
@@ -56,8 +56,8 @@ export async function getAllMutations(): Promise<PendingMutation[]> {
     req.onsuccess = () =>
       resolve(
         (req.result as PendingMutation[]).sort(
-          (a, b) => a.createdAt - b.createdAt,
-        ),
+          (a, b) => a.createdAt - b.createdAt
+        )
       );
     req.onerror = () => reject(req.error);
   });

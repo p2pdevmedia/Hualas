@@ -173,9 +173,12 @@ export default function ActivityImageUpload({
               {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                   <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
-                    <h2 className="text-lg font-semibold mb-2">Eliminar imagen</h2>
+                    <h2 className="text-lg font-semibold mb-2">
+                      Eliminar imagen
+                    </h2>
                     <p className="text-muted-foreground mb-6">
-                      ¿Estás seguro de que querés eliminar la imagen de la actividad? Esta acción no se puede deshacer.
+                      ¿Estás seguro de que querés eliminar la imagen de la
+                      actividad? Esta acción no se puede deshacer.
                     </p>
                     <div className="flex gap-3 justify-end">
                       <button
@@ -186,7 +189,10 @@ export default function ActivityImageUpload({
                         Cancelar
                       </button>
                       <button
-                        onClick={async () => { setShowDeleteConfirm(false); await handleDelete(); }}
+                        onClick={async () => {
+                          setShowDeleteConfirm(false);
+                          await handleDelete();
+                        }}
                         disabled={isUploading}
                         className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50"
                       >

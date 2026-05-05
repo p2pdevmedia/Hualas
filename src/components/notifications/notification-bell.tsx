@@ -8,7 +8,8 @@ import { useNotifications } from './notifications-context';
 
 export default function NotificationBell() {
   const { status } = useSession();
-  const { items, unreadCount, fetchData, markRead, markAllRead } = useNotifications();
+  const { items, unreadCount, fetchData, markRead, markAllRead } =
+    useNotifications();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);

@@ -22,12 +22,12 @@ Add `PROFESSOR` to the existing `Role` enum in `prisma/schema.prisma`.
 
 Many-to-many join between `Activity` and `User` (professors).
 
-| Field       | Type     | Notes                              |
-|-------------|----------|------------------------------------|
-| id          | String   | cuid, PK                           |
-| activityId  | String   | FK → Activity                      |
-| userId      | String   | FK → User (must have role PROFESSOR) |
-| createdAt   | DateTime | default now()                      |
+| Field      | Type     | Notes                                |
+| ---------- | -------- | ------------------------------------ |
+| id         | String   | cuid, PK                             |
+| activityId | String   | FK → Activity                        |
+| userId     | String   | FK → User (must have role PROFESSOR) |
+| createdAt  | DateTime | default now()                        |
 
 Unique constraint: `(activityId, userId)`.
 
@@ -35,30 +35,30 @@ Unique constraint: `(activityId, userId)`.
 
 A session is one occurrence of an activity, defined by a professor.
 
-| Field       | Type     | Notes                              |
-|-------------|----------|------------------------------------|
-| id          | String   | cuid, PK                           |
-| activityId  | String   | FK → Activity                      |
+| Field       | Type     | Notes                                |
+| ----------- | -------- | ------------------------------------ |
+| id          | String   | cuid, PK                             |
+| activityId  | String   | FK → Activity                        |
 | createdById | String   | FK → User (professor who created it) |
-| date        | DateTime | Date of the session                |
-| startTime   | String   | "HH:MM" (local time)               |
-| endTime     | String   | "HH:MM" estimated                  |
-| description | String?  | Optional notes                     |
-| lat         | Float    | Latitude of meeting point          |
-| lng         | Float    | Longitude of meeting point         |
-| createdAt   | DateTime | default now()                      |
+| date        | DateTime | Date of the session                  |
+| startTime   | String   | "HH:MM" (local time)                 |
+| endTime     | String   | "HH:MM" estimated                    |
+| description | String?  | Optional notes                       |
+| lat         | Float    | Latitude of meeting point            |
+| lng         | Float    | Longitude of meeting point           |
+| createdAt   | DateTime | default now()                        |
 
 ### 1.4 SessionAttendance (new table)
 
 Per-participant attendance confirmation for each session.
 
-| Field         | Type             | Notes                              |
-|---------------|------------------|------------------------------------|
-| id            | String           | cuid, PK                           |
-| sessionId     | String           | FK → ActivitySession               |
-| participantId | String           | FK → ActivityParticipant           |
-| status        | AttendanceStatus | CONFIRMED \| DECLINED              |
-| updatedAt     | DateTime         | updatedAt                          |
+| Field         | Type             | Notes                    |
+| ------------- | ---------------- | ------------------------ |
+| id            | String           | cuid, PK                 |
+| sessionId     | String           | FK → ActivitySession     |
+| participantId | String           | FK → ActivityParticipant |
+| status        | AttendanceStatus | CONFIRMED \| DECLINED    |
+| updatedAt     | DateTime         | updatedAt                |
 
 Unique constraint: `(sessionId, participantId)`.
 
@@ -77,28 +77,28 @@ enum AttendanceStatus {
 
 ### Admin — Professor assignment
 
-| Method | Path                                          | Description                    |
-|--------|-----------------------------------------------|--------------------------------|
-| GET    | `/api/activities/[id]/professors`             | List assigned professors       |
-| POST   | `/api/activities/[id]/professors`             | Assign a professor (by userId) |
-| DELETE | `/api/activities/[id]/professors/[userId]`    | Remove a professor             |
+| Method | Path                                       | Description                    |
+| ------ | ------------------------------------------ | ------------------------------ |
+| GET    | `/api/activities/[id]/professors`          | List assigned professors       |
+| POST   | `/api/activities/[id]/professors`          | Assign a professor (by userId) |
+| DELETE | `/api/activities/[id]/professors/[userId]` | Remove a professor             |
 
 Auth: ADMIN or SUPER_ADMIN only.
 
 ### Professor — Session management
 
-| Method | Path                              | Description                      |
-|--------|-----------------------------------|----------------------------------|
-| GET    | `/api/activities/[id]/sessions`   | List sessions for an activity    |
-| POST   | `/api/activities/[id]/sessions`   | Create a new session             |
+| Method | Path                            | Description                   |
+| ------ | ------------------------------- | ----------------------------- |
+| GET    | `/api/activities/[id]/sessions` | List sessions for an activity |
+| POST   | `/api/activities/[id]/sessions` | Create a new session          |
 
 Auth (POST): must be PROFESSOR and assigned to the activity.
 
 ### Member — Attendance
 
-| Method | Path                              | Description                                  |
-|--------|-----------------------------------|----------------------------------------------|
-| PATCH  | `/api/sessions/[id]/attendance`   | Set attendance status (CONFIRMED or DECLINED) |
+| Method | Path                            | Description                                   |
+| ------ | ------------------------------- | --------------------------------------------- |
+| PATCH  | `/api/sessions/[id]/attendance` | Set attendance status (CONFIRMED or DECLINED) |
 
 Auth: must be enrolled in the activity (have an ActivityParticipant record).
 
@@ -151,6 +151,7 @@ Auth: must be enrolled in the activity (have an ActivityParticipant record).
 ## 5. Affected Files Summary
 
 ### New files
+
 - `prisma/migrations/YYYYMMDD_add_profesor_role/migration.sql`
 - `src/app/my-activities/page.tsx`
 - `src/app/my-activities/[id]/sessions/new/page.tsx`
@@ -163,6 +164,7 @@ Auth: must be enrolled in the activity (have an ActivityParticipant record).
 - `src/components/map-preview.tsx`
 
 ### Modified files
+
 - `prisma/schema.prisma` — add PROFESSOR role, 3 new models, 1 new enum
 - `src/app/activities/[id]/page.tsx` — add sessions section for enrolled members
 - `src/app/activities/[id]/edit/form.tsx` — add professors panel

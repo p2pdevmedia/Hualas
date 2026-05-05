@@ -204,7 +204,6 @@ export default function EditChildForm({
             type="file"
             accept="image/*"
             capture="environment"
-            required={documentType === 'DNI' && !documentFrontPhoto}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -219,7 +218,6 @@ export default function EditChildForm({
             type="file"
             accept="image/*"
             capture="environment"
-            required={documentType === 'DNI' && !documentBackPhoto}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;

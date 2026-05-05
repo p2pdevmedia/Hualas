@@ -13,17 +13,20 @@
 ## File Structure
 
 **New Files:**
+
 - `src/app/api/activity-days/[dayId]/grouped-attendance/route.ts` - New grouped attendance endpoint
 - `src/lib/validations/grouped-attendance.ts` - Zod validation schema
 - `tests/api/grouped-attendance.test.ts` - API tests
 
 **Modified Files:**
+
 - `prisma/schema.prisma` - Add `GroupedActivityDayAttendance` model
 - `src/app/api/activity-days/[dayId]/attendance/route.ts` - Add 409 conflict check
 - `src/app/activities/[id]/activity-days-panel.tsx` - UI updates for grouped display
 - `src/app/activities/[id]/page.tsx` - Fetch grouped attendance records
 
 **Migrations:**
+
 - `prisma/migrations/[timestamp]_add_grouped_attendance/migration.sql` - Auto-generated
 
 ---
@@ -31,6 +34,7 @@
 ## Task 1: Prisma Schema & Migration
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (add new model)
 - Create: Migration (auto-generated)
 
@@ -50,7 +54,7 @@ model GroupedActivityDayAttendance {
   updatedAt             DateTime                @updatedAt
   activityDay           ActivityDay             @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
   parentUser            User                    @relation("GroupedAttendanceParent", fields: [parentUserId], references: [id], onDelete: Cascade)
-  
+
   @@unique([activityDayId, parentUserId])
   @@index([activityDayId])
   @@index([parentUserId])
@@ -72,6 +76,7 @@ groupedAttendances    GroupedActivityDayAttendance[] @relation("GroupedAttendanc
 - [ ] **Step 2: Generate migration**
 
 Run:
+
 ```bash
 pnpm prisma migrate dev --name add_grouped_attendance
 ```
@@ -81,6 +86,7 @@ Expected output: Migration created in `prisma/migrations/` and schema synced to 
 - [ ] **Step 3: Generate Prisma client**
 
 Run:
+
 ```bash
 pnpm prisma:generate
 ```
@@ -99,6 +105,7 @@ git commit -m "schema: add GroupedActivityDayAttendance model for parent-child g
 ## Task 2: Validation Schema
 
 **Files:**
+
 - Create: `src/lib/validations/grouped-attendance.ts`
 
 - [ ] **Step 1: Create grouped attendance validation schema**
@@ -129,7 +136,9 @@ export const groupedAttendanceResponseSchema = z.object({
   totalPeople: z.number().int().positive(),
 });
 
-export type GroupedAttendanceResponse = z.infer<typeof groupedAttendanceResponseSchema>;
+export type GroupedAttendanceResponse = z.infer<
+  typeof groupedAttendanceResponseSchema
+>;
 ```
 
 - [ ] **Step 2: Commit**
@@ -144,6 +153,7 @@ git commit -m "feat: add grouped attendance validation schema"
 ## Task 3: Backend API - New Grouped Attendance Endpoint
 
 **Files:**
+
 - Create: `src/app/api/activity-days/[dayId]/grouped-attendance/route.ts`
 
 - [ ] **Step 1: Create new endpoint file**
@@ -183,7 +193,8 @@ export async function PATCH(
   }
 
   // Validate session user is parent or admin
-  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+  const isAdmin =
+    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
   if (data.parentUserId !== session.user.id && !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -240,9 +251,7 @@ export async function PATCH(
       select: { childId: true },
     });
 
-    const registeredChildIds = new Set(
-      childParticipants.map((p) => p.childId)
-    );
+    const registeredChildIds = new Set(childParticipants.map((p) => p.childId));
     for (const childId of data.childIds) {
       if (!registeredChildIds.has(childId)) {
         return NextResponse.json(
@@ -296,6 +305,7 @@ git commit -m "feat: add grouped attendance API endpoint"
 ## Task 4: Backend - Add Conflict Check to Old Endpoint
 
 **Files:**
+
 - Modify: `src/app/api/activity-days/[dayId]/attendance/route.ts`
 
 - [ ] **Step 1: Update attendance endpoint to check for grouped record**
@@ -303,52 +313,61 @@ git commit -m "feat: add grouped attendance API endpoint"
 Open `src/app/api/activity-days/[dayId]/attendance/route.ts` and modify the PATCH handler. Find the section after the participant is fetched (around line 30-54), and add this check before the existing logic:
 
 Replace this section:
+
 ```typescript
-  if (!participant || participant.userId !== session.user.id) {
-    const childUserId = participant?.child?.userId;
-    if (!participant || childUserId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+if (!participant || participant.userId !== session.user.id) {
+  const childUserId = participant?.child?.userId;
+  if (!participant || childUserId !== session.user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+}
 ```
 
 With:
+
 ```typescript
-  if (!participant) {
-    return NextResponse.json({ error: 'Participante no encontrado' }, { status: 404 });
-  }
+if (!participant) {
+  return NextResponse.json(
+    { error: 'Participante no encontrado' },
+    { status: 404 }
+  );
+}
 
-  // Authorization check
-  const isParticipantOwner = participant.userId === session.user.id;
-  const isChildOwner = participant.child?.userId === session.user.id;
-  if (!isParticipantOwner && !isChildOwner) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+// Authorization check
+const isParticipantOwner = participant.userId === session.user.id;
+const isChildOwner = participant.child?.userId === session.user.id;
+if (!isParticipantOwner && !isChildOwner) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
 
-  // Check for conflicting grouped attendance (only if this is a parent registration)
-  if (!participant.childId) {
-    const groupedRecord = await prisma.groupedActivityDayAttendance.findUnique({
-      where: {
-        activityDayId_parentUserId: {
-          activityDayId: day.id,
-          parentUserId: participant.userId,
-        },
+// Check for conflicting grouped attendance (only if this is a parent registration)
+if (!participant.childId) {
+  const groupedRecord = await prisma.groupedActivityDayAttendance.findUnique({
+    where: {
+      activityDayId_parentUserId: {
+        activityDayId: day.id,
+        parentUserId: participant.userId,
       },
-      select: { id: true },
-    });
+    },
+    select: { id: true },
+  });
 
-    if (groupedRecord) {
-      return NextResponse.json(
-        { error: 'Esta persona ya tiene una confirmación de asistencia grupal. Actualice el grupo en su lugar.' },
-        { status: 409 }
-      );
-    }
+  if (groupedRecord) {
+    return NextResponse.json(
+      {
+        error:
+          'Esta persona ya tiene una confirmación de asistencia grupal. Actualice el grupo en su lugar.',
+      },
+      { status: 409 }
+    );
   }
+}
 ```
 
 - [ ] **Step 2: Run tests to ensure old endpoint still works for non-grouped scenarios**
 
 Run:
+
 ```bash
 npm test -- attendance
 ```
@@ -367,11 +386,12 @@ git commit -m "feat: add 409 conflict check for grouped attendance on legacy end
 ## Task 5: Frontend - Fetch Grouped Attendance Data
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/page.tsx`
 
 - [ ] **Step 1: Update activity detail page to fetch grouped attendance**
 
-Open `src/app/activities/[id]/page.tsx` and find the section where `days` are fetched (around the query that builds the ActivityDay array). 
+Open `src/app/activities/[id]/page.tsx` and find the section where `days` are fetched (around the query that builds the ActivityDay array).
 
 In the `.map()` function that builds each day's `attendances` array, add a new query to fetch grouped records. Find where attendances are currently fetched like:
 
@@ -406,6 +426,7 @@ groupedAttendances: await prisma.groupedActivityDayAttendance.findMany({
 ```
 
 Also update the ActivityDay type definition to include:
+
 ```typescript
 groupedAttendances: Array<{
   id: string;
@@ -419,6 +440,7 @@ groupedAttendances: Array<{
 - [ ] **Step 2: Run build to verify no TypeScript errors**
 
 Run:
+
 ```bash
 npm run build
 ```
@@ -437,6 +459,7 @@ git commit -m "feat: fetch grouped attendance data in activity detail page"
 ## Task 6: Frontend - Update Activity Days Panel Component
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx`
 
 - [ ] **Step 1: Add types and helper function**
@@ -471,7 +494,9 @@ groupedAttendances: GroupedAttendance[];
 In the component function, after existing state declarations, add:
 
 ```typescript
-  const [selectedChildren, setSelectedChildren] = useState<Record<string, Set<string>>>({});
+const [selectedChildren, setSelectedChildren] = useState<
+  Record<string, Set<string>>
+>({});
 ```
 
 - [ ] **Step 4: Add updateGroupedAttendance function**
@@ -479,41 +504,34 @@ In the component function, after existing state declarations, add:
 Add this new async function alongside the existing `updateAttendance` function:
 
 ```typescript
-  async function updateGroupedAttendance(
-    dayId: string,
-    parentUserId: string,
-    childIds: string[],
-    status: AttendanceStatus
-  ) {
-    const key = `${dayId}:${parentUserId}`;
-    setError('');
-    setSavingKey(key);
-    try {
-      const res = await fetch(
-        `/api/activity-days/${dayId}/grouped-attendance`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parentUserId, childIds, status }),
-        }
-      );
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(
-          payload?.error || 'No se pudo actualizar la asistencia'
-        );
-      }
-      router.refresh();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'No se pudo actualizar la asistencia'
-      );
-    } finally {
-      setSavingKey(null);
+async function updateGroupedAttendance(
+  dayId: string,
+  parentUserId: string,
+  childIds: string[],
+  status: AttendanceStatus
+) {
+  const key = `${dayId}:${parentUserId}`;
+  setError('');
+  setSavingKey(key);
+  try {
+    const res = await fetch(`/api/activity-days/${dayId}/grouped-attendance`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parentUserId, childIds, status }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No se pudo actualizar la asistencia');
     }
+    router.refresh();
+  } catch (err) {
+    setError(
+      err instanceof Error ? err.message : 'No se pudo actualizar la asistencia'
+    );
+  } finally {
+    setSavingKey(null);
   }
+}
 ```
 
 - [ ] **Step 5: Update attendance count calculation**
@@ -525,8 +543,7 @@ const goingCount =
   day.groupedAttendances
     .filter((g) => g.status === 'GOING')
     .reduce((sum, g) => sum + 1 + g.childIds.length, 0) +
-  day.attendances.filter((attendance) => attendance.status === 'GOING')
-    .length;
+  day.attendances.filter((attendance) => attendance.status === 'GOING').length;
 
 const notGoingCount =
   day.groupedAttendances
@@ -670,7 +687,7 @@ Replace the entire `registrations.map()` block with:
                     onClick={() => {
                       if (hasChildren) {
                         const childIds = Array.from(
-                          selectedChildren[registration.id] ?? 
+                          selectedChildren[registration.id] ??
                           (groupedRecord?.childIds || [])
                         );
                         updateGroupedAttendance(
@@ -714,6 +731,7 @@ Replace the entire `registrations.map()` block with:
 - [ ] **Step 7: Run build to verify no errors**
 
 Run:
+
 ```bash
 npm run build
 ```
@@ -732,6 +750,7 @@ git commit -m "feat: add grouped attendance UI with child checkboxes"
 ## Task 7: Write Integration Tests
 
 **Files:**
+
 - Create: `tests/api/grouped-attendance.test.ts`
 
 - [ ] **Step 1: Create test file**
@@ -816,7 +835,7 @@ describe('Grouped Attendance API', () => {
 
   it('should create grouped attendance for parent with children', async () => {
     const session = createMockSession(testParent.id);
-    
+
     const response = await fetch(
       `/api/activity-days/${testDay.id}/grouped-attendance`,
       {
@@ -933,6 +952,7 @@ describe('Grouped Attendance API', () => {
 - [ ] **Step 2: Run tests**
 
 Run:
+
 ```bash
 npm test -- grouped-attendance
 ```
@@ -951,11 +971,13 @@ git commit -m "test: add integration tests for grouped attendance API"
 ## Task 8: Verify Backward Compatibility
 
 **Files:**
+
 - No new files (testing existing endpoints)
 
 - [ ] **Step 1: Test solo parent (no children) can still use old endpoint**
 
 Run existing activity day attendance tests:
+
 ```bash
 npm test -- attendance
 ```
@@ -965,6 +987,7 @@ Expected output: All existing tests pass (solo registrations still work).
 - [ ] **Step 2: Test count calculation with mixed grouped + ungrouped**
 
 Create a quick manual test in your local dev environment:
+
 1. Create an activity with 2 days
 2. Register 1 parent + 1 child for the activity
 3. Confirm parent+child as grouped for Day 1 (count should be 2)
@@ -984,6 +1007,7 @@ git commit -m "test: verify backward compatibility for solo attendances"
 ## Task 9: Manual UI Testing & Verification
 
 **Files:**
+
 - No changes (testing/verification only)
 
 - [ ] **Step 1: Start dev server**
@@ -997,6 +1021,7 @@ Expected output: Server running on `http://localhost:3000`
 - [ ] **Step 2: Test grouped attendance flow**
 
 Scenario A: Parent with 1 child registered
+
 1. Login as parent
 2. Navigate to activity detail
 3. Expand Day 1
@@ -1007,6 +1032,7 @@ Scenario A: Parent with 1 child registered
 8. Verify "Confirmados" count increases by 2
 
 Scenario B: Parent with 2 children, select 1
+
 1. Register parent + 2 children for activity
 2. Expand Day 1
 3. Check only 1 child checkbox
@@ -1017,6 +1043,7 @@ Scenario B: Parent with 2 children, select 1
 8. Verify count updates correctly
 
 Scenario C: Solo parent (no children)
+
 1. Register only parent (no children)
 2. Expand Day 1
 3. Verify no child checkboxes appear
@@ -1027,16 +1054,19 @@ Scenario C: Solo parent (no children)
 - [ ] **Step 3: Test error scenarios**
 
 Scenario: Try to confirm grouped then use old endpoint
+
 1. (From Scenario A) Parent already confirmed grouped
 2. Open browser DevTools → Network
 3. Try to call old endpoint via manual fetch:
+
 ```javascript
 fetch('/api/activity-days/[dayId]/attendance', {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ participantId: '...', status: 'NOT_GOING' })
-})
+  body: JSON.stringify({ participantId: '...', status: 'NOT_GOING' }),
+});
 ```
+
 4. Verify response is 409 with message about grouped confirmation
 
 - [ ] **Step 4: Test performance**
@@ -1063,19 +1093,20 @@ git commit -m "test: document manual UI testing results for grouped attendance"
 
 **Spec Coverage Check:**
 
-| Spec Section | Implemented In | ✓ |
-|--------------|-------------------|---|
-| Data Model (GroupedActivityDayAttendance) | Task 1: Schema | ✓ |
-| API Endpoint (PATCH /api/.../grouped-attendance) | Task 3: New Endpoint | ✓ |
-| Validation (parent/child/registration checks) | Task 3: Endpoint logic | ✓ |
-| Conflict detection (409 on old endpoint) | Task 4: Old Endpoint Conflict Check | ✓ |
-| Backward compatibility (solo registrations) | Task 8: Verification | ✓ |
-| UI with checkboxes | Task 6: Frontend Component | ✓ |
-| Attendance count calculation | Task 6: Count Logic | ✓ |
-| Error handling (401/404/400/409) | Task 3 & 4: Endpoint Logic | ✓ |
-| Testing (integration + manual) | Task 7 & 9: Tests | ✓ |
+| Spec Section                                     | Implemented In                      | ✓   |
+| ------------------------------------------------ | ----------------------------------- | --- |
+| Data Model (GroupedActivityDayAttendance)        | Task 1: Schema                      | ✓   |
+| API Endpoint (PATCH /api/.../grouped-attendance) | Task 3: New Endpoint                | ✓   |
+| Validation (parent/child/registration checks)    | Task 3: Endpoint logic              | ✓   |
+| Conflict detection (409 on old endpoint)         | Task 4: Old Endpoint Conflict Check | ✓   |
+| Backward compatibility (solo registrations)      | Task 8: Verification                | ✓   |
+| UI with checkboxes                               | Task 6: Frontend Component          | ✓   |
+| Attendance count calculation                     | Task 6: Count Logic                 | ✓   |
+| Error handling (401/404/400/409)                 | Task 3 & 4: Endpoint Logic          | ✓   |
+| Testing (integration + manual)                   | Task 7 & 9: Tests                   | ✓   |
 
 **Placeholder Scan:**
+
 - ✓ All code blocks complete (no "TBD" or "implement later")
 - ✓ All types defined (GroupedAttendance, etc.)
 - ✓ All validation rules explicit
@@ -1083,6 +1114,7 @@ git commit -m "test: document manual UI testing results for grouped attendance"
 - ✓ All commands have expected outputs
 
 **Type Consistency Check:**
+
 - `status` field: `AttendanceStatus` enum (PENDING/GOING/NOT_GOING) used consistently
 - `childIds`: `string[]` JSON array used in schema, API, and frontend
 - `totalPeople`: Calculated as `1 + childIds.length` in endpoint and frontend
@@ -1097,12 +1129,14 @@ All checks passed. Plan is complete and ready for execution.
 This plan contains 9 tasks. **Recommended approach:**
 
 **Option 1: Subagent-Driven (Recommended for speed)**
+
 - I dispatch a fresh subagent per task
 - Each subagent focuses on one task in isolation
 - I review each completed task before moving to next
 - Fast feedback loop, easy to catch issues early
 
 **Option 2: Inline Execution (Recommended for context)**
+
 - Execute tasks sequentially in this session
 - Full context preservation between tasks
 - Single review checkpoint after all tasks complete

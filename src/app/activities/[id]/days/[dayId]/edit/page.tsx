@@ -51,7 +51,8 @@ export default async function EditActivityDayPage({
 
   const professors = activityProfessors.map((ap) => ap.user);
 
-  if (!day || day.activityId !== params.id) redirect(`/activities/${params.id}`);
+  if (!day || day.activityId !== params.id)
+    redirect(`/activities/${params.id}`);
 
   const dateLabel = day.date.toLocaleDateString('es-AR', {
     weekday: 'long',

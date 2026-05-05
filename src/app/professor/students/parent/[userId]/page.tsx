@@ -84,7 +84,13 @@ export default async function ProfessorParentProfilePage({
       members: {
         include: {
           member: {
-            select: { id: true, name: true, lastName: true, phone: true, email: true },
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              phone: true,
+              email: true,
+            },
           },
         },
         orderBy: { createdAt: 'asc' },
@@ -189,7 +195,9 @@ export default async function ProfessorParentProfilePage({
 
       {familyGroup && familyGroup.members.length > 0 && (
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
-          <h2 className="text-lg font-semibold tracking-tight">Tutores y padres</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Tutores y padres
+          </h2>
           <div className="space-y-2">
             {familyGroup.members.map((fm) => {
               const relLabel: Record<string, string> = {
@@ -198,10 +206,15 @@ export default async function ProfessorParentProfilePage({
                 OTHER: 'Tutor/a',
               };
               return (
-                <div key={fm.id} className="rounded-lg border bg-muted/20 p-3 text-sm space-y-1">
+                <div
+                  key={fm.id}
+                  className="rounded-lg border bg-muted/20 p-3 text-sm space-y-1"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium">
-                      {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
+                      {[fm.member.name, fm.member.lastName]
+                        .filter(Boolean)
+                        .join(' ') || fm.member.email}
                     </p>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground shrink-0">
                       {relLabel[fm.relationship] ?? fm.relationship}
@@ -209,13 +222,19 @@ export default async function ProfessorParentProfilePage({
                   </div>
                   {fm.member.phone && (
                     <p className="text-muted-foreground">
-                      <a href={`tel:${fm.member.phone}`} className="hover:text-primary transition-colors">
+                      <a
+                        href={`tel:${fm.member.phone}`}
+                        className="hover:text-primary transition-colors"
+                      >
                         {fm.member.phone}
                       </a>
                     </p>
                   )}
                   <p className="text-muted-foreground">
-                    <a href={`mailto:${fm.member.email}`} className="hover:text-primary transition-colors">
+                    <a
+                      href={`mailto:${fm.member.email}`}
+                      className="hover:text-primary transition-colors"
+                    >
                       {fm.member.email}
                     </a>
                   </p>
@@ -249,7 +268,10 @@ export default async function ProfessorParentProfilePage({
           </h2>
           <ul className="divide-y divide-border">
             {user.activityParticipants.map((ap) => (
-              <li key={ap.id} className="py-2 text-sm flex items-center justify-between">
+              <li
+                key={ap.id}
+                className="py-2 text-sm flex items-center justify-between"
+              >
                 <span>
                   <span className="font-medium">{ap.activity.name}</span>
                   {ap.groupMembership?.activityGroup && (
@@ -293,7 +315,10 @@ export default async function ProfessorParentProfilePage({
                     )}
                     <div className="space-y-1">
                       {child.activityParticipants.map((ap) => (
-                        <p key={ap.id} className="text-xs text-muted-foreground">
+                        <p
+                          key={ap.id}
+                          className="text-xs text-muted-foreground"
+                        >
                           {ap.activity.name}
                           {ap.groupMembership?.activityGroup &&
                             ` · ${ap.groupMembership.activityGroup.name}`}

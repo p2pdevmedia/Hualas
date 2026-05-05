@@ -78,7 +78,10 @@ export default async function DayDescripcionPage({
         )}
       </div>
 
-      <DescriptionForm dayId={day.id} initialDescription={day.description ?? null} />
+      <DescriptionForm
+        dayId={day.id}
+        initialDescription={day.description ?? null}
+      />
     </main>
   );
 }

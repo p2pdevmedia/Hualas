@@ -87,9 +87,11 @@ function getWorkbookSheetPath(sheetName) {
   const relsXml = readZipEntry('xl/_rels/workbook.xml.rels');
 
   const relTargets = new Map(
-    [...relsXml.matchAll(/<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g)].map(
-      ([, id, target]) => [id, target]
-    )
+    [
+      ...relsXml.matchAll(
+        /<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g
+      ),
+    ].map(([, id, target]) => [id, target])
   );
 
   const sheetMatch = new RegExp(
@@ -198,7 +200,9 @@ function buildRawData({
 }
 
 function formatPersonName(person) {
-  return `${person?.name ?? ''} ${person?.lastName ?? ''}`.trim() || 'Sin nombre';
+  return (
+    `${person?.name ?? ''} ${person?.lastName ?? ''}`.trim() || 'Sin nombre'
+  );
 }
 
 async function main() {
@@ -292,8 +296,8 @@ async function main() {
   for (const row of validRows) {
     const child = childByDni.get(row.dni) ?? null;
     const responsibleUser = child
-      ? userById.get(child.userId) ?? null
-      : userByDni.get(row.dni) ?? null;
+      ? (userById.get(child.userId) ?? null)
+      : (userByDni.get(row.dni) ?? null);
 
     if (!responsibleUser) {
       if (skippedUnmatched.length < 10) {
@@ -331,14 +335,13 @@ async function main() {
       continue;
     }
 
-    const stats =
-      activityStats.get(item.activityLabel) ?? {
-        firstDate: item.date,
-        lastDate: item.date,
-        amountCounts: new Map(),
-        latestAmount: item.activityAmount,
-        latestRowNumber: item.rowNumber,
-      };
+    const stats = activityStats.get(item.activityLabel) ?? {
+      firstDate: item.date,
+      lastDate: item.date,
+      amountCounts: new Map(),
+      latestAmount: item.activityAmount,
+      latestRowNumber: item.rowNumber,
+    };
 
     if (item.date < stats.firstDate) stats.firstDate = item.date;
     if (item.date > stats.lastDate) stats.lastDate = item.date;
@@ -448,15 +451,20 @@ async function main() {
 
   for (const item of items) {
     const isSocialOnly = item.activityLabel === 'CUOTA SOCIAL';
-    const activityId = isSocialOnly ? null : activityMap.get(item.activityLabel);
+    const activityId = isSocialOnly
+      ? null
+      : activityMap.get(item.activityLabel);
     if (!isSocialOnly && !activityId) {
-      throw new Error(`No se pudo resolver la actividad "${item.activityLabel}".`);
+      throw new Error(
+        `No se pudo resolver la actividad "${item.activityLabel}".`
+      );
     }
 
     const paymentDate = item.date;
     const paymentId = stableId('manualpay', item.importKey);
     const orderId = stableId('manualorder', item.importKey);
-    const orderTotal = item.socialFeeAmount + (isSocialOnly ? 0 : item.activityAmount);
+    const orderTotal =
+      item.socialFeeAmount + (isSocialOnly ? 0 : item.activityAmount);
     const rawData = buildRawData({
       sourceDate: paymentDate,
       socialFeeAmount: item.socialFeeAmount,

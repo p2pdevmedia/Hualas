@@ -71,13 +71,15 @@ export default function TutorsList({
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{tutor.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{tutor.email}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {tutor.email}
+              </p>
             </div>
             <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {relationshipLabel[tutor.relationship] ?? tutor.relationship}
             </span>
-            {isResponsible && (
-              confirmId === tutor.memberId ? (
+            {isResponsible &&
+              (confirmId === tutor.memberId ? (
                 <div className="flex flex-shrink-0 items-center gap-1">
                   <button
                     type="button"
@@ -98,15 +100,17 @@ export default function TutorsList({
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setError(''); setConfirmId(tutor.memberId); }}
+                  onClick={() => {
+                    setError('');
+                    setConfirmId(tutor.memberId);
+                  }}
                   disabled={removing !== null}
                   className="flex-shrink-0 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
                   title="Eliminar del grupo"
                 >
                   <X className="h-4 w-4" />
                 </button>
-              )
-            )}
+              ))}
           </div>
         ))}
       </div>

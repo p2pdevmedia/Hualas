@@ -41,69 +41,70 @@ export async function GET(request: Request) {
   if (toDate) dateFilter.lte = toDate;
   const hasDateFilter = Boolean(fromDate || toDate);
 
-  const [movements, manualPayments, mpPayments, paidProfessorPayments] = await Promise.all([
-    prisma.accountingMovement.findMany({
-      where: hasDateFilter ? { date: dateFilter } : undefined,
-      orderBy: { date: 'desc' },
-    }),
-    prisma.payment.findMany({
-      where: {
-        provider: 'MANUAL_TRANSFER',
-        status: 'APPROVED',
-      },
-      orderBy: { paidAt: 'desc' },
-      select: {
-        id: true,
-        paidAt: true,
-        updatedAt: true,
-        createdAt: true,
-        amount: true,
-        receiptUrl: true,
-        payerName: true,
-        order: {
-          select: {
-            responsibleName: true,
-            responsibleEmail: true,
-            total: true,
-            items: {
-              select: {
-                description: true,
-                billableConcept: {
-                  select: {
-                    code: true,
+  const [movements, manualPayments, mpPayments, paidProfessorPayments] =
+    await Promise.all([
+      prisma.accountingMovement.findMany({
+        where: hasDateFilter ? { date: dateFilter } : undefined,
+        orderBy: { date: 'desc' },
+      }),
+      prisma.payment.findMany({
+        where: {
+          provider: 'MANUAL_TRANSFER',
+          status: 'APPROVED',
+        },
+        orderBy: { paidAt: 'desc' },
+        select: {
+          id: true,
+          paidAt: true,
+          updatedAt: true,
+          createdAt: true,
+          amount: true,
+          receiptUrl: true,
+          payerName: true,
+          order: {
+            select: {
+              responsibleName: true,
+              responsibleEmail: true,
+              total: true,
+              items: {
+                select: {
+                  description: true,
+                  billableConcept: {
+                    select: {
+                      code: true,
+                    },
                   },
+                  activity: { select: { name: true } },
                 },
-                activity: { select: { name: true } },
               },
             },
           },
         },
-      },
-    }),
-    prisma.activityParticipant.findMany({
-      where: {
-        receipt: { not: null },
-        ...(hasDateFilter ? { receiptDate: dateFilter } : {}),
-      },
-      include: {
-        activity: { select: { name: true, price: true } },
-        user: { select: { name: true, lastName: true } },
-        child: { select: { name: true, lastName: true } },
-      },
-    }),
-    prisma.professorPayment.findMany({
-      where: {
-        status: 'PAID',
-        ...(hasDateFilter ? { paidAt: dateFilter } : {}),
-      },
-      orderBy: { paidAt: 'desc' },
-      include: {
-        professorProfile: {
-          include: { user: { select: { name: true, lastName: true } } },
+      }),
+      prisma.activityParticipant.findMany({
+        where: {
+          receipt: { not: null },
+          ...(hasDateFilter ? { receiptDate: dateFilter } : {}),
         },
-      },
-    }),
-  ]);
+        include: {
+          activity: { select: { name: true, price: true } },
+          user: { select: { name: true, lastName: true } },
+          child: { select: { name: true, lastName: true } },
+        },
+      }),
+      prisma.professorPayment.findMany({
+        where: {
+          status: 'PAID',
+          ...(hasDateFilter ? { paidAt: dateFilter } : {}),
+        },
+        orderBy: { paidAt: 'desc' },
+        include: {
+          professorProfile: {
+            include: { user: { select: { name: true, lastName: true } } },
+          },
+        },
+      }),
+    ]);
 
   const manualIncomePayments = manualPayments
     .filter((payment) => {
@@ -137,12 +138,15 @@ export async function GET(request: Request) {
     receipt: payment.receipt,
   }));
 
-  const reportProfessorPayments: ProfessorPaymentLike[] = paidProfessorPayments.map((p) => ({
-    id: p.id,
-    paidAt: p.paidAt,
-    amount: p.amount,
-    professorName: `${p.professorProfile.user.name ?? ''} ${p.professorProfile.user.lastName ?? ''}`.trim() || 'Profesor',
-  }));
+  const reportProfessorPayments: ProfessorPaymentLike[] =
+    paidProfessorPayments.map((p) => ({
+      id: p.id,
+      paidAt: p.paidAt,
+      amount: p.amount,
+      professorName:
+        `${p.professorProfile.user.name ?? ''} ${p.professorProfile.user.lastName ?? ''}`.trim() ||
+        'Profesor',
+    }));
 
   const summary = summarizeAccounting({
     movements,

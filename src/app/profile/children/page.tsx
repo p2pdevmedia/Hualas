@@ -49,8 +49,7 @@ export default async function ChildrenPage() {
     familyGroups = await familyGroupService.getFamilyGroupsForUser(userId);
   }
 
-  const activeFamilyGroup =
-    responsibleFamilyGroup ?? familyGroups[0] ?? null;
+  const activeFamilyGroup = responsibleFamilyGroup ?? familyGroups[0] ?? null;
   const children = await prisma.child.findMany({
     where: await getAccessibleChildrenWhere(userId),
     include: {
@@ -62,7 +61,6 @@ export default async function ChildrenPage() {
 
   const familyMembers = activeFamilyGroup?.members ?? [];
   const isResponsible = activeFamilyGroup?.responsibleUserId === userId;
-
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -122,11 +120,17 @@ export default async function ChildrenPage() {
               </p>
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {`${activeFamilyGroup.responsibleUser.name?.[0] ?? ''}${activeFamilyGroup.responsibleUser.lastName?.[0] ?? ''}`.trim() || '?'}
+                  {`${activeFamilyGroup.responsibleUser.name?.[0] ?? ''}${activeFamilyGroup.responsibleUser.lastName?.[0] ?? ''}`.trim() ||
+                    '?'}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {[activeFamilyGroup.responsibleUser.name, activeFamilyGroup.responsibleUser.lastName].filter(Boolean).join(' ') || activeFamilyGroup.responsibleUser.email}
+                    {[
+                      activeFamilyGroup.responsibleUser.name,
+                      activeFamilyGroup.responsibleUser.lastName,
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || activeFamilyGroup.responsibleUser.email}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {activeFamilyGroup.responsibleUser.email}
@@ -143,7 +147,10 @@ export default async function ChildrenPage() {
             tutors={familyMembers.map((fm) => ({
               id: fm.id,
               memberId: fm.memberId,
-              name: [fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email,
+              name:
+                [fm.member.name, fm.member.lastName]
+                  .filter(Boolean)
+                  .join(' ') || fm.member.email,
               email: fm.member.email,
               relationship: fm.relationship,
             }))}
@@ -208,7 +215,11 @@ export default async function ChildrenPage() {
                         const birth = new Date(child.birthDate);
                         let age = today.getFullYear() - birth.getFullYear();
                         const m = today.getMonth() - birth.getMonth();
-                        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                        if (
+                          m < 0 ||
+                          (m === 0 && today.getDate() < birth.getDate())
+                        )
+                          age--;
                         return age;
                       })()}{' '}
                       años
@@ -258,12 +269,15 @@ export default async function ChildrenPage() {
                   Editar
                 </Link>
               </div>
-              {child.userId === userId && child._count.activityParticipants === 0 && (
-                <DeleteChildButton
-                  childId={child.id}
-                  childName={[child.name, child.lastName].filter(Boolean).join(' ')}
-                />
-              )}
+              {child.userId === userId &&
+                child._count.activityParticipants === 0 && (
+                  <DeleteChildButton
+                    childId={child.id}
+                    childName={[child.name, child.lastName]
+                      .filter(Boolean)
+                      .join(' ')}
+                  />
+                )}
             </div>
           ))}
         </div>

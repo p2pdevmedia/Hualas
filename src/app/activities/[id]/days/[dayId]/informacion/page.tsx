@@ -33,19 +33,26 @@ export default async function DayGroupInfoPage({
 
   if (!day || day.activityId !== params.id) redirect('/my-activities');
 
-  if (isProfessor && !day.professors.some((p) => p.userId === session!.user.id)) {
+  if (
+    isProfessor &&
+    !day.professors.some((p) => p.userId === session!.user.id)
+  ) {
     redirect('/my-activities');
   }
 
   const allParticipants = await prisma.activityParticipant.findMany({
     where: { activityId: params.id },
     include: {
-      user: { select: { name: true, lastName: true, email: true, phone: true } },
+      user: {
+        select: { name: true, lastName: true, email: true, phone: true },
+      },
       child: {
         select: {
           name: true,
           lastName: true,
-          user: { select: { name: true, lastName: true, email: true, phone: true } },
+          user: {
+            select: { name: true, lastName: true, email: true, phone: true },
+          },
         },
       },
       groupMembership: { select: { activityGroupId: true } },
@@ -89,7 +96,9 @@ export default async function DayGroupInfoPage({
       </nav>
 
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold">Información de contacto</h1>
+        <h1 className="font-heading text-2xl font-semibold">
+          Información de contacto
+        </h1>
         <p className="text-sm text-muted-foreground capitalize">{dateLabel}</p>
         <p className="text-sm text-muted-foreground">
           {day.schedule} · {day.geoLocation}
@@ -102,16 +111,20 @@ export default async function DayGroupInfoPage({
       </div>
 
       {participants.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No hay inscriptos para este grupo.</p>
+        <p className="text-sm text-muted-foreground">
+          No hay inscriptos para este grupo.
+        </p>
       ) : (
         <div className="space-y-3">
           {participants.map((p) => {
             const isChild = !!p.child;
             const displayName = isChild
               ? `${p.child!.name}${p.child!.lastName ? ` ${p.child!.lastName}` : ''}`
-              : `${p.user.name ?? ''}${p.user.lastName ? ` ${p.user.lastName}` : ''}`.trim() || 'Sin nombre';
+              : `${p.user.name ?? ''}${p.user.lastName ? ` ${p.user.lastName}` : ''}`.trim() ||
+                'Sin nombre';
             const contact = isChild ? p.child!.user : p.user;
-            const contactName = `${contact.name ?? ''}${contact.lastName ? ` ${contact.lastName}` : ''}`.trim();
+            const contactName =
+              `${contact.name ?? ''}${contact.lastName ? ` ${contact.lastName}` : ''}`.trim();
 
             return (
               <div
@@ -142,7 +155,9 @@ export default async function DayGroupInfoPage({
                     </a>
                   )}
                   {!contact.email && !contact.phone && (
-                    <p className="text-xs text-muted-foreground italic">Sin datos de contacto</p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Sin datos de contacto
+                    </p>
                   )}
                 </div>
               </div>

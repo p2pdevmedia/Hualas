@@ -68,7 +68,11 @@ export default function ActivityRegisterButton({
     const existing = raw ? (JSON.parse(raw) as ActivityCartItem[]) : [];
     const deduped = existing.filter(
       (entry) =>
-        !(entry.activityId === item.activityId && entry.target === item.target && (entry.groupId ?? '') === (item.groupId ?? ''))
+        !(
+          entry.activityId === item.activityId &&
+          entry.target === item.target &&
+          (entry.groupId ?? '') === (item.groupId ?? '')
+        )
     );
     window.localStorage.setItem(
       ACTIVITY_CART_STORAGE_KEY,

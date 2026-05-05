@@ -52,20 +52,20 @@ model PickupNotice {
   childId               String
   createdBy             User @relation("PickupNoticeCreator", fields: [createdById], references: [id], onDelete: Restrict)
   createdById           String
-  
+
   // Alternate person: either a registered user or free text
   alternatePersonUser   User? @relation("PickupNoticeAlternatePerson", fields: [alternatePersonUserId], references: [id], onDelete: SetNull)
   alternatePersonUserId String?
   alternatePersonName   String? // Free text if not a registered user
-  
+
   description           String // Why/what they're here for
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   deletedAt             DateTime? // Soft delete
-  
+
   // Acknowledgments from professors
   acknowledgments       PickupNoticeAcknowledgment[]
-  
+
   @@unique([activityDayId, childId])
   @@index([childId])
   @@index([createdById])
@@ -80,7 +80,7 @@ model PickupNoticeAcknowledgment {
   acknowledgedById String
   notes           String?
   confirmedAt     DateTime @default(now())
-  
+
   @@unique([pickupNoticeId, acknowledgedById])
   @@index([pickupNoticeId])
   @@index([acknowledgedById])
@@ -106,6 +106,7 @@ POST /api/activity-days/[dayId]/pickup-notices
 ```
 
 **Request body:**
+
 ```json
 {
   "childId": "child_123",
@@ -116,6 +117,7 @@ POST /api/activity-days/[dayId]/pickup-notices
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "id": "notice_123",
@@ -131,6 +133,7 @@ POST /api/activity-days/[dayId]/pickup-notices
 ```
 
 **Validation:**
+
 - `childId` must belong to the creating parent
 - `activityDayId` must be in the future
 - Either `alternatePersonUserId` or `alternatePersonName` must be provided
@@ -145,6 +148,7 @@ GET /api/activity-days/[dayId]/pickup-notices
 ```
 
 **Response:** `200 OK`
+
 ```json
 [
   {
@@ -179,6 +183,7 @@ PUT /api/pickup-notices/[noticeId]
 ```
 
 **Request body:**
+
 ```json
 {
   "alternatePersonName": "Tía María García",
@@ -189,6 +194,7 @@ PUT /api/pickup-notices/[noticeId]
 **Response:** `200 OK` (updated notice)
 
 **Validation:**
+
 - Only the creating parent can edit
 - Cannot edit if activity day has passed
 
@@ -203,6 +209,7 @@ DELETE /api/pickup-notices/[noticeId]
 **Response:** `204 No Content`
 
 **Validation:**
+
 - Only the creating parent can delete
 - Cannot delete if activity day has passed
 - Soft delete: set `deletedAt` timestamp
@@ -216,6 +223,7 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
 ```
 
 **Request body:**
+
 ```json
 {
   "notes": "Conforme, he anotado"
@@ -223,6 +231,7 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "id": "ack_111",
@@ -234,6 +243,7 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
 ```
 
 **Validation:**
+
 - Only professors assigned to this activity day can acknowledge
 - One acknowledgment per professor per notice
 
@@ -255,11 +265,13 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
   - Success toast on save
 
 **Edit flow:**
+
 - Parent opens notice
 - Can modify fields (except child and day)
 - Changes saved via PUT
 
 **Delete:**
+
 - Delete button with confirmation dialog
 
 ---
@@ -283,42 +295,45 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
 
 ## Error Handling
 
-| Scenario | Status | Message |
-|----------|--------|---------|
-| Parent tries to edit past day | 400 Bad Request | "Cannot modify notices after activity day" |
-| Parent tries to create for someone else's child | 403 Forbidden | "Cannot create notice for this child" |
-| Professor not assigned to day | 403 Forbidden | "You do not have access to this activity day" |
-| Duplicate notice (same child, day) | 400 Bad Request | "A notice already exists for this child on this day" |
-| Invalid child/day | 404 Not Found | "Resource not found" |
+| Scenario                                        | Status          | Message                                              |
+| ----------------------------------------------- | --------------- | ---------------------------------------------------- |
+| Parent tries to edit past day                   | 400 Bad Request | "Cannot modify notices after activity day"           |
+| Parent tries to create for someone else's child | 403 Forbidden   | "Cannot create notice for this child"                |
+| Professor not assigned to day                   | 403 Forbidden   | "You do not have access to this activity day"        |
+| Duplicate notice (same child, day)              | 400 Bad Request | "A notice already exists for this child on this day" |
+| Invalid child/day                               | 404 Not Found   | "Resource not found"                                 |
 
 ---
 
 ## Permissions & Authorization
 
-| Action | Allowed Roles | Condition |
-|--------|---------------|-----------|
-| Create notice | User (any) | Must be parent of the child; activityDay must be future |
-| Edit notice | User (any) | Must be creator; activityDay must be future |
-| Delete notice | User (any) | Must be creator; activityDay must be future |
-| View notices | PROFESSOR, ADMIN | Must be assigned to this activityDay via ActivityDayProfessor |
-| Acknowledge | PROFESSOR, ADMIN | Must be assigned to this activityDay |
+| Action        | Allowed Roles    | Condition                                                     |
+| ------------- | ---------------- | ------------------------------------------------------------- |
+| Create notice | User (any)       | Must be parent of the child; activityDay must be future       |
+| Edit notice   | User (any)       | Must be creator; activityDay must be future                   |
+| Delete notice | User (any)       | Must be creator; activityDay must be future                   |
+| View notices  | PROFESSOR, ADMIN | Must be assigned to this activityDay via ActivityDayProfessor |
+| Acknowledge   | PROFESSOR, ADMIN | Must be assigned to this activityDay                          |
 
 ---
 
 ## Testing
 
 ### Unit Tests
+
 - Validate creation rules (parent owns child, day is future)
 - Validate unique constraint (one per child per day)
 - Validate past-day edit restrictions
 
 ### Integration Tests
+
 - Parent creates, edits, deletes notice
 - Professor sees notices only for assigned days
 - Professor acknowledges and adds notes
 - Soft delete works correctly
 
 ### E2E Tests
+
 - Parent flow: create → view acknowledgments
 - Professor flow: view notice → confirm → see acknowledgment
 
@@ -344,6 +359,7 @@ POST /api/pickup-notices/[noticeId]/acknowledgments
 ## Scope
 
 This feature **only** adds the pickup notice system. It does **not** include:
+
 - General notification/alert system (only visual display in activity day)
 - Email/SMS to professors (parents see acknowledgments in UI)
 - Recurring notices (one per day)

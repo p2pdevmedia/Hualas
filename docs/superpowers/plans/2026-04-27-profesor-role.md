@@ -13,6 +13,7 @@
 ## File Map
 
 ### New files
+
 - `prisma/migrations/20260427000002_add_profesor_role/migration.sql`
 - `src/app/api/activities/[id]/professors/route.ts`
 - `src/app/api/activities/[id]/professors/[userId]/route.ts`
@@ -24,6 +25,7 @@
 - `src/app/my-activities/[id]/sessions/new/form.tsx`
 
 ### Modified files
+
 - `prisma/schema.prisma` — add PROFESSOR, 3 new models, AttendanceStatus enum
 - `src/types/next-auth.d.ts` — add PROFESSOR to role union types
 - `src/app/activities/[id]/edit/form.tsx` — add professors panel at bottom
@@ -37,6 +39,7 @@
 ## Task 1: Schema + Migration
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 - Create: `prisma/migrations/20260427000002_add_profesor_role/migration.sql`
 
@@ -164,11 +167,13 @@ model ActivityParticipant {
 - [ ] **Step 2: Create migration SQL file**
 
 Create directory and file:
+
 ```
 prisma/migrations/20260427000002_add_profesor_role/migration.sql
 ```
 
 Content:
+
 ```sql
 -- CreateEnum
 CREATE TYPE "AttendanceStatus" AS ENUM ('CONFIRMED', 'DECLINED');
@@ -264,11 +269,13 @@ git commit -m "feat: add PROFESSOR role, ActivityProfessor, ActivitySession, Ses
 ## Task 2: NextAuth Types
 
 **Files:**
+
 - Modify: `src/types/next-auth.d.ts`
 
 - [ ] **Step 1: Add PROFESSOR to role unions**
 
 Current file content:
+
 ```typescript
 import NextAuth from 'next-auth';
 
@@ -333,6 +340,7 @@ git commit -m "feat: add PROFESSOR to NextAuth role types"
 ## Task 3: API — Professor Assignment
 
 **Files:**
+
 - Create: `src/app/api/activities/[id]/professors/route.ts`
 - Create: `src/app/api/activities/[id]/professors/[userId]/route.ts`
 
@@ -360,7 +368,9 @@ export async function GET(
 
   const professors = await prisma.activityProfessor.findMany({
     where: { activityId: params.id },
-    include: { user: { select: { id: true, name: true, lastName: true, email: true } } },
+    include: {
+      user: { select: { id: true, name: true, lastName: true, email: true } },
+    },
   });
 
   return NextResponse.json(professors);
@@ -386,7 +396,10 @@ export async function POST(
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== 'PROFESSOR') {
-    return NextResponse.json({ error: 'User is not a PROFESSOR' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'User is not a PROFESSOR' },
+      { status: 400 }
+    );
   }
 
   const existing = await prisma.activityProfessor.findUnique({
@@ -398,7 +411,9 @@ export async function POST(
 
   const ap = await prisma.activityProfessor.create({
     data: { activityId: params.id, userId },
-    include: { user: { select: { id: true, name: true, lastName: true, email: true } } },
+    include: {
+      user: { select: { id: true, name: true, lastName: true, email: true } },
+    },
   });
 
   return NextResponse.json(ap, { status: 201 });
@@ -447,6 +462,7 @@ git commit -m "feat: add professor assignment API (GET/POST/DELETE)"
 ## Task 4: API — Sessions
 
 **Files:**
+
 - Create: `src/app/api/activities/[id]/sessions/route.ts`
 
 - [ ] **Step 1: Create GET/POST route for sessions**
@@ -490,10 +506,15 @@ export async function POST(
   }
 
   const assignment = await prisma.activityProfessor.findUnique({
-    where: { activityId_userId: { activityId: params.id, userId: session.user.id } },
+    where: {
+      activityId_userId: { activityId: params.id, userId: session.user.id },
+    },
   });
   if (!assignment) {
-    return NextResponse.json({ error: 'Not assigned to this activity' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Not assigned to this activity' },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
@@ -507,7 +528,10 @@ export async function POST(
   };
 
   if (!date || !startTime || !endTime || lat == null || lng == null) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Missing required fields' },
+      { status: 400 }
+    );
   }
 
   const newSession = await prisma.activitySession.create({
@@ -539,6 +563,7 @@ git commit -m "feat: add sessions API (GET/POST)"
 ## Task 5: API — Attendance
 
 **Files:**
+
 - Create: `src/app/api/sessions/[id]/attendance/route.ts`
 
 - [ ] **Step 1: Create PATCH and GET route for attendance**
@@ -575,7 +600,12 @@ export async function GET(
   }
 
   const attendance = await prisma.sessionAttendance.findUnique({
-    where: { sessionId_participantId: { sessionId: params.id, participantId: participant.id } },
+    where: {
+      sessionId_participantId: {
+        sessionId: params.id,
+        participantId: participant.id,
+      },
+    },
   });
 
   return NextResponse.json({ status: attendance?.status ?? null });
@@ -601,17 +631,28 @@ export async function PATCH(
     where: { activityId: actSession.activityId, userId: session.user.id },
   });
   if (!participant) {
-    return NextResponse.json({ error: 'Not enrolled in this activity' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Not enrolled in this activity' },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
   const { status } = body as { status: 'CONFIRMED' | 'DECLINED' };
   if (status !== 'CONFIRMED' && status !== 'DECLINED') {
-    return NextResponse.json({ error: 'status must be CONFIRMED or DECLINED' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'status must be CONFIRMED or DECLINED' },
+      { status: 400 }
+    );
   }
 
   const attendance = await prisma.sessionAttendance.upsert({
-    where: { sessionId_participantId: { sessionId: params.id, participantId: participant.id } },
+    where: {
+      sessionId_participantId: {
+        sessionId: params.id,
+        participantId: participant.id,
+      },
+    },
     create: { sessionId: params.id, participantId: participant.id, status },
     update: { status },
   });
@@ -632,6 +673,7 @@ git commit -m "feat: add session attendance API (GET/PATCH)"
 ## Task 6: Install Leaflet + Map Components
 
 **Files:**
+
 - Create: `src/components/map-picker.tsx`
 - Create: `src/components/map-preview.tsx`
 
@@ -675,12 +717,17 @@ export default function MapPicker({ lat, lng, onChange }: MapPickerProps) {
       // Fix default icon paths broken by webpack
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconRetinaUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        shadowUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(containerRef.current!).setView([defaultLat, defaultLng], 13);
+      const map = L.map(containerRef.current!).setView(
+        [defaultLat, defaultLng],
+        13
+      );
       mapRef.current = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -701,7 +748,9 @@ export default function MapPicker({ lat, lng, onChange }: MapPickerProps) {
         if (markerRef.current) {
           markerRef.current.setLatLng([clickLat, clickLng]);
         } else {
-          const marker = L.marker([clickLat, clickLng], { draggable: true }).addTo(map);
+          const marker = L.marker([clickLat, clickLng], {
+            draggable: true,
+          }).addTo(map);
           markerRef.current = marker;
           marker.on('dragend', () => {
             const pos = marker.getLatLng();
@@ -751,7 +800,11 @@ interface MapPreviewProps {
   height?: string;
 }
 
-export default function MapPreview({ lat, lng, height = 'h-36' }: MapPreviewProps) {
+export default function MapPreview({
+  lat,
+  lng,
+  height = 'h-36',
+}: MapPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
@@ -761,12 +814,18 @@ export default function MapPreview({ lat, lng, height = 'h-36' }: MapPreviewProp
     import('leaflet').then((L) => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconRetinaUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        shadowUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(containerRef.current!, { zoomControl: false, dragging: false, scrollWheelZoom: false }).setView([lat, lng], 14);
+      const map = L.map(containerRef.current!, {
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+      }).setView([lat, lng], 14);
       mapRef.current = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -788,7 +847,10 @@ export default function MapPreview({ lat, lng, height = 'h-36' }: MapPreviewProp
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       />
-      <div ref={containerRef} className={`${height} w-full rounded-lg border`} />
+      <div
+        ref={containerRef}
+        className={`${height} w-full rounded-lg border`}
+      />
     </>
   );
 }
@@ -806,6 +868,7 @@ git commit -m "feat: add MapPicker and MapPreview components using react-leaflet
 ## Task 7: Admin Edit Form — Professors Panel
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/edit/page.tsx`
 - Modify: `src/app/activities/[id]/edit/form.tsx`
 
@@ -945,7 +1008,12 @@ interface EditActivityFormProps {
     professors: Array<{
       id: string;
       userId: string;
-      user: { id: string; name: string | null; lastName: string | null; email: string };
+      user: {
+        id: string;
+        name: string | null;
+        lastName: string | null;
+        email: string;
+      };
     }>;
   };
   allProfessors: Array<{
@@ -986,9 +1054,12 @@ async function assignProfessor() {
 }
 
 async function removeProfessor(userId: string) {
-  const res = await fetch(`/api/activities/${activity.id}/professors/${userId}`, {
-    method: 'DELETE',
-  });
+  const res = await fetch(
+    `/api/activities/${activity.id}/professors/${userId}`,
+    {
+      method: 'DELETE',
+    }
+  );
   if (res.ok || res.status === 204) {
     setProfessors((prev) => prev.filter((p) => p.userId !== userId));
   }
@@ -1008,7 +1079,9 @@ Add the professors panel JSX at the bottom of the `<form>` element (before the s
         <li key={ap.id} className="flex items-center justify-between text-sm">
           <span>
             {ap.user.name ?? ''} {ap.user.lastName ?? ''}{' '}
-            <span className="text-muted-foreground text-xs">({ap.user.email})</span>
+            <span className="text-muted-foreground text-xs">
+              ({ap.user.email})
+            </span>
           </span>
           <button
             type="button"
@@ -1060,6 +1133,7 @@ git commit -m "feat: add professors panel to activity edit form"
 ## Task 8: Professor — Session Creation Page
 
 **Files:**
+
 - Create: `src/app/my-activities/[id]/sessions/new/page.tsx`
 - Create: `src/app/my-activities/[id]/sessions/new/form.tsx`
 
@@ -1121,7 +1195,9 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 
-const MapPicker = dynamic(() => import('@/components/map-picker'), { ssr: false });
+const MapPicker = dynamic(() => import('@/components/map-picker'), {
+  ssr: false,
+});
 
 export default function SessionForm({ activityId }: { activityId: string }) {
   const [date, setDate] = useState('');
@@ -1149,7 +1225,14 @@ export default function SessionForm({ activityId }: { activityId: string }) {
       const res = await fetch(`/api/activities/${activityId}/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, startTime, endTime, description, lat, lng }),
+        body: JSON.stringify({
+          date,
+          startTime,
+          endTime,
+          description,
+          lat,
+          lng,
+        }),
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Sesión creada');
@@ -1183,7 +1266,9 @@ export default function SessionForm({ activityId }: { activityId: string }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-1 block">Hora fin (estimada)</label>
+          <label className="text-sm font-medium mb-1 block">
+            Hora fin (estimada)
+          </label>
           <input
             type="time"
             className={inputClass}
@@ -1206,7 +1291,14 @@ export default function SessionForm({ activityId }: { activityId: string }) {
         <label className="text-sm font-medium mb-1 block">
           Punto de encuentro — hacé click en el mapa para colocar el pin
         </label>
-        <MapPicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln); }} />
+        <MapPicker
+          lat={lat}
+          lng={lng}
+          onChange={(la, ln) => {
+            setLat(la);
+            setLng(ln);
+          }}
+        />
       </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
@@ -1230,6 +1322,7 @@ git commit -m "feat: add professor session creation page"
 ## Task 9: My Activities — Professor View
 
 **Files:**
+
 - Modify: `src/app/my-activities/page.tsx`
 
 - [ ] **Step 1: Extend the page to show professor activities**
@@ -1480,6 +1573,7 @@ git commit -m "feat: extend my-activities page with professor view and session d
 ## Task 10: Activity Detail — Sessions for Enrolled Members
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/page.tsx`
 
 - [ ] **Step 1: Add sessions section for enrolled members**
@@ -1492,9 +1586,7 @@ First, update the prisma query inside the try block to also include sessions:
 activity = await prisma.activity.findUnique({
   where: { id: params.id },
   include: {
-    participants: isAdmin
-      ? { include: { user: true, child: true } }
-      : true,
+    participants: isAdmin ? { include: { user: true, child: true } } : true,
     sessions: {
       orderBy: { date: 'asc' },
     },
@@ -1515,13 +1607,15 @@ Add `dynamic` import for MapPreview at the top of the file:
 
 ```typescript
 import dynamic from 'next/dynamic';
-const MapPreview = dynamic(() => import('@/components/map-preview'), { ssr: false });
+const MapPreview = dynamic(() => import('@/components/map-preview'), {
+  ssr: false,
+});
 ```
 
 Add a `SessionsSection` client component inline — add this **before** the `export default` function, at the bottom of the file:
 
 ```typescript
-'use client' // Note: this goes at the top of a separate file; inline here we handle it via a client component import
+'use client'; // Note: this goes at the top of a separate file; inline here we handle it via a client component import
 ```
 
 Actually, since the page is a server component and we need client interactivity for the "Voy/No voy" buttons, add a separate client component for the sessions section. Add this to the same file is not possible since it's server-rendered. Instead, create the sessions section as a client component:
@@ -1534,7 +1628,9 @@ Create `src/app/activities/[id]/sessions-section.tsx`:
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-const MapPreview = dynamic(() => import('@/components/map-preview'), { ssr: false });
+const MapPreview = dynamic(() => import('@/components/map-preview'), {
+  ssr: false,
+});
 
 interface Session {
   id: string;
@@ -1551,8 +1647,13 @@ interface SessionsSectionProps {
   sessions: Session[];
 }
 
-export default function SessionsSection({ activityId, sessions }: SessionsSectionProps) {
-  const [statuses, setStatuses] = useState<Record<string, 'CONFIRMED' | 'DECLINED' | null>>({});
+export default function SessionsSection({
+  activityId,
+  sessions,
+}: SessionsSectionProps) {
+  const [statuses, setStatuses] = useState<
+    Record<string, 'CONFIRMED' | 'DECLINED' | null>
+  >({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -1568,7 +1669,10 @@ export default function SessionsSection({ activityId, sessions }: SessionsSectio
     });
   }, [sessions]);
 
-  async function setAttendance(sessionId: string, status: 'CONFIRMED' | 'DECLINED') {
+  async function setAttendance(
+    sessionId: string,
+    status: 'CONFIRMED' | 'DECLINED'
+  ) {
     setLoading((prev) => ({ ...prev, [sessionId]: true }));
     try {
       const res = await fetch(`/api/sessions/${sessionId}/attendance`, {
@@ -1587,8 +1691,12 @@ export default function SessionsSection({ activityId, sessions }: SessionsSectio
   if (sessions.length === 0) {
     return (
       <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="font-heading text-2xl font-semibold mb-3">Próximas sesiones</h2>
-        <p className="text-sm text-muted-foreground">No hay sesiones programadas aún.</p>
+        <h2 className="font-heading text-2xl font-semibold mb-3">
+          Próximas sesiones
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          No hay sesiones programadas aún.
+        </p>
       </section>
     );
   }
@@ -1601,7 +1709,10 @@ export default function SessionsSection({ activityId, sessions }: SessionsSectio
           const status = statuses[s.id];
           const isLoading = loading[s.id];
           return (
-            <li key={s.id} className="rounded-lg border bg-muted/20 p-4 space-y-3">
+            <li
+              key={s.id}
+              className="rounded-lg border bg-muted/20 p-4 space-y-3"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <p className="font-medium text-sm">
@@ -1616,7 +1727,9 @@ export default function SessionsSection({ activityId, sessions }: SessionsSectio
                     {s.startTime} – {s.endTime} (estimado)
                   </p>
                   {s.description && (
-                    <p className="text-xs text-muted-foreground">{s.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.description}
+                    </p>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -1663,20 +1776,22 @@ import SessionsSection from './sessions-section';
 And in the return JSX, after the admin participants section (or after the left column for non-admins), add:
 
 ```tsx
-{isEnrolled && activity.sessions && (
-  <SessionsSection
-    activityId={activity.id}
-    sessions={activity.sessions.map((s: any) => ({
-      id: s.id,
-      date: s.date.toISOString(),
-      startTime: s.startTime,
-      endTime: s.endTime,
-      description: s.description,
-      lat: s.lat,
-      lng: s.lng,
-    }))}
-  />
-)}
+{
+  isEnrolled && activity.sessions && (
+    <SessionsSection
+      activityId={activity.id}
+      sessions={activity.sessions.map((s: any) => ({
+        id: s.id,
+        date: s.date.toISOString(),
+        startTime: s.startTime,
+        endTime: s.endTime,
+        description: s.description,
+        lat: s.lat,
+        lng: s.lng,
+      }))}
+    />
+  );
+}
 ```
 
 Place this block after the closing `</div>` of `max-w-5xl mx-auto` grid and before the closing `</main>`:
@@ -1722,6 +1837,7 @@ git commit -m "feat: add sessions section for enrolled members on activity detai
 ## Task 11: Navbar — PROFESSOR Support
 
 **Files:**
+
 - Modify: `src/components/navbar.tsx`
 
 - [ ] **Step 1: Add PROFESSOR to navbar logic**
@@ -1738,7 +1854,8 @@ Replace with:
 ```typescript
 const isProfessor = role === 'PROFESSOR';
 const isMember = !!session && !isAdmin && !isProfessor;
-const activitiesHref = isMember || isProfessor ? '/my-activities' : '/activities';
+const activitiesHref =
+  isMember || isProfessor ? '/my-activities' : '/activities';
 ```
 
 The translation key `t.myActivities` is already defined for all languages in `src/lib/i18n.ts`, so no i18n changes are needed.

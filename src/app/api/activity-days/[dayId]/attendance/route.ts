@@ -56,7 +56,10 @@ export async function PATCH(
   if (!isSelf && !isParent) {
     const professorAssignment = await prisma.activityDayProfessor.findUnique({
       where: {
-        activityDayId_userId: { activityDayId: day.id, userId: session.user.id },
+        activityDayId_userId: {
+          activityDayId: day.id,
+          userId: session.user.id,
+        },
       },
       select: { userId: true },
     });

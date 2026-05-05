@@ -48,17 +48,29 @@ export async function POST(
   const file = formData.get('photo');
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No se recibió ninguna foto' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'No se recibió ninguna foto' },
+      { status: 400 }
+    );
   }
   if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'El archivo debe ser una imagen' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'El archivo debe ser una imagen' },
+      { status: 400 }
+    );
   }
   if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'La foto debe pesar menos de 5 MB' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'La foto debe pesar menos de 5 MB' },
+      { status: 400 }
+    );
   }
 
   const pathname = `children-photos/${child.id}/${crypto.randomUUID()}${extensionFor(file)}`;
-  const blob = await put(pathname, file, { access: 'private', contentType: file.type });
+  const blob = await put(pathname, file, {
+    access: 'private',
+    contentType: file.type,
+  });
 
   try {
     await prisma.child.update({
@@ -67,7 +79,10 @@ export async function POST(
     });
   } catch {
     await del(blob.url).catch(() => undefined);
-    return NextResponse.json({ error: 'No se pudo guardar la foto' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'No se pudo guardar la foto' },
+      { status: 500 }
+    );
   }
 
   if (child.profilePhoto) {

@@ -13,6 +13,7 @@ This feature integrates with the existing Payment infrastructure and accounting 
 ## 2. User Stories
 
 ### Customer Story
+
 ```
 As a customer without Mercado Pago or preferring bank transfer,
 I want to pay for activities via bank transfer and upload proof during checkout,
@@ -26,6 +27,7 @@ Acceptance Criteria:
 ```
 
 ### Accountant Story
+
 ```
 As an accountant,
 I want to review manual payment proofs and approve or reject them,
@@ -41,6 +43,7 @@ Acceptance Criteria:
 ## 3. Feature Scope
 
 ### In Scope
+
 - Manual bank transfer payment method in checkout
 - File upload for proof of payment (image file)
 - Instant activity registration upon successful upload
@@ -50,6 +53,7 @@ Acceptance Criteria:
 - Payment status tracking (PENDING → APPROVED/REJECTED)
 
 ### Out of Scope
+
 - Email notifications (can be added in future)
 - Bulk approval of payments
 - Custom fields for transaction details (bank name, ref number, etc.)
@@ -59,6 +63,7 @@ Acceptance Criteria:
 ## 4. Data Model
 
 ### Payment Model (Existing - No Schema Changes Required)
+
 The existing Prisma `Payment` model already supports this:
 
 ```prisma
@@ -84,6 +89,7 @@ model Payment {
 
 **New Field (Minor Extension):**
 We'll extend the `rawData` JSON field to store:
+
 ```json
 {
   "accountantComments": "Payment reference not visible, please resubmit",
@@ -158,6 +164,7 @@ Alternatively, create a `PaymentReview` table if more sophisticated audit needs 
 ### 5.3 Customer Status Check
 
 Customer can view payment status in profile or order history:
+
 - Status: "Pending approval" (yellow badge)
 - Status: "Approved" (green badge)
 - Status: "Rejected" (red badge, can retry checkout)
@@ -167,11 +174,13 @@ Customer can view payment status in profile or order history:
 ### New Components
 
 #### 1. `PaymentMethodSelector` (Modify Existing)
+
 - Location: `src/components/checkout/payment-method-selector.tsx`
 - Add "Manual Bank Transfer" option alongside Mercado Pago
 - Show/hide based on activity settings or global config
 
 #### 2. `ManualPaymentForm` (New)
+
 - Location: `src/components/checkout/manual-payment-form.tsx`
 - Inputs:
   - File upload (proof image)
@@ -187,12 +196,14 @@ Customer can view payment status in profile or order history:
   - Handle errors (network, file too large, etc.)
 
 #### 3. `ManualPaymentsDashboard` (New)
+
 - Location: `src/app/accounting/manual-payments/page.tsx`
 - Display: table or list of pending payments
 - Columns: Customer, Activity, Amount, Upload Date, Status
 - Actions: Click to open detail modal
 
 #### 4. `ManualPaymentDetail` (New)
+
 - Location: `src/components/accounting/manual-payment-detail.tsx`
 - Displays:
   - Proof file (image preview or PDF)
@@ -203,6 +214,7 @@ Customer can view payment status in profile or order history:
   - Reject button (with comment modal)
 
 #### 5. `AuditTrail` (Reusable)
+
 - Location: `src/components/audit-trail.tsx`
 - Generic component to display timeline of events
 - Used for: payment reviews, rejections, comments
@@ -212,11 +224,13 @@ Customer can view payment status in profile or order history:
 ### Modified Components
 
 #### `CheckoutPage` (Extend)
+
 - Location: `src/app/activities/[id]/checkout/page.tsx` (or similar)
 - Add conditional rendering for manual payment form
 - Pass payment method selection to checkout logic
 
 #### `AccountingLayout` (Update Navigation)
+
 - Location: `src/app/accounting/layout.tsx`
 - Add link to "Manual Payments" in sidebar navigation
 
@@ -225,6 +239,7 @@ Customer can view payment status in profile or order history:
 ### New Routes
 
 #### `POST /api/accounting/manual-payments/[id]/approve`
+
 - **Auth:** ADMIN or ACCOUNTANT role required
 - **Params:** `id` = Payment ID
 - **Request:** Empty or optional metadata
@@ -238,6 +253,7 @@ Customer can view payment status in profile or order history:
   - Return payment
 
 #### `POST /api/accounting/manual-payments/[id]/reject`
+
 - **Auth:** ADMIN or ACCOUNTANT role required
 - **Params:** `id` = Payment ID
 - **Request Body:**
@@ -258,6 +274,7 @@ Customer can view payment status in profile or order history:
   - Note: DO NOT unregister customer from activity
 
 #### `GET /api/accounting/manual-payments`
+
 - **Auth:** ADMIN or ACCOUNTANT role required
 - **Query Params:**
   - `status` (optional): PENDING, APPROVED, REJECTED
@@ -273,6 +290,7 @@ Customer can view payment status in profile or order history:
 ### Modified Routes
 
 #### `POST /api/activities/[id]/checkout`
+
 - **Extend existing logic:**
   - Add conditional handling for paymentMethod = MANUAL_TRANSFER
   - If manual transfer:
@@ -283,6 +301,7 @@ Customer can view payment status in profile or order history:
   - Existing Mercado Pago logic unchanged
 
 #### `GET /api/activities/[id]/checkout`
+
 - **Extend existing logic:**
   - When returning checkout details, include available payment methods
   - Include bank transfer instructions if manual method is enabled
@@ -290,6 +309,7 @@ Customer can view payment status in profile or order history:
 ## 8. File Upload & Storage
 
 ### Strategy
+
 Use **Vercel Blob** (already integrated in the project):
 
 1. Customer selects file in form
@@ -299,6 +319,7 @@ Use **Vercel Blob** (already integrated in the project):
 5. Display via `<img>` tag (if image) or embedded PDF viewer
 
 ### File Constraints
+
 - Max size: 5MB
 - Accepted types: image/png, image/jpeg, application/pdf
 - No virus scanning (optional enhancement later)
@@ -306,6 +327,7 @@ Use **Vercel Blob** (already integrated in the project):
 ## 9. Audit Trail Implementation
 
 ### Data Structure
+
 Store in `Payment.rawData` as nested object:
 
 ```json
@@ -334,7 +356,9 @@ Store in `Payment.rawData` as nested object:
 ```
 
 ### Display
+
 Render as timeline in `AuditTrail` component:
+
 - "Payment uploaded by customer on 2026-04-29 08:00"
 - "Rejected by Admin on 2026-04-29 10:30 - Image too blurry"
 - "Approved by Admin on 2026-04-29 11:15"
@@ -342,6 +366,7 @@ Render as timeline in `AuditTrail` component:
 ## 10. Configuration
 
 ### Bank Transfer Instructions
+
 Store in a configurable setting (admin-editable in `/admin/settings` or hardcoded):
 
 ```
@@ -354,18 +379,21 @@ Concept: Club Hualas - [Activity Name]
 ```
 
 ### Enabled/Disabled Per Activity
+
 Optional: Add a field to Activity model: `allowManualPayment: Boolean` (default true)
 This allows admins to disable manual payments for specific activities if needed.
 
 ## 11. Error Handling
 
 ### Customer Errors
+
 - File too large → "File must be under 5MB"
 - Wrong file type → "Please upload an image (PNG, JPG) or PDF"
 - Network error → "Upload failed. Please try again"
 - Server error → "Payment creation failed. Please contact support"
 
 ### Accountant Errors
+
 - Payment already approved/rejected → "This payment was already processed"
 - Payment not found → "Payment record not found"
 - Permission denied → Standard 403 response
@@ -373,12 +401,14 @@ This allows admins to disable manual payments for specific activities if needed.
 ## 12. Testing Strategy
 
 ### Unit Tests
+
 - File validation (size, type)
 - Payment status transitions
 - Audit trail data structure
 - API response validation
 
 ### Integration Tests
+
 - Full checkout flow with manual payment
 - Approve payment flow
 - Reject payment with comment flow
@@ -386,6 +416,7 @@ This allows admins to disable manual payments for specific activities if needed.
 - Verify payment status queries
 
 ### Manual Testing Checklist
+
 - [ ] Upload proof image during checkout
 - [ ] Verify instant activity registration
 - [ ] View payment in accounting dashboard

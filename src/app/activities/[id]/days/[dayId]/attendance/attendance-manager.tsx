@@ -40,15 +40,16 @@ export default function AttendanceManager({
   useEffect(() => {
     const onSynced = () => setPendingIds(new Set());
     window.addEventListener('hualas-mutations-synced', onSynced);
-    return () => window.removeEventListener('hualas-mutations-synced', onSynced);
+    return () =>
+      window.removeEventListener('hualas-mutations-synced', onSynced);
   }, []);
 
   async function update(participantId: string, status: AttendanceStatus) {
     const previous = list;
     setList((current) =>
       current.map((p) =>
-        p.activityParticipantId === participantId ? { ...p, status } : p,
-      ),
+        p.activityParticipantId === participantId ? { ...p, status } : p
+      )
     );
     setSavingId(participantId);
     setError('');
@@ -154,7 +155,7 @@ export default function AttendanceManager({
                     >
                       {statusLabels[status]}
                     </button>
-                  ),
+                  )
                 )}
               </div>
             </div>

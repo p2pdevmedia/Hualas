@@ -24,13 +24,19 @@ export async function POST(
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid request body' },
+      { status: 400 }
+    );
   }
 
   const { survivorId, loserId, fieldChoices } = body;
 
   if (!survivorId || !loserId || survivorId === loserId) {
-    return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Parámetros inválidos' },
+      { status: 400 }
+    );
   }
 
   const [survivor, loser] = await Promise.all([
@@ -38,7 +44,12 @@ export async function POST(
       where: { id: survivorId, userId: params.id },
       include: {
         activityParticipants: {
-          select: { id: true, activityId: true, userId: true, participantKey: true },
+          select: {
+            id: true,
+            activityId: true,
+            userId: true,
+            participantKey: true,
+          },
         },
         socialFeePayments: {
           select: { id: true, periodMonth: true, periodYear: true },
@@ -52,7 +63,12 @@ export async function POST(
       where: { id: loserId, userId: params.id },
       include: {
         activityParticipants: {
-          select: { id: true, activityId: true, userId: true, participantKey: true },
+          select: {
+            id: true,
+            activityId: true,
+            userId: true,
+            participantKey: true,
+          },
         },
         socialFeePayments: {
           select: { id: true, periodMonth: true, periodYear: true },
@@ -65,23 +81,45 @@ export async function POST(
   ]);
 
   if (!survivor || !loser) {
-    return NextResponse.json({ error: 'Hijos no encontrados' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Hijos no encontrados' },
+      { status: 404 }
+    );
   }
 
-  const survivorParticipantKeys = new Set(survivor.activityParticipants.map((p) => p.participantKey));
+  const survivorParticipantKeys = new Set(
+    survivor.activityParticipants.map((p) => p.participantKey)
+  );
   const survivorSocialFeeKeys = new Set(
     survivor.socialFeePayments.map((p) => `${p.periodMonth}:${p.periodYear}`)
   );
-  const survivorPickupDayIds = new Set(survivor.pickupNotices.map((n) => n.activityDayId));
+  const survivorPickupDayIds = new Set(
+    survivor.pickupNotices.map((n) => n.activityDayId)
+  );
 
   const MERGEABLE_FIELDS = [
-    'name', 'lastName', 'documentType', 'documentNumber',
-    'documentFrontPhoto', 'documentBackPhoto', 'birthDate',
-    'address', 'gender', 'nationality', 'maritalStatus',
-    'allergies', 'regularMedication', 'relevantDiseases',
-    'previousInjuries', 'physicalRestrictions', 'bloodGroup',
-    'primaryDoctor', 'doctorPhone', 'doctorCertificate',
-    'profilePhoto', 'observations',
+    'name',
+    'lastName',
+    'documentType',
+    'documentNumber',
+    'documentFrontPhoto',
+    'documentBackPhoto',
+    'birthDate',
+    'address',
+    'gender',
+    'nationality',
+    'maritalStatus',
+    'allergies',
+    'regularMedication',
+    'relevantDiseases',
+    'previousInjuries',
+    'physicalRestrictions',
+    'bloodGroup',
+    'primaryDoctor',
+    'doctorPhone',
+    'doctorCertificate',
+    'profilePhoto',
+    'observations',
   ];
 
   const [survivorFull, loserFull] = await Promise.all([
@@ -90,7 +128,10 @@ export async function POST(
   ]);
 
   if (!survivorFull || !loserFull) {
-    return NextResponse.json({ error: 'Hijos no encontrados' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Hijos no encontrados' },
+      { status: 404 }
+    );
   }
 
   const fieldUpdates: Record<string, unknown> = {};
@@ -108,7 +149,11 @@ export async function POST(
 
   await prisma.$transaction(async (tx) => {
     for (const p of loser.activityParticipants) {
-      const newKey = getActivityParticipantKey(p.activityId, p.userId, survivorId);
+      const newKey = getActivityParticipantKey(
+        p.activityId,
+        p.userId,
+        survivorId
+      );
       if (survivorParticipantKeys.has(newKey)) {
         await tx.activityParticipant.delete({ where: { id: p.id } });
       } else {

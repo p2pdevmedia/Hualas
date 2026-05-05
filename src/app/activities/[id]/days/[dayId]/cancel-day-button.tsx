@@ -36,7 +36,10 @@ export default function CancelDayButton({
       const res = await fetch(`/api/activity-days/${dayId}/cancel`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cancelled: true, cancellationReason: reason.trim() }),
+        body: JSON.stringify({
+          cancelled: true,
+          cancellationReason: reason.trim(),
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -70,7 +73,9 @@ export default function CancelDayButton({
       setConfirmingReactivate(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al reactivar el día');
+      setError(
+        err instanceof Error ? err.message : 'Error al reactivar el día'
+      );
     } finally {
       setLoading(false);
     }
@@ -92,7 +97,9 @@ export default function CancelDayButton({
 
       {!cancelled && dialogOpen && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 space-y-3">
-          <p className="text-sm font-medium text-destructive">Cancelar este día</p>
+          <p className="text-sm font-medium text-destructive">
+            Cancelar este día
+          </p>
           <textarea
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-destructive/40"
             rows={3}

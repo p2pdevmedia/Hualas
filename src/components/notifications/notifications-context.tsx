@@ -22,11 +22,16 @@ type NotificationsContextValue = {
   markAllRead: () => Promise<void>;
 };
 
-const NotificationsContext = createContext<NotificationsContextValue | null>(null);
+const NotificationsContext = createContext<NotificationsContextValue | null>(
+  null
+);
 
 export function useNotifications() {
   const ctx = useContext(NotificationsContext);
-  if (!ctx) throw new Error('useNotifications must be used inside NotificationsProvider');
+  if (!ctx)
+    throw new Error(
+      'useNotifications must be used inside NotificationsProvider'
+    );
   return ctx;
 }
 
@@ -74,26 +79,32 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }
     }
     navigator.serviceWorker.addEventListener('message', handleSwMessage);
-    return () => navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener('message', handleSwMessage);
   }, [fetchData]);
 
-  const markRead = useCallback(async (id: string) => {
-    const target = items.find((n) => n.id === id);
-    setItems((prev) =>
-      prev.map((n) =>
-        n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n
-      )
-    );
-    setUnreadCount((c) => Math.max(0, c - 1));
-    if (target?.type === 'CHAT_MESSAGE_NEW' && !target.readAt) {
-      setChatUnreadCount((c) => Math.max(0, c - 1));
-    }
-    try {
-      await fetch(`/api/notifications/${id}`, { method: 'PATCH' });
-    } catch {
-      // ignore
-    }
-  }, [items]);
+  const markRead = useCallback(
+    async (id: string) => {
+      const target = items.find((n) => n.id === id);
+      setItems((prev) =>
+        prev.map((n) =>
+          n.id === id && !n.readAt
+            ? { ...n, readAt: new Date().toISOString() }
+            : n
+        )
+      );
+      setUnreadCount((c) => Math.max(0, c - 1));
+      if (target?.type === 'CHAT_MESSAGE_NEW' && !target.readAt) {
+        setChatUnreadCount((c) => Math.max(0, c - 1));
+      }
+      try {
+        await fetch(`/api/notifications/${id}`, { method: 'PATCH' });
+      } catch {
+        // ignore
+      }
+    },
+    [items]
+  );
 
   const markAllRead = useCallback(async () => {
     const now = new Date().toISOString();
@@ -109,7 +120,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationsContext.Provider
-      value={{ items, unreadCount, chatUnreadCount, fetchData, markRead, markAllRead }}
+      value={{
+        items,
+        unreadCount,
+        chatUnreadCount,
+        fetchData,
+        markRead,
+        markAllRead,
+      }}
     >
       {children}
     </NotificationsContext.Provider>

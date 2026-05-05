@@ -49,7 +49,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const groups = await familyGroupService.getFamilyGroupsForUser(session.user.id);
+  const groups = await familyGroupService.getFamilyGroupsForUser(
+    session.user.id
+  );
   if (!groups.some((group) => group.id === params.id)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }

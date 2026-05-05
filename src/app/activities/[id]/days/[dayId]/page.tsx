@@ -134,7 +134,9 @@ export default async function ActivityDayPage({
             Asistensia
           </span>
           <span className="text-sm text-muted-foreground">
-            {total > 0 ? `${going} de ${total} asistieron` : 'Sin registros aún'}
+            {total > 0
+              ? `${going} de ${total} asistieron`
+              : 'Sin registros aún'}
           </span>
         </Link>
 
@@ -177,7 +179,9 @@ export default async function ActivityDayPage({
           </span>
           <span className="text-sm text-foreground line-clamp-3">
             {day.description ?? (
-              <span className="italic text-muted-foreground">Sin descripción</span>
+              <span className="italic text-muted-foreground">
+                Sin descripción
+              </span>
             )}
           </span>
         </Link>

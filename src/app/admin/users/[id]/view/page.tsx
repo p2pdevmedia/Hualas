@@ -95,7 +95,13 @@ export default async function ViewUserPage({
       members: {
         include: {
           member: {
-            select: { id: true, name: true, lastName: true, email: true, phone: true },
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            },
           },
         },
         orderBy: { createdAt: 'asc' },
@@ -400,7 +406,8 @@ export default async function ViewUserPage({
                     className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2 text-sm"
                   >
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                      {`${fm.member.name?.[0] ?? ''}${fm.member.lastName?.[0] ?? ''}`.trim() || '?'}
+                      {`${fm.member.name?.[0] ?? ''}${fm.member.lastName?.[0] ?? ''}`.trim() ||
+                        '?'}
                     </div>
                     <div className="min-w-0 flex-1">
                       <Link
@@ -408,9 +415,13 @@ export default async function ViewUserPage({
                         prefetch={true}
                         className="font-medium hover:underline underline-offset-4 text-primary"
                       >
-                        {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
+                        {[fm.member.name, fm.member.lastName]
+                          .filter(Boolean)
+                          .join(' ') || fm.member.email}
                       </Link>
-                      <p className="text-xs text-muted-foreground truncate">{fm.member.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {fm.member.email}
+                      </p>
                     </div>
                     <span className="flex-shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {relLabel[fm.relationship] ?? fm.relationship}

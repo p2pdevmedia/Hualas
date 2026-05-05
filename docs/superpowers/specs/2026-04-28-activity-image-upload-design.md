@@ -10,15 +10,18 @@ Currently, activities store image URLs entered manually as text. This design add
 ## Design Decisions
 
 ### Approach: Separate Upload Component (Post-Creation)
+
 - Create activity first, then upload image via dedicated component
 - Follows existing `ProfilePhotoUpload` pattern
 - Modular, low risk, reusable
 
 ### Who Can Upload
+
 - Only `ADMIN` and `SUPER_ADMIN` roles
 - Enforced at API layer with auth check
 
 ### Image Constraints
+
 - **Supported formats:** JPEG, PNG, WebP, GIF, AVIF
 - **Max size:** 5 MB
 - **Storage location:** Vercel Blob at `activity-images/{activityId}/{uuid}.{ext}`
@@ -27,6 +30,7 @@ Currently, activities store image URLs entered manually as text. This design add
 ## Implementation Components
 
 ### 1. Database Schema (No Changes)
+
 The `Activity.image` field already exists as `String?` and will continue to store the Vercel Blob URL.
 
 ```prisma
@@ -42,6 +46,7 @@ model Activity {
 **File:** `src/app/api/activities/[id]/image/route.ts`
 
 #### POST - Upload Image
+
 - **Auth:** ADMIN or SUPER_ADMIN only
 - **Input:** FormData with `image` file
 - **Validation:**
@@ -61,6 +66,7 @@ model Activity {
   - 500 if database/blob operation fails
 
 #### DELETE - Remove Image
+
 - **Auth:** ADMIN or SUPER_ADMIN only
 - **Process:**
   1. Verify activity exists
@@ -74,6 +80,7 @@ model Activity {
 
 **Helper Function:**
 Create a helper in `src/lib/image-utils.ts` (or add to existing utils):
+
 ```typescript
 function extensionFor(file: File): string {
   // Map MIME types to extensions, matching profile photo pattern
@@ -88,6 +95,7 @@ function extensionFor(file: File): string {
 A reusable component for uploading/removing activity images, similar to `ProfilePhotoUpload`.
 
 **Props:**
+
 ```typescript
 type Props = {
   activityId: string;
@@ -97,6 +105,7 @@ type Props = {
 ```
 
 **Features:**
+
 - Display current image or placeholder
 - File input (click to select)
 - Drag-and-drop support
@@ -106,6 +115,7 @@ type Props = {
 - Disabled state during upload
 
 **UX Flow:**
+
 1. Show current image or placeholder
 2. User clicks or drags file → upload starts
 3. Loading indicator appears
@@ -115,11 +125,13 @@ type Props = {
 ### 4. Form Integration
 
 #### Create Activity (`/activities/new/page.tsx`)
+
 1. Render create form (unchanged)
 2. After successful activity creation, display `ActivityImageUpload` component with the new activity ID
 3. Image is optional—user can skip it
 
 **Example structure:**
+
 ```typescript
 {!activityId ? (
   <CreateActivityForm onSuccess={setActivityId} />
@@ -129,6 +141,7 @@ type Props = {
 ```
 
 #### Edit Activity (`/activities/[id]/edit/page.tsx`)
+
 1. Keep existing form (unchanged)
 2. Add `ActivityImageUpload` component below the form
 3. Allows independent image updates without re-saving other fields
@@ -136,28 +149,34 @@ type Props = {
 ### 5. Styling & UX
 
 **Image Preview:**
+
 - Use Next.js `Image` component with fixed size (e.g., 200×200px)
 - Fallback placeholder (initials or icon)
 
 **Buttons:**
+
 - "Seleccionar imagen" (file input)
 - "Eliminar imagen" (if image exists, red variant)
 - Upload state: disable button + "Subiendo..."
 
 **Messages:**
+
 - Success: "Imagen actualizada"
 - Error: specific error message from API
 
 **Info Text:**
+
 - "La imagen se guarda en Vercel Blob."
 
 ## Validation Rules
 
 ### Client-Side (UX only)
+
 - File type hint on input (`accept="image/*"`)
 - Optional size pre-check in JavaScript
 
 ### Server-Side (Enforced)
+
 - MIME type must start with `image/`
 - File size ≤ 5 MB (as with profile photos)
 - Activity must exist and belong to accessible account
@@ -165,6 +184,7 @@ type Props = {
 ## Error Handling
 
 All errors return JSON with descriptive Spanish messages:
+
 - "No se recibió ninguna imagen"
 - "El archivo debe ser una imagen"
 - "La imagen debe pesar menos de 5 MB"
@@ -194,15 +214,18 @@ All errors return JSON with descriptive Spanish messages:
 ## Files to Create/Modify
 
 ### New Files
+
 - `src/app/api/activities/[id]/image/route.ts` — API endpoint
 - `src/app/activities/activity-image-upload.tsx` — Upload component
 - `src/lib/image-utils.ts` — Helper function (if needed)
 
 ### Modified Files
+
 - `src/app/activities/new/page.tsx` — Add component display logic
 - `src/app/activities/[id]/edit/page.tsx` — Add component
 
 ### No Changes Required
+
 - `prisma/schema.prisma` — Field already exists
 - Activity create/edit forms — Keep as-is
 

@@ -67,7 +67,8 @@ export default function DeleteChildButton({
           <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 className="text-lg font-semibold mb-2">Borrar hijo/a</h2>
             <p className="text-muted-foreground mb-6">
-              ¿Borrar a {childName}? Esta acción elimina también sus inscripciones y registros asociados.
+              ¿Borrar a {childName}? Esta acción elimina también sus
+              inscripciones y registros asociados.
             </p>
             <div className="flex gap-3 justify-end">
               <button

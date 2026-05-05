@@ -13,9 +13,11 @@
 ## File Structure
 
 **Files to create:**
+
 - `src/app/activities/[id]/attendance-list.tsx` — Presentational component for rendering participant lists
 
 **Files to modify:**
+
 - `src/app/activities/[id]/activity-days-panel.tsx` — Add state management, update UI, integrate AttendanceList
 - `src/app/activities/[id]/page.tsx` — Transform data, pass attendanceList to component
 
@@ -26,6 +28,7 @@
 ### Task 1: Create AttendanceList Component
 
 **Files:**
+
 - Create: `src/app/activities/[id]/attendance-list.tsx`
 
 - [ ] **Step 1: Create new AttendanceList component file**
@@ -85,6 +88,7 @@ Expected: File exists
 ### Task 2: Update ActivityDaysPanel Types
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx:1-60`
 
 - [ ] **Step 1: Read the current ActivityDay type definition**
@@ -94,6 +98,7 @@ The current type is defined around line 29-49. You need to add `attendanceList` 
 - [ ] **Step 2: Update ActivityDay type to include attendanceList**
 
 Find this section (lines 29-49):
+
 ```typescript
 type ActivityDay = {
   id: string;
@@ -119,6 +124,7 @@ type ActivityDay = {
 ```
 
 Replace with:
+
 ```typescript
 type ParticipantForAttendance = {
   activityParticipantId: string;
@@ -154,6 +160,7 @@ type ActivityDay = {
 - [ ] **Step 3: Add import for AttendanceList component**
 
 At the top of the file (after existing imports), add:
+
 ```typescript
 import AttendanceList, {
   type ParticipantForAttendance,
@@ -165,11 +172,13 @@ import AttendanceList, {
 ### Task 3: Add Expand/Collapse State to ActivityDaysPanel
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx:76-81`
 
 - [ ] **Step 1: Add expandedLists state**
 
 Find the current state declarations (around line 76-80):
+
 ```typescript
 const [showCreateForm, setShowCreateForm] = useState(false);
 const [editingDayId, setEditingDayId] = useState<string | null>(null);
@@ -178,6 +187,7 @@ const [savingKey, setSavingKey] = useState<string | null>(null);
 ```
 
 Add this after them:
+
 ```typescript
 const [expandedLists, setExpandedLists] = useState<
   Record<string, { going: boolean; notGoing: boolean }>
@@ -205,11 +215,13 @@ function toggleExpanded(dayId: string, status: 'going' | 'notGoing') {
 ### Task 4: Replace Static Indicator with Clickable Buttons
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx:218-222`
 
 - [ ] **Step 1: Find the current attendance indicator**
 
 Around line 218-222, you'll find:
+
 ```typescript
 <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground sm:items-end">
   <span>
@@ -220,6 +232,7 @@ Around line 218-222, you'll find:
 - [ ] **Step 2: Replace with clickable buttons**
 
 Replace the `<span>` element with:
+
 ```typescript
 <div className="flex gap-2 text-xs text-muted-foreground">
   <button
@@ -245,6 +258,7 @@ Replace the `<span>` element with:
 ### Task 5: Render AttendanceList Components
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx:273-275` (after edit form section)
 
 - [ ] **Step 1: Find insertion point**
@@ -281,6 +295,7 @@ Insert this code after the `{isEditing && ...}` block and before `{registrations
 ### Task 6: Update Page Query to Include Attendance Data
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/page.tsx:163-198`
 
 - [ ] **Step 1: Find the days query**
@@ -290,6 +305,7 @@ Around line 163-198, you'll find the `prisma.activityDay.findMany()` query.
 - [ ] **Step 2: Verify attendances are included**
 
 The query already includes `attendances` in the select. Verify lines 186-192 contain:
+
 ```typescript
 attendances: {
   select: {
@@ -308,7 +324,7 @@ Add this helper function inside `ActivityPage` component after the `getParticipa
 
 ```typescript
 function transformAttendanceList(
-  day: typeof days[number],
+  day: (typeof days)[number],
   participantsMap: Map<string, ActivityParticipantDetail>
 ) {
   return day.attendances.map((attendance) => {
@@ -343,13 +359,15 @@ const daysWithAttendance = days.map((day) => ({
 - [ ] **Step 5: Update ActivityDaysPanel call to use transformed data**
 
 Find where `ActivityDaysPanel` is rendered (search for `<ActivityDaysPanel`), and change:
+
 ```typescript
-days={days}
+days = { days };
 ```
 
 to:
+
 ```typescript
-days={daysWithAttendance}
+days = { daysWithAttendance };
 ```
 
 ---
@@ -357,6 +375,7 @@ days={daysWithAttendance}
 ### Task 7: Verify Types Are Exported Correctly
 
 **Files:**
+
 - Modify: `src/app/activities/[id]/activity-days-panel.tsx` (top section)
 
 - [ ] **Step 1: Check ActivityDaysPanel exports**
@@ -366,6 +385,7 @@ Ensure `ParticipantForAttendance` is exported or the component has a clear inter
 - [ ] **Step 2: Verify no type mismatches**
 
 Ensure that:
+
 - `attendance.status` matches `AttendanceStatus` enum: `'GOING' | 'NOT_GOING' | 'PENDING'`
 - `registeredUserId` is always a string
 - `participantName` is always a string
@@ -375,6 +395,7 @@ Ensure that:
 ### Task 8: Build and Test
 
 **Files:**
+
 - Test: Full feature testing
 
 - [ ] **Step 1: Run TypeScript check**
@@ -427,6 +448,7 @@ Expected: Buttons stack properly, text wraps, links are touch-friendly
 ### Task 9: Commit Changes
 
 **Files:**
+
 - Modified: `src/app/activities/[id]/page.tsx`
 - Modified: `src/app/activities/[id]/activity-days-panel.tsx`
 - Created: `src/app/activities/[id]/attendance-list.tsx`
@@ -434,6 +456,7 @@ Expected: Buttons stack properly, text wraps, links are touch-friendly
 - [ ] **Step 1: Stage all files**
 
 Run:
+
 ```bash
 git add src/app/activities/[id]/page.tsx \
          src/app/activities/[id]/activity-days-panel.tsx \
@@ -443,6 +466,7 @@ git add src/app/activities/[id]/page.tsx \
 - [ ] **Step 2: Create commit**
 
 Run:
+
 ```bash
 git commit -m "feat: add expandible attendance lists to activity days
 

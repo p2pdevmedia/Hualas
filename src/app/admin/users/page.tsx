@@ -36,7 +36,13 @@ export default async function UsersPage() {
       },
     }),
     prisma.child.findMany({
-      select: { id: true, name: true, lastName: true, birthDate: true, userId: true },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        birthDate: true,
+        userId: true,
+      },
     }),
   ]);
 
@@ -60,9 +66,14 @@ export default async function UsersPage() {
   const users = rawUsers.map((u) => {
     const direct = childrenByOwner.get(u.id) ?? [];
     const responsibleId = responsibleByMember.get(u.id);
-    const familyChildren = responsibleId ? (childrenByOwner.get(responsibleId) ?? []) : [];
+    const familyChildren = responsibleId
+      ? (childrenByOwner.get(responsibleId) ?? [])
+      : [];
     const seen = new Set(direct.map((c) => c.id));
-    const children = [...direct, ...familyChildren.filter((c) => !seen.has(c.id))];
+    const children = [
+      ...direct,
+      ...familyChildren.filter((c) => !seen.has(c.id)),
+    ];
     return { ...u, roles: u.roleAssignments.map((r) => r.role), children };
   });
 

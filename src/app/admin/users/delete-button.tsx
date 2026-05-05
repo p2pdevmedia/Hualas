@@ -24,7 +24,10 @@ export default function DeleteUserButton({ id }: { id: string }) {
 
   return (
     <>
-      <Button onClick={() => setShowConfirm(true)} className="bg-red-600 hover:bg-red-700">
+      <Button
+        onClick={() => setShowConfirm(true)}
+        className="bg-red-600 hover:bg-red-700"
+      >
         {t.delete}
       </Button>
       {showConfirm && (
@@ -32,7 +35,8 @@ export default function DeleteUserButton({ id }: { id: string }) {
           <div className="bg-card rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 className="text-lg font-semibold mb-2">Eliminar usuario</h2>
             <p className="text-muted-foreground mb-6">
-              ¿Estás seguro de que querés eliminar este usuario? Esta acción no se puede deshacer.
+              ¿Estás seguro de que querés eliminar este usuario? Esta acción no
+              se puede deshacer.
             </p>
             <div className="flex gap-3 justify-end">
               <button

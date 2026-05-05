@@ -24,14 +24,15 @@ export default async function ViewMyChildPage({
   const child = await prisma.child.findFirst({
     where: {
       id: params.childId,
-      userId: { in: await getAccessibleChildOwnerIds((session.user as any).id) },
+      userId: {
+        in: await getAccessibleChildOwnerIds((session.user as any).id),
+      },
     },
     include: {
       user: true,
       activityParticipants: { include: { activity: true } },
     },
   });
-
 
   if (!child) {
     redirect('/profile/children');

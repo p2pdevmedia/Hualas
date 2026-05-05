@@ -31,7 +31,7 @@ self.addEventListener('install', (event) => {
     caches
       .open(CACHE_VERSION)
       .then((cache) => cache.addAll([OFFLINE_URL]))
-      .then(() => self.skipWaiting()),
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -43,12 +43,10 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((k) => k !== CACHE_VERSION)
-            .map((k) => caches.delete(k)),
-        ),
+          keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))
+        )
       )
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
 
@@ -141,14 +139,13 @@ self.addEventListener('push', (event) => {
             } catch (e) {}
           }
         }),
-    ]),
+    ])
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url =
-    (event.notification.data && event.notification.data.url) || '/';
+  const url = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
@@ -162,6 +159,6 @@ self.addEventListener('notificationclick', (event) => {
           }
         }
         return self.clients.openWindow(url);
-      }),
+      })
   );
 });

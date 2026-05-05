@@ -43,15 +43,13 @@ export const familyGroupService = {
       where: { familyGroupId },
       include: { member: true },
     }),
-  getOrCreateFamilyGroupByResponsible: async (
-    responsibleUser: {
-      id: string;
-      name: string | null;
-      lastName: string | null;
-      email: string;
-      phone: string | null;
-    }
-  ) => {
+  getOrCreateFamilyGroupByResponsible: async (responsibleUser: {
+    id: string;
+    name: string | null;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+  }) => {
     const existing = await prisma.familyGroup.findFirst({
       where: { responsibleUserId: responsibleUser.id },
       include: {

@@ -37,7 +37,9 @@ export async function GET(req: Request) {
       },
     }),
     prisma.notification.count({ where: { userId, readAt: null } }),
-    prisma.notification.count({ where: { userId, readAt: null, type: 'CHAT_MESSAGE_NEW' } }),
+    prisma.notification.count({
+      where: { userId, readAt: null, type: 'CHAT_MESSAGE_NEW' },
+    }),
   ]);
 
   return NextResponse.json({ notifications, unreadCount, chatUnreadCount });

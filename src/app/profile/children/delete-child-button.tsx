@@ -39,7 +39,9 @@ export default function DeleteChildButton({
     return (
       <div className="space-y-2 pt-2">
         <p className="text-xs text-muted-foreground">
-          ¿Eliminar a <span className="font-medium text-foreground">{childName}</span>? Esta acción no se puede deshacer.
+          ¿Eliminar a{' '}
+          <span className="font-medium text-foreground">{childName}</span>? Esta
+          acción no se puede deshacer.
         </p>
         <div className="flex gap-2">
           <button
@@ -50,7 +52,10 @@ export default function DeleteChildButton({
             {loading ? 'Eliminando...' : 'Sí, eliminar'}
           </button>
           <button
-            onClick={() => { setConfirming(false); setError(''); }}
+            onClick={() => {
+              setConfirming(false);
+              setError('');
+            }}
             disabled={loading}
             className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-border px-3 text-xs font-medium hover:bg-muted transition-colors"
           >

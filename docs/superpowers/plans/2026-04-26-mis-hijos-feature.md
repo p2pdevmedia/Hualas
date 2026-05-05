@@ -13,11 +13,13 @@
 ## File Structure
 
 **New Files:**
+
 - `/src/app/profile/children/page.tsx` — Children cards listing page
 - `/src/app/profile/children/[childId]/page.tsx` — Child detail view page
 - `/src/app/profile/children/[childId]/edit/page.tsx` — Child edit page (wrapper)
 
 **Modified Files:**
+
 - `/src/components/navbar.tsx` — Add "Mis Hijos" dropdown to Profile menu
 - `/src/app/profile/page.tsx` — Update to handle children management routing
 - `/src/lib/i18n.ts` — Add translation keys for "Mis Hijos"
@@ -29,6 +31,7 @@
 ### Task 1: Add Translation Keys
 
 **Files:**
+
 - Modify: `/src/lib/i18n.ts`
 
 - [ ] **Step 1: Add translation keys to all language sections**
@@ -36,24 +39,28 @@
 Update `/src/lib/i18n.ts` in the `actions` object for each language (es, pt, en, fr):
 
 Spanish (es):
+
 ```typescript
 myChildren: 'Mis Hijos',
 addChild: 'Agregar hijo',
 ```
 
 Portuguese (pt):
+
 ```typescript
 myChildren: 'Meus Filhos',
 addChild: 'Adicionar filho',
 ```
 
 English (en):
+
 ```typescript
 myChildren: 'My Children',
 addChild: 'Add child',
 ```
 
 French (fr):
+
 ```typescript
 myChildren: 'Mes Enfants',
 addChild: 'Ajouter un enfant',
@@ -64,6 +71,7 @@ Add these to the `actions` object in all 4 language sections.
 - [ ] **Step 2: Verify keys are added**
 
 Run:
+
 ```bash
 grep -n "myChildren" src/lib/i18n.ts
 ```
@@ -82,6 +90,7 @@ git commit -m "feat: add translation keys for Mis Hijos feature"
 ### Task 2: Update Navbar with Profile Dropdown
 
 **Files:**
+
 - Modify: `/src/components/navbar.tsx:200-208`
 
 - [ ] **Step 1: Update navbar to include dropdown menu**
@@ -89,32 +98,31 @@ git commit -m "feat: add translation keys for Mis Hijos feature"
 Find the Profile link section (around lines 200-208) and replace the simple profile link with a dropdown menu:
 
 ```tsx
-              <div className="relative group">
-                <button className={linkClass}>
-                  {t.profile}
-                </button>
-                <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
-                  <Link
-                    href="/profile"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm"
-                  >
-                    {t.profile}
-                  </Link>
-                  <Link
-                    href="/profile/children"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t"
-                  >
-                    {t.myChildren}
-                  </Link>
-                </div>
-              </div>
+<div className="relative group">
+  <button className={linkClass}>{t.profile}</button>
+  <div className="absolute right-0 top-full hidden group-hover:block bg-card border rounded-md shadow-lg z-50 min-w-48">
+    <Link
+      href="/profile"
+      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm"
+    >
+      {t.profile}
+    </Link>
+    <Link
+      href="/profile/children"
+      className="block w-full text-left px-4 py-2 hover:bg-muted text-sm border-t"
+    >
+      {t.myChildren}
+    </Link>
+  </div>
+</div>
 ```
 
 Replace the original:
+
 ```tsx
-              <Link href="/profile" className={linkClass}>
-                {t.profile}
-              </Link>
+<Link href="/profile" className={linkClass}>
+  {t.profile}
+</Link>
 ```
 
 With the dropdown code above (keeping the logout button after).
@@ -122,6 +130,7 @@ With the dropdown code above (keeping the logout button after).
 - [ ] **Step 2: Update navbar import for translation**
 
 Ensure `t` is imported from translations at the top of the file (it should already be):
+
 ```bash
 grep -n "useTranslation()" src/components/navbar.tsx
 ```
@@ -140,6 +149,7 @@ git commit -m "feat: add Mis Hijos dropdown to profile menu in navbar"
 ### Task 3: Create Children Cards Page
 
 **Files:**
+
 - Create: `/src/app/profile/children/page.tsx`
 
 - [ ] **Step 1: Create the children cards page**
@@ -210,7 +220,8 @@ export default async function ChildrenPage() {
                 </h2>
                 {child.birthDate && (
                   <p className="text-xs text-muted-foreground">
-                    {new Date().getFullYear() - child.birthDate.getFullYear()} años
+                    {new Date().getFullYear() - child.birthDate.getFullYear()}{' '}
+                    años
                   </p>
                 )}
               </div>
@@ -219,7 +230,8 @@ export default async function ChildrenPage() {
               <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
                 {child.bloodGroup && (
                   <p className="text-muted-foreground">
-                    <span className="font-medium">Grupo sanguíneo:</span> {child.bloodGroup}
+                    <span className="font-medium">Grupo sanguíneo:</span>{' '}
+                    {child.bloodGroup}
                   </p>
                 )}
                 {child.allergies && (
@@ -231,7 +243,8 @@ export default async function ChildrenPage() {
                 )}
                 {child.primaryDoctor && (
                   <p className="text-muted-foreground">
-                    <span className="font-medium">Médico:</span> {child.primaryDoctor}
+                    <span className="font-medium">Médico:</span>{' '}
+                    {child.primaryDoctor}
                   </p>
                 )}
               </div>
@@ -270,6 +283,7 @@ export default async function ChildrenPage() {
 - [ ] **Step 2: Verify page structure**
 
 Run:
+
 ```bash
 grep -n "export default async function ChildrenPage" src/app/profile/children/page.tsx
 ```
@@ -288,6 +302,7 @@ git commit -m "feat: add children cards listing page for members"
 ### Task 4: Create Child View Page with Activity History
 
 **Files:**
+
 - Create: `/src/app/profile/children/[childId]/page.tsx`
 
 - [ ] **Step 1: Create the child view page**
@@ -377,7 +392,9 @@ export default async function ViewMyChildPage({
           )}
           {child.lastName && (
             <div>
-              <span className="font-medium block text-foreground">Apellido</span>
+              <span className="font-medium block text-foreground">
+                Apellido
+              </span>
               <span className="text-muted-foreground">{child.lastName}</span>
             </div>
           )}
@@ -566,7 +583,9 @@ export default async function ViewMyChildPage({
                 <span className="font-medium block text-foreground">
                   Grupo Sanguíneo
                 </span>
-                <span className="text-muted-foreground">{child.bloodGroup}</span>
+                <span className="text-muted-foreground">
+                  {child.bloodGroup}
+                </span>
               </div>
             )}
             {child.primaryDoctor && (
@@ -652,6 +671,7 @@ export default async function ViewMyChildPage({
 - [ ] **Step 2: Verify page structure**
 
 Run:
+
 ```bash
 grep -n "export default async function ViewMyChildPage" src/app/profile/children/[childId]/page.tsx
 ```
@@ -670,6 +690,7 @@ git commit -m "feat: add child detail view page with activity history for member
 ### Task 5: Create Child Edit Page Wrapper
 
 **Files:**
+
 - Create: `/src/app/profile/children/[childId]/edit/page.tsx`
 
 - [ ] **Step 1: Create edit page wrapper**
@@ -788,30 +809,33 @@ export default function ChildEditForm({ child }: ChildEditFormProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`/api/users/${child.userId}/children/${child.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          lastName,
-          birthDate: birthDate ? new Date(birthDate) : null,
-          documentType,
-          documentNumber,
-          address,
-          gender: gender || undefined,
-          nationality,
-          maritalStatus,
-          allergies,
-          regularMedication,
-          relevantDiseases,
-          previousInjuries,
-          physicalRestrictions,
-          bloodGroup,
-          primaryDoctor,
-          doctorPhone,
-          observations,
-        }),
-      });
+      const res = await fetch(
+        `/api/users/${child.userId}/children/${child.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            lastName,
+            birthDate: birthDate ? new Date(birthDate) : null,
+            documentType,
+            documentNumber,
+            address,
+            gender: gender || undefined,
+            nationality,
+            maritalStatus,
+            allergies,
+            regularMedication,
+            relevantDiseases,
+            previousInjuries,
+            physicalRestrictions,
+            bloodGroup,
+            primaryDoctor,
+            doctorPhone,
+            observations,
+          }),
+        }
+      );
 
       if (res.ok) {
         router.push(`/profile/children/${child.id}`);
@@ -970,6 +994,7 @@ export default function ChildEditForm({ child }: ChildEditFormProps) {
 - [ ] **Step 3: Verify files created**
 
 Run:
+
 ```bash
 ls -la src/app/profile/children/[childId]/edit/
 ```

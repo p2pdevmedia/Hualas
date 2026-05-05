@@ -111,24 +111,24 @@ export default function PushManager() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-    <div className="w-full max-w-sm rounded-xl border bg-background p-4 shadow-lg">
-      <div className="space-y-2">
-        <p className="text-sm font-semibold">Activá PushAlert</p>
-        <p className="text-sm text-muted-foreground">
-          Cuando el navegador te muestre el permiso, aceptalo para recibir las
-          notificaciones de Hualas.
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={handleDismiss}
-            className="rounded-md border px-3 py-1.5 text-sm"
-          >
-            Después
-          </button>
+      <div className="w-full max-w-sm rounded-xl border bg-background p-4 shadow-lg">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">Activá PushAlert</p>
+          <p className="text-sm text-muted-foreground">
+            Cuando el navegador te muestre el permiso, aceptalo para recibir las
+            notificaciones de Hualas.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="rounded-md border px-3 py-1.5 text-sm"
+            >
+              Después
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

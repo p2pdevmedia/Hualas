@@ -17,7 +17,9 @@ export default function FamilyMemberForm({
   members: FamilyMemberOption[];
 }) {
   const [email, setEmail] = useState('');
-  const [relationship, setRelationship] = useState<'PARENT' | 'RESPONSIBLE' | 'OTHER'>('PARENT');
+  const [relationship, setRelationship] = useState<
+    'PARENT' | 'RESPONSIBLE' | 'OTHER'
+  >('PARENT');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);

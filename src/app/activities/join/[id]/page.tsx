@@ -114,7 +114,10 @@ export default async function ActivityJoinPage({
     ? Math.max(capacity - participantCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
-  const activityDateRange = formatDateRange(activityData.date, activityData.endDate);
+  const activityDateRange = formatDateRange(
+    activityData.date,
+    activityData.endDate
+  );
 
   return (
     <main className="pb-12">

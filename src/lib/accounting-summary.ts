@@ -38,7 +38,11 @@ export type ProfessorPaymentLike = {
 export type AccountingReportEntry = {
   id: string;
   date: string;
-  source: 'Movimiento manual' | 'Pago manual' | 'Mercado Pago' | 'Pago a profesor';
+  source:
+    | 'Movimiento manual'
+    | 'Pago manual'
+    | 'Mercado Pago'
+    | 'Pago a profesor';
   type: MovementType;
   category: string;
   description: string;
@@ -126,7 +130,12 @@ export function summarizeAccounting({
     professorExpense,
     totalIncome: movementIncome + manualIncome + mpIncome,
     totalExpense: movementExpense + professorExpense,
-    netBalance: movementIncome + manualIncome + mpIncome - movementExpense - professorExpense,
+    netBalance:
+      movementIncome +
+      manualIncome +
+      mpIncome -
+      movementExpense -
+      professorExpense,
   };
 }
 

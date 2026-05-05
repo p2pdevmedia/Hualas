@@ -63,6 +63,7 @@ attendanceList: ParticipantForAttendance[];
 ## UI Structure
 
 ### Current State
+
 ```
 Días de la actividad
 ─────────────────────
@@ -70,11 +71,12 @@ Días de la actividad
   viernes, 10 de mayo de 2026 · 10:00 - 12:00 · Parque Central
   2 confirmados · 1 no asistirá
   [Edit button]
-  
+
   [Confirmation section with buttons...]
 ```
 
 ### New State (Collapsed)
+
 ```
 [Day: 2026-05-10]
   viernes, 10 de mayo de 2026 · 10:00 - 12:00 · Parque Central
@@ -83,18 +85,19 @@ Días de la actividad
 ```
 
 ### New State (Expanded - both lists)
+
 ```
 [Day: 2026-05-10]
   viernes, 10 de mayo de 2026 · 10:00 - 12:00 · Parque Central
   [2 confirmados ▼] · [1 no asistirá ▼]
-  
+
   Confirmados
   ├─ Juan Pérez García → link
   ├─ María López Martínez → link
-  
+
   No asistirán
   ├─ Carlos Rodríguez → link
-  
+
   [Edit button]
 ```
 
@@ -140,6 +143,7 @@ function toggleExpanded(dayId: string, status: 'going' | 'notGoing') {
 ### 3. Render Changes (lines 219-221)
 
 Replace:
+
 ```tsx
 <span>
   {goingCount} confirmados · {notGoingCount} no asistirán
@@ -147,6 +151,7 @@ Replace:
 ```
 
 With:
+
 ```tsx
 <div className="flex gap-2 text-xs text-muted-foreground">
   <button
@@ -215,21 +220,25 @@ export default function AttendanceList({
 ### 5. Render Lists (after attendance buttons section)
 
 ```tsx
-{expandedLists[day.id]?.going && (
-  <AttendanceList
-    label="Confirmados"
-    participants={day.attendanceList.filter((a) => a.status === 'GOING')}
-    isExpanded={true}
-  />
-)}
+{
+  expandedLists[day.id]?.going && (
+    <AttendanceList
+      label="Confirmados"
+      participants={day.attendanceList.filter((a) => a.status === 'GOING')}
+      isExpanded={true}
+    />
+  );
+}
 
-{expandedLists[day.id]?.notGoing && (
-  <AttendanceList
-    label="No asistirán"
-    participants={day.attendanceList.filter((a) => a.status === 'NOT_GOING')}
-    isExpanded={true}
-  />
-)}
+{
+  expandedLists[day.id]?.notGoing && (
+    <AttendanceList
+      label="No asistirán"
+      participants={day.attendanceList.filter((a) => a.status === 'NOT_GOING')}
+      isExpanded={true}
+    />
+  );
+}
 ```
 
 ### 6. Update Page Query (page.tsx)
@@ -244,9 +253,7 @@ attendanceList: day.attendances.map((attendance) => {
   return {
     activityParticipantId: attendance.activityParticipantId,
     status: attendance.status,
-    participantName: participant
-      ? getParticipantName(participant)
-      : 'Unknown',
+    participantName: participant ? getParticipantName(participant) : 'Unknown',
     registeredUserId: participant?.user.id || '',
   };
 });

@@ -46,7 +46,8 @@ const TYPE_LABELS: Record<
   },
   ACTIVITY_DAY_CANCELLED: {
     title: 'Día de actividad cancelado',
-    description: 'Cuando se cancela un día de una actividad en la que estás inscripto.',
+    description:
+      'Cuando se cancela un día de una actividad en la que estás inscripto.',
   },
   ACTIVITY_DAY_REACTIVATED: {
     title: 'Día de actividad reactivado',

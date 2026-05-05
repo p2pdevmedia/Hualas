@@ -4,9 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-export default function AddTutorForm({ familyGroupId }: { familyGroupId: string }) {
+export default function AddTutorForm({
+  familyGroupId,
+}: {
+  familyGroupId: string;
+}) {
   const [email, setEmail] = useState('');
-  const [relationship, setRelationship] = useState<'PARENT' | 'RESPONSIBLE' | 'OTHER'>('PARENT');
+  const [relationship, setRelationship] = useState<
+    'PARENT' | 'RESPONSIBLE' | 'OTHER'
+  >('PARENT');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
@@ -24,13 +30,16 @@ export default function AddTutorForm({ familyGroupId }: { familyGroupId: string 
         body: JSON.stringify({ email, relationship }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'No se pudo agregar el integrante.');
+      if (!res.ok)
+        throw new Error(data.error ?? 'No se pudo agregar el integrante.');
       setEmail('');
       setRelationship('PARENT');
       setSuccess('Tutor agregado al grupo familiar.');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo agregar el integrante.');
+      setError(
+        err instanceof Error ? err.message : 'No se pudo agregar el integrante.'
+      );
     } finally {
       setSaving(false);
     }
@@ -54,7 +63,11 @@ export default function AddTutorForm({ familyGroupId }: { familyGroupId: string 
         <select
           className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           value={relationship}
-          onChange={(e) => setRelationship(e.target.value as 'PARENT' | 'RESPONSIBLE' | 'OTHER')}
+          onChange={(e) =>
+            setRelationship(
+              e.target.value as 'PARENT' | 'RESPONSIBLE' | 'OTHER'
+            )
+          }
         >
           <option value="PARENT">Madre / Padre</option>
           <option value="RESPONSIBLE">Responsable</option>

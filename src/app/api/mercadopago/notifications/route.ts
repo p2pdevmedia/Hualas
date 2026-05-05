@@ -114,7 +114,8 @@ export async function POST(req: NextRequest) {
       });
 
       const activityCapacity =
-        activity.groups.length === 0 || activity.groups.some((g) => g.capacity == null)
+        activity.groups.length === 0 ||
+        activity.groups.some((g) => g.capacity == null)
           ? null
           : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
 

@@ -142,7 +142,8 @@ export default function ActivityCalendar({
           const isPast = key < todayKey;
 
           const displayActivities = activities.slice(0, 2);
-          const allCancelled = activities.length > 0 && activities.every((a) => a.cancelled);
+          const allCancelled =
+            activities.length > 0 && activities.every((a) => a.cancelled);
 
           return (
             <button
@@ -183,7 +184,10 @@ export default function ActivityCalendar({
                 <div className="flex gap-0.5 w-full flex-1 min-h-0 items-center">
                   {displayActivities.map((a, idx) =>
                     a.sportIcon ? (
-                      <div key={idx} className="relative flex-1 min-w-0 h-full flex items-center justify-center">
+                      <div
+                        key={idx}
+                        className="relative flex-1 min-w-0 h-full flex items-center justify-center"
+                      >
                         <Image
                           src={`/icons/${a.sportIcon}`}
                           alt=""
@@ -203,7 +207,9 @@ export default function ActivityCalendar({
                   )}
                 </div>
               ) : hasActivity ? (
-                <span className={`h-1.5 w-1.5 rounded-full mt-1 ${allCancelled ? 'bg-red-400' : 'bg-primary'}`} />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full mt-1 ${allCancelled ? 'bg-red-400' : 'bg-primary'}`}
+                />
               ) : null}
 
               {/* More indicator */}
@@ -240,7 +246,9 @@ export default function ActivityCalendar({
                       className={`h-16 w-16 object-contain ${d.cancelled ? 'opacity-30' : ''}`}
                     />
                   ) : (
-                    <span className={`h-2 w-2 rounded-full ${d.cancelled ? 'bg-red-400' : 'bg-primary'}`} />
+                    <span
+                      className={`h-2 w-2 rounded-full ${d.cancelled ? 'bg-red-400' : 'bg-primary'}`}
+                    />
                   )}
                   {d.cancelled && d.sportIcon && (
                     <span className="absolute inset-0 flex items-center justify-center">
@@ -252,7 +260,9 @@ export default function ActivityCalendar({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className={`text-sm font-medium ${d.cancelled ? 'line-through text-muted-foreground' : ''}`}>
+                    <p
+                      className={`text-sm font-medium ${d.cancelled ? 'line-through text-muted-foreground' : ''}`}
+                    >
                       {d.activityName}
                     </p>
                     {d.cancelled && (

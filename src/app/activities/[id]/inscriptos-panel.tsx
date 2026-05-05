@@ -165,11 +165,14 @@ export default function InscriptosPanel({
     if (nextGroupId === currentGroupId) return;
 
     if (!nextGroupId) {
-      const res = await fetch(`/api/activity-groups/${currentGroupId}/members`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId }),
-      });
+      const res = await fetch(
+        `/api/activity-groups/${currentGroupId}/members`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ participantId }),
+        }
+      );
       if (!res.ok) {
         const payload = await res.json().catch(() => null);
         throw new Error(payload?.error || 'No se pudo quitar del grupo');
@@ -191,8 +194,10 @@ export default function InscriptosPanel({
   const unassignedParticipants = filteredParticipants.filter((p) => !p.groupId);
 
   async function handleDropInGroup(targetGroupId: string) {
-    const participantId = draggingParticipantId ?? selectedParticipantIdForAssign;
-    if ((!participantId && selectedParticipantIds.length === 0) || savingId) return;
+    const participantId =
+      draggingParticipantId ?? selectedParticipantIdForAssign;
+    if ((!participantId && selectedParticipantIds.length === 0) || savingId)
+      return;
 
     setDropTargetGroupId(null);
     if (selectedParticipantIds.length > 0) {
@@ -340,16 +345,20 @@ export default function InscriptosPanel({
                               className="mt-0.5 h-3.5 w-3.5 rounded border-input"
                             />
                           )}
-                        <div className="min-w-0">
-                          <Link href={participant.detailHref} className="text-xs font-medium leading-tight text-link hover:underline" onClick={(event) => event.stopPropagation()}>
-                            {participant.name}
-                          </Link>
-                          {participant.age != null && (
-                            <p className="text-[11px] text-muted-foreground">
-                              {participant.age} años
-                            </p>
-                          )}
-                        </div>
+                          <div className="min-w-0">
+                            <Link
+                              href={participant.detailHref}
+                              className="text-xs font-medium leading-tight text-link hover:underline"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {participant.name}
+                            </Link>
+                            {participant.age != null && (
+                              <p className="text-[11px] text-muted-foreground">
+                                {participant.age} años
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </li>
                     ))}
@@ -416,7 +425,11 @@ export default function InscriptosPanel({
                               )}
                               <div className="flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                  <Link href={member.detailHref} className="text-xs font-medium leading-tight text-link hover:underline" onClick={(event) => event.stopPropagation()}>
+                                  <Link
+                                    href={member.detailHref}
+                                    className="text-xs font-medium leading-tight text-link hover:underline"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
                                     {member.name}
                                   </Link>
                                   {member.age != null && (

@@ -70,7 +70,13 @@ export default async function ProfessorChildProfilePage({
       members: {
         include: {
           member: {
-            select: { id: true, name: true, lastName: true, phone: true, email: true },
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              phone: true,
+              email: true,
+            },
           },
         },
         orderBy: { createdAt: 'asc' },
@@ -185,7 +191,9 @@ export default async function ProfessorChildProfilePage({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-medium">
-                          {[fm.member.name, fm.member.lastName].filter(Boolean).join(' ') || fm.member.email}
+                          {[fm.member.name, fm.member.lastName]
+                            .filter(Boolean)
+                            .join(' ') || fm.member.email}
                         </p>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                           {relLabel[fm.relationship] ?? fm.relationship}
@@ -243,7 +251,10 @@ export default async function ProfessorChildProfilePage({
           </h2>
           <ul className="divide-y divide-border">
             {child.activityParticipants.map((ap) => (
-              <li key={ap.id} className="py-2 text-sm flex items-center justify-between">
+              <li
+                key={ap.id}
+                className="py-2 text-sm flex items-center justify-between"
+              >
                 <span>
                   <span className="font-medium">{ap.activity.name}</span>
                   {ap.groupMembership?.activityGroup && (

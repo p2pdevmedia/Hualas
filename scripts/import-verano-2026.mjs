@@ -35,9 +35,11 @@ function getWorkbookSheetPath(sheetName) {
   const relsXml = readZipEntry('xl/_rels/workbook.xml.rels');
 
   const relTargets = new Map(
-    [...relsXml.matchAll(/<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g)].map(
-      ([, id, target]) => [id, target]
-    )
+    [
+      ...relsXml.matchAll(
+        /<Relationship[^>]+Id="([^"]+)"[^>]+Target="([^"]+)"/g
+      ),
+    ].map(([, id, target]) => [id, target])
   );
 
   const sheetMatch = new RegExp(
@@ -50,7 +52,9 @@ function getWorkbookSheetPath(sheetName) {
 
   const target = relTargets.get(sheetMatch[1]);
   if (!target) {
-    throw new Error(`No se pudo resolver la relación de la hoja "${sheetName}".`);
+    throw new Error(
+      `No se pudo resolver la relación de la hoja "${sheetName}".`
+    );
   }
 
   return `xl/${target}`;
@@ -59,8 +63,8 @@ function getWorkbookSheetPath(sheetName) {
 function parseSharedStrings() {
   try {
     const sharedXml = readZipEntry('xl/sharedStrings.xml');
-    return [...sharedXml.matchAll(/<si[^>]*>([\s\S]*?)<\/si>/g)].map(([, inner]) =>
-      stripTags(inner).replace(/\s+/g, ' ').trim()
+    return [...sharedXml.matchAll(/<si[^>]*>([\s\S]*?)<\/si>/g)].map(
+      ([, inner]) => stripTags(inner).replace(/\s+/g, ' ').trim()
     );
   } catch {
     return [];
@@ -73,7 +77,9 @@ function parseSheetRows() {
   const sheetXml = readZipEntry(sheetPath);
   const rows = [];
 
-  for (const rowMatch of sheetXml.matchAll(/<row[^>]+r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g)) {
+  for (const rowMatch of sheetXml.matchAll(
+    /<row[^>]+r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g
+  )) {
     const rowNumber = Number(rowMatch[1]);
     if (rowNumber === 1) continue;
 
@@ -234,7 +240,10 @@ async function main() {
     };
 
     current.name = pickPreferredName(current.name, responsibleName.name);
-    current.lastName = pickPreferredName(current.lastName, responsibleName.lastName);
+    current.lastName = pickPreferredName(
+      current.lastName,
+      responsibleName.lastName
+    );
     current.phone = pickPreferredPhone(current.phone, phone);
     current.children.push(row);
     families.set(email, current);
@@ -297,7 +306,12 @@ async function main() {
       const existingChild = await prisma.child.findFirst({
         where: documentNumber
           ? { userId: user.id, documentNumber }
-          : { userId: user.id, name: cleanText(row.B), lastName: cleanText(row.C) || null, birthDate },
+          : {
+              userId: user.id,
+              name: cleanText(row.B),
+              lastName: cleanText(row.C) || null,
+              birthDate,
+            },
         select: { id: true },
       });
 

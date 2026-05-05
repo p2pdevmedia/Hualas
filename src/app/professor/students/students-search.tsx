@@ -39,10 +39,7 @@ export type StudentEntry =
     };
 
 function normalize(s: string) {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 function matches(student: StudentEntry, query: string): boolean {
@@ -165,7 +162,9 @@ export default function StudentsSearch({
                       {student.type === 'child' && (
                         <div className="space-y-0.5">
                           <p className="text-sm text-muted-foreground">
-                            <span className="text-xs uppercase tracking-wide mr-1">Responsable:</span>
+                            <span className="text-xs uppercase tracking-wide mr-1">
+                              Responsable:
+                            </span>
                             <span className="font-medium text-foreground">
                               {student.parentName}
                             </span>
@@ -180,11 +179,16 @@ export default function StudentsSearch({
                               OTHER: 'Tutor/a',
                             };
                             return (
-                              <p key={i} className="text-sm text-muted-foreground">
+                              <p
+                                key={i}
+                                className="text-sm text-muted-foreground"
+                              >
                                 <span className="text-xs uppercase tracking-wide mr-1">
                                   {relLabel[t.relationship] ?? t.relationship}:
                                 </span>
-                                <span className="font-medium text-foreground">{t.name}</span>
+                                <span className="font-medium text-foreground">
+                                  {t.name}
+                                </span>
                                 {t.phone && <span> · {t.phone}</span>}
                               </p>
                             );
@@ -195,7 +199,9 @@ export default function StudentsSearch({
                       {student.type === 'adult' && (
                         <div className="space-y-0.5">
                           {student.phone && (
-                            <p className="text-sm text-muted-foreground">{student.phone}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {student.phone}
+                            </p>
                           )}
                           {student.tutors.map((t, i) => {
                             const relLabel: Record<string, string> = {
@@ -204,11 +210,16 @@ export default function StudentsSearch({
                               OTHER: 'Tutor/a',
                             };
                             return (
-                              <p key={i} className="text-sm text-muted-foreground">
+                              <p
+                                key={i}
+                                className="text-sm text-muted-foreground"
+                              >
                                 <span className="text-xs uppercase tracking-wide mr-1">
                                   {relLabel[t.relationship] ?? t.relationship}:
                                 </span>
-                                <span className="font-medium text-foreground">{t.name}</span>
+                                <span className="font-medium text-foreground">
+                                  {t.name}
+                                </span>
                                 {t.phone && <span> · {t.phone}</span>}
                               </p>
                             );
@@ -230,7 +241,9 @@ export default function StudentsSearch({
 
                     {student.type === 'child' && student.birthDate && (
                       <span className="shrink-0 text-xs text-muted-foreground mt-1">
-                        {new Date(student.birthDate).toLocaleDateString('es-AR')}
+                        {new Date(student.birthDate).toLocaleDateString(
+                          'es-AR'
+                        )}
                       </span>
                     )}
                   </Link>

@@ -122,12 +122,20 @@ export default function ChildProfilePhotoUpload({
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    if (!ctx) { setError('No se pudo procesar la foto'); return; }
+    if (!ctx) {
+      setError('No se pudo procesar la foto');
+      return;
+    }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
       async (blob) => {
-        if (!blob) { setError('No se pudo generar la foto'); return; }
-        const file = new File([blob], `child-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        if (!blob) {
+          setError('No se pudo generar la foto');
+          return;
+        }
+        const file = new File([blob], `child-photo-${Date.now()}.jpg`, {
+          type: 'image/jpeg',
+        });
         stopCamera();
         setIsCameraOpen(false);
         await uploadFile(file);
@@ -172,14 +180,21 @@ export default function ChildProfilePhotoUpload({
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={handleCapture} disabled={isUploading}>
+            <Button
+              type="button"
+              onClick={handleCapture}
+              disabled={isUploading}
+            >
               <Camera className="mr-2 h-4 w-4" />
               Tomar foto
             </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => { stopCamera(); setIsCameraOpen(false); }}
+              onClick={() => {
+                stopCamera();
+                setIsCameraOpen(false);
+              }}
               disabled={isUploading}
             >
               <X className="mr-2 h-4 w-4" />
@@ -189,7 +204,11 @@ export default function ChildProfilePhotoUpload({
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => setIsCameraOpen(true)} disabled={isUploading}>
+          <Button
+            type="button"
+            onClick={() => setIsCameraOpen(true)}
+            disabled={isUploading}
+          >
             <Camera className="mr-2 h-4 w-4" />
             Usar cámara
           </Button>
@@ -214,7 +233,9 @@ export default function ChildProfilePhotoUpload({
         onChange={handleFileChange}
       />
 
-      {isUploading && <p className="text-sm text-muted-foreground">Subiendo foto...</p>}
+      {isUploading && (
+        <p className="text-sm text-muted-foreground">Subiendo foto...</p>
+      )}
       {message && <p className="text-sm text-success">{message}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>

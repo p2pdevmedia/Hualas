@@ -36,7 +36,7 @@ model GroupedActivityDayAttendance {
   updatedAt             DateTime                @updatedAt
   activityDay           ActivityDay             @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
   parentUser            User                    @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
-  
+
   @@unique([activityDayId, parentUserId])
   @@index([activityDayId])
   @@index([parentUserId])
@@ -44,12 +44,14 @@ model GroupedActivityDayAttendance {
 ```
 
 **Fields:**
+
 - `parentUserId`: The parent (User) confirming attendance
 - `childIds`: Array of Child IDs included in this confirmation (stored as JSON)
 - `status`: Attendance status (`PENDING`, `GOING`, `NOT_GOING`)
 - `confirmedAt`: Timestamp when status was set to non-PENDING
 
 **Relationships:**
+
 - One parent per activity day (unique constraint)
 - Cascade delete on activity day removal
 
@@ -67,6 +69,7 @@ model GroupedActivityDayAttendance {
 **Endpoint:** `PATCH /api/activity-days/[dayId]/grouped-attendance`
 
 **Request Body:**
+
 ```json
 {
   "parentUserId": "user123",
@@ -76,6 +79,7 @@ model GroupedActivityDayAttendance {
 ```
 
 **Response (Success 200):**
+
 ```json
 {
   "id": "grouped123",
@@ -89,6 +93,7 @@ model GroupedActivityDayAttendance {
 ```
 
 **Validation:**
+
 1. Session user must be the parent or an admin
 2. Parent must be registered as `ActivityParticipant` for the activity
 3. All children must be registered as `ActivityParticipant` for the same activity
@@ -96,6 +101,7 @@ model GroupedActivityDayAttendance {
 5. Activity day must exist and belong to a valid activity
 
 **Error Responses:**
+
 - `401 Unauthorized`: User is not the parent or admin
 - `404 Not Found`: Activity day not found
 - `400 Bad Request`: Parent or child not registered, child doesn't belong to parent, or invalid payload
@@ -106,6 +112,7 @@ model GroupedActivityDayAttendance {
 **Endpoint:** `PATCH /api/activity-days/[dayId]/attendance` (unchanged URL, modified behavior)
 
 **Behavior Change:**
+
 - If a `GroupedActivityDayAttendance` record exists for the parent, return `409 Conflict` with message: "Esta persona ya tiene una confirmación de asistencia grupal. Actualice el grupo en su lugar."
 - Solo registrations (no grouped record) continue to work as before
 
@@ -118,6 +125,7 @@ model GroupedActivityDayAttendance {
 **File:** `src/app/activities/[id]/activity-days-panel.tsx`
 
 **Data Fetching:**
+
 1. Fetch all registrations for the logged-in user (parents + their children)
 2. For each activity day, fetch:
    - All `GroupedActivityDayAttendance` records (to show grouped confirmations)
@@ -126,6 +134,7 @@ model GroupedActivityDayAttendance {
 **Registration Display Logic:**
 
 For each parent registration:
+
 1. Check if they have children also registered for this activity
 2. If yes, fetch their grouped attendance record for this day
 3. Render grouped card with:
@@ -135,6 +144,7 @@ For each parent registration:
 4. If no children, render as single-person registration (existing behavior)
 
 **UI Layout per Parent Registration:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Parent Name                         │
@@ -149,19 +159,19 @@ For each parent registration:
 ```
 
 **onClick Handler Update:**
+
 - Call new endpoint: `PATCH /api/activity-days/[dayId]/grouped-attendance`
 - Pass `parentUserId`, selected `childIds`, and `status`
 - If no children selected, call old endpoint for solo registration
 
 **Attendance Count Update:**
+
 ```typescript
-const goingCount = 
+const goingCount =
   groupedAttendances
-    .filter(g => g.status === 'GOING')
-    .reduce((sum, g) => sum + 1 + g.childIds.length, 0)
-  + 
-  ungroupedAttendances
-    .filter(a => a.status === 'GOING').length
+    .filter((g) => g.status === 'GOING')
+    .reduce((sum, g) => sum + 1 + g.childIds.length, 0) +
+  ungroupedAttendances.filter((a) => a.status === 'GOING').length;
 ```
 
 ---
@@ -170,13 +180,13 @@ const goingCount =
 
 ### Conflict Scenarios
 
-| Scenario | Handling |
-|----------|----------|
-| Parent tries old endpoint while grouped record exists | Return 409: "Ya tiene confirmación grupal" |
-| Child unregistered after grouped record created | Query validation fails; frontend refresh prompts update |
-| Multiple tabs/sessions updating simultaneously | Last write wins (upsert behavior) |
-| Parent removed from activity | Query validation fails on next update |
-| Admin removes child from activity | Grouped record becomes stale; next sync removes child from array |
+| Scenario                                              | Handling                                                         |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
+| Parent tries old endpoint while grouped record exists | Return 409: "Ya tiene confirmación grupal"                       |
+| Child unregistered after grouped record created       | Query validation fails; frontend refresh prompts update          |
+| Multiple tabs/sessions updating simultaneously        | Last write wins (upsert behavior)                                |
+| Parent removed from activity                          | Query validation fails on next update                            |
+| Admin removes child from activity                     | Grouped record becomes stale; next sync removes child from array |
 
 ### Validation Flow
 
@@ -218,18 +228,21 @@ Return 200 with totalPeople count
 ## Testing Strategy
 
 ### Unit Tests
+
 - Validate parent-child relationship checks
 - Validate activity registration checks
 - Test upsert logic (create vs. update)
 - Test conflict detection
 
 ### Integration Tests
+
 - Test grouped attendance creation flow end-to-end
 - Test attendance count calculations
 - Test switching between grouped and solo (if grouped record deleted)
 - Test concurrent updates (last write wins)
 
 ### Manual Testing
+
 - Parent with 1 child: confirm for both, verify count = 2
 - Parent with 2 children: select only 1, confirm, verify count = 2
 - Parent with 2 children: uncheck one, update, verify count changes
@@ -265,4 +278,4 @@ Return 200 with totalPeople count
 ✓ UI clearly shows which children are included  
 ✓ Conflicts are prevented (no accidental dual-confirmation)  
 ✓ Backward compatibility maintained for solo registrations  
-✓ No impact on payment/registration audit trail  
+✓ No impact on payment/registration audit trail

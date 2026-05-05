@@ -108,7 +108,9 @@ export default function MergeChildrenClient({
   const [phase, setPhase] = useState<Phase>('select');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [survivorId, setSurvivorId] = useState<string | null>(null);
-  const [fieldChoices, setFieldChoices] = useState<Record<string, 'survivor' | 'loser'>>({});
+  const [fieldChoices, setFieldChoices] = useState<
+    Record<string, 'survivor' | 'loser'>
+  >({});
   const [loading, setLoading] = useState(false);
 
   function handleToggle(id: string) {
@@ -177,7 +179,10 @@ export default function MergeChildrenClient({
         throw new Error(data?.error || 'No se pudo fusionar los hijos');
       }
 
-      toast({ title: 'Hijos fusionados', description: 'La fusión se completó correctamente.' });
+      toast({
+        title: 'Hijos fusionados',
+        description: 'La fusión se completó correctamente.',
+      });
       router.push(`/admin/users/${userId}/view`);
       router.refresh();
     } catch (err) {
@@ -222,10 +227,14 @@ export default function MergeChildrenClient({
                     }`}
                   >
                     <div>
-                      <span className="font-medium">{childFullName(child)}</span>
+                      <span className="font-medium">
+                        {childFullName(child)}
+                      </span>
                       <span className="ml-2 text-xs text-muted-foreground">
                         {total}{' '}
-                        {total === 1 ? 'registro de historial' : 'registros de historial'}
+                        {total === 1
+                          ? 'registro de historial'
+                          : 'registros de historial'}
                       </span>
                     </div>
                     {isSelected && (
@@ -257,7 +266,9 @@ export default function MergeChildrenClient({
 
   // ── Review phase ──────────────────────────────────────────────────────────
   const survivor = childList.find((c) => c.id === survivorId)!;
-  const loser = childList.find((c) => selectedIds.includes(c.id) && c.id !== survivorId)!;
+  const loser = childList.find(
+    (c) => selectedIds.includes(c.id) && c.id !== survivorId
+  )!;
 
   const conflictFields = PROFILE_FIELDS.filter(({ key }) => {
     const sVal = survivor[key];
@@ -274,7 +285,8 @@ export default function MergeChildrenClient({
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Revisar Fusión</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Confirmá los datos antes de fusionar. Esta acción no se puede deshacer.
+          Confirmá los datos antes de fusionar. Esta acción no se puede
+          deshacer.
         </p>
       </div>
 
@@ -290,7 +302,9 @@ export default function MergeChildrenClient({
               <button
                 key={id}
                 type="button"
-                onClick={() => { if (!isSurvivor) handleSwap(); }}
+                onClick={() => {
+                  if (!isSurvivor) handleSwap();
+                }}
                 className={`rounded-lg border p-4 text-left transition-colors ${
                   isSurvivor
                     ? 'border-primary bg-primary/5'
@@ -341,7 +355,10 @@ export default function MergeChildrenClient({
                     <button
                       type="button"
                       onClick={() =>
-                        setFieldChoices((prev) => ({ ...prev, [key]: 'survivor' }))
+                        setFieldChoices((prev) => ({
+                          ...prev,
+                          [key]: 'survivor',
+                        }))
                       }
                       className={`rounded-lg border p-3 text-left text-sm transition-colors ${
                         choice === 'survivor'
@@ -384,8 +401,8 @@ export default function MergeChildrenClient({
           <div>
             <h2 className="text-base font-semibold">Datos que se copiarán</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Estos datos solo existen en {childFullName(loser)} y se copiarán
-              a {childFullName(survivor)}.
+              Estos datos solo existen en {childFullName(loser)} y se copiarán a{' '}
+              {childFullName(survivor)}.
             </p>
           </div>
           <ul className="space-y-1 text-sm">
@@ -408,8 +425,7 @@ export default function MergeChildrenClient({
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-2">
         <h2 className="text-base font-semibold">Historial que se transfiere</h2>
         <p className="text-sm text-muted-foreground">
-          De{' '}
-          <span className="font-medium">{childFullName(loser)}</span> a{' '}
+          De <span className="font-medium">{childFullName(loser)}</span> a{' '}
           <span className="font-medium">{childFullName(survivor)}</span>:
         </p>
         <ul className="text-sm space-y-1 mt-2">

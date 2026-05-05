@@ -6,7 +6,7 @@ import { enqueueMutation } from '@/lib/offline/pending-mutations';
 async function saveDayField(
   dayId: string,
   field: 'planificacion' | 'devolucion',
-  value: string,
+  value: string
 ): Promise<{ savedLocally: boolean }> {
   if (!navigator.onLine) {
     await enqueueMutation({

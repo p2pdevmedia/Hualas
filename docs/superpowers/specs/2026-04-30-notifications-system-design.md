@@ -160,15 +160,23 @@ src/lib/notifications/
 The only file consumed by API routes. One function per event:
 
 ```ts
-export async function notifyActivityDayCreated(dayId: string): Promise<void>
-export async function notifyActivityDayUpdated(dayId: string): Promise<void>
-export async function notifyPickupNoticeCreated(noticeId: string): Promise<void>
-export async function notifyPickupNoticeAcknowledged(ackId: string): Promise<void>
-export async function notifyPaymentManualCreated(movementId: string): Promise<void>
-export async function notifyPaymentApproved(paymentId: string): Promise<void>
-export async function notifyPaymentRejected(paymentId: string): Promise<void>
-export async function notifyActivityCapacityFull(activityId: string): Promise<void>
-export async function notifyChatMessage(messageId: string): Promise<void>
+export async function notifyActivityDayCreated(dayId: string): Promise<void>;
+export async function notifyActivityDayUpdated(dayId: string): Promise<void>;
+export async function notifyPickupNoticeCreated(
+  noticeId: string
+): Promise<void>;
+export async function notifyPickupNoticeAcknowledged(
+  ackId: string
+): Promise<void>;
+export async function notifyPaymentManualCreated(
+  movementId: string
+): Promise<void>;
+export async function notifyPaymentApproved(paymentId: string): Promise<void>;
+export async function notifyPaymentRejected(paymentId: string): Promise<void>;
+export async function notifyActivityCapacityFull(
+  activityId: string
+): Promise<void>;
+export async function notifyChatMessage(messageId: string): Promise<void>;
 ```
 
 Each function: (1) loads the data it needs from Prisma, (2) calls `recipients.ts` for the userId list, (3) calls the dispatcher with a fully-formed payload (`type`, `title`, `body`, `url`, `data`, `recipients`).
@@ -312,31 +320,31 @@ Three sections:
 
 All require authenticated session. Validation in `src/lib/validations/notifications.ts` using `zod`.
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/notifications/subscriptions` | Upsert subscription by endpoint |
-| DELETE | `/api/notifications/subscriptions/:id` | Remove a subscription (verifies ownership) |
-| GET | `/api/notifications` | List user's notifications, paginated; `?unread=1` filter |
-| PATCH | `/api/notifications/:id` | Mark single notification as read |
-| PATCH | `/api/notifications` | Mark all as read |
-| GET | `/api/notifications/preferences` | Map of `{type → {inApp, push}}`, defaulting to `true` |
-| PUT | `/api/notifications/preferences` | Upsert one preference row by `(userId, type)` |
+| Method | Path                                   | Purpose                                                  |
+| ------ | -------------------------------------- | -------------------------------------------------------- |
+| POST   | `/api/notifications/subscriptions`     | Upsert subscription by endpoint                          |
+| DELETE | `/api/notifications/subscriptions/:id` | Remove a subscription (verifies ownership)               |
+| GET    | `/api/notifications`                   | List user's notifications, paginated; `?unread=1` filter |
+| PATCH  | `/api/notifications/:id`               | Mark single notification as read                         |
+| PATCH  | `/api/notifications`                   | Mark all as read                                         |
+| GET    | `/api/notifications/preferences`       | Map of `{type → {inApp, push}}`, defaulting to `true`    |
+| PUT    | `/api/notifications/preferences`       | Upsert one preference row by `(userId, type)`            |
 
 ---
 
 ## Trigger map
 
-| # | Event | File | After | Call |
-|---|---|---|---|---|
-| 1a | Activity day created | `src/app/api/activities/[id]/days/route.ts` | `prisma.activityDay.create` | `notifyActivityDayCreated(day.id)` |
-| 1b | Activity day updated | `src/app/api/activity-days/[dayId]/route.ts` (PUT) | `prisma.activityDay.update`, only if `date`, `schedule` or `geoLocation` changed | `notifyActivityDayUpdated(day.id)` |
-| 2 | Pickup notice created | `src/app/api/activity-days/[dayId]/pickup-notices/route.ts` (POST) | `prisma.pickupNotice.create` | `notifyPickupNoticeCreated(notice.id)` |
-| 2b | Pickup notice acknowledged | `src/app/api/pickup-notices/[noticeId]/acknowledgments/route.ts` (POST) | `prisma.pickupNoticeAcknowledgment.create` | `notifyPickupNoticeAcknowledged(ack.id)` |
-| 3 | Manual movement created | `src/app/api/accounting/movements/route.ts` (POST) | `prisma.accountingMovement.create` | `notifyPaymentManualCreated(movement.id)` |
-| 4 | MP payment approved | `src/app/api/mercadopago/notifications/route.ts` | branch where status transitions to `APPROVED` | `notifyPaymentApproved(payment.id)` |
-| 5 | MP payment rejected | same webhook | branch where status transitions to `REJECTED` | `notifyPaymentRejected(payment.id)` |
-| 6 | Activity capacity full | participant creation paths (webhook + checkout) | after creating participant; only when count went from `< capacity` to `>= capacity`; skipped if `capacity` is null | `notifyActivityCapacityFull(activity.id)` |
-| 7 | Chat message new | `src/app/api/messages/[userId]/route.ts` (POST) | `prisma.message.create` | `notifyChatMessage(message.id)` |
+| #   | Event                      | File                                                                    | After                                                                                                              | Call                                      |
+| --- | -------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| 1a  | Activity day created       | `src/app/api/activities/[id]/days/route.ts`                             | `prisma.activityDay.create`                                                                                        | `notifyActivityDayCreated(day.id)`        |
+| 1b  | Activity day updated       | `src/app/api/activity-days/[dayId]/route.ts` (PUT)                      | `prisma.activityDay.update`, only if `date`, `schedule` or `geoLocation` changed                                   | `notifyActivityDayUpdated(day.id)`        |
+| 2   | Pickup notice created      | `src/app/api/activity-days/[dayId]/pickup-notices/route.ts` (POST)      | `prisma.pickupNotice.create`                                                                                       | `notifyPickupNoticeCreated(notice.id)`    |
+| 2b  | Pickup notice acknowledged | `src/app/api/pickup-notices/[noticeId]/acknowledgments/route.ts` (POST) | `prisma.pickupNoticeAcknowledgment.create`                                                                         | `notifyPickupNoticeAcknowledged(ack.id)`  |
+| 3   | Manual movement created    | `src/app/api/accounting/movements/route.ts` (POST)                      | `prisma.accountingMovement.create`                                                                                 | `notifyPaymentManualCreated(movement.id)` |
+| 4   | MP payment approved        | `src/app/api/mercadopago/notifications/route.ts`                        | branch where status transitions to `APPROVED`                                                                      | `notifyPaymentApproved(payment.id)`       |
+| 5   | MP payment rejected        | same webhook                                                            | branch where status transitions to `REJECTED`                                                                      | `notifyPaymentRejected(payment.id)`       |
+| 6   | Activity capacity full     | participant creation paths (webhook + checkout)                         | after creating participant; only when count went from `< capacity` to `>= capacity`; skipped if `capacity` is null | `notifyActivityCapacityFull(activity.id)` |
+| 7   | Chat message new           | `src/app/api/messages/[userId]/route.ts` (POST)                         | `prisma.message.create`                                                                                            | `notifyChatMessage(message.id)`           |
 
 ### Per-event rules
 

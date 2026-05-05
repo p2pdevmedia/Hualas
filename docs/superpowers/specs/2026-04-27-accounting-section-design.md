@@ -61,25 +61,25 @@ enum MovementType {
 
 ### Frontend routes
 
-| Route | Description | File |
-|-------|-------------|------|
-| `/accounting` | Dashboard: balance summary + recent movements | `src/app/accounting/page.tsx` |
-| `/accounting/movements` | Manual movements list | `src/app/accounting/movements/page.tsx` |
-| `/accounting/movements/new` | Create movement form | `src/app/accounting/movements/new/page.tsx` |
-| `/accounting/movements/[id]/edit` | Edit movement form | `src/app/accounting/movements/[id]/edit/page.tsx` |
-| `/accounting/payments` | Mercado Pago payments (read-only) | `src/app/accounting/payments/page.tsx` |
-| `/accounting/reports` | Reports by period/category + export | `src/app/accounting/reports/page.tsx` |
+| Route                             | Description                                   | File                                              |
+| --------------------------------- | --------------------------------------------- | ------------------------------------------------- |
+| `/accounting`                     | Dashboard: balance summary + recent movements | `src/app/accounting/page.tsx`                     |
+| `/accounting/movements`           | Manual movements list                         | `src/app/accounting/movements/page.tsx`           |
+| `/accounting/movements/new`       | Create movement form                          | `src/app/accounting/movements/new/page.tsx`       |
+| `/accounting/movements/[id]/edit` | Edit movement form                            | `src/app/accounting/movements/[id]/edit/page.tsx` |
+| `/accounting/payments`            | Mercado Pago payments (read-only)             | `src/app/accounting/payments/page.tsx`            |
+| `/accounting/reports`             | Reports by period/category + export           | `src/app/accounting/reports/page.tsx`             |
 
 ### API routes
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET | `/api/accounting/movements` | List movements (with filters) |
-| POST | `/api/accounting/movements` | Create movement |
-| PUT | `/api/accounting/movements/[id]` | Update movement |
-| DELETE | `/api/accounting/movements/[id]` | Delete movement |
-| POST | `/api/accounting/movements/[id]/receipt` | Upload receipt image to Vercel Blob |
-| GET | `/api/accounting/reports` | Aggregated data for reports |
+| Method | Route                                    | Purpose                             |
+| ------ | ---------------------------------------- | ----------------------------------- |
+| GET    | `/api/accounting/movements`              | List movements (with filters)       |
+| POST   | `/api/accounting/movements`              | Create movement                     |
+| PUT    | `/api/accounting/movements/[id]`         | Update movement                     |
+| DELETE | `/api/accounting/movements/[id]`         | Delete movement                     |
+| POST   | `/api/accounting/movements/[id]/receipt` | Upload receipt image to Vercel Blob |
+| GET    | `/api/accounting/reports`                | Aggregated data for reports         |
 
 ---
 
@@ -123,6 +123,7 @@ Add a "Contaduría" link visible when `role === 'COUNTER' || isAdmin`.
 ### `/accounting/movements/new` and `/edit` — Movement form
 
 Fields:
+
 - Date (date picker, required)
 - Type (select: INCOME / EXPENSE, required)
 - Category (select from predefined list, required)
@@ -149,6 +150,7 @@ Fields:
 ## 5. Files to Create or Modify
 
 ### New files
+
 - `src/app/accounting/layout.tsx`
 - `src/app/accounting/page.tsx`
 - `src/app/accounting/movements/page.tsx`
@@ -164,6 +166,7 @@ Fields:
 - `src/lib/accounting.ts` (shared categories constant + helpers)
 
 ### Modified files
+
 - `prisma/schema.prisma` — add `COUNTER` role, `AccountingMovement` model, `MovementType` enum
 - `src/components/navbar.tsx` — add Contaduría link
 - `src/app/admin/users/users-list.tsx` — add `readOnly` prop
