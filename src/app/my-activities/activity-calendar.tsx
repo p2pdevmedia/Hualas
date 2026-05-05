@@ -270,6 +270,7 @@ export default function ActivityCalendar({
                 <div className="mt-2 flex gap-2">
                   <Link
                     href={`/activities/${d.activityId}/days/${d.id}`}
+                    prefetch={true}
                     className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                   >
                     Ver sesión

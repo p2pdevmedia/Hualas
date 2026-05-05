@@ -406,6 +406,7 @@ export default async function MyActivitiesPage({
                   <div>
                     <Link
                       href={`/activities/${activity.id}`}
+                      prefetch={true}
                       className="text-lg font-semibold transition-colors hover:text-primary leading-snug"
                     >
                       {activity.name}
@@ -515,6 +516,7 @@ export default async function MyActivitiesPage({
                               {isProfessor && (
                                 <Link
                                   href={`/activities/${activity.id}/days/${s.id}`}
+                                  prefetch={true}
                                   className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                                 >
                                   Ver sesión
