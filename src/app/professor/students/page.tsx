@@ -2,7 +2,42 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import StudentsSearch, { type StudentEntry } from './students-search';
+import StudentsSearch, {
+  type ProfessorGroupEntry,
+  type StudentEntry,
+} from './students-search';
+
+function calculateAge(birthDate: Date | null) {
+  if (!birthDate) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+function formatFullName(
+  person: {
+    name: string | null;
+    lastName: string | null;
+    email?: string;
+  } | null
+) {
+  if (!person) return 'Sin nombre';
+  return (
+    [person.name, person.lastName].filter(Boolean).join(' ') ||
+    person.email ||
+    'Sin nombre'
+  );
+}
 
 export default async function ProfessorStudentsPage() {
   const session = await getServerSession(authOptions);
@@ -57,6 +92,47 @@ export default async function ProfessorStudentsPage() {
               lastName: true,
               birthDate: true,
               documentNumber: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const activityGroups = await prisma.activityGroup.findMany({
+    where: { activityId: { in: activityIds } },
+    orderBy: [{ activity: { name: 'asc' } }, { name: 'asc' }],
+    include: {
+      activity: { select: { name: true } },
+      days: {
+        orderBy: { date: 'asc' },
+        select: {
+          id: true,
+          date: true,
+          schedule: true,
+          cancelled: true,
+        },
+      },
+      members: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          activityParticipant: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  lastName: true,
+                  email: true,
+                  birthDate: true,
+                },
+              },
+              child: {
+                select: {
+                  name: true,
+                  lastName: true,
+                  birthDate: true,
+                },
+              },
             },
           },
         },
@@ -225,6 +301,45 @@ export default async function ProfessorStudentsPage() {
     return nameA.localeCompare(nameB, 'es');
   });
 
+  const groups: ProfessorGroupEntry[] = activityGroups.map((group) => ({
+    id: group.id,
+    name: group.name,
+    activityName: group.activity.name,
+    description: group.description,
+    capacity: group.capacity,
+    minAge: group.minAge,
+    maxAge: group.maxAge,
+    schedules: group.days.map((day) => ({
+      id: day.id,
+      date: day.date.toISOString(),
+      schedule: day.schedule,
+      cancelled: day.cancelled,
+    })),
+    participants: group.members
+      .map((member) => {
+        const participant = member.activityParticipant;
+
+        if (participant.child) {
+          return {
+            id: member.id,
+            type: 'child' as const,
+            name: formatFullName(participant.child),
+            age: calculateAge(participant.child.birthDate),
+            responsibleName: formatFullName(participant.user),
+          };
+        }
+
+        return {
+          id: member.id,
+          type: 'adult' as const,
+          name: formatFullName(participant.user),
+          age: calculateAge(participant.user.birthDate),
+          responsibleName: null,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+  }));
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">
       <div>
@@ -233,7 +348,7 @@ export default async function ProfessorStudentsPage() {
           Alumnos y padres en grupos de tus actividades.
         </p>
       </div>
-      <StudentsSearch students={students} />
+      <StudentsSearch students={students} groups={groups} />
     </main>
   );
 }
