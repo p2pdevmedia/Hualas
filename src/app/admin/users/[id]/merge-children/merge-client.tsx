@@ -94,11 +94,11 @@ function childFullName(child: ChildData) {
 type Phase = 'select' | 'review';
 
 export default function MergeChildrenClient({
-  children,
+  childList,
   userId,
   userName,
 }: {
-  children: ChildData[];
+  childList: ChildData[];
   userId: string;
   userName: string;
 }) {
@@ -122,8 +122,8 @@ export default function MergeChildrenClient({
   function handleContinue() {
     if (selectedIds.length !== 2) return;
     const [idA, idB] = selectedIds;
-    const childA = children.find((c) => c.id === idA)!;
-    const childB = children.find((c) => c.id === idB)!;
+    const childA = childList.find((c) => c.id === idA)!;
+    const childB = childList.find((c) => c.id === idB)!;
 
     const autoSurvivorId =
       historyCount(childA) >= historyCount(childB) ? idA : idB;
@@ -206,7 +206,7 @@ export default function MergeChildrenClient({
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-3">
           <p className="text-sm font-medium">Seleccioná exactamente 2 hijos:</p>
           <ul className="divide-y divide-border">
-            {children.map((child) => {
+            {childList.map((child) => {
               const isSelected = selectedIds.includes(child.id);
               const total = historyCount(child);
               return (
@@ -256,8 +256,8 @@ export default function MergeChildrenClient({
   }
 
   // ── Review phase ──────────────────────────────────────────────────────────
-  const survivor = children.find((c) => c.id === survivorId)!;
-  const loser = children.find((c) => selectedIds.includes(c.id) && c.id !== survivorId)!;
+  const survivor = childList.find((c) => c.id === survivorId)!;
+  const loser = childList.find((c) => selectedIds.includes(c.id) && c.id !== survivorId)!;
 
   const conflictFields = PROFILE_FIELDS.filter(({ key }) => {
     const sVal = survivor[key];
@@ -283,7 +283,7 @@ export default function MergeChildrenClient({
         <h2 className="text-base font-semibold">¿Cuál hijo queda?</h2>
         <div className="grid grid-cols-2 gap-3">
           {selectedIds.map((id) => {
-            const child = children.find((c) => c.id === id)!;
+            const child = childList.find((c) => c.id === id)!;
             const isSurvivor = id === survivorId;
             const total = historyCount(child);
             return (
