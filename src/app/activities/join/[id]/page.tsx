@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getActivityBaseRecordById } from '@/lib/activities/activity-records';
 import { prisma } from '@/lib/prisma';
 import JoinEnrollmentPanel from './join-enrollment-panel';
 
@@ -27,67 +26,85 @@ function formatDateRange(startDate: Date, endDate: Date) {
 export default async function ActivityJoinPage({
   params,
 }: ActivityJoinPageProps) {
-  const activity = await getActivityBaseRecordById(params.id);
-
-  if (!activity) {
-    notFound();
-  }
-
-  const session = await getServerSession(authOptions);
-  const userId = session?.user ? ((session.user as any).id as string) : null;
-
-  const [participantCount, groups, sessions, userProfile] = await Promise.all([
-    prisma.activityParticipant.count({ where: { activityId: activity.id } }),
-    prisma.activityGroup.findMany({
-      where: { activityId: activity.id },
+  // Fetch all activity data and session in parallel — avoids two sequential DB round-trips.
+  const [activityData, session] = await Promise.all([
+    prisma.activity.findUnique({
+      where: { id: params.id },
       select: {
         id: true,
         name: true,
-        capacity: true,
-        minAge: true,
-        maxAge: true,
-      },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.activityDay.findMany({
-      where: { activityId: activity.id, cancelled: false },
-      select: {
-        id: true,
         date: true,
-        schedule: true,
-        activityGroupId: true,
-        sportIcon: true,
-        professors: { select: { user: { select: { name: true, lastName: true } } } },
-      },
-      orderBy: { date: 'asc' },
-    }),
-    userId
-      ? prisma.user.findUnique({
-          where: { id: userId },
+        endDate: true,
+        activityType: true,
+        frequency: true,
+        image: true,
+        description: true,
+        price: true,
+        createdAt: true,
+        _count: { select: { participants: true } },
+        groups: {
           select: {
+            id: true,
             name: true,
-            lastName: true,
-            dni: true,
-            birthDate: true,
-            address: true,
-            phone: true,
+            capacity: true,
+            minAge: true,
+            maxAge: true,
           },
-        })
-      : Promise.resolve(null),
+          orderBy: { name: 'asc' },
+        },
+        days: {
+          where: { cancelled: false },
+          select: {
+            id: true,
+            date: true,
+            schedule: true,
+            activityGroupId: true,
+            sportIcon: true,
+            professors: {
+              select: { user: { select: { name: true, lastName: true } } },
+            },
+          },
+          orderBy: { date: 'asc' },
+        },
+      },
+    }),
+    getServerSession(authOptions),
   ]);
 
+  if (!activityData) {
+    notFound();
+  }
+
+  const userId = session?.user ? ((session.user as any).id as string) : null;
+  const userProfile = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          name: true,
+          lastName: true,
+          dni: true,
+          birthDate: true,
+          address: true,
+          phone: true,
+        },
+      })
+    : null;
+
   const professorsByGroup: Record<string, string[]> = {};
-  for (const session of sessions) {
-    if (!session.activityGroupId) continue;
-    if (!professorsByGroup[session.activityGroupId]) professorsByGroup[session.activityGroupId] = [];
-    for (const { user } of session.professors) {
+  for (const day of activityData.days) {
+    if (!day.activityGroupId) continue;
+    if (!professorsByGroup[day.activityGroupId])
+      professorsByGroup[day.activityGroupId] = [];
+    for (const { user } of day.professors) {
       const fullName = [user.name, user.lastName].filter(Boolean).join(' ');
-      if (!professorsByGroup[session.activityGroupId].includes(fullName)) {
-        professorsByGroup[session.activityGroupId].push(fullName);
+      if (!professorsByGroup[day.activityGroupId].includes(fullName)) {
+        professorsByGroup[day.activityGroupId].push(fullName);
       }
     }
   }
 
+  const participantCount = activityData._count.participants;
+  const groups = activityData.groups;
   const capacity =
     groups.length === 0 || groups.some((g) => g.capacity == null)
       ? null
@@ -97,15 +114,15 @@ export default async function ActivityJoinPage({
     ? Math.max(capacity - participantCount, 0)
     : null;
   const isFull = hasCapacity && remainingSpots === 0;
-  const activityDateRange = formatDateRange(activity.date, activity.endDate);
+  const activityDateRange = formatDateRange(activityData.date, activityData.endDate);
 
   return (
     <main className="pb-12">
-      {activity.image ? (
+      {activityData.image ? (
         <div className="relative h-56 w-full overflow-hidden">
           <Image
-            src={`/api/activities/${activity.id}/image`}
-            alt={activity.name}
+            src={`/api/activities/${activityData.id}/image`}
+            alt={activityData.name}
             fill
             unoptimized
             className="object-cover"
@@ -129,7 +146,7 @@ export default async function ActivityJoinPage({
               Inicio
             </Link>
             <span>→</span>
-            <span className="text-foreground">{activity.name}</span>
+            <span className="text-foreground">{activityData.name}</span>
           </nav>
 
           <div className="space-y-4">
@@ -141,11 +158,11 @@ export default async function ActivityJoinPage({
 
             <div className="space-y-3">
               <h1 className="font-heading text-3xl font-semibold leading-tight sm:text-4xl">
-                {activity.name}
+                {activityData.name}
               </h1>
-              {activity.description && (
+              {activityData.description && (
                 <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground font-body">
-                  {activity.description}
+                  {activityData.description}
                 </p>
               )}
             </div>
@@ -157,7 +174,7 @@ export default async function ActivityJoinPage({
                 Precio
               </p>
               <p className="font-heading text-lg font-semibold">
-                ${activity.price}
+                ${activityData.price}
               </p>
             </div>
 
@@ -197,18 +214,21 @@ export default async function ActivityJoinPage({
 
         <JoinEnrollmentPanel
           activity={{
-            id: activity.id,
-            name: activity.name,
-            price: Number(activity.price),
-            activityType: activity.activityType,
+            id: activityData.id,
+            name: activityData.name,
+            price: activityData.price,
+            activityType: activityData.activityType,
           }}
-          groups={groups.map((g) => ({ ...g, professors: professorsByGroup[g.id] ?? [] }))}
-          sessions={sessions.map((session) => ({
-            id: session.id,
-            date: session.date.toISOString(),
-            schedule: session.schedule,
-            activityGroupId: session.activityGroupId,
-            sportIcon: session.sportIcon ?? null,
+          groups={groups.map((g) => ({
+            ...g,
+            professors: professorsByGroup[g.id] ?? [],
+          }))}
+          sessions={activityData.days.map((day) => ({
+            id: day.id,
+            date: day.date.toISOString(),
+            schedule: day.schedule,
+            activityGroupId: day.activityGroupId,
+            sportIcon: day.sportIcon ?? null,
           }))}
           isFull={isFull}
           hasCapacity={hasCapacity}
@@ -227,7 +247,7 @@ export default async function ActivityJoinPage({
                 ].filter((f): f is string => f !== null)
               : []
           }
-          activityStartDate={activity.date.toISOString()}
+          activityStartDate={activityData.date.toISOString()}
         />
       </div>
     </main>
