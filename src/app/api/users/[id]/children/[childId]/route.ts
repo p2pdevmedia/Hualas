@@ -55,7 +55,11 @@ export async function PUT(
       documentNumber: data.documentNumber,
       documentFrontPhoto: data.documentFrontPhoto,
       documentBackPhoto: data.documentBackPhoto,
-      birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      birthDate: (() => {
+        if (!data.birthDate) return null;
+        const d = new Date(data.birthDate);
+        return isNaN(d.getTime()) || d.getFullYear() > 2100 || d.getFullYear() < 1900 ? null : d;
+      })(),
       address: data.address,
       gender: data.gender,
       nationality: data.nationality,
