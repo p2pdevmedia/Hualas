@@ -348,12 +348,23 @@ export default async function ViewUserPage({
                 : 'Sin hijos registrados.'}
             </p>
           </div>
-          <Link
-            href={`/admin/users/${user.id}/child-enrollment`}
-            className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
-          >
-            Agregar hijo
-          </Link>
+          <div className="flex items-center gap-2">
+            {(session?.user?.role === 'ADMIN' ||
+              session?.user?.role === 'SUPER_ADMIN') && (
+              <Link
+                href={`/admin/users/${user.id}/add-tutor`}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium hover:bg-muted transition-colors"
+              >
+                Agregar Tutor
+              </Link>
+            )}
+            <Link
+              href={`/admin/users/${user.id}/child-enrollment`}
+              className="inline-flex h-9 items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              Agregar hijo
+            </Link>
+          </div>
         </div>
 
         {familyGroup && familyGroup.members.length > 0 && (

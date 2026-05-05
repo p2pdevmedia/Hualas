@@ -141,6 +141,11 @@ Agents should check this before searching the codebase.
 - `/admin/users/[id]/view` → User detail
   - File: `src/app/admin/users/[id]/view/page.tsx`
 
+- `/admin/users/[id]/add-tutor` → Add tutor to user's family group (ADMIN/SUPER_ADMIN only, selects from active system users)
+  - File: `src/app/admin/users/[id]/add-tutor/page.tsx`
+  - Related form: `src/app/admin/users/[id]/add-tutor/add-tutor-admin-form.tsx`
+  - API: `POST /api/admin/users/[id]/tutors`
+
 - `/admin/forms` → Forms list
   - File: `src/app/admin/forms/page.tsx`
   - Related components:
