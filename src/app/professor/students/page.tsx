@@ -137,6 +137,38 @@ export default async function ProfessorStudentsPage() {
     }
   }
 
+  // Fetch tutors for all children's parents
+  const parentIds = Array.from(new Set(Array.from(childrenMap.values()).map((c) => c.parentId)));
+  const familyGroups = parentIds.length > 0
+    ? await prisma.familyGroup.findMany({
+        where: { responsibleUserId: { in: parentIds } },
+        select: {
+          responsibleUserId: true,
+          members: {
+            include: {
+              member: {
+                select: { name: true, lastName: true, phone: true, email: true },
+              },
+            },
+          },
+        },
+      })
+    : [];
+
+  const tutorsByParent = new Map<string, Array<{ name: string; phone: string | null; email: string; relationship: string }>>();
+  for (const group of familyGroups) {
+    if (!group.responsibleUserId) continue;
+    tutorsByParent.set(
+      group.responsibleUserId,
+      group.members.map((m) => ({
+        name: [m.member.name, m.member.lastName].filter(Boolean).join(' ') || m.member.email,
+        phone: m.member.phone ?? null,
+        email: m.member.email,
+        relationship: m.relationship,
+      }))
+    );
+  }
+
   const students: StudentEntry[] = [
     ...Array.from(childrenMap.values()).map(
       (c): StudentEntry => ({
@@ -151,6 +183,7 @@ export default async function ProfessorStudentsPage() {
         parentPhone: c.parentPhone,
         parentEmail: c.parentEmail,
         parentDni: c.parentDni,
+        tutors: tutorsByParent.get(c.parentId) ?? [],
         activities: Array.from(c.activitiesSet),
       })
     ),

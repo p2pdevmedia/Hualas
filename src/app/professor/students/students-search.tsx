@@ -3,6 +3,13 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 
+type Tutor = {
+  name: string;
+  phone: string | null;
+  email: string;
+  relationship: string;
+};
+
 export type StudentEntry =
   | {
       type: 'child';
@@ -16,6 +23,7 @@ export type StudentEntry =
       parentPhone: string | null;
       parentEmail: string;
       parentDni: string | null;
+      tutors: Tutor[];
       activities: string[];
     }
   | {
@@ -48,6 +56,11 @@ function matches(student: StudentEntry, query: string): boolean {
     if (normalize(student.parentEmail).includes(q)) return true;
     if (student.parentDni && normalize(student.parentDni).includes(q))
       return true;
+    for (const t of student.tutors) {
+      if (normalize(t.name).includes(q)) return true;
+      if (normalize(t.email).includes(q)) return true;
+      if (t.phone && normalize(t.phone).includes(q)) return true;
+    }
   } else {
     if (student.dni && normalize(student.dni).includes(q)) return true;
     if (normalize(student.email).includes(q)) return true;
@@ -144,13 +157,33 @@ export default function StudentsSearch({
                       </div>
 
                       {student.type === 'child' && (
-                        <p className="text-sm text-muted-foreground">
-                          Padre/madre:{' '}
-                          <span className="font-medium text-foreground">
-                            {student.parentName}
-                          </span>
-                          {student.parentPhone && ` · ${student.parentPhone}`}
-                        </p>
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="text-xs uppercase tracking-wide mr-1">Responsable:</span>
+                            <span className="font-medium text-foreground">
+                              {student.parentName}
+                            </span>
+                            {student.parentPhone && (
+                              <span> · {student.parentPhone}</span>
+                            )}
+                          </p>
+                          {student.tutors.map((t, i) => {
+                            const relLabel: Record<string, string> = {
+                              PARENT: 'Madre/Padre',
+                              RESPONSIBLE: 'Responsable',
+                              OTHER: 'Tutor/a',
+                            };
+                            return (
+                              <p key={i} className="text-sm text-muted-foreground">
+                                <span className="text-xs uppercase tracking-wide mr-1">
+                                  {relLabel[t.relationship] ?? t.relationship}:
+                                </span>
+                                <span className="font-medium text-foreground">{t.name}</span>
+                                {t.phone && <span> · {t.phone}</span>}
+                              </p>
+                            );
+                          })}
+                        </div>
                       )}
 
                       {student.type === 'adult' && student.phone && (
