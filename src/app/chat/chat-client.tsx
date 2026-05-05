@@ -447,7 +447,7 @@ export default function ChatClient() {
   }, [hasProfessorCapability, professorContext, session, users]);
 
   const pickerGroups = useMemo<GroupOption[]>(() => {
-    if (!hasProfessorCapability || !professorContext) return [];
+    if (!professorContext) return [];
 
     return professorContext.activities.flatMap((activity) =>
       activity.groups.map((group) => ({
@@ -463,7 +463,7 @@ export default function ChatClient() {
         })),
       }))
     );
-  }, [hasProfessorCapability, professorContext]);
+  }, [professorContext]);
 
   const selectedUser = users.find((u) => u.id === recipient) ?? null;
   const selectedActivity = professorContext?.activities.find(
@@ -475,6 +475,7 @@ export default function ChatClient() {
   const canUseProfessorTools = professorContext != null;
 
   const selectedGroupMessageCount = selectedGroupData?.memberCount ?? 0;
+  const canUseGroupChat = professorContext != null && pickerGroups.length > 0;
 
   const filteredPickerPeople = useMemo(() => {
     const q = newChatQuery.trim().toLowerCase();
@@ -881,16 +882,13 @@ export default function ChatClient() {
                 <button
                   type="button"
                   onClick={() => setNewChatTab('groups')}
-                  disabled={
-                    !hasProfessorCapability || pickerGroups.length === 0
-                  }
+                  disabled={!canUseGroupChat}
                   className={cn(
                     'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                     newChatTab === 'groups'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
-                    (!hasProfessorCapability || pickerGroups.length === 0) &&
-                      'cursor-not-allowed opacity-40'
+                    !canUseGroupChat && 'cursor-not-allowed opacity-40'
                   )}
                 >
                   Grupos

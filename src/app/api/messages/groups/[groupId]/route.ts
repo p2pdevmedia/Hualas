@@ -60,8 +60,11 @@ export async function POST(
   const isAssignedProfessor = group.activity.professors.some(
     (assignment) => assignment.userId === session.user.id
   );
+  const isGroupMember = group.members.some(
+    (member) => member.activityParticipant.userId === session.user.id
+  );
 
-  if (!isAdmin && !isAssignedProfessor) {
+  if (!isAdmin && !isAssignedProfessor && !isGroupMember) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

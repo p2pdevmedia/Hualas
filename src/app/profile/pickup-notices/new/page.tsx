@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import ActivityDaySelector from './activity-day-selector';
-import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 
 export default async function CreatePickupNoticePage() {
   const session = await getServerSession(authOptions);
@@ -22,8 +22,9 @@ export default async function CreatePickupNoticePage() {
     redirect('/profile/pickup-notices');
   }
 
+  const ownerIds = await getAccessibleChildOwnerIds((session.user as any).id);
   const children = await prisma.child.findMany({
-    where: await getAccessibleChildrenWhere((session.user as any).id),
+    where: { userId: { in: ownerIds } },
     select: {
       id: true,
       name: true,
@@ -44,28 +45,32 @@ export default async function CreatePickupNoticePage() {
   }));
 
   // Get future activity days where user's children are enrolled
-  const activityDays = await prisma.activityDay.findMany({
-    where: {
-      date: {
-        gt: new Date(),
-      },
-      activity: {
-        participants: {
-          some: {
-            childId: {
-              in: children.map((c) => c.id),
+  const childIds = children.map((c) => c.id);
+  const activityDays =
+    childIds.length > 0
+      ? await prisma.activityDay.findMany({
+          where: {
+            date: {
+              gt: new Date(),
+            },
+            activity: {
+              participants: {
+                some: {
+                  childId: {
+                    in: childIds,
+                  },
+                },
+              },
             },
           },
-        },
-      },
-    },
-    include: {
-      activity: true,
-    },
-    orderBy: {
-      date: 'asc',
-    },
-  });
+          include: {
+            activity: true,
+          },
+          orderBy: {
+            date: 'asc',
+          },
+        })
+      : [];
 
   if (children.length === 0) {
     return (
