@@ -59,6 +59,7 @@ export default async function Home() {
                 <Link
                   key={activity.id}
                   href={`/activities/join/${activity.id}`}
+                  prefetch={true}
                   className="group block"
                 >
                   <div className="overflow-hidden rounded-lg border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
