@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
@@ -8,5 +9,9 @@ export default async function ChatPage() {
   if (!session) {
     redirect('/login');
   }
-  return <ChatClient />;
+  return (
+    <Suspense>
+      <ChatClient />
+    </Suspense>
+  );
 }

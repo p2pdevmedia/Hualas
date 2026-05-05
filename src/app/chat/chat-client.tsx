@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { ArrowLeft, Send } from 'lucide-react';
@@ -220,6 +221,7 @@ function UnreadIndicator() {
 
 export default function ChatClient() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [history, setHistory] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -243,6 +245,14 @@ export default function ChatClient() {
       .then((res) => res.json())
       .then((data: User[]) => setUsers(data));
   }, [session]);
+
+  const withParam = searchParams.get('with');
+  useEffect(() => {
+    if (!withParam || users.length === 0) return;
+    if (users.some((u) => u.id === withParam)) {
+      setRecipient(withParam);
+    }
+  }, [withParam, users]);
 
   useEffect(() => {
     if (!session) return;

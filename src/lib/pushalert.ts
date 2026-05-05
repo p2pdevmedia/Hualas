@@ -29,6 +29,14 @@ function getApiKey(): string {
   return apiKey;
 }
 
+function toAbsoluteUrl(url: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base =
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  return base + url;
+}
+
 export async function sendPushAlert(
   subscriberIds: string[],
   payload: PushAlertPayload
@@ -38,7 +46,7 @@ export async function sendPushAlert(
   const body = new URLSearchParams();
   body.set('title', payload.title);
   body.set('message', payload.message);
-  if (payload.url) body.set('url', payload.url);
+  if (payload.url) body.set('url', toAbsoluteUrl(payload.url));
   if (payload.icon) body.set('icon', payload.icon);
   if (subscriberIds.length === 1) {
     body.set('subscriber', subscriberIds[0]);

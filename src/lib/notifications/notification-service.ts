@@ -481,7 +481,7 @@ export async function notifyChatMessage(messageId: string): Promise<void> {
       recipients: info.recipients,
       title: `Mensaje de ${senderName}`,
       body: preview,
-      url: `/chat`,
+      url: `/chat?with=${info.senderId}`,
       data: {
         messageId: message.id,
         senderId: info.senderId,
