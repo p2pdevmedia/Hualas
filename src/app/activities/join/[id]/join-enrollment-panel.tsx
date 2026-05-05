@@ -148,7 +148,7 @@ export default function JoinEnrollmentPanel({
   };
 
   return (
-    <div className="space-y-4 lg:grid lg:grid-cols-[1fr_320px] lg:items-start lg:gap-8">
+    <div className="space-y-4 lg:grid lg:grid-cols-[1fr_auto] lg:items-start lg:gap-8">
       {groups.length > 0 && (
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
@@ -163,61 +163,65 @@ export default function JoinEnrollmentPanel({
         </div>
       )}
 
-      <div className="space-y-4 rounded-xl border bg-card p-5 lg:col-start-2 lg:sticky lg:top-6">
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Inscripción</p>
-          <p className="font-heading text-2xl font-semibold">${activity.price}</p>
-          {hasCapacity && (
-            <p className={`text-xs font-body ${isFull ? 'text-destructive' : 'text-muted-foreground'}`}>
-              {isFull ? 'Cupo completo' : `${remainingSpots} lugares disponibles`}
-            </p>
-          )}
-        </div>
-
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start lg:col-start-2 lg:sticky lg:top-6">
         {session && people.length > 1 && (
-          <PersonPicker
-            people={people}
-            value={selectedPersonId}
-            onChange={setSelectedPersonId}
-          />
-        )}
-
-        {session && people.length === 1 && (
-          <div className="flex items-center gap-3">
-            <Avatar src={people[0].photoUrl} name={people[0].label} />
-            <p className="text-sm font-medium">{people[0].label}</p>
+          <div className="rounded-xl border bg-card p-5 sm:w-52">
+            <PersonPicker
+              people={people}
+              value={selectedPersonId}
+              onChange={setSelectedPersonId}
+            />
           </div>
         )}
 
-        {isFull ? (
-          <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
-            No hay cupos disponibles en este momento.
-          </div>
-        ) : needsPersonSelection ? (
-          <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
-            Seleccioná para quién es la actividad.
-          </div>
-        ) : needsGroupSelection ? (
-          <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
-            Seleccioná un grupo en el calendario para continuar.
-          </div>
-        ) : profileIncomplete ? (
-          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">
-            <p className="font-medium">Completá el perfil para inscribirte</p>
-            <p>Faltan: {missingFields.join(', ')}.</p>
-            {effectivePersonId === 'self' ? (
-              <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
-                Ir a mi perfil
-              </Link>
-            ) : (
-              <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
-                Completar datos del menor
-              </Link>
+        <div className="space-y-4 rounded-xl border bg-card p-5 sm:w-64">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground font-body">Inscripción</p>
+            <p className="font-heading text-2xl font-semibold">${activity.price}</p>
+            {hasCapacity && (
+              <p className={`text-xs font-body ${isFull ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {isFull ? 'Cupo completo' : `${remainingSpots} lugares disponibles`}
+              </p>
             )}
           </div>
-        ) : (
-          <RegisterButton onClick={handleRegister} disabled={!canRegister} />
-        )}
+
+          {session && people.length === 1 && (
+            <div className="flex items-center gap-3">
+              <Avatar src={people[0].photoUrl} name={people[0].label} />
+              <p className="text-sm font-medium">{people[0].label}</p>
+            </div>
+          )}
+
+          {isFull ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
+              No hay cupos disponibles en este momento.
+            </div>
+          ) : needsPersonSelection ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
+              Seleccioná para quién es la actividad.
+            </div>
+          ) : needsGroupSelection ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
+              Seleccioná un grupo en el calendario para continuar.
+            </div>
+          ) : profileIncomplete ? (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">
+              <p className="font-medium">Completá el perfil para inscribirte</p>
+              <p>Faltan: {missingFields.join(', ')}.</p>
+              {effectivePersonId === 'self' ? (
+                <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                  Ir a mi perfil
+                </Link>
+              ) : (
+                <Link href="/profile" className="underline underline-offset-4 hover:text-amber-900">
+                  Completar datos del menor
+                </Link>
+              )}
+            </div>
+          ) : (
+            <RegisterButton onClick={handleRegister} disabled={!canRegister} />
+          )}
+        </div>
       </div>
     </div>
   );
