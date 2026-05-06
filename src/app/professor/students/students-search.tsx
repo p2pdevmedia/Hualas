@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Select } from '@/components/ui/select';
 
 type Tutor = {
   name: string;
@@ -387,35 +388,29 @@ export default function StudentsSearch({
             </div>
           ) : (
             <>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {groups.map((group) => {
-                  const isSelected = selectedGroup?.id === group.id;
-                  return (
-                    <button
-                      key={group.id}
-                      type="button"
-                      onClick={() => setSelectedGroupId(group.id)}
-                      className={`rounded-xl border p-4 text-left shadow-sm transition-colors ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
-                          : 'bg-card hover:border-primary/50 hover:bg-primary/5'
-                      }`}
-                    >
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {group.activityName}
-                      </p>
-                      <p className="mt-1 font-semibold text-foreground">
-                        {group.name}
-                      </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {group.participants.length} participante
-                        {group.participants.length === 1 ? '' : 's'} ·{' '}
-                        {getAgeSummary(group.participants)}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+              <label className="block space-y-2 rounded-xl border bg-card p-4 shadow-sm">
+                <span className="text-sm font-medium text-foreground">
+                  Seleccioná un grupo
+                </span>
+                <Select
+                  value={selectedGroup?.id ?? ''}
+                  onValueChange={setSelectedGroupId}
+                  aria-label="Seleccionar grupo para ver su información"
+                >
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.activityName} — {group.name} (
+                      {group.participants.length} participante
+                      {group.participants.length === 1 ? '' : 's'} ·{' '}
+                      {getAgeSummary(group.participants)})
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Elegí una opción para actualizar la información del recuadro
+                  de abajo.
+                </p>
+              </label>
 
               {selectedGroup && (
                 <section className="rounded-2xl border bg-card p-5 shadow-sm space-y-5">
