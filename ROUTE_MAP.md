@@ -317,6 +317,18 @@ Agents should check this before searching the codebase.
 - `POST /api/professors/[id]/payments` → create payment record (COUNTER/ADMIN only)
   - File: `src/app/api/professors/[id]/payments/route.ts`
 
+- `GET /api/professors/[id]/invoices` → list professor invoices
+  - File: `src/app/api/professors/[id]/invoices/route.ts`
+
+- `POST /api/professors/[id]/invoices` → upload professor invoice file (professor self only)
+  - File: `src/app/api/professors/[id]/invoices/route.ts`
+
+- `GET /api/professor-invoices/[invoiceId]/file` → download professor invoice file
+  - File: `src/app/api/professor-invoices/[invoiceId]/file/route.ts`
+
+- `DELETE /api/professor-invoices/[invoiceId]` → delete professor invoice (professor self or accounting)
+  - File: `src/app/api/professor-invoices/[invoiceId]/route.ts`
+
 - `PATCH /api/professor-payments/[paymentId]` → update payment status
   - File: `src/app/api/professor-payments/[paymentId]/route.ts`
 
