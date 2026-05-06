@@ -31,6 +31,15 @@ type Props = {
 };
 
 const weekdayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const longWeekdayLabels = [
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+  'domingo',
+];
 
 const GROUP_COLORS = [
   {
@@ -83,6 +92,32 @@ function calculateAge(birthDate: Date, referenceDate: Date): number {
   return age;
 }
 
+function getDateKey(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  return date.toISOString().slice(0, 10);
+}
+
+function getMondayWeekdayIndex(date: Date) {
+  return (date.getDay() + 6) % 7;
+}
+
+function formatAgeRange(group: Group) {
+  if (group.minAge === null && group.maxAge === null) return 'Todas las edades';
+  if (group.minAge !== null && group.maxAge !== null) {
+    return `${group.minAge} a ${group.maxAge} años`;
+  }
+  if (group.minAge !== null) return `Desde ${group.minAge} años`;
+  return `Hasta ${group.maxAge} años`;
+}
+
+function formatSessionDate(date: Date) {
+  return date.toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 export default function GroupScheduleCalendar({
   activityType,
   groups,
@@ -94,7 +129,14 @@ export default function GroupScheduleCalendar({
   isPersonSelected = false,
   activityStartDate,
 }: Props) {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const parsedActivityDate = activityStartDate
+      ? new Date(activityStartDate)
+      : null;
+    return parsedActivityDate && !Number.isNaN(parsedActivityDate.getTime())
+      ? parsedActivityDate
+      : new Date();
+  });
 
   const groupColorMap = useMemo(() => {
     const map = new Map<string, (typeof GROUP_COLORS)[number]>();
@@ -128,7 +170,7 @@ export default function GroupScheduleCalendar({
     const map = new Map<string, Session[]>();
     for (const session of sessions) {
       if (!session.activityGroupId) continue;
-      const key = new Date(session.date).toISOString().slice(0, 10);
+      const key = getDateKey(session.date);
       const list = map.get(key) ?? [];
       list.push(session);
       map.set(key, list);
@@ -154,10 +196,19 @@ export default function GroupScheduleCalendar({
     return null;
   }, [selectedGroupId, selectedPersonBirthDate, groups, activityStartDate]);
 
-  const title = currentDate.toLocaleDateString('es-AR', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const title =
+    activityType === 'ANNUAL'
+      ? `Semana del ${weeklyDays[0].toLocaleDateString('es-AR', {
+          day: 'numeric',
+          month: 'short',
+        })} al ${weeklyDays[6].toLocaleDateString('es-AR', {
+          day: 'numeric',
+          month: 'short',
+        })}`
+      : currentDate.toLocaleDateString('es-AR', {
+          month: 'long',
+          year: 'numeric',
+        });
 
   const movePeriod = (delta: number) => {
     const next = new Date(currentDate);
@@ -170,6 +221,61 @@ export default function GroupScheduleCalendar({
   };
 
   const daysToRender = activityType === 'ANNUAL' ? weeklyDays : monthlyDays;
+
+  const annualScheduleByGroup = useMemo(
+    () =>
+      groups.map((group) => {
+        const weeklySlots = sessions
+          .filter((session) => session.activityGroupId === group.id)
+          .map((session) => {
+            const date = new Date(session.date);
+            return {
+              key: `${getMondayWeekdayIndex(date)}-${session.schedule}-${session.id}`,
+              weekdayIndex: getMondayWeekdayIndex(date),
+              weekday: longWeekdayLabels[getMondayWeekdayIndex(date)],
+              schedule: session.schedule,
+            };
+          })
+          .sort((a, b) => {
+            if (a.weekdayIndex !== b.weekdayIndex) {
+              return a.weekdayIndex - b.weekdayIndex;
+            }
+            return a.schedule.localeCompare(b.schedule, 'es-AR');
+          })
+          .filter(
+            (slot, index, allSlots) =>
+              allSlots.findIndex(
+                (candidate) =>
+                  candidate.weekdayIndex === slot.weekdayIndex &&
+                  candidate.schedule === slot.schedule
+              ) === index
+          );
+
+        return { group, weeklySlots };
+      }),
+    [groups, sessions]
+  );
+
+  const monthlySessions = useMemo(
+    () =>
+      sessions
+        .filter((session) => {
+          const date = new Date(session.date);
+          return (
+            session.activityGroupId &&
+            date.getFullYear() === currentDate.getFullYear() &&
+            date.getMonth() === currentDate.getMonth()
+          );
+        })
+        .map((session) => ({
+          ...session,
+          dateObject: new Date(session.date),
+          group: groups.find((group) => group.id === session.activityGroupId),
+        }))
+        .filter((session) => session.group)
+        .sort((a, b) => a.dateObject.getTime() - b.dateObject.getTime()),
+    [sessions, groups, currentDate]
+  );
 
   return (
     <section className="rounded-lg border bg-card p-5 space-y-4">
@@ -254,6 +360,124 @@ export default function GroupScheduleCalendar({
         </button>
       </div>
 
+      <div className="space-y-3 sm:hidden">
+        {activityType === 'ANNUAL' ? (
+          annualScheduleByGroup.map(({ group, weeklySlots }) => {
+            const colors = groupColorMap.get(group.id)!;
+            const isSelected = group.id === selectedGroupId;
+            return (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => onGroupChange(group.id)}
+                className={`w-full rounded-xl border p-4 text-left shadow-sm transition-colors ${
+                  isSelected
+                    ? `${colors.slotSelected} shadow-md`
+                    : 'bg-background hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="font-heading text-base font-semibold leading-tight">
+                      {group.name}
+                    </p>
+                    <p className="text-xs opacity-75">
+                      Edad: {formatAgeRange(group)}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2 py-1 text-[11px] font-medium ${
+                      isSelected ? 'border-white/60' : colors.pill
+                    }`}
+                  >
+                    {isSelected ? 'Elegido' : 'Elegir'}
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {weeklySlots.length > 0 ? (
+                    weeklySlots.map((slot) => (
+                      <div
+                        key={slot.key}
+                        className={`rounded-lg border px-3 py-2 text-sm ${
+                          isSelected
+                            ? 'border-white/30 bg-white/10'
+                            : 'border-border bg-muted/25'
+                        }`}
+                      >
+                        <p className="font-medium capitalize">{slot.weekday}</p>
+                        <p className="text-xs opacity-80">{slot.schedule}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-lg border border-dashed px-3 py-2 text-sm opacity-75">
+                      Todavía no hay días y horarios cargados para este grupo.
+                    </p>
+                  )}
+                </div>
+
+                <p className="mt-3 text-xs opacity-80">
+                  Profe:{' '}
+                  {group.professors.length > 0
+                    ? group.professors.join(', ')
+                    : 'a confirmar'}
+                </p>
+              </button>
+            );
+          })
+        ) : monthlySessions.length > 0 ? (
+          monthlySessions.map((session) => {
+            const group = session.group!;
+            const colors = groupColorMap.get(group.id)!;
+            const isSelected = group.id === selectedGroupId;
+            return (
+              <button
+                key={session.id}
+                type="button"
+                onClick={() => onGroupChange(group.id)}
+                className={`w-full rounded-xl border p-4 text-left shadow-sm transition-colors ${
+                  isSelected
+                    ? `${colors.slotSelected} shadow-md`
+                    : 'bg-background hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {session.sportIcon && (
+                    <Image
+                      src={`/icons/${session.sportIcon}`}
+                      alt=""
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="mt-0.5 opacity-80"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-heading text-base font-semibold capitalize leading-tight">
+                      {formatSessionDate(session.dateObject)}
+                    </p>
+                    <p className="text-sm font-medium">{session.schedule}</p>
+                    <p className="text-xs opacity-80">
+                      {group.name} · {formatAgeRange(group)}
+                    </p>
+                    <p className="text-xs opacity-80">
+                      Profe:{' '}
+                      {group.professors.length > 0
+                        ? group.professors.join(', ')
+                        : 'a confirmar'}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        ) : (
+          <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground font-body">
+            No hay sesiones cargadas para este mes.
+          </div>
+        )}
+      </div>
+
       <div className="hidden grid-cols-7 gap-1 text-center sm:grid">
         {weekdayLabels.map((label) => (
           <p
@@ -265,9 +489,9 @@ export default function GroupScheduleCalendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-1 sm:grid-cols-7">
+      <div className="hidden gap-1 sm:grid sm:grid-cols-7">
         {daysToRender.map((day) => {
-          const key = day.toISOString().slice(0, 10);
+          const key = getDateKey(day);
           const daySessions = sessionsByDate.get(key) ?? [];
           const isCurrentMonth = day.getMonth() === currentDate.getMonth();
           return (
