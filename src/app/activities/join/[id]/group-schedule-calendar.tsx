@@ -25,6 +25,8 @@ type Props = {
   selectedGroupId: string;
   onGroupChange: (value: string) => void;
   selectedPersonBirthDate?: string | null;
+  selectedPersonAge?: number | null;
+  isPersonSelected?: boolean;
   activityStartDate?: string | null;
 };
 
@@ -88,6 +90,8 @@ export default function GroupScheduleCalendar({
   selectedGroupId,
   onGroupChange,
   selectedPersonBirthDate,
+  selectedPersonAge,
+  isPersonSelected = false,
   activityStartDate,
 }: Props) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -175,39 +179,55 @@ export default function GroupScheduleCalendar({
         </h2>
         <p className="text-sm text-muted-foreground font-body">
           Hacé clic en un horario del calendario para elegir el grupo al que
-          querés inscribirte.
+          querés inscribirte. Las opciones se filtran por la edad de la persona
+          seleccionada.
         </p>
 
-        <div className="flex flex-wrap gap-2">
-          {groups.map((group) => {
-            const colors = groupColorMap.get(group.id)!;
-            const isSelected = group.id === selectedGroupId;
-            return (
-              <button
-                key={group.id}
-                type="button"
-                onClick={() => onGroupChange(group.id)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${
-                  isSelected ? colors.pillSelected : colors.pill
-                }`}
-              >
-                <span className="block leading-tight">
-                  {group.name}
-                  {(group.minAge !== null || group.maxAge !== null) && (
-                    <span className="ml-1 opacity-70">
-                      ({group.minAge ?? '0'}-{group.maxAge ?? '∞'} años)
+        {isPersonSelected &&
+          selectedPersonAge !== null &&
+          selectedPersonAge !== undefined && (
+            <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground font-body">
+              Mostrando grupos disponibles para {selectedPersonAge} año
+              {selectedPersonAge === 1 ? '' : 's'}.
+            </p>
+          )}
+
+        {groups.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground font-body">
+            No hay grupos disponibles para la persona seleccionada.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {groups.map((group) => {
+              const colors = groupColorMap.get(group.id)!;
+              const isSelected = group.id === selectedGroupId;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => onGroupChange(group.id)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${
+                    isSelected ? colors.pillSelected : colors.pill
+                  }`}
+                >
+                  <span className="block leading-tight">
+                    {group.name}
+                    {(group.minAge !== null || group.maxAge !== null) && (
+                      <span className="ml-1 opacity-70">
+                        ({group.minAge ?? '0'}-{group.maxAge ?? '∞'} años)
+                      </span>
+                    )}
+                  </span>
+                  {group.professors.length > 0 && (
+                    <span className="block leading-tight opacity-75 font-normal mt-0.5">
+                      {group.professors.join(', ')}
                     </span>
                   )}
-                </span>
-                {group.professors.length > 0 && (
-                  <span className="block leading-tight opacity-75 font-normal mt-0.5">
-                    {group.professors.join(', ')}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {ageWarning && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 font-body">

@@ -13,6 +13,7 @@ export type CartCheckoutItem = {
   activityId: string;
   target?: string;
   targetLabel?: string;
+  groupId?: string;
 };
 
 type ActivitySummary = {
@@ -68,6 +69,25 @@ class CartQuoteError extends Error {
   }
 }
 
+function calculateAge(birthDate: Date, referenceDate: Date) {
+  let age = referenceDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && referenceDate.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+function getActivityReferenceDate(activityDate: Date) {
+  const today = new Date();
+  return activityDate > today ? activityDate : today;
+}
+
 function normalizeTarget(target?: string) {
   return !target || target === 'self' ? null : target;
 }
@@ -96,17 +116,61 @@ export async function buildCartQuote({
     where: { id: { in: uniqueIds } },
     include: {
       participants: { select: { id: true } },
-      groups: { select: { capacity: true } },
+      groups: {
+        select: {
+          id: true,
+          name: true,
+          capacity: true,
+          minAge: true,
+          maxAge: true,
+          _count: { select: { members: true } },
+        },
+      },
     },
   });
   const activityById = new Map(
     activities.map((activity) => [activity.id, activity])
   );
 
+  const userProfile = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { birthDate: true },
+  });
+
+  const selectedCountByGroupId = items.reduce((counts, item) => {
+    if (item.groupId) {
+      counts.set(item.groupId, (counts.get(item.groupId) ?? 0) + 1);
+    }
+    return counts;
+  }, new Map<string, number>());
+
   for (const item of items) {
     const activity = activityById.get(item.activityId);
     if (!activity) {
       throw new CartQuoteError(404, 'Una actividad no existe.');
+    }
+
+    const selectedGroup = item.groupId
+      ? activity.groups.find((group) => group.id === item.groupId)
+      : null;
+
+    if (activity.groups.length > 0 && !selectedGroup) {
+      throw new CartQuoteError(
+        400,
+        `Seleccioná un grupo válido para ${activity.name}.`
+      );
+    }
+
+    if (
+      selectedGroup?.capacity != null &&
+      selectedGroup._count.members +
+        (selectedCountByGroupId.get(selectedGroup.id) ?? 0) >
+        selectedGroup.capacity
+    ) {
+      throw new CartQuoteError(
+        409,
+        `El grupo ${selectedGroup.name} no tiene cupo.`
+      );
     }
 
     const activityCapacity =
@@ -144,6 +208,7 @@ export async function buildCartQuote({
           id: true,
           name: true,
           lastName: true,
+          birthDate: true,
         },
       })
     : [];
@@ -154,6 +219,46 @@ export async function buildCartQuote({
       throw new CartQuoteError(
         403,
         'Una de las personas seleccionadas no pertenece a tu familia.'
+      );
+    }
+  }
+
+  for (const item of items) {
+    const activity = activityById.get(item.activityId)!;
+    const selectedGroup = item.groupId
+      ? activity.groups.find((group) => group.id === item.groupId)
+      : null;
+
+    if (!selectedGroup) continue;
+
+    const childId = normalizeTarget(item.target);
+    const birthDate = childId
+      ? (childById.get(childId)?.birthDate ?? null)
+      : (userProfile?.birthDate ?? null);
+
+    if (!birthDate) {
+      throw new CartQuoteError(
+        422,
+        'La persona seleccionada no tiene fecha de nacimiento cargada.'
+      );
+    }
+
+    const age = calculateAge(
+      birthDate,
+      getActivityReferenceDate(activity.date)
+    );
+
+    if (selectedGroup.minAge != null && age < selectedGroup.minAge) {
+      throw new CartQuoteError(
+        400,
+        `${item.targetLabel ?? 'La persona seleccionada'} no alcanza la edad mínima del grupo ${selectedGroup.name}.`
+      );
+    }
+
+    if (selectedGroup.maxAge != null && age > selectedGroup.maxAge) {
+      throw new CartQuoteError(
+        400,
+        `${item.targetLabel ?? 'La persona seleccionada'} supera la edad máxima del grupo ${selectedGroup.name}.`
       );
     }
   }
