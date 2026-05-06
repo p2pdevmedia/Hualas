@@ -355,6 +355,37 @@ export default function ActivityCalendar({
     );
   }
 
+  function getAttendanceButtonState(status: AttendanceStatus) {
+    if (status === 'GOING') {
+      return {
+        nextStatus: 'NOT_GOING' as const,
+        label: 'Voy',
+        helper: 'Tocar para cambiar a No voy',
+        ariaPressed: true,
+        className: 'border-green-600 bg-green-50 text-green-700',
+      };
+    }
+
+    if (status === 'NOT_GOING') {
+      return {
+        nextStatus: 'GOING' as const,
+        label: 'No voy',
+        helper: 'Tocar para cambiar a Voy',
+        ariaPressed: false,
+        className: 'border-destructive bg-destructive/10 text-destructive',
+      };
+    }
+
+    return {
+      nextStatus: 'GOING' as const,
+      label: 'Confirmar que voy',
+      helper: 'Sin confirmar',
+      ariaPressed: false,
+      className:
+        'border-border bg-background text-muted-foreground hover:bg-muted',
+    };
+  }
+
   function handleCompactScroll() {
     if (scrollFrameRef.current !== null) {
       window.cancelAnimationFrame(scrollFrameRef.current);
@@ -518,6 +549,8 @@ export default function ActivityCalendar({
                                         const optionKey = `${day.id}:${option.participantId}`;
                                         const isSaving =
                                           savingAttendanceKey === optionKey;
+                                        const buttonState =
+                                          getAttendanceButtonState(status);
 
                                         return (
                                           <div key={option.participantId}>
@@ -530,25 +563,20 @@ export default function ActivityCalendar({
                                                 updateAttendance(
                                                   day.id,
                                                   option.participantId,
-                                                  status === 'NOT_GOING'
-                                                    ? 'GOING'
-                                                    : 'NOT_GOING'
+                                                  buttonState.nextStatus
                                                 )
                                               }
                                               aria-pressed={
-                                                status === 'NOT_GOING'
+                                                buttonState.ariaPressed
                                               }
-                                              className={`w-full rounded-full border px-3 py-1.5 text-left text-[11px] font-semibold transition-colors ${
-                                                status === 'NOT_GOING'
-                                                  ? 'border-destructive bg-destructive/10 text-destructive'
-                                                  : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                                              } disabled:cursor-not-allowed disabled:opacity-60`}
+                                              className={`w-full rounded-full border px-3 py-1.5 text-left transition-colors ${buttonState.className} disabled:cursor-not-allowed disabled:opacity-60`}
                                             >
-                                              <span className="block truncate">
-                                                {status === 'NOT_GOING'
-                                                  ? 'Voy'
-                                                  : 'No voy'}{' '}
-                                                · {option.label}
+                                              <span className="block truncate text-[11px] font-semibold">
+                                                {buttonState.label} ·{' '}
+                                                {option.label}
+                                              </span>
+                                              <span className="block truncate text-[10px] font-medium opacity-75">
+                                                {buttonState.helper}
                                               </span>
                                             </button>
                                           </div>
