@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const router = useRouter();
   const t = useTranslation().auth;
 
   const inputClass =
@@ -37,10 +39,26 @@ export default function RegisterPage() {
         body: JSON.stringify(parsed.data),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Registro exitoso');
+
+      const loginRes = await signIn('credentials', {
+        email: parsed.data.email.toLowerCase(),
+        password: parsed.data.password,
+        redirect: false,
+      });
+
+      if (loginRes?.error) {
+        setSuccess(
+          'Registro exitoso. Iniciá sesión para completar tu perfil obligatorio.'
+        );
+        router.push('/login');
+        return;
+      }
+
+      setSuccess('Registro exitoso. Te llevamos a completar tu perfil.');
       setEmail('');
       setPassword('');
       setName('');
+      router.push('/profile?onboarding=1');
     } catch (e) {
       setError('Registration failed');
     }
@@ -125,7 +143,9 @@ export default function RegisterPage() {
 
           <Button
             className="w-full flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-muted"
-            onClick={() => signIn('google', { callbackUrl: '/' })}
+            onClick={() =>
+              signIn('google', { callbackUrl: '/profile?onboarding=1' })
+            }
           >
             <Image src="/google.svg" alt="Google logo" width={18} height={18} />
             Registrarse con Google

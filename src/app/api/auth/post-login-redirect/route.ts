@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { isCounterRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
+import { checkUserProfile } from '@/lib/participant-profile-check';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -17,7 +18,18 @@ export async function GET() {
 
   const userId = session.user.id;
 
-  const [participantCount, professorCount] = await Promise.all([
+  const [user, participantCount, professorCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        lastName: true,
+        dni: true,
+        birthDate: true,
+        address: true,
+        phone: true,
+      },
+    }),
     prisma.activityParticipant.count({
       where: {
         OR: [{ userId }, { child: { userId } }],
@@ -25,6 +37,10 @@ export async function GET() {
     }),
     prisma.activityProfessor.count({ where: { userId } }),
   ]);
+
+  if (user && !checkUserProfile(user).valid) {
+    return NextResponse.json({ redirectUrl: '/profile?onboarding=1' });
+  }
 
   const hasActivities = participantCount > 0 || professorCount > 0;
 
