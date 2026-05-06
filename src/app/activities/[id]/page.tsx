@@ -483,6 +483,21 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         </div>
 
+        {isAdmin && activityGroupOptions.length > 0 && (
+          <div className="mt-8 flex flex-wrap gap-2">
+            {activityGroupOptions.map((group) => (
+              <Link
+                key={group.id}
+                href={`/activities/${activity.id}/groups/${group.id}`}
+                prefetch={true}
+                className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                {group.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
         {canSeeSessions && (
           <ActivityDaysPanel
             activityId={activity.id}
@@ -538,21 +553,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 pickupNotices: day.pickupNotices || [],
               }))}
           />
-        )}
-
-        {isAdmin && activityGroupOptions.length > 0 && (
-          <div className="mt-8 flex flex-wrap gap-2">
-            {activityGroupOptions.map((group) => (
-              <Link
-                key={group.id}
-                href={`/activities/${activity.id}/groups/${group.id}`}
-                prefetch={true}
-                className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
-              >
-                {group.name}
-              </Link>
-            ))}
-          </div>
         )}
 
         {(isAdmin || isProfessor) && (
