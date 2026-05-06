@@ -51,9 +51,6 @@ function addDays(date: Date, amount: number): Date {
 function formatDayTitle(date: Date, todayKey: string): string {
   const key = toLocalDateKey(date);
   if (key === todayKey) return 'hoy';
-  if (key === toLocalDateKey(addDays(new Date(todayKey + 'T12:00:00'), -1))) {
-    return 'ayer';
-  }
 
   return date.toLocaleDateString('es-AR', { weekday: 'long' });
 }
@@ -146,16 +143,29 @@ export default function ActivityCalendar({
   const [showMonthCalendar, setShowMonthCalendar] = useState(
     variant === 'month'
   );
+  const [activeCompactKey, setActiveCompactKey] = useState(todayKey);
   const todayCardRef = useRef<HTMLElement | null>(null);
+  const compactScrollerRef = useRef<HTMLDivElement | null>(null);
+  const compactCardRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const scrollFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (variant !== 'professor-agenda') return;
+    if (variant !== 'professor-agenda' || showMonthCalendar) return;
 
     todayCardRef.current?.scrollIntoView({
       block: 'nearest',
       inline: 'center',
     });
-  }, [variant]);
+  }, [showMonthCalendar, variant]);
+
+  useEffect(
+    () => () => {
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+      }
+    },
+    []
+  );
 
   const dayMap = useMemo(() => {
     const map = new Map<string, CalendarActivityDay[]>();
@@ -216,11 +226,56 @@ export default function ActivityCalendar({
     onDaySelect?.(nextKey ? (dayMap.get(nextKey)?.[0]?.id ?? null) : null);
   }
 
+  function setCompactCardRef(key: string, node: HTMLElement | null) {
+    if (node) {
+      compactCardRefs.current.set(key, node);
+      return;
+    }
+
+    compactCardRefs.current.delete(key);
+  }
+
+  function updateActiveCompactDay() {
+    const scroller = compactScrollerRef.current;
+    if (!scroller) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const scrollerCenter = scrollerRect.left + scrollerRect.width / 2;
+    let closestKey = activeCompactKey;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    compactCardRefs.current.forEach((card, key) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + cardRect.width / 2;
+      const distance = Math.abs(cardCenter - scrollerCenter);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestKey = key;
+      }
+    });
+
+    if (closestKey !== activeCompactKey) {
+      setActiveCompactKey(closestKey);
+    }
+  }
+
+  function handleCompactScroll() {
+    if (scrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollFrameRef.current);
+    }
+
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      updateActiveCompactDay();
+      scrollFrameRef.current = null;
+    });
+  }
+
   const selectedActivities = selectedKey ? (dayMap.get(selectedKey) ?? []) : [];
 
   return (
     <div className="space-y-3">
-      {variant === 'professor-agenda' && (
+      {variant === 'professor-agenda' && !showMonthCalendar && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -230,10 +285,14 @@ export default function ActivityCalendar({
               </p>
             </div>
           </div>
-          <div className="-mx-4 overflow-x-auto px-4 pb-2">
+          <div
+            ref={compactScrollerRef}
+            onScroll={handleCompactScroll}
+            className="-mx-4 overflow-x-auto px-4 pb-2"
+          >
             <div className="flex w-max gap-3">
-              {compactDays.map(({ date, key, offset, activities }) => {
-                const isMainDay = offset === 0;
+              {compactDays.map(({ date, key, activities }) => {
+                const isMainDay = key === activeCompactKey;
                 const title = formatDayTitle(date, todayKey);
                 const visibleActivities = activities.slice(
                   0,
@@ -242,9 +301,12 @@ export default function ActivityCalendar({
                 return (
                   <article
                     key={key}
-                    ref={isMainDay ? todayCardRef : undefined}
+                    ref={(node) => {
+                      setCompactCardRef(key, node);
+                      if (key === todayKey) todayCardRef.current = node;
+                    }}
                     className={[
-                      'rounded-2xl border bg-background p-4 shadow-sm transition-opacity',
+                      'rounded-2xl border bg-background p-4 shadow-sm transition-all',
                       isMainDay
                         ? 'w-64 scale-[1.02] border-primary/50 shadow-md'
                         : 'w-52 opacity-60',
@@ -287,19 +349,15 @@ export default function ActivityCalendar({
                             </div>
                           );
 
-                          return isMainDay ? (
+                          return (
                             <Link
                               key={day.id}
                               href={detailHref}
                               prefetch={true}
-                              className="block rounded-xl p-2 transition-colors hover:bg-muted/50"
+                              className="block rounded-xl p-2 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                               {content}
                             </Link>
-                          ) : (
-                            <div key={day.id} className="rounded-xl p-2">
-                              {content}
-                            </div>
                           );
                         })}
                         {activities.length > visibleActivities.length && (
@@ -319,15 +377,28 @@ export default function ActivityCalendar({
       )}
 
       {variant === 'professor-agenda' && (
-        <button
-          type="button"
-          onClick={() => setShowMonthCalendar((value) => !value)}
-          className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
-          aria-expanded={showMonthCalendar}
-        >
-          <CalendarDays className="h-4 w-4" aria-hidden="true" />
-          Calendario
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {showMonthCalendar ? (
+            <button
+              type="button"
+              onClick={() => setShowMonthCalendar(false)}
+              className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+              aria-expanded={!showMonthCalendar}
+            >
+              Día
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowMonthCalendar(true)}
+              className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+              aria-expanded={showMonthCalendar}
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              Calendario
+            </button>
+          )}
+        </div>
       )}
 
       {showMonthCalendar && (
@@ -496,7 +567,7 @@ export default function ActivityCalendar({
                       </p>
                     </div>
                   </div>
-                  {onEdit && (
+                  {(variant === 'professor-agenda' || onEdit) && (
                     <div className="mt-2 flex gap-2">
                       <Link
                         href={`/activities/${d.activityId}/days/${d.id}`}
@@ -505,13 +576,15 @@ export default function ActivityCalendar({
                       >
                         Ver sesión
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => onEdit(d.id)}
-                        className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                      >
-                        Editar sesión
-                      </button>
+                      {onEdit && (
+                        <button
+                          type="button"
+                          onClick={() => onEdit(d.id)}
+                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          Editar sesión
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
