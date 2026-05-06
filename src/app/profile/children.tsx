@@ -277,7 +277,6 @@ export default function ChildrenManager({
               className={inputClass}
               type="file"
               accept="image/*"
-              capture="environment"
               required={
                 form.documentType === 'DNI' &&
                 !editingId &&
@@ -299,7 +298,6 @@ export default function ChildrenManager({
               className={inputClass}
               type="file"
               accept="image/*"
-              capture="environment"
               required={
                 form.documentType === 'DNI' &&
                 !editingId &&

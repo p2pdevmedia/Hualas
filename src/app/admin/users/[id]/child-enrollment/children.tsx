@@ -214,7 +214,6 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
                 className={inputClass}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 required={documentType === 'DNI'}
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
@@ -229,7 +228,6 @@ export default function AdminChildrenManager({ userId }: { userId: string }) {
                 className={inputClass}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 required={documentType === 'DNI'}
                 onChange={async (e) => {
                   const file = e.target.files?.[0];

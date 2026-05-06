@@ -198,7 +198,6 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={inputClass}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -215,7 +214,6 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={inputClass}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
