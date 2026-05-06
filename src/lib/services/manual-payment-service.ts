@@ -3,6 +3,7 @@ import { BillableConceptCode, PaymentStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { registerSocialFeePayment } from '@/lib/social-fee';
+import { familyGroupService } from '@/lib/services/family-group-service';
 import {
   appendManualPaymentReview,
   createManualPaymentRawData,
@@ -376,6 +377,14 @@ export async function createManualPaymentCheckout(input: {
   try {
     const { activityFeeConceptId, socialFeeConceptId, discountConceptId } =
       await getBillableConceptIds();
+    const familyGroup =
+      await familyGroupService.getOrCreateFamilyGroupByResponsible({
+        id: input.user.id,
+        name: input.user.name ?? null,
+        lastName: input.user.lastName ?? null,
+        email: input.user.email?.trim() || 'sin-email@hualas.local',
+        phone: null,
+      });
     const payment = await prisma.$transaction(async (tx) => {
       const now = new Date();
       const period = currentPeriod();
@@ -383,6 +392,7 @@ export async function createManualPaymentCheckout(input: {
         input.quote.totalActivityAmount + input.quote.totalSocialFeeAmount;
       const order = await tx.order.create({
         data: {
+          familyGroupId: familyGroup.id,
           responsibleUserId: input.user.id,
           responsibleName:
             input.user.name?.trim() ||

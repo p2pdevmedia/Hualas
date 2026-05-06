@@ -236,6 +236,7 @@ export default async function DebtByFamilyPage({
           select: {
             id: true,
             familyGroupId: true,
+            responsibleUserId: true,
             responsibleName: true,
             periodMonth: true,
             periodYear: true,
@@ -285,10 +286,16 @@ export default async function DebtByFamilyPage({
 
   const familyRows = families.map((family) => {
     const familyOrders = orders.filter(
-      (order) => order.familyGroupId === family.id
+      (order) =>
+        order.familyGroupId === family.id ||
+        (!order.familyGroupId &&
+          order.responsibleUserId === family.responsibleUserId)
     );
     const familyPayments = payments.filter(
-      (payment) => payment.order.familyGroupId === family.id
+      (payment) =>
+        payment.order.familyGroupId === family.id ||
+        (!payment.order.familyGroupId &&
+          payment.order.responsibleUserId === family.responsibleUserId)
     );
 
     const monthlyRows = familyOrders.flatMap((order) =>
@@ -578,7 +585,9 @@ export default async function DebtByFamilyPage({
                     const payment =
                       charge.order.payments.find(
                         (entry) => entry.status === 'APPROVED'
-                      ) ?? charge.order.payments[0] ?? null;
+                      ) ??
+                      charge.order.payments[0] ??
+                      null;
                     return (
                       <tr key={charge.id} className="align-top">
                         <td className="px-4 py-3">
