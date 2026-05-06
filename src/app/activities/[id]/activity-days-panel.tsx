@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BulkSessionCreator from './bulk-session-creator';
 import ActivityCalendar, {
@@ -76,6 +77,7 @@ export default function ActivityDaysPanel({
 }: ActivityDaysPanelProps) {
   const router = useRouter();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const calendarDays: CalendarActivityDay[] = days.map((day) => ({
     id: day.id,
@@ -135,23 +137,33 @@ export default function ActivityDaysPanel({
           )}
         </div>
 
-        {days.length > 0 && (
-          <div className="mt-6">
-            <ActivityCalendar
-              activityDays={calendarDays}
-              onEdit={
-                canManageDays
-                  ? (dayId) =>
-                      router.push(
-                        `/activities/${activityId}/days/${dayId}/edit`
-                      )
-                  : undefined
-              }
-            />
-          </div>
-        )}
+        {days.length > 0 ? (
+          <div className="mt-6 space-y-4">
+            <button
+              type="button"
+              onClick={() => setShowCalendar((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+              aria-expanded={showCalendar}
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              Calendario
+            </button>
 
-        {days.length === 0 && (
+            {showCalendar && (
+              <ActivityCalendar
+                activityDays={calendarDays}
+                onEdit={
+                  canManageDays
+                    ? (dayId) =>
+                        router.push(
+                          `/activities/${activityId}/days/${dayId}/edit`
+                        )
+                    : undefined
+                }
+              />
+            )}
+          </div>
+        ) : (
           <p className="mt-6 text-sm text-muted-foreground font-body">
             Aún no hay días cargados para esta actividad.
           </p>
