@@ -10,6 +10,7 @@ type CartItem = {
   activityId: string;
   target?: string;
   targetLabel?: string;
+  groupId?: string;
 };
 
 export async function POST(req: Request) {

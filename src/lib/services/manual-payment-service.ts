@@ -427,7 +427,7 @@ export async function createManualPaymentCheckout(input: {
           source?.target && source.target !== 'self' ? source.target : null
         );
 
-        await tx.activityParticipant.upsert({
+        const participant = await tx.activityParticipant.upsert({
           where: { participantKey },
           create: {
             activityId: item.id,
@@ -437,7 +437,19 @@ export async function createManualPaymentCheckout(input: {
             participantKey,
           },
           update: {},
+          select: { id: true },
         });
+
+        if (source?.groupId) {
+          await tx.activityGroupMember.upsert({
+            where: { activityParticipantId: participant.id },
+            create: {
+              activityGroupId: source.groupId,
+              activityParticipantId: participant.id,
+            },
+            update: { activityGroupId: source.groupId },
+          });
+        }
       }
 
       if (input.quote.totalDiscountAmount > 0) {

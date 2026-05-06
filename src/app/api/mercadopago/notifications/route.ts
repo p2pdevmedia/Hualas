@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       : [payment.external_reference];
 
     for (const reference of references) {
-      const [activityId, userId, childId] = reference.split(':');
+      const [activityId, userId, childId, groupId] = reference.split(':');
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -85,7 +85,13 @@ export async function POST(req: NextRequest) {
       const activity = await prisma.activity.findUnique({
         where: { id: activityId },
         select: {
-          groups: { select: { capacity: true } },
+          groups: {
+            select: {
+              id: true,
+              capacity: true,
+              _count: { select: { members: true } },
+            },
+          },
           participants: {
             select: {
               id: true,
@@ -97,6 +103,10 @@ export async function POST(req: NextRequest) {
       if (!activity) {
         continue;
       }
+
+      const selectedGroup = groupId
+        ? activity.groups.find((group) => group.id === groupId)
+        : null;
 
       const participantChildId = childId || null;
       const participantKey = getActivityParticipantKey(
@@ -130,6 +140,17 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      if (
+        selectedGroup?.capacity != null &&
+        !existingParticipant &&
+        selectedGroup._count.members >= selectedGroup.capacity
+      ) {
+        console.warn(
+          `[mercadopago] Group ${selectedGroup.id} reached capacity, skipping participant upsert`
+        );
+        continue;
+      }
+
       const receipt = payment.id?.toString();
       const date = payment.date_approved || payment.date_created || new Date();
       const participantData = {
@@ -151,6 +172,17 @@ export async function POST(req: NextRequest) {
         update: participantData,
         select: { id: true },
       });
+
+      if (selectedGroup) {
+        await prisma.activityGroupMember.upsert({
+          where: { activityParticipantId: participant.id },
+          create: {
+            activityGroupId: selectedGroup.id,
+            activityParticipantId: participant.id,
+          },
+          update: { activityGroupId: selectedGroup.id },
+        });
+      }
 
       if (!existingParticipant) {
         notifyActivityPaymentApproved(participant.id).catch((err) =>

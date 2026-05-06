@@ -34,6 +34,7 @@ type CartItem = {
   activityId: string;
   target?: string;
   targetLabel?: string;
+  groupId?: string;
 };
 
 function isManualPaymentMethod(value: unknown) {
@@ -235,9 +236,11 @@ export async function POST(req: Request) {
   const checkoutSettings = getMercadoPagoCheckoutSettings();
   const appUrl = getAppUrl(req);
   const base = `${appUrl}/activities/cart`;
-  const refs = items.map(
+  const refs = quote.validatedItems.map(
     (item) =>
-      `${item.activityId}:${(session.user as { id: string }).id}:${item.target && item.target !== 'self' ? item.target : ''}`
+      `${item.activityId}:${(session.user as { id: string }).id}:${
+        item.target && item.target !== 'self' ? item.target : ''
+      }:${item.groupId ?? ''}`
   );
 
   const result = await new Preference(client).create({

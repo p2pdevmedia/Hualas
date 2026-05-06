@@ -60,6 +60,38 @@ function calculateAge(birthDate: Date, referenceDate: Date): number {
   return age;
 }
 
+function getReferenceDate(activityStartDate?: string | null) {
+  const today = new Date();
+  const parsedActivityDate = activityStartDate
+    ? new Date(activityStartDate)
+    : null;
+
+  return parsedActivityDate &&
+    !Number.isNaN(parsedActivityDate.getTime()) &&
+    parsedActivityDate > today
+    ? parsedActivityDate
+    : today;
+}
+
+function getPersonAge(
+  birthDate: string | null | undefined,
+  activityStartDate?: string | null
+) {
+  if (!birthDate) return null;
+
+  const parsedBirthDate = new Date(birthDate);
+  if (Number.isNaN(parsedBirthDate.getTime())) return null;
+
+  return calculateAge(parsedBirthDate, getReferenceDate(activityStartDate));
+}
+
+function isGroupEligibleForAge(group: Group, age: number | null) {
+  if (age === null) return true;
+  if (group.minAge !== null && age < group.minAge) return false;
+  if (group.maxAge !== null && age > group.maxAge) return false;
+  return true;
+}
+
 function getGroupAgeError(
   group: Group | undefined,
   birthDate: string | null | undefined,
@@ -68,20 +100,8 @@ function getGroupAgeError(
   if (!group || (group.minAge === null && group.maxAge === null)) return null;
   if (!birthDate) return null;
 
-  const parsedBirthDate = new Date(birthDate);
-  if (Number.isNaN(parsedBirthDate.getTime())) return null;
-
-  const today = new Date();
-  const parsedActivityDate = activityStartDate
-    ? new Date(activityStartDate)
-    : null;
-  const referenceDate =
-    parsedActivityDate &&
-    !Number.isNaN(parsedActivityDate.getTime()) &&
-    parsedActivityDate > today
-      ? parsedActivityDate
-      : today;
-  const age = calculateAge(parsedBirthDate, referenceDate);
+  const age = getPersonAge(birthDate, activityStartDate);
+  if (age === null) return null;
 
   if (group.minAge !== null && age < group.minAge) {
     return `La persona seleccionada tiene ${age} año${age === 1 ? '' : 's'} y este grupo requiere al menos ${group.minAge}.`;
@@ -173,6 +193,28 @@ export default function JoinEnrollmentPanel({
   const effectivePersonId =
     people.length === 1 ? people[0].id : selectedPersonId;
   const selectedPerson = people.find((p) => p.id === effectivePersonId) ?? null;
+  const selectedPersonAge = useMemo(
+    () => getPersonAge(selectedPerson?.birthDate ?? null, activityStartDate),
+    [selectedPerson?.birthDate, activityStartDate]
+  );
+  const eligibleGroups = useMemo(
+    () =>
+      groups.filter((group) => isGroupEligibleForAge(group, selectedPersonAge)),
+    [groups, selectedPersonAge]
+  );
+  const eligibleGroupIds = useMemo(
+    () => new Set(eligibleGroups.map((group) => group.id)),
+    [eligibleGroups]
+  );
+  const eligibleSessions = useMemo(
+    () =>
+      sessions.filter(
+        (activitySession) =>
+          activitySession.activityGroupId &&
+          eligibleGroupIds.has(activitySession.activityGroupId)
+      ),
+    [sessions, eligibleGroupIds]
+  );
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
   const missingFields = useMemo(() => {
@@ -182,6 +224,12 @@ export default function JoinEnrollmentPanel({
     if (!child) return [];
     return getMissingChildFields(child, userPhone ?? null);
   }, [effectivePersonId, selfMissingFields, children, userPhone]);
+
+  useEffect(() => {
+    if (selectedGroupId && !eligibleGroupIds.has(selectedGroupId)) {
+      setSelectedGroupId('');
+    }
+  }, [selectedGroupId, eligibleGroupIds]);
 
   const groupAgeError = useMemo(
     () =>
@@ -197,11 +245,13 @@ export default function JoinEnrollmentPanel({
   const needsPersonSelection = Boolean(
     session && people.length > 1 && !selectedPersonId
   );
-  const needsGroupSelection = groups.length > 0 && !selectedGroupId;
+  const needsGroupSelection = eligibleGroups.length > 0 && !selectedGroupId;
+  const hasNoEligibleGroups = groups.length > 0 && eligibleGroups.length === 0;
   const canRegister =
     !isFull &&
     !needsPersonSelection &&
     !needsGroupSelection &&
+    !hasNoEligibleGroups &&
     !profileIncomplete &&
     !groupAgeError;
 
@@ -225,11 +275,7 @@ export default function JoinEnrollmentPanel({
     const existing = raw ? (JSON.parse(raw) as ActivityCartItem[]) : [];
     const deduped = existing.filter(
       (entry) =>
-        !(
-          entry.activityId === item.activityId &&
-          entry.target === item.target &&
-          (entry.groupId ?? '') === (item.groupId ?? '')
-        )
+        !(entry.activityId === item.activityId && entry.target === item.target)
     );
     window.localStorage.setItem(
       ACTIVITY_CART_STORAGE_KEY,
@@ -244,11 +290,13 @@ export default function JoinEnrollmentPanel({
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
             activityType={activity.activityType}
-            groups={groups}
-            sessions={sessions}
+            groups={eligibleGroups}
+            sessions={eligibleSessions}
             selectedGroupId={selectedGroupId}
             onGroupChange={setSelectedGroupId}
             selectedPersonBirthDate={selectedPerson?.birthDate}
+            selectedPersonAge={selectedPersonAge}
+            isPersonSelected={Boolean(effectivePersonId)}
             activityStartDate={activityStartDate}
           />
         </div>
@@ -301,6 +349,16 @@ export default function JoinEnrollmentPanel({
         ) : needsGroupSelection ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
             Seleccioná un grupo en el calendario para continuar.
+          </div>
+        ) : hasNoEligibleGroups ? (
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">
+            <p className="font-medium">
+              No hay grupos disponibles para esta edad
+            </p>
+            <p>
+              Seleccioná otra persona del grupo familiar o consultá con
+              administración.
+            </p>
           </div>
         ) : profileIncomplete ? (
           <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">

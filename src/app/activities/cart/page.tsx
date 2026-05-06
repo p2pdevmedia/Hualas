@@ -189,6 +189,7 @@ export default function ActivitiesCartPage() {
     activityId: item.activityId,
     target: item.target === 'self' ? 'self' : item.target,
     targetLabel: item.targetLabel,
+    groupId: item.groupId,
   }));
 
   return (
