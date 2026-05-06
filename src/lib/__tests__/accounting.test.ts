@@ -1,6 +1,7 @@
 import {
   getAccountingManualPaymentAmount,
   getAccountingPaymentDate,
+  getFamilyGroupMemberCount,
 } from '../accounting';
 
 describe('accounting helpers', () => {
@@ -38,5 +39,23 @@ describe('accounting helpers', () => {
         createdAt: '2026-05-01T12:00:00.000Z',
       })?.toISOString()
     ).toBe('2026-05-01T12:00:00.000Z');
+  });
+
+  it('counts the responsible user plus additional family members', () => {
+    expect(
+      getFamilyGroupMemberCount({
+        responsibleUserId: 'user-1',
+        members: [{}, {}],
+      })
+    ).toBe(3);
+  });
+
+  it('counts only additional members when there is no responsible user linked', () => {
+    expect(
+      getFamilyGroupMemberCount({
+        responsibleUserId: null,
+        members: [{}],
+      })
+    ).toBe(1);
   });
 });

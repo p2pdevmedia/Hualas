@@ -7,6 +7,7 @@ import {
   formatAccountingDate,
   formatAmount,
   formatPersonName,
+  getFamilyGroupMemberCount,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import PersonLink from '@/components/accounting/person-link';
@@ -486,6 +487,7 @@ export default async function DebtByFamilyPage({
                       );
                     }
 
+                    const familyMemberCount = getFamilyGroupMemberCount(family);
                     const lastPayment =
                       familyPayments[0] ?? familySocialFeePayments[0] ?? null;
 
@@ -511,8 +513,8 @@ export default async function DebtByFamilyPage({
                         <td className="px-4 py-3">
                           <div className="font-medium">{family.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {family.members.length} integrante
-                            {family.members.length === 1 ? '' : 's'}
+                            {familyMemberCount} integrante
+                            {familyMemberCount === 1 ? '' : 's'}
                           </div>
                         </td>
                         <td className="px-4 py-3 font-medium">

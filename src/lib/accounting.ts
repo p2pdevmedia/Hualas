@@ -81,6 +81,14 @@ export function formatPersonName(
   return `${person.name ?? ''} ${person.lastName ?? ''}`.trim() || 'Sin nombre';
 }
 
+export function getFamilyGroupMemberCount(familyGroup: {
+  responsibleUserId?: string | null;
+  members?: Array<unknown> | null;
+}): number {
+  const additionalMembers = familyGroup.members?.length ?? 0;
+  return additionalMembers + (familyGroup.responsibleUserId ? 1 : 0);
+}
+
 export function movementTypeLabel(type: MovementType): string {
   return type === 'INCOME' ? 'Ingreso' : 'Egreso';
 }
