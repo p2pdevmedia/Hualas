@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Select } from '@/components/ui/select';
 
@@ -158,6 +158,7 @@ export default function StudentsSearch({
   const [activeTab, setActiveTab] = useState<'students' | 'groups'>('students');
   const [selectedGroupId, setSelectedGroupId] = useState(groups[0]?.id ?? '');
   const [query, setQuery] = useState('');
+  const [participantsExpanded, setParticipantsExpanded] = useState(false);
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -167,6 +168,10 @@ export default function StudentsSearch({
 
   const selectedGroup =
     groups.find((group) => group.id === selectedGroupId) ?? groups[0] ?? null;
+
+  useEffect(() => {
+    setParticipantsExpanded(false);
+  }, [selectedGroupId]);
 
   return (
     <div className="space-y-4">
@@ -485,42 +490,81 @@ export default function StudentsSearch({
                     </div>
 
                     <div className="rounded-xl border bg-background p-4">
-                      <h3 className="font-medium">Participantes</h3>
-                      {selectedGroup.participants.length === 0 ? (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Este grupo todavía no tiene participantes asignados.
-                        </p>
-                      ) : (
-                        <ul className="mt-3 divide-y rounded-lg border bg-card">
-                          {selectedGroup.participants.map((participant) => (
-                            <li
-                              key={participant.id}
-                              className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                            >
-                              <div>
-                                <p className="font-medium">
-                                  {participant.name}
-                                </p>
-                                {participant.responsibleName && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Responsable: {participant.responsibleName}
+                      <h3 className="hidden font-medium md:block">
+                        Participantes
+                      </h3>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-3 text-left md:hidden"
+                        onClick={() =>
+                          setParticipantsExpanded((expanded) => !expanded)
+                        }
+                        aria-expanded={participantsExpanded}
+                        aria-controls="group-participants-list"
+                      >
+                        <span className="font-medium">Participantes</span>
+                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {selectedGroup.participants.length} participante
+                          {selectedGroup.participants.length === 1 ? '' : 's'}
+                          <svg
+                            className={`h-4 w-4 transition-transform ${
+                              participantsExpanded ? 'rotate-180' : ''
+                            }`}
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                      <div
+                        id="group-participants-list"
+                        className={`${participantsExpanded ? 'block' : 'hidden'} md:block`}
+                      >
+                        {selectedGroup.participants.length === 0 ? (
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Este grupo todavía no tiene participantes asignados.
+                          </p>
+                        ) : (
+                          <ul className="mt-3 divide-y rounded-lg border bg-card">
+                            {selectedGroup.participants.map((participant) => (
+                              <li
+                                key={participant.id}
+                                className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                              >
+                                <div>
+                                  <p className="font-medium">
+                                    {participant.name}
                                   </p>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                <span className="rounded-full bg-muted px-2 py-0.5">
-                                  {participant.type === 'child'
-                                    ? 'Alumno'
-                                    : 'Adulto'}
-                                </span>
-                                <span className="rounded-full bg-muted px-2 py-0.5">
-                                  {getParticipantAgeLabel(participant.age)}
-                                </span>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                                  {participant.responsibleName && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Responsable: {participant.responsibleName}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                  <span className="rounded-full bg-muted px-2 py-0.5">
+                                    {participant.type === 'child'
+                                      ? 'Alumno'
+                                      : 'Adulto'}
+                                  </span>
+                                  <span className="rounded-full bg-muted px-2 py-0.5">
+                                    {getParticipantAgeLabel(participant.age)}
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>
