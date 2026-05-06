@@ -59,6 +59,7 @@ interface ActivityDaysPanelProps {
   canManageDays: boolean;
   hideSessionDetails?: boolean;
   hideSessionList?: boolean;
+  canOpenSessionDetails?: boolean;
   professors: ProfessorOption[];
   groups: GroupOption[];
   defaultProfessorIds: string[];
@@ -70,6 +71,7 @@ export default function ActivityDaysPanel({
   activityId,
   canManageDays,
   hideSessionDetails = false,
+  canOpenSessionDetails = false,
   professors,
   groups,
   defaultProfessorIds,
@@ -152,6 +154,8 @@ export default function ActivityDaysPanel({
             {showCalendar && (
               <ActivityCalendar
                 activityDays={calendarDays}
+                enableSessionDetailLinks={canOpenSessionDetails}
+                sessionDetailLabel="Ver sesión"
                 onEdit={
                   canManageDays
                     ? (dayId) =>

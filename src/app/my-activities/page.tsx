@@ -292,6 +292,7 @@ export default async function MyActivitiesPage() {
       <ActivityCalendar
         activityDays={calendarDays}
         variant={isProfessorView ? 'professor-agenda' : 'member-agenda'}
+        sessionDetailLabel={isProfessorView ? 'Ver sesión' : 'Ver detalle'}
       />
     </main>
   );
