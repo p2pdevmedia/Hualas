@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
+import { Menu, Newspaper, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -173,6 +173,22 @@ export default function Navbar() {
     />
   );
 
+  const renderNewsLink = (onClick?: () => void) => (
+    <Link
+      href="/news"
+      className={cn(navLinkClass('/news'), 'inline-flex items-center gap-2')}
+      onClick={onClick}
+    >
+      <span
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-current/25 bg-current/10"
+        aria-hidden="true"
+      >
+        <Newspaper className="h-5 w-5" strokeWidth={2.2} />
+      </span>
+      <span>Noticias</span>
+    </Link>
+  );
+
   return (
     <nav
       className={cn(
@@ -235,11 +251,7 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {isMemberRole && (
-            <Link href="/news" className={navLinkClass('/news')}>
-              Noticias
-            </Link>
-          )}
+          {isMemberRole && renderNewsLink()}
           {isProfessor && (
             <>
               <Link
@@ -249,16 +261,12 @@ export default function Navbar() {
               >
                 Mis grupos
               </Link>
-              <Link href="/news" className={navLinkClass('/news')}>
-                Noticias
-              </Link>
+              {renderNewsLink()}
             </>
           )}
           {isAdmin && (
             <>
-              <Link href="/news" className={navLinkClass('/news')}>
-                Noticias
-              </Link>
+              {renderNewsLink()}
               <Link
                 href="/admin/users"
                 className={navLinkClass('/admin/users')}
@@ -496,15 +504,7 @@ export default function Navbar() {
                   {isMember ? t.myActivities : t.activities}
                 </Link>
               )}
-              {isMemberRole && (
-                <Link
-                  href="/news"
-                  className={navLinkClass('/news')}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Noticias
-                </Link>
-              )}
+              {isMemberRole && renderNewsLink(() => setMenuOpen(false))}
               {isMemberRole && (
                 <Link
                   href="/activities/cart"
@@ -564,13 +564,7 @@ export default function Navbar() {
               </Link>
               {isAdmin && (
                 <>
-                  <Link
-                    href="/news"
-                    className={navLinkClass('/news')}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Noticias
-                  </Link>
+                  {renderNewsLink(() => setMenuOpen(false))}
                   <Link
                     href="/admin/users"
                     className={navLinkClass('/admin/users')}
@@ -627,13 +621,7 @@ export default function Navbar() {
                   >
                     Mis grupos
                   </Link>
-                  <Link
-                    href="/news"
-                    className={navLinkClass('/news')}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Noticias
-                  </Link>
+                  {renderNewsLink(() => setMenuOpen(false))}
                 </>
               )}
               {isProfessor && (
