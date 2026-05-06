@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 import { Select } from '@/components/ui/select';
 
 type Tutor = {
@@ -19,6 +20,13 @@ export type ProfessorGroupEntry = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
+  professors: {
+    userId: string;
+    name: string;
+    email: string;
+    phone: string | null;
+    sessionCount: number;
+  }[];
   schedules: {
     id: string;
     date: string;
@@ -451,6 +459,59 @@ export default function StudentsSearch({
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  <div className="rounded-xl border bg-background p-4">
+                    <h3 className="font-medium">Profesores asignados</h3>
+                    {selectedGroup.professors.length === 0 ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Este grupo todavía no tiene profesores asignados en sus
+                        sesiones.
+                      </p>
+                    ) : (
+                      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {selectedGroup.professors.map((professor) => (
+                          <li
+                            key={professor.userId}
+                            className="rounded-lg border bg-card p-3 text-sm"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 space-y-1">
+                                <Link
+                                  href={`/professors/${professor.userId}`}
+                                  prefetch={true}
+                                  className="font-medium hover:text-primary hover:underline underline-offset-4"
+                                >
+                                  {professor.name}
+                                </Link>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {professor.email}
+                                </p>
+                                {professor.phone && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {professor.phone}
+                                  </p>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {professor.sessionCount} sesión
+                                  {professor.sessionCount === 1 ? '' : 'es'}
+                                  asignada
+                                  {professor.sessionCount === 1 ? '' : 's'}
+                                </p>
+                              </div>
+                              <Link
+                                href={`/chat?with=${professor.userId}`}
+                                prefetch={true}
+                                aria-label={`Iniciar chat con ${professor.name}`}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-primary transition-colors hover:bg-primary/10"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Link>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

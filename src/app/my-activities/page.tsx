@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { MessageCircle } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import RoleSwitchPrompt from '@/components/role-switch-prompt';
 import { hasProfessorCapability } from '@/lib/roles';
@@ -23,11 +22,6 @@ type UpcomingSession = {
   activityGroupId: string | null;
   groupName: string | null;
   cancelled: boolean;
-  professors: Array<{
-    userId: string;
-    name: string | null;
-    lastName: string | null;
-  }>;
 };
 
 type ActivityParticipantSummary = {
@@ -218,12 +212,6 @@ export default async function MyActivitiesPage({
           activityId: true,
           cancelled: true,
           activityGroup: { select: { name: true } },
-          professors: {
-            select: {
-              userId: true,
-              user: { select: { name: true, lastName: true } },
-            },
-          },
         },
         orderBy: { date: 'asc' },
       });
@@ -250,11 +238,6 @@ export default async function MyActivitiesPage({
             activityGroupId: s.activityGroupId,
             groupName: s.activityGroup?.name ?? null,
             cancelled: s.cancelled,
-            professors: s.professors.map((professor) => ({
-              userId: professor.userId,
-              name: professor.user.name,
-              lastName: professor.user.lastName,
-            })),
           });
           sessionsByActivity.set(s.activityId, list);
         }
@@ -533,47 +516,6 @@ export default async function MyActivitiesPage({
                                 </summary>
 
                                 <div className="mt-3 space-y-3 border-t pt-3">
-                                  <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Profesores del grupo
-                                    </p>
-                                    {s.professors.length > 0 ? (
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {s.professors.map((professor) => {
-                                          const professorName =
-                                            `${professor.name ?? ''}${professor.lastName ? ` ${professor.lastName}` : ''}`.trim() ||
-                                            'Sin nombre';
-                                          return (
-                                            <span
-                                              key={professor.userId}
-                                              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary"
-                                            >
-                                              <Link
-                                                href={`/professors/${professor.userId}`}
-                                                prefetch={true}
-                                                className="hover:underline underline-offset-4"
-                                              >
-                                                {professorName}
-                                              </Link>
-                                              <Link
-                                                href={`/chat?with=${professor.userId}`}
-                                                prefetch={true}
-                                                aria-label={`Iniciar chat con ${professorName}`}
-                                                className="inline-flex h-5 w-5 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
-                                              >
-                                                <MessageCircle className="h-3.5 w-3.5" />
-                                              </Link>
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    ) : (
-                                      <p className="mt-2 text-xs text-muted-foreground">
-                                        No hay profesores asignados.
-                                      </p>
-                                    )}
-                                  </div>
-
                                   <div className="grid gap-3 md:grid-cols-[1fr_180px] md:items-start">
                                     <div className="space-y-2">
                                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

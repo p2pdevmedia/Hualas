@@ -126,6 +126,19 @@ export default async function ProfessorStudentsPage() {
           date: true,
           schedule: true,
           cancelled: true,
+          professors: {
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  name: true,
+                  lastName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       },
       members: {
@@ -316,49 +329,83 @@ export default async function ProfessorStudentsPage() {
     return nameA.localeCompare(nameB, 'es');
   });
 
-  const groups: ProfessorGroupEntry[] = activityGroups.map((group) => ({
-    id: group.id,
-    name: group.name,
-    activityName: group.activity.name,
-    description: group.description,
-    capacity: group.capacity,
-    minAge: group.minAge,
-    maxAge: group.maxAge,
-    schedules: summarizeActivitySchedules(
-      group.activity.activityType,
-      group.days
-    ).map((day) => ({
-      id: day.id,
-      date: day.date.toISOString(),
-      weekday: day.weekday,
-      schedule: day.schedule,
-      cancelled: day.cancelled,
-      repeatsWeekly: day.repeatsWeekly,
-    })),
-    participants: group.members
-      .map((member) => {
-        const participant = member.activityParticipant;
+  const groups: ProfessorGroupEntry[] = activityGroups.map((group) => {
+    const professorsById = new Map<
+      string,
+      {
+        userId: string;
+        name: string;
+        email: string;
+        phone: string | null;
+        sessionCount: number;
+      }
+    >();
 
-        if (participant.child) {
-          return {
-            id: member.id,
-            type: 'child' as const,
-            name: formatFullName(participant.child),
-            age: calculateAge(participant.child.birthDate),
-            responsibleName: formatFullName(participant.user),
-          };
+    for (const day of group.days) {
+      for (const professor of day.professors) {
+        const existing = professorsById.get(professor.userId);
+        if (existing) {
+          existing.sessionCount += 1;
+          continue;
         }
 
-        return {
-          id: member.id,
-          type: 'adult' as const,
-          name: formatFullName(participant.user),
-          age: calculateAge(participant.user.birthDate),
-          responsibleName: null,
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'es')),
-  }));
+        professorsById.set(professor.userId, {
+          userId: professor.userId,
+          name: formatFullName(professor.user),
+          email: professor.user.email,
+          phone: professor.user.phone,
+          sessionCount: 1,
+        });
+      }
+    }
+
+    return {
+      id: group.id,
+      name: group.name,
+      activityName: group.activity.name,
+      description: group.description,
+      capacity: group.capacity,
+      minAge: group.minAge,
+      maxAge: group.maxAge,
+      professors: Array.from(professorsById.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, 'es')
+      ),
+      schedules: summarizeActivitySchedules(
+        group.activity.activityType,
+        group.days
+      ).map((day) => ({
+        id: day.id,
+        date: day.date.toISOString(),
+        weekday: day.weekday,
+        schedule: day.schedule,
+        cancelled: day.cancelled,
+        repeatsWeekly: day.repeatsWeekly,
+      })),
+      participants: group.members
+        .map((member) => {
+          const participant = member.activityParticipant;
+
+          if (participant.child) {
+            return {
+              id: member.id,
+              type: 'child' as const,
+              name: formatFullName(participant.child),
+              age: calculateAge(participant.child.birthDate),
+              responsibleName: formatFullName(participant.user),
+            };
+          }
+
+          return {
+            id: member.id,
+            type: 'adult' as const,
+            name: formatFullName(participant.user),
+            age: calculateAge(participant.user.birthDate),
+            responsibleName: null,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    };
+  });
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">
