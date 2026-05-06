@@ -152,38 +152,41 @@ export default function ProfileForm({
     <Form onSubmit={submit} className="space-y-3" autoComplete="on">
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1 text-sm">
-          <span className="text-muted-foreground">Nombre</span>
+          <span className="text-muted-foreground">Nombre *</span>
           <input
             className={inputClass}
             name="given-name"
             autoComplete="given-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            required
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-muted-foreground">Apellido</span>
+          <span className="text-muted-foreground">Apellido *</span>
           <input
             className={inputClass}
             name="family-name"
             autoComplete="family-name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            required
           />
         </label>
       </div>
       <label className="space-y-1 text-sm">
-        <span className="text-muted-foreground">DNI</span>
+        <span className="text-muted-foreground">DNI *</span>
         <input
           className={inputClass}
           name="national-id"
           autoComplete="off"
           value={dni}
           onChange={(e) => setDni(e.target.value)}
+          required
         />
       </label>
       <label className="space-y-1 text-sm">
-        <span className="text-muted-foreground">Fecha de nacimiento</span>
+        <span className="text-muted-foreground">Fecha de nacimiento *</span>
         <input
           className={inputClass}
           name="birth-date"
@@ -191,6 +194,7 @@ export default function ProfileForm({
           type="date"
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
+          required
         />
       </label>
       <label className="space-y-1 text-sm">
@@ -209,17 +213,18 @@ export default function ProfileForm({
         </select>
       </label>
       <label className="space-y-1 text-sm">
-        <span className="text-muted-foreground">Domicilio</span>
+        <span className="text-muted-foreground">Domicilio *</span>
         <input
           className={inputClass}
           name="street-address"
           autoComplete="street-address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
+          required
         />
       </label>
       <label className="space-y-1 text-sm">
-        <span className="text-muted-foreground">Teléfono</span>
+        <span className="text-muted-foreground">Teléfono *</span>
         <input
           className={inputClass}
           name="tel"
@@ -227,6 +232,7 @@ export default function ProfileForm({
           autoComplete="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          required
         />
       </label>
       <label className="space-y-1 text-sm">
