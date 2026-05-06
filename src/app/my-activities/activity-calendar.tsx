@@ -44,10 +44,7 @@ const MONTHS = [
   'Noviembre',
   'Diciembre',
 ];
-const COMPACT_DAY_OFFSETS = Array.from(
-  { length: 61 },
-  (_, index) => index - 14
-);
+const COMPACT_DAY_OFFSETS = Array.from({ length: 15 }, (_, index) => index - 7);
 
 type CalendarVariant = 'month' | 'professor-agenda' | 'member-agenda';
 
@@ -63,9 +60,10 @@ function addDays(date: Date, amount: number): Date {
 
 function formatDayTitle(date: Date, todayKey: string): string {
   const key = toLocalDateKey(date);
-  if (key === todayKey) return 'hoy';
+  const weekday = date.toLocaleDateString('es-AR', { weekday: 'long' });
+  if (key === todayKey) return `Hoy · ${weekday}`;
 
-  return date.toLocaleDateString('es-AR', { weekday: 'long' });
+  return weekday;
 }
 
 function getGoogleMapsHref(day: CalendarActivityDay): string {
@@ -412,7 +410,7 @@ export default function ActivityCalendar({
                   : 'Agenda de actividades'}
               </p>
               <p className="text-xs text-muted-foreground">
-                Deslizá para ver días anteriores o próximos.
+                Deslizá para ver hasta una semana atrás o adelante.
               </p>
             </div>
           </div>
@@ -425,6 +423,7 @@ export default function ActivityCalendar({
               {compactDays.map(({ date, key, activities }) => {
                 const isMainDay = key === activeCompactKey;
                 const title = formatDayTitle(date, todayKey);
+                const hasActivities = activities.length > 0;
                 const visibleActivities = activities.slice(
                   0,
                   isMainDay ? 3 : 2
@@ -437,15 +436,23 @@ export default function ActivityCalendar({
                       if (key === todayKey) todayCardRef.current = node;
                     }}
                     className={[
-                      'rounded-2xl border bg-background p-4 shadow-sm transition-all',
-                      isMainDay
+                      'rounded-2xl border bg-background shadow-sm transition-all',
+                      hasActivities ? 'p-4' : 'p-3',
+                      hasActivities && isMainDay
                         ? 'w-64 scale-[1.02] border-primary/50 shadow-md'
-                        : 'w-52 opacity-60',
+                        : '',
+                      hasActivities && !isMainDay ? 'w-52 opacity-60' : '',
+                      !hasActivities && isMainDay
+                        ? 'w-44 scale-[1.02] border-primary/30 opacity-80 shadow-md'
+                        : '',
+                      !hasActivities && !isMainDay ? 'w-32 opacity-50' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    <div className="mb-3 flex items-start justify-between gap-3">
+                    <div
+                      className={`${hasActivities ? 'mb-3' : 'mb-2'} flex items-start justify-between gap-3`}
+                    >
                       <div>
                         <p
                           className={`${isMainDay ? 'text-base' : 'text-sm'} font-bold text-foreground`}
@@ -462,8 +469,8 @@ export default function ActivityCalendar({
                     </div>
 
                     {visibleActivities.length === 0 ? (
-                      <p className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
-                        Sin actividades programadas.
+                      <p className="rounded-lg border border-dashed px-2 py-1.5 text-xs leading-tight text-muted-foreground">
+                        Sin actividad.
                       </p>
                     ) : (
                       <div className="space-y-3">

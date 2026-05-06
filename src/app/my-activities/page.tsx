@@ -118,13 +118,17 @@ export default async function MyActivitiesPage() {
   let calendarDays: CalendarActivityDay[] = [];
   if (activityIds.length > 0) {
     try {
-      const sixMonthsLater = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const sixMonthsLater = new Date(today);
       sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
       const raw = await prisma.activityDay.findMany({
         where: {
           activityId: { in: activityIds },
           date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            gte: oneWeekAgo,
             lte: sixMonthsLater,
           },
           ...(isProfessorView ? { professors: { some: { userId } } } : {}),
