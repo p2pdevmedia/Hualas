@@ -22,6 +22,8 @@ type SearchParams = {
   year?: string;
   q?: string;
   page?: string;
+  paidPage?: string;
+  pendingPage?: string;
 };
 
 type PersonRecord = {
@@ -93,7 +95,15 @@ export default async function SocialFeePage({
   const year = parsePeriod(searchParams.year, defaultYear, 2020, 2100);
   const rawQ = searchParams.q?.trim() ?? '';
   const q = rawQ.toLowerCase();
-  const page = Math.max(Number(searchParams.page ?? '1') || 1, 1);
+  const legacyPage = Math.max(Number(searchParams.page ?? '1') || 1, 1);
+  const paidPage = Math.max(
+    Number(searchParams.paidPage ?? legacyPage) || 1,
+    1
+  );
+  const pendingPage = Math.max(
+    Number(searchParams.pendingPage ?? legacyPage) || 1,
+    1
+  );
 
   const [concept, members, payments] = await Promise.all([
     prisma.billableConcept.findUnique({
@@ -196,48 +206,72 @@ export default async function SocialFeePage({
     }
   }
 
+  // Keep paid rows at the top so recent approvals are visible on the first page.
+  const orderedPeople = [...people].sort((left, right) => {
+    if (left.status !== right.status) {
+      return left.status === 'PAID' ? -1 : 1;
+    }
+
+    return left.name.localeCompare(right.name, 'es-AR');
+  });
+
   const filteredPeople = q
-    ? people.filter((person) => {
+    ? orderedPeople.filter((person) => {
         return matchesAccountingSearch(q, [
           person.name,
           person.email ?? '',
           person.payerLabel ?? '',
         ]);
       })
-    : people;
+    : orderedPeople;
   const totalPeople = filteredPeople.length;
-  const totalPages = Math.max(Math.ceil(totalPeople / PAGE_SIZE), 1);
-  const currentPage = Math.min(page, totalPages);
-  const pageStart = totalPeople === 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
-  const pageEnd = Math.min(pageStart + PAGE_SIZE, totalPeople);
-  const pagePeople = filteredPeople.slice(pageStart, pageEnd);
   const paidPeople = filteredPeople.filter(
     (person) => person.status === 'PAID'
   );
   const pendingPeople = filteredPeople.filter(
     (person) => person.status === 'PENDING'
   );
-  const pagePaidPeople = pagePeople.filter(
-    (person) => person.status === 'PAID'
+  const paidTotalPages = Math.max(Math.ceil(paidPeople.length / PAGE_SIZE), 1);
+  const pendingTotalPages = Math.max(
+    Math.ceil(pendingPeople.length / PAGE_SIZE),
+    1
   );
-  const pagePendingPeople = pagePeople.filter(
-    (person) => person.status === 'PENDING'
+  const currentPaidPage = Math.min(paidPage, paidTotalPages);
+  const currentPendingPage = Math.min(pendingPage, pendingTotalPages);
+  const paidPageStart =
+    paidPeople.length === 0 ? 0 : (currentPaidPage - 1) * PAGE_SIZE;
+  const paidPageEnd = Math.min(paidPageStart + PAGE_SIZE, paidPeople.length);
+  const pendingPageStart =
+    pendingPeople.length === 0 ? 0 : (currentPendingPage - 1) * PAGE_SIZE;
+  const pendingPageEnd = Math.min(
+    pendingPageStart + PAGE_SIZE,
+    pendingPeople.length
+  );
+  const pagePaidPeople = paidPeople.slice(paidPageStart, paidPageEnd);
+  const pagePendingPeople = pendingPeople.slice(
+    pendingPageStart,
+    pendingPageEnd
   );
   const collectedAmount = paidPeople.reduce(
     (sum, person) => sum + person.amount,
     0
   );
   const expectedAmount = people.length * socialFeeAmount;
-  const visibleRangeLabel =
-    totalPeople === 0
+  const visiblePaidRangeLabel =
+    paidPeople.length === 0
       ? 'Sin resultados'
-      : `Mostrando ${pageStart + 1}-${pageEnd} de ${totalPeople}`;
+      : `Mostrando ${paidPageStart + 1}-${paidPageEnd} de ${paidPeople.length}`;
+  const visiblePendingRangeLabel =
+    pendingPeople.length === 0
+      ? 'Sin resultados'
+      : `Mostrando ${pendingPageStart + 1}-${pendingPageEnd} de ${pendingPeople.length}`;
 
-  function pageHref(nextPage: number) {
+  function pageHref(nextPaidPage: number, nextPendingPage: number) {
     const params = new URLSearchParams({
       month: String(month),
       year: String(year),
-      page: String(nextPage),
+      paidPage: String(nextPaidPage),
+      pendingPage: String(nextPendingPage),
     });
 
     if (rawQ) {
@@ -302,7 +336,8 @@ export default async function SocialFeePage({
               <form>
                 <input type="hidden" name="month" value={String(month)} />
                 <input type="hidden" name="year" value={String(year)} />
-                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="paidPage" value="1" />
+                <input type="hidden" name="pendingPage" value="1" />
                 <input
                   type="text"
                   name="q"
@@ -387,6 +422,42 @@ export default async function SocialFeePage({
                   </tbody>
                 </table>
               </div>
+              <div className="mt-4 flex flex-col gap-3 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Página {currentPaidPage} de {paidTotalPages} ·{' '}
+                  {visiblePaidRangeLabel}
+                </span>
+                <div className="flex gap-2">
+                  {currentPaidPage <= 1 ? (
+                    <Button type="button" variant="outline" disabled>
+                      Anterior
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline">
+                      <Link
+                        href={pageHref(currentPaidPage - 1, currentPendingPage)}
+                        prefetch={true}
+                      >
+                        Anterior
+                      </Link>
+                    </Button>
+                  )}
+                  {currentPaidPage >= paidTotalPages ? (
+                    <Button type="button" variant="outline" disabled>
+                      Siguiente
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline">
+                      <Link
+                        href={pageHref(currentPaidPage + 1, currentPendingPage)}
+                        prefetch={true}
+                      >
+                        Siguiente
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div>
@@ -448,29 +519,36 @@ export default async function SocialFeePage({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-4 flex flex-col gap-3 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>
-                Página {currentPage} de {totalPages} · {visibleRangeLabel}
+                Página {currentPendingPage} de {pendingTotalPages} ·{' '}
+                {visiblePendingRangeLabel}
               </span>
               <div className="flex gap-2">
-                {currentPage <= 1 ? (
+                {currentPendingPage <= 1 ? (
                   <Button type="button" variant="outline" disabled>
                     Anterior
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link href={pageHref(currentPage - 1)} prefetch={true}>
+                    <Link
+                      href={pageHref(currentPaidPage, currentPendingPage - 1)}
+                      prefetch={true}
+                    >
                       Anterior
                     </Link>
                   </Button>
                 )}
-                {currentPage >= totalPages ? (
+                {currentPendingPage >= pendingTotalPages ? (
                   <Button type="button" variant="outline" disabled>
                     Siguiente
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link href={pageHref(currentPage + 1)} prefetch={true}>
+                    <Link
+                      href={pageHref(currentPaidPage, currentPendingPage + 1)}
+                      prefetch={true}
+                    >
                       Siguiente
                     </Link>
                   </Button>

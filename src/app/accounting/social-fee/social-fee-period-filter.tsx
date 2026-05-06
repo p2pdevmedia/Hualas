@@ -45,7 +45,9 @@ export default function SocialFeePeriodFilter({
     const params = new URLSearchParams(searchParams.toString());
     params.set('month', nextMonth);
     params.set('year', nextYear);
-    params.set('page', '1');
+    params.set('paidPage', '1');
+    params.set('pendingPage', '1');
+    params.delete('page');
 
     router.replace(`/accounting/social-fee?${params.toString()}`, {
       scroll: false,
