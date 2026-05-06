@@ -203,7 +203,6 @@ export default function EditChildForm({
             className={inputClass}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -217,7 +216,6 @@ export default function EditChildForm({
             className={inputClass}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
