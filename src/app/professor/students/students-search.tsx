@@ -550,9 +550,6 @@ export default function StudentsSearch({
                     >
                       <span className="font-medium">Profesores asignados</span>
                       <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="rounded-full border px-2.5 py-1 font-medium text-foreground">
-                          {professorsExpanded ? 'Ocultar' : 'Ver'}
-                        </span>
                         {selectedGroup.professors.length} profesor
                         {selectedGroup.professors.length === 1 ? '' : 'es'}
                         <svg
