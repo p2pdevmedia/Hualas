@@ -81,7 +81,6 @@ model Payment {
   receiptUrl        String?              // Stores proof file URL
   rawData           Json?
   order             Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  monthlyCharges    MemberMonthlyCharge[]
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 }

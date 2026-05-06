@@ -567,11 +567,6 @@ export async function approveManualPayment({
 
   const now = new Date();
   const updatedPayment = await prisma.$transaction(async (tx) => {
-    const orderItems = await tx.orderItem.findMany({
-      where: { orderId: payment.orderId },
-      select: { id: true },
-    });
-
     await tx.order.update({
       where: { id: payment.orderId },
       data: { status: 'PAID', paidAt: now },
@@ -581,13 +576,6 @@ export async function approveManualPayment({
       where: { orderId: payment.orderId },
       data: { status: 'PAID' },
     });
-
-    if (orderItems.length > 0) {
-      await tx.memberMonthlyCharge.updateMany({
-        where: { orderItemId: { in: orderItems.map((item) => item.id) } },
-        data: { status: 'PAID', paidAt: now, paymentId: payment.id },
-      });
-    }
 
     return tx.payment.update({
       where: { id: payment.id },

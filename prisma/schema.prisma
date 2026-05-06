@@ -8,63 +8,62 @@ datasource db {
 }
 
 model User {
-  id                    String                    @id @default(cuid())
-  email                 String                    @unique
-  name                  String?
-  lastName              String?
-  dni                   String?                   @unique
-  birthDate             DateTime?
-  gender                Gender?
-  address               String?
-  phone                 String?
-  observations          String?
-  allergies             String?
-  regularMedication     String?
-  relevantDiseases      String?
-  previousInjuries      String?
-  physicalRestrictions  String?
-  bloodGroup            String?
-  primaryDoctor         String?
-  doctorPhone           String?
-  doctorCertificate     String?
-  profilePhoto          String?
-  nationality           String?
-  maritalStatus         String?
-  password              String
-  role                  Role                      @default(MEMBER)
-  activeRole            Role                      @default(MEMBER)
-  isActive              Boolean                   @default(true)
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
-  lastLogin             DateTime?
-  messages              Message[]
-  conversations         ConversationParticipant[]
-  passwordResetTokens   PasswordResetToken[]
-  formResponses         FormResponse[]
-  activityParticipants  ActivityParticipant[]
-  activityProfessors    ActivityProfessor[]
-  createdActivityDays   ActivityDay[]             @relation("ActivityDayCreatedBy")
-  activityDayProfessors ActivityDayProfessor[]
-  children              Child[]
-  accountingMovements   AccountingMovement[]
-  responsibleFamilyGroups FamilyGroup[]      @relation("FamilyGroupResponsible")
-  familyMemberships       FamilyGroupMember[] @relation("FamilyGroupMemberUser")
-  memberMonthlyCharges    MemberMonthlyCharge[] @relation("MemberMonthlyCharges")
-  ordersAsResponsible     Order[]            @relation("OrderResponsible")
-  orderItems              OrderItem[]        @relation("OrderItemMember")
-  socialFeePayments       SocialFeePayment[]
-  pickupNoticesCreated       PickupNotice[] @relation("PickupNoticeCreator")
-  pickupNoticesAsAlternate   PickupNotice[] @relation("PickupNoticeAlternatePerson")
+  id                          String                       @id @default(cuid())
+  email                       String                       @unique
+  name                        String?
+  lastName                    String?
+  dni                         String?                      @unique
+  birthDate                   DateTime?
+  gender                      Gender?
+  address                     String?
+  phone                       String?
+  observations                String?
+  allergies                   String?
+  regularMedication           String?
+  relevantDiseases            String?
+  previousInjuries            String?
+  physicalRestrictions        String?
+  bloodGroup                  String?
+  primaryDoctor               String?
+  doctorPhone                 String?
+  doctorCertificate           String?
+  profilePhoto                String?
+  nationality                 String?
+  maritalStatus               String?
+  password                    String
+  role                        Role                         @default(MEMBER)
+  activeRole                  Role                         @default(MEMBER)
+  isActive                    Boolean                      @default(true)
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  lastLogin                   DateTime?
+  messages                    Message[]
+  conversations               ConversationParticipant[]
+  passwordResetTokens         PasswordResetToken[]
+  formResponses               FormResponse[]
+  activityParticipants        ActivityParticipant[]
+  activityProfessors          ActivityProfessor[]
+  createdActivityDays         ActivityDay[]                @relation("ActivityDayCreatedBy")
+  activityDayProfessors       ActivityDayProfessor[]
+  children                    Child[]
+  accountingMovements         AccountingMovement[]
+  responsibleFamilyGroups     FamilyGroup[]                @relation("FamilyGroupResponsible")
+  familyMemberships           FamilyGroupMember[]          @relation("FamilyGroupMemberUser")
+  ordersAsResponsible         Order[]                      @relation("OrderResponsible")
+  orderItems                  OrderItem[]                  @relation("OrderItemMember")
+  socialFeePayments           SocialFeePayment[]
+  pickupNoticesCreated        PickupNotice[]               @relation("PickupNoticeCreator")
+  pickupNoticesAsAlternate    PickupNotice[]               @relation("PickupNoticeAlternatePerson")
   pickupNoticeAcknowledgments PickupNoticeAcknowledgment[]
-  notifications              Notification[]
-  createdNews                News[]                    @relation("NewsCreatedBy")
-  pushAlertSubscriptions     PushAlertSubscription[]
-  notificationPreferences    NotificationPreference[]
-  professorProfile           ProfessorProfile?
-  professorPaymentsCreated   ProfessorPayment[] @relation("ProfessorPaymentCreatedBy")
-  professorInvoices          ProfessorInvoice[] @relation("ProfessorInvoices")
-  roleAssignments            UserRoleAssignment[] @relation("UserRoleAssignmentUser")
-  roleAssignmentsGranted     UserRoleAssignment[] @relation("UserRoleAssignmentAssignedBy")
+  notifications               Notification[]
+  createdNews                 News[]                       @relation("NewsCreatedBy")
+  pushAlertSubscriptions      PushAlertSubscription[]
+  notificationPreferences     NotificationPreference[]
+  professorProfile            ProfessorProfile?
+  professorPaymentsCreated    ProfessorPayment[]           @relation("ProfessorPaymentCreatedBy")
+  professorInvoices           ProfessorInvoice[]           @relation("ProfessorInvoices")
+  roleAssignments             UserRoleAssignment[]         @relation("UserRoleAssignmentUser")
+  roleAssignmentsGranted      UserRoleAssignment[]         @relation("UserRoleAssignmentAssignedBy")
 }
 
 model UserRoleAssignment {
@@ -81,7 +80,6 @@ model UserRoleAssignment {
   @@index([userId])
   @@index([role])
 }
-
 
 model PasswordResetToken {
   id        String   @id @default(cuid())
@@ -169,23 +167,22 @@ model Activity {
   groups       ActivityGroup[]
   days         ActivityDay[]
   createdAt    DateTime              @default(now())
-  orderItems    OrderItem[]
+  orderItems   OrderItem[]
 }
 
-
 model ActivityParticipant {
-  id             String                  @id @default(cuid())
-  activityId     String
-  userId         String
-  childId        String?
-  participantKey String                  @unique
-  receipt        String?
-  receiptDate    DateTime?
-  activity       Activity                @relation(fields: [activityId], references: [id])
-  user           User                    @relation(fields: [userId], references: [id])
-  child          Child?                  @relation(fields: [childId], references: [id])
+  id              String                  @id @default(cuid())
+  activityId      String
+  userId          String
+  childId         String?
+  participantKey  String                  @unique
+  receipt         String?
+  receiptDate     DateTime?
+  activity        Activity                @relation(fields: [activityId], references: [id])
+  user            User                    @relation(fields: [userId], references: [id])
+  child           Child?                  @relation(fields: [childId], references: [id])
   groupMembership ActivityGroupMember?
-  attendances    ActivityDayAttendance[]
+  attendances     ActivityDayAttendance[]
 }
 
 model ActivityProfessor {
@@ -201,16 +198,16 @@ model ActivityProfessor {
 }
 
 model ActivityGroup {
-  id          String               @id @default(cuid())
+  id          String                @id @default(cuid())
   activityId  String
   name        String
   description String?
   capacity    Int?
   minAge      Int?
   maxAge      Int?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  activity    Activity             @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  activity    Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
   members     ActivityGroupMember[]
   days        ActivityDay[]
 
@@ -220,7 +217,7 @@ model ActivityGroup {
 model ActivityGroupMember {
   id                    String              @id @default(cuid())
   activityGroupId       String
-  activityParticipantId  String              @unique
+  activityParticipantId String              @unique
   createdAt             DateTime            @default(now())
   activityGroup         ActivityGroup       @relation(fields: [activityGroupId], references: [id], onDelete: Cascade)
   activityParticipant   ActivityParticipant @relation(fields: [activityParticipantId], references: [id], onDelete: Cascade)
@@ -229,29 +226,29 @@ model ActivityGroupMember {
 }
 
 model ActivityDay {
-  id          String                  @id @default(cuid())
-  activityId  String
-  activityGroupId String?
-  createdById String
-  date        DateTime
-  schedule    String
-  description String?
-  planificacion String?
-  devolucion  String?
-  geoLocation String
-  latitude    Float?
-  longitude   Float?
-  sportIcon   String?
-  cancelled          Boolean  @default(false)
+  id                 String                  @id @default(cuid())
+  activityId         String
+  activityGroupId    String?
+  createdById        String
+  date               DateTime
+  schedule           String
+  description        String?
+  planificacion      String?
+  devolucion         String?
+  geoLocation        String
+  latitude           Float?
+  longitude          Float?
+  sportIcon          String?
+  cancelled          Boolean                 @default(false)
   cancellationReason String?
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
-  activity    Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  activityGroup ActivityGroup?        @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
-  createdBy   User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  attendances   ActivityDayAttendance[]
-  professors    ActivityDayProfessor[]
-  pickupNotices PickupNotice[]
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  activity           Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityGroup      ActivityGroup?          @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
+  createdBy          User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  attendances        ActivityDayAttendance[]
+  professors         ActivityDayProfessor[]
+  pickupNotices      PickupNotice[]
 
   @@index([activityId, date])
   @@index([activityGroupId])
@@ -286,24 +283,24 @@ model ActivityDayAttendance {
 }
 
 model PickupNotice {
-  id                    String   @id @default(cuid())
-  activityDay           ActivityDay @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
-  activityDayId         String
-  child                 Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  childId               String
-  createdBy             User @relation("PickupNoticeCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  createdById           String
+  id            String      @id @default(cuid())
+  activityDay   ActivityDay @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
+  activityDayId String
+  child         Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId       String
+  createdBy     User        @relation("PickupNoticeCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdById   String
 
-  alternatePersonUser   User? @relation("PickupNoticeAlternatePerson", fields: [alternatePersonUserId], references: [id], onDelete: SetNull)
+  alternatePersonUser   User?   @relation("PickupNoticeAlternatePerson", fields: [alternatePersonUserId], references: [id], onDelete: SetNull)
   alternatePersonUserId String?
   alternatePersonName   String?
 
-  description           String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  deletedAt             DateTime?
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
-  acknowledgments       PickupNoticeAcknowledgment[]
+  acknowledgments PickupNoticeAcknowledgment[]
 
   @@unique([activityDayId, childId])
   @@index([childId])
@@ -312,13 +309,13 @@ model PickupNotice {
 }
 
 model PickupNoticeAcknowledgment {
-  id              String   @id @default(cuid())
-  pickupNotice    PickupNotice @relation(fields: [pickupNoticeId], references: [id], onDelete: Cascade)
-  pickupNoticeId  String
-  acknowledgedBy  User @relation(fields: [acknowledgedById], references: [id], onDelete: Restrict)
+  id               String       @id @default(cuid())
+  pickupNotice     PickupNotice @relation(fields: [pickupNoticeId], references: [id], onDelete: Cascade)
+  pickupNoticeId   String
+  acknowledgedBy   User         @relation(fields: [acknowledgedById], references: [id], onDelete: Restrict)
   acknowledgedById String
-  notes           String?
-  confirmedAt     DateTime @default(now())
+  notes            String?
+  confirmedAt      DateTime     @default(now())
 
   @@unique([pickupNoticeId, acknowledgedById])
   @@index([pickupNoticeId])
@@ -374,7 +371,6 @@ model SocialFeePayment {
   @@index([periodYear, periodMonth])
 }
 
-
 model AccountingMovement {
   id            String       @id @default(cuid())
   date          DateTime
@@ -419,138 +415,114 @@ model DbAuditLog {
   @@index([requestId])
 }
 
-
 model FamilyGroup {
-  id                 String              @id @default(cuid())
-  name               String
-  responsibleUserId  String?
-  responsibleUser    User?               @relation("FamilyGroupResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
-  responsibleName    String
-  responsibleEmail   String
-  responsiblePhone   String?
-  members            FamilyGroupMember[]
-  orders             Order[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                String              @id @default(cuid())
+  name              String
+  responsibleUserId String?
+  responsibleUser   User?               @relation("FamilyGroupResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  responsibleName   String
+  responsibleEmail  String
+  responsiblePhone  String?
+  members           FamilyGroupMember[]
+  orders            Order[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@index([responsibleUserId])
 }
 
 model FamilyGroupMember {
-  id                    String                  @id @default(cuid())
-  familyGroupId         String
-  memberId              String
-  relationship          FamilyRelationship      @default(CHILD)
-  isPaymentResponsible  Boolean                 @default(false)
-  createdAt             DateTime                @default(now())
-  familyGroup           FamilyGroup             @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
-  member                User                    @relation("FamilyGroupMemberUser", fields: [memberId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(cuid())
+  familyGroupId        String
+  memberId             String
+  relationship         FamilyRelationship @default(CHILD)
+  isPaymentResponsible Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  familyGroup          FamilyGroup        @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
+  member               User               @relation("FamilyGroupMemberUser", fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([familyGroupId, memberId])
   @@index([memberId])
 }
 
 model BillableConcept {
-  id             String                @id @default(cuid())
-  code           BillableConceptCode   @unique
-  name           String
-  description    String?
-  defaultAmount  Int                   @default(0)
-  active         Boolean               @default(true)
-  orderItems     OrderItem[]
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-}
-
-model MemberMonthlyCharge {
-  id           String             @id @default(cuid())
-  memberId     String
-  periodMonth  Int
-  periodYear   Int
-  concept      BillableConceptCode
-  amount       Int
-  status       MonthlyChargeStatus @default(PENDING)
-  orderItemId  String?
-  paymentId    String?
-  paidAt       DateTime?
-  member       User               @relation("MemberMonthlyCharges", fields: [memberId], references: [id], onDelete: Cascade)
-  orderItem    OrderItem?         @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
-  payment      Payment?           @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-
-  @@unique([memberId, periodMonth, periodYear, concept])
-  @@index([status, periodMonth, periodYear])
+  id            String              @id @default(cuid())
+  code          BillableConceptCode @unique
+  name          String
+  description   String?
+  defaultAmount Int                 @default(0)
+  active        Boolean             @default(true)
+  orderItems    OrderItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 }
 
 model Order {
-  id                String        @id @default(cuid())
+  id                String       @id @default(cuid())
   familyGroupId     String?
   responsibleUserId String?
-  responsibleUser   User?         @relation("OrderResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
-  familyGroup       FamilyGroup?  @relation(fields: [familyGroupId], references: [id], onDelete: SetNull)
+  responsibleUser   User?        @relation("OrderResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  familyGroup       FamilyGroup? @relation(fields: [familyGroupId], references: [id], onDelete: SetNull)
   responsibleName   String
   responsibleEmail  String
   responsiblePhone  String?
   periodMonth       Int
   periodYear        Int
-  status            OrderStatus   @default(DRAFT)
-  subtotal          Int           @default(0)
-  discountTotal     Int           @default(0)
-  surchargeTotal    Int           @default(0)
-  total             Int           @default(0)
+  status            OrderStatus  @default(DRAFT)
+  subtotal          Int          @default(0)
+  discountTotal     Int          @default(0)
+  surchargeTotal    Int          @default(0)
+  total             Int          @default(0)
   paidAt            DateTime?
   items             OrderItem[]
   payments          Payment[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([familyGroupId, periodMonth, periodYear])
   @@index([responsibleUserId])
 }
 
 model OrderItem {
-  id                String               @id @default(cuid())
+  id                String          @id @default(cuid())
   orderId           String
   memberId          String?
   activityId        String?
   billableConceptId String
   description       String
-  quantity          Int                  @default(1)
+  quantity          Int             @default(1)
   unitPrice         Int
   total             Int
   periodMonth       Int
   periodYear        Int
-  status            OrderItemStatus      @default(PENDING)
-  order             Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  member            User?                @relation("OrderItemMember", fields: [memberId], references: [id], onDelete: SetNull)
-  activity          Activity?            @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  billableConcept   BillableConcept      @relation(fields: [billableConceptId], references: [id], onDelete: Restrict)
-  monthlyCharges    MemberMonthlyCharge[]
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  status            OrderItemStatus @default(PENDING)
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  member            User?           @relation("OrderItemMember", fields: [memberId], references: [id], onDelete: SetNull)
+  activity          Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  billableConcept   BillableConcept @relation(fields: [billableConceptId], references: [id], onDelete: Restrict)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@unique([orderId, memberId, activityId, billableConceptId, periodMonth, periodYear])
   @@index([orderId, status])
 }
 
 model Payment {
-  id                String               @id @default(cuid())
+  id                String          @id @default(cuid())
   orderId           String
   provider          PaymentProvider
   providerPaymentId String?
   amount            Int
-  currency          String               @default("ARS")
-  status            PaymentStatus        @default(PENDING)
+  currency          String          @default("ARS")
+  status            PaymentStatus   @default(PENDING)
   paidAt            DateTime?
   payerName         String?
   payerEmail        String?
   receiptUrl        String?
   rawData           Json?
-  order             Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  monthlyCharges    MemberMonthlyCharge[]
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([orderId, status])
   @@index([provider, providerPaymentId])
@@ -573,13 +545,13 @@ model Notification {
 }
 
 model PushAlertSubscription {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscriberId String   @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriberId String    @unique
   userAgent    String?
-  createdAt    DateTime @default(now())
-  lastUsedAt   DateTime @default(now())
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime  @default(now())
   failedAt     DateTime?
 
   @@index([userId])
@@ -636,7 +608,6 @@ enum AttendanceStatus {
   NOT_GOING
 }
 
-
 enum FamilyRelationship {
   CHILD
   PARENT
@@ -652,13 +623,6 @@ enum BillableConceptCode {
   DISCOUNT
   SURCHARGE
   OTHER
-}
-
-enum MonthlyChargeStatus {
-  PENDING
-  PAID
-  CANCELLED
-  WAIVED
 }
 
 enum OrderStatus {

@@ -86,9 +86,11 @@ export default async function DebtByFamilyPage({
     families,
     concept,
   ] = await Promise.all([
-    prisma.memberMonthlyCharge.count({
+    prisma.orderItem.count({
       where: {
-        concept: BillableConceptCode.SOCIAL_FEE,
+        billableConcept: {
+          code: BillableConceptCode.SOCIAL_FEE,
+        },
       },
     }),
     prisma.payment.count({
@@ -104,9 +106,11 @@ export default async function DebtByFamilyPage({
         },
       },
     }),
-    prisma.memberMonthlyCharge.findMany({
+    prisma.orderItem.findMany({
       where: {
-        concept: BillableConceptCode.SOCIAL_FEE,
+        billableConcept: {
+          code: BillableConceptCode.SOCIAL_FEE,
+        },
       },
       include: {
         member: {
@@ -117,32 +121,29 @@ export default async function DebtByFamilyPage({
             email: true,
           },
         },
-        payment: {
+        order: {
           select: {
             id: true,
             status: true,
-            amount: true,
+            responsibleUserId: true,
+            responsibleName: true,
+            responsibleEmail: true,
+            periodMonth: true,
+            periodYear: true,
+            total: true,
             paidAt: true,
-            provider: true,
-            providerPaymentId: true,
             createdAt: true,
-          },
-        },
-        orderItem: {
-          select: {
-            order: {
+            payments: {
               select: {
                 id: true,
                 status: true,
-                responsibleUserId: true,
-                responsibleName: true,
-                responsibleEmail: true,
-                periodMonth: true,
-                periodYear: true,
-                total: true,
+                amount: true,
                 paidAt: true,
+                provider: true,
+                providerPaymentId: true,
                 createdAt: true,
               },
+              orderBy: { createdAt: 'desc' },
             },
           },
         },
@@ -208,18 +209,6 @@ export default async function DebtByFamilyPage({
                 name: true,
                 lastName: true,
               },
-            },
-            monthlyCharges: {
-              select: {
-                id: true,
-                memberId: true,
-                periodMonth: true,
-                periodYear: true,
-                amount: true,
-                status: true,
-                paidAt: true,
-              },
-              orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
             },
           },
         },
@@ -303,21 +292,22 @@ export default async function DebtByFamilyPage({
     );
 
     const monthlyRows = familyOrders.flatMap((order) =>
-      order.items.flatMap((item) =>
-        item.monthlyCharges.map((charge) => ({
-          charge,
+      order.items
+        .filter(
+          (item) => item.billableConcept.code === BillableConceptCode.SOCIAL_FEE
+        )
+        .map((item) => ({
           order,
           item,
         }))
-      )
     );
 
     const outstandingRows = monthlyRows.filter(
-      ({ charge }) => charge.status !== 'PAID'
+      ({ order }) => order.status !== 'PAID'
     );
 
     const totalDebt = outstandingRows.reduce(
-      (sum, row) => sum + row.charge.amount,
+      (sum, row) => sum + row.item.total,
       0
     );
     const partialCount = monthlyRows.filter(
@@ -461,10 +451,10 @@ export default async function DebtByFamilyPage({
                       : null;
                     const overduePeriods = new Map<string, number>();
                     for (const row of outstandingRows) {
-                      const key = `${row.charge.periodMonth}/${row.charge.periodYear}`;
+                      const key = `${row.item.periodMonth}/${row.item.periodYear}`;
                       overduePeriods.set(
                         key,
-                        (overduePeriods.get(key) ?? 0) + row.charge.amount
+                        (overduePeriods.get(key) ?? 0) + row.item.total
                       );
                     }
 
@@ -559,7 +549,7 @@ export default async function DebtByFamilyPage({
             Detalle de meses
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Quién debe cada mes, cuánto debe y si quedó parcialmente pago.
+            Quién debe cada período, cuánto debe y si quedó parcialmente pago.
           </p>
           <div className="mt-4 overflow-x-auto rounded-xl border">
             <table className="min-w-full text-sm">
@@ -579,26 +569,34 @@ export default async function DebtByFamilyPage({
                       colSpan={5}
                       className="px-4 py-10 text-center text-muted-foreground"
                     >
-                      No hay cargos mensuales cargados.
+                      No hay cargos de cuota social cargados.
                     </td>
                   </tr>
                 ) : (
                   charges.map((charge) => {
-                    const order = charge.orderItem?.order ?? null;
+                    const member = charge.member;
+                    const payment =
+                      charge.order.payments.find(
+                        (entry) => entry.status === 'APPROVED'
+                      ) ?? charge.order.payments[0] ?? null;
                     return (
                       <tr key={charge.id} className="align-top">
                         <td className="px-4 py-3">
                           <div className="font-medium">
-                            <PersonLink
-                              href={`/admin/users/${charge.member.id}/view`}
-                              className="text-link hover:underline"
-                            >
-                              {formatPersonName(charge.member)}
-                            </PersonLink>
+                            {member ? (
+                              <PersonLink
+                                href={`/admin/users/${member.id}/view`}
+                                className="text-link hover:underline"
+                              >
+                                {formatPersonName(member)}
+                              </PersonLink>
+                            ) : (
+                              'Sin titular'
+                            )}
                           </div>
-                          {charge.member.email ? (
+                          {member?.email ? (
                             <div className="text-xs text-muted-foreground">
-                              {charge.member.email}
+                              {member.email}
                             </div>
                           ) : null}
                         </td>
@@ -609,35 +607,35 @@ export default async function DebtByFamilyPage({
                           )}
                         </td>
                         <td className="px-4 py-3 font-medium">
-                          {formatAmount(charge.amount)}
+                          {formatAmount(charge.total)}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full border px-2 py-1 text-xs font-medium ${statusClass(
-                              charge.status
+                              charge.order.status
                             )}`}
                           >
-                            {statusLabel(charge.status)}
+                            {statusLabel(charge.order.status)}
                           </span>
-                          {order?.status === 'PARTIALLY_PAID' ? (
+                          {charge.order.status === 'PARTIALLY_PAID' ? (
                             <div className="mt-1 text-xs text-muted-foreground">
-                              Orden parcial: {formatAmount(order.total)}
+                              Orden parcial: {formatAmount(charge.order.total)}
                             </div>
                           ) : null}
                         </td>
                         <td className="px-4 py-3">
-                          {charge.payment ? (
+                          {payment ? (
                             <div className="space-y-1">
                               <div className="font-medium">
-                                {formatAmount(charge.payment.amount)}
+                                {formatAmount(payment.amount)}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {formatAccountingDate(charge.payment.createdAt)}
+                                {formatAccountingDate(payment.createdAt)}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {charge.payment.provider}
-                                {charge.payment.providerPaymentId
-                                  ? ` · ${charge.payment.providerPaymentId}`
+                                {payment.provider}
+                                {payment.providerPaymentId
+                                  ? ` · ${payment.providerPaymentId}`
                                   : ''}
                               </div>
                             </div>
@@ -798,8 +796,8 @@ export default async function DebtByFamilyPage({
         </h3>
         <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
           <li>
-            La deuda total se calcula con cargos mensuales pendientes de cuota
-            social.
+            La deuda total se calcula con ítems de orden de cuota social
+            pendientes de pago.
           </li>
           <li>
             El estado parcial se toma desde la orden familiar cuando quedó

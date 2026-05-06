@@ -5,10 +5,11 @@
   "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
+    "db:migrate:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "test": "jest",
     "import:verano-2026": "node scripts/import-verano-2026.mjs",

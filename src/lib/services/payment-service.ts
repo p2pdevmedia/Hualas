@@ -21,16 +21,9 @@ export const paymentService = {
         where: { id: payment.orderId },
         data: { status: 'PAID', paidAt: now },
       });
-      const items = await tx.orderItem.findMany({
-        where: { orderId: order.id },
-      });
       await tx.orderItem.updateMany({
         where: { orderId: order.id },
         data: { status: 'PAID' },
-      });
-      await tx.memberMonthlyCharge.updateMany({
-        where: { orderItemId: { in: items.map((i) => i.id) } },
-        data: { status: 'PAID', paidAt: now, paymentId: payment.id },
       });
       return payment;
     });
