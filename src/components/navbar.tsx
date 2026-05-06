@@ -180,7 +180,7 @@ export default function Navbar() {
       onClick={onClick}
     >
       <Newspaper
-        className="h-5 w-5 shrink-0 text-current"
+        className="h-5 w-5 shrink-0 text-primary"
         strokeWidth={2.2}
         aria-hidden="true"
       />
