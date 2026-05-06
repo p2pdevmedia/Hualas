@@ -148,11 +148,15 @@ export default function ActivityCalendar({
   onDaySelect,
   onEdit,
   variant = 'month',
+  enableSessionDetailLinks = false,
+  sessionDetailLabel = 'Ver detalle',
 }: {
   activityDays: CalendarActivityDay[];
   onDaySelect?: (dayId: string | null) => void;
   onEdit?: (dayId: string) => void;
   variant?: CalendarVariant;
+  enableSessionDetailLinks?: boolean;
+  sessionDetailLabel?: string;
 }) {
   const today = useMemo(() => new Date(), []);
   const todayKey = toLocalDateKey(today);
@@ -398,6 +402,8 @@ export default function ActivityCalendar({
   }
 
   const selectedActivities = selectedKey ? (dayMap.get(selectedKey) ?? []) : [];
+  const shouldLinkToSessionPage =
+    variant === 'professor-agenda' || enableSessionDetailLinks || !!onEdit;
 
   return (
     <div className="space-y-3">
@@ -534,7 +540,7 @@ export default function ActivityCalendar({
                                       prefetch={true}
                                       className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
-                                      Ver detalle
+                                      {sessionDetailLabel}
                                     </Link>
                                   )}
                                 </div>
@@ -770,7 +776,7 @@ export default function ActivityCalendar({
                       </p>
                     </div>
                   </div>
-                  {(variant !== 'month' || onEdit) && (
+                  {(variant !== 'month' || shouldLinkToSessionPage) && (
                     <div className="mt-2 flex gap-2">
                       {variant === 'member-agenda' ? (
                         <button
@@ -786,7 +792,7 @@ export default function ActivityCalendar({
                           prefetch={true}
                           className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                         >
-                          Ver detalle
+                          {sessionDetailLabel}
                         </Link>
                       )}
                       {onEdit && (

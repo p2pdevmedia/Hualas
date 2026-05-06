@@ -502,6 +502,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           <ActivityDaysPanel
             activityId={activity.id}
             canManageDays={canManageDays}
+            canOpenSessionDetails={isAdmin || isProfessor}
             hideSessionDetails={hideSessionDetails}
             hideSessionList={hideSessionList}
             professors={professorOptions}
