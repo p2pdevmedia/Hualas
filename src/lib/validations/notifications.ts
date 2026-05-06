@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   'PAYMENT_REJECTED',
   'ACTIVITY_CAPACITY_FULL',
   'CHAT_MESSAGE_NEW',
+  'NEWS_CREATED',
 ] as const;
 
 export const notificationTypeSchema = z.enum(NOTIFICATION_TYPES);

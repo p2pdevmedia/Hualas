@@ -28,6 +28,7 @@ const TYPE_ROLES: Record<NotificationType, Role[]> = {
   PAYMENT_REJECTED: ALL_ROLES,
   ACTIVITY_CAPACITY_FULL: ['ADMIN', 'SUPER_ADMIN'],
   CHAT_MESSAGE_NEW: ALL_ROLES,
+  NEWS_CREATED: ALL_ROLES,
 };
 
 const TYPE_LABELS: Record<
@@ -80,6 +81,11 @@ const TYPE_LABELS: Record<
   CHAT_MESSAGE_NEW: {
     title: 'Mensajes nuevos',
     description: 'Cuando recibís un mensaje en el chat interno.',
+  },
+  NEWS_CREATED: {
+    title: 'Noticias institucionales',
+    description:
+      'Cuando administración publica una noticia para el club o tus actividades.',
   },
 };
 

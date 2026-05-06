@@ -12,6 +12,7 @@ import {
   recipientsForActivityParticipant,
   recipientsForCapacityFull,
   recipientsForChatMessage,
+  recipientsForNews,
 } from './recipients';
 
 function logFailure(label: string, err: unknown): void {
@@ -543,5 +544,43 @@ export async function notifyChatMessage(messageId: string): Promise<void> {
     });
   } catch (err) {
     logFailure('notifyChatMessage', err);
+  }
+}
+
+export async function notifyNewsCreated(newsId: string): Promise<void> {
+  try {
+    const news = await prisma.news.findUnique({
+      where: { id: newsId },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        scope: true,
+        activityId: true,
+        activity: { select: { name: true } },
+      },
+    });
+    if (!news) return;
+    const recipients = await recipientsForNews(newsId);
+    if (recipients.length === 0) return;
+    const title =
+      news.scope === 'ACTIVITY' && news.activity?.name
+        ? `Noticia — ${news.activity.name}`
+        : 'Noticia institucional';
+    const preview =
+      news.body.length > 120 ? `${news.body.slice(0, 117)}...` : news.body;
+    await dispatch({
+      type: 'NEWS_CREATED',
+      recipients,
+      title,
+      body: `${news.title}: ${preview}`,
+      url: `/news#${news.id}`,
+      data: {
+        newsId: news.id,
+        activityId: news.activityId ?? null,
+      } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyNewsCreated', err);
   }
 }

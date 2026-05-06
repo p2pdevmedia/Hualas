@@ -57,6 +57,7 @@ model User {
   pickupNoticesAsAlternate   PickupNotice[] @relation("PickupNoticeAlternatePerson")
   pickupNoticeAcknowledgments PickupNoticeAcknowledgment[]
   notifications              Notification[]
+  createdNews                News[]                    @relation("NewsCreatedBy")
   pushAlertSubscriptions     PushAlertSubscription[]
   notificationPreferences    NotificationPreference[]
   professorProfile           ProfessorProfile?
@@ -163,6 +164,7 @@ model Activity {
   description  String?
   price        Int                   @default(0)
   participants ActivityParticipant[]
+  news         News[]
   professors   ActivityProfessor[]
   groups       ActivityGroup[]
   days         ActivityDay[]
@@ -688,6 +690,47 @@ enum PaymentStatus {
   CANCELLED
 }
 
+model News {
+  id          String      @id @default(cuid())
+  title       String
+  body        String
+  scope       NewsScope
+  activityId  String?
+  activity    Activity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User        @relation("NewsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  media       NewsMedia[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([scope, createdAt])
+  @@index([activityId, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model NewsMedia {
+  id        String        @id @default(cuid())
+  newsId    String
+  news      News          @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  url       String
+  mimeType  String
+  type      NewsMediaType
+  fileName  String?
+  createdAt DateTime      @default(now())
+
+  @@index([newsId])
+}
+
+enum NewsScope {
+  CLUB
+  ACTIVITY
+}
+
+enum NewsMediaType {
+  IMAGE
+  VIDEO
+}
+
 enum NotificationType {
   ACTIVITY_DAY_NEW
   ACTIVITY_DAY_UPDATED
@@ -700,6 +743,7 @@ enum NotificationType {
   PAYMENT_REJECTED
   ACTIVITY_CAPACITY_FULL
   CHAT_MESSAGE_NEW
+  NEWS_CREATED
 }
 
 model ProfessorProfile {

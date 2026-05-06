@@ -58,6 +58,12 @@ Agents should check this before searching the codebase.
   - File: `src/app/activities/[id]/edit/page.tsx`
   - Related form: `src/app/activities/[id]/edit/form.tsx`
 
+### News
+
+- `/news` → Institutional news feed for members, professors, and admins
+  - File: `src/app/news/page.tsx`
+  - Related component: `src/app/news/create-news-form.tsx`
+
 ### User
 
 - `/profile` → User profile
@@ -269,6 +275,14 @@ Agents should check this before searching the codebase.
 - `POST /api/forms/[id]/responses` → submit response
   - File: `src/app/api/forms/[id]/responses/route.ts`
   - Validation: `src/lib/validations/form.ts`
+
+### News API
+
+- `POST /api/news` → create institutional news with optional image/video media and dispatch notifications
+  - File: `src/app/api/news/route.ts`
+
+- `GET /api/news/[id]/media` → stream private news media to authorized users
+  - File: `src/app/api/news/[id]/media/route.ts`
 
 ### Messaging
 

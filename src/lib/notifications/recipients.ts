@@ -214,3 +214,39 @@ export async function recipientsForChatMessage(
     conversationId: message.conversationId,
   };
 }
+
+export async function recipientsForNews(newsId: string): Promise<string[]> {
+  const news = await prisma.news.findUnique({
+    where: { id: newsId },
+    select: { scope: true, activityId: true, createdById: true },
+  });
+  if (!news) return [];
+
+  if (news.scope === 'CLUB') {
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    });
+    return users.map((u) => u.id);
+  }
+
+  if (!news.activityId) return [];
+
+  const [participants, professors] = await Promise.all([
+    prisma.activityParticipant.findMany({
+      where: { activityId: news.activityId },
+      select: { userId: true },
+    }),
+    prisma.activityProfessor.findMany({
+      where: { activityId: news.activityId },
+      select: { userId: true },
+    }),
+  ]);
+
+  return [
+    ...new Set([
+      ...participants.map((p) => p.userId),
+      ...professors.map((p) => p.userId),
+    ]),
+  ];
+}
