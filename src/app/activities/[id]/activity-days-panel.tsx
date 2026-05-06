@@ -84,7 +84,10 @@ export default function ActivityDaysPanel({
     activityName: 'Actividad',
     schedule: day.schedule,
     geoLocation: day.geoLocation,
+    description: day.description,
     sportIcon: day.sportIcon,
+    latitude: day.latitude,
+    longitude: day.longitude,
     cancelled: false,
   }));
 
