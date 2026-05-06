@@ -21,7 +21,10 @@ export type CalendarActivityDay = {
   activityName: string;
   schedule: string;
   geoLocation: string;
+  description: string | null;
   sportIcon: string | null;
+  latitude: number | null;
+  longitude: number | null;
   cancelled: boolean;
   attendanceOptions?: CalendarAttendanceOption[];
 };
@@ -63,6 +66,15 @@ function formatDayTitle(date: Date, todayKey: string): string {
   if (key === todayKey) return 'hoy';
 
   return date.toLocaleDateString('es-AR', { weekday: 'long' });
+}
+
+function getGoogleMapsHref(day: CalendarActivityDay): string {
+  const query =
+    day.latitude != null && day.longitude != null
+      ? `${day.latitude},${day.longitude}`
+      : day.geoLocation;
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
 function ActivityIcon({
@@ -161,6 +173,7 @@ export default function ActivityCalendar({
     null
   );
   const [attendanceError, setAttendanceError] = useState('');
+  const [detailDay, setDetailDay] = useState<CalendarActivityDay | null>(null);
   const todayCardRef = useRef<HTMLElement | null>(null);
   const compactScrollerRef = useRef<HTMLDivElement | null>(null);
   const compactCardRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -426,6 +439,7 @@ export default function ActivityCalendar({
                       <div className="space-y-3">
                         {visibleActivities.map((day) => {
                           const detailHref = `/activities/${day.activityId}/days/${day.id}`;
+                          const isMemberAgenda = variant === 'member-agenda';
 
                           return (
                             <div
@@ -438,13 +452,23 @@ export default function ActivityCalendar({
                                   featured={isMainDay}
                                 />
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <Link
-                                    href={detailHref}
-                                    prefetch={true}
-                                    className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                                  >
-                                    Ver detalle
-                                  </Link>
+                                  {isMemberAgenda ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDetailDay(day)}
+                                      className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    >
+                                      Ver detalle
+                                    </button>
+                                  ) : (
+                                    <Link
+                                      href={detailHref}
+                                      prefetch={true}
+                                      className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    >
+                                      Ver detalle
+                                    </Link>
+                                  )}
                                 </div>
                                 {day.attendanceOptions &&
                                   day.attendanceOptions.length > 0 && (
@@ -731,13 +755,23 @@ export default function ActivityCalendar({
                   </div>
                   {(variant !== 'month' || onEdit) && (
                     <div className="mt-2 flex gap-2">
-                      <Link
-                        href={`/activities/${d.activityId}/days/${d.id}`}
-                        prefetch={true}
-                        className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                      >
-                        Ver detalle
-                      </Link>
+                      {variant === 'member-agenda' ? (
+                        <button
+                          type="button"
+                          onClick={() => setDetailDay(d)}
+                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          Ver detalle
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/activities/${d.activityId}/days/${d.id}`}
+                          prefetch={true}
+                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          Ver detalle
+                        </Link>
+                      )}
                       {onEdit && (
                         <button
                           type="button"
@@ -753,6 +787,74 @@ export default function ActivityCalendar({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {detailDay && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="activity-day-detail-title"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-background p-5 shadow-xl">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Detalle de la sesión
+              </p>
+              <h2
+                id="activity-day-detail-title"
+                className="text-lg font-semibold text-foreground"
+              >
+                {detailDay.activityName}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {new Date(detailDay.date + 'T12:00:00').toLocaleDateString(
+                  'es-AR',
+                  { weekday: 'long', day: 'numeric', month: 'long' }
+                )}{' '}
+                · {detailDay.schedule}
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-xl border bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Materiales
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm text-foreground">
+                  {detailDay.description?.trim() || 'Sin materiales cargados.'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Ubicación
+                </p>
+                <p className="mt-2 text-sm text-foreground">
+                  {detailDay.geoLocation}
+                </p>
+                <a
+                  href={getGoogleMapsHref(detailDay)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex rounded-full border border-primary px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  Ver en Maps
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailDay(null)}
+                className="rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
