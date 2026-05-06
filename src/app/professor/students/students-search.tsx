@@ -404,10 +404,7 @@ export default function StudentsSearch({
                 >
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.activityName} — {group.name} (
-                      {group.participants.length} participante
-                      {group.participants.length === 1 ? '' : 's'} ·{' '}
-                      {getAgeSummary(group.participants)})
+                      {group.activityName} — {group.name}
                     </option>
                   ))}
                 </Select>
