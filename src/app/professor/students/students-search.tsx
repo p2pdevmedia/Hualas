@@ -167,6 +167,7 @@ export default function StudentsSearch({
   const [selectedGroupId, setSelectedGroupId] = useState(groups[0]?.id ?? '');
   const [query, setQuery] = useState('');
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
+  const [professorsExpanded, setProfessorsExpanded] = useState(false);
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -179,6 +180,7 @@ export default function StudentsSearch({
 
   useEffect(() => {
     setParticipantsExpanded(false);
+    setProfessorsExpanded(false);
   }, [selectedGroupId]);
 
   return (
@@ -462,168 +464,202 @@ export default function StudentsSearch({
                   </div>
 
                   <div className="rounded-xl border bg-background p-4">
-                    <h3 className="font-medium">Profesores asignados</h3>
-                    {selectedGroup.professors.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Este grupo todavía no tiene profesores asignados en sus
-                        sesiones.
-                      </p>
-                    ) : (
-                      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {selectedGroup.professors.map((professor) => (
-                          <li
-                            key={professor.userId}
-                            className="rounded-lg border bg-card p-3 text-sm"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 space-y-1">
-                                <Link
-                                  href={`/professors/${professor.userId}`}
-                                  prefetch={true}
-                                  className="font-medium hover:text-primary hover:underline underline-offset-4"
-                                >
-                                  {professor.name}
-                                </Link>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {professor.email}
-                                </p>
-                                {professor.phone && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {professor.phone}
-                                  </p>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                  {professor.sessionCount} sesión
-                                  {professor.sessionCount === 1 ? '' : 'es'}
-                                  asignada
-                                  {professor.sessionCount === 1 ? '' : 's'}
-                                </p>
-                              </div>
-                              <Link
-                                href={`/chat?with=${professor.userId}`}
-                                prefetch={true}
-                                aria-label={`Iniciar chat con ${professor.name}`}
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-primary transition-colors hover:bg-primary/10"
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                              </Link>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                    <div className="rounded-xl border bg-background p-4">
-                      <h3 className="font-medium">Días y horarios</h3>
-                      {selectedGroup.schedules.length === 0 ? (
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() =>
+                        setParticipantsExpanded((expanded) => !expanded)
+                      }
+                      aria-expanded={participantsExpanded}
+                      aria-controls="group-participants-list"
+                    >
+                      <span className="font-medium">Participantes</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {selectedGroup.participants.length} participante
+                        {selectedGroup.participants.length === 1 ? '' : 's'}
+                        <svg
+                          className={`h-4 w-4 transition-transform ${
+                            participantsExpanded ? 'rotate-180' : ''
+                          }`}
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+                    <div
+                      id="group-participants-list"
+                      className={`${participantsExpanded ? 'block' : 'hidden'}`}
+                    >
+                      {selectedGroup.participants.length === 0 ? (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Este grupo todavía no tiene días cargados.
+                          Este grupo todavía no tiene participantes asignados.
                         </p>
                       ) : (
-                        <ul className="mt-3 space-y-2">
-                          {selectedGroup.schedules.map((day) => (
+                        <ul className="mt-3 divide-y rounded-lg border bg-card">
+                          {selectedGroup.participants.map((participant) => (
                             <li
-                              key={day.id}
-                              className="rounded-lg bg-muted/60 p-3 text-sm"
+                              key={participant.id}
+                              className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                             >
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="font-medium capitalize">
-                                  {formatScheduleDay(day)}
-                                </span>
-                                {day.cancelled && (
-                                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                                    Cancelado
-                                  </span>
+                              <div>
+                                <p className="font-medium">
+                                  {participant.name}
+                                </p>
+                                {participant.responsibleName && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Responsable: {participant.responsibleName}
+                                  </p>
                                 )}
                               </div>
-                              <p className="text-muted-foreground">
-                                {day.schedule}
-                              </p>
+                              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                <span className="rounded-full bg-muted px-2 py-0.5">
+                                  {participant.type === 'child'
+                                    ? 'Alumno'
+                                    : 'Adulto'}
+                                </span>
+                                <span className="rounded-full bg-muted px-2 py-0.5">
+                                  {getParticipantAgeLabel(participant.age)}
+                                </span>
+                              </div>
                             </li>
                           ))}
                         </ul>
                       )}
                     </div>
+                  </div>
 
-                    <div className="rounded-xl border bg-background p-4">
-                      <h3 className="hidden font-medium md:block">
-                        Participantes
-                      </h3>
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between gap-3 text-left md:hidden"
-                        onClick={() =>
-                          setParticipantsExpanded((expanded) => !expanded)
-                        }
-                        aria-expanded={participantsExpanded}
-                        aria-controls="group-participants-list"
-                      >
-                        <span className="font-medium">Participantes</span>
-                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {selectedGroup.participants.length} participante
-                          {selectedGroup.participants.length === 1 ? '' : 's'}
-                          <svg
-                            className={`h-4 w-4 transition-transform ${
-                              participantsExpanded ? 'rotate-180' : ''
-                            }`}
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                            />
-                          </svg>
+                  <div className="rounded-xl border bg-background p-4">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() =>
+                        setProfessorsExpanded((expanded) => !expanded)
+                      }
+                      aria-expanded={professorsExpanded}
+                      aria-controls="group-professors-list"
+                    >
+                      <span className="font-medium">Profesores asignados</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full border px-2.5 py-1 font-medium text-foreground">
+                          {professorsExpanded ? 'Ocultar' : 'Ver'}
                         </span>
-                      </button>
-                      <div
-                        id="group-participants-list"
-                        className={`${participantsExpanded ? 'block' : 'hidden'} md:block`}
-                      >
-                        {selectedGroup.participants.length === 0 ? (
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Este grupo todavía no tiene participantes asignados.
-                          </p>
-                        ) : (
-                          <ul className="mt-3 divide-y rounded-lg border bg-card">
-                            {selectedGroup.participants.map((participant) => (
-                              <li
-                                key={participant.id}
-                                className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div>
-                                  <p className="font-medium">
-                                    {participant.name}
+                        {selectedGroup.professors.length} profesor
+                        {selectedGroup.professors.length === 1 ? '' : 'es'}
+                        <svg
+                          className={`h-4 w-4 transition-transform ${
+                            professorsExpanded ? 'rotate-180' : ''
+                          }`}
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+                    <div
+                      id="group-professors-list"
+                      className={`${professorsExpanded ? 'block' : 'hidden'}`}
+                    >
+                      {selectedGroup.professors.length === 0 ? (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Este grupo todavía no tiene profesores asignados en
+                          sus sesiones.
+                        </p>
+                      ) : (
+                        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {selectedGroup.professors.map((professor) => (
+                            <li
+                              key={professor.userId}
+                              className="rounded-lg border bg-card p-3 text-sm"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 space-y-1">
+                                  <Link
+                                    href={`/professors/${professor.userId}`}
+                                    prefetch={true}
+                                    className="font-medium hover:text-primary hover:underline underline-offset-4"
+                                  >
+                                    {professor.name}
+                                  </Link>
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {professor.email}
                                   </p>
-                                  {participant.responsibleName && (
+                                  {professor.phone && (
                                     <p className="text-xs text-muted-foreground">
-                                      Responsable: {participant.responsibleName}
+                                      {professor.phone}
                                     </p>
                                   )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {professor.sessionCount} sesión
+                                    {professor.sessionCount === 1 ? '' : 'es'}
+                                    asignada
+                                    {professor.sessionCount === 1 ? '' : 's'}
+                                  </p>
                                 </div>
-                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                  <span className="rounded-full bg-muted px-2 py-0.5">
-                                    {participant.type === 'child'
-                                      ? 'Alumno'
-                                      : 'Adulto'}
-                                  </span>
-                                  <span className="rounded-full bg-muted px-2 py-0.5">
-                                    {getParticipantAgeLabel(participant.age)}
-                                  </span>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
+                                <Link
+                                  href={`/chat?with=${professor.userId}`}
+                                  prefetch={true}
+                                  aria-label={`Iniciar chat con ${professor.name}`}
+                                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <MessageCircle className="h-4 w-4" />
+                                </Link>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
+                  </div>
+
+                  <div className="rounded-xl border bg-background p-4">
+                    <h3 className="font-medium">Días y horarios</h3>
+                    {selectedGroup.schedules.length === 0 ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Este grupo todavía no tiene días cargados.
+                      </p>
+                    ) : (
+                      <ul className="mt-3 space-y-2">
+                        {selectedGroup.schedules.map((day) => (
+                          <li
+                            key={day.id}
+                            className="rounded-lg bg-muted/60 p-3 text-sm"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-medium capitalize">
+                                {formatScheduleDay(day)}
+                              </span>
+                              {day.cancelled && (
+                                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                  Cancelado
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-muted-foreground">
+                              {day.schedule}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </section>
               )}
