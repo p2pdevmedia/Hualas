@@ -3,19 +3,26 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { updatePickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { z } from 'zod';
 
 async function checkNoticeOwnershipAndFuture(noticeId: string, userId: string) {
   const notice = await prisma.pickupNotice.findUnique({
     where: { id: noticeId },
-    include: { activityDay: true },
+    include: { activityDay: true, child: { select: { userId: true } } },
   });
 
   if (!notice) {
     return { valid: false, status: 404, message: 'Notice not found' };
   }
 
-  if (notice.createdById !== userId) {
+  let canManageNotice = notice.createdById === userId;
+  if (!canManageNotice) {
+    const accessibleOwnerIds = await getAccessibleChildOwnerIds(userId);
+    canManageNotice = accessibleOwnerIds.includes(notice.child?.userId ?? '');
+  }
+
+  if (!canManageNotice) {
     return { valid: false, status: 403, message: 'Cannot modify this notice' };
   }
 

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import ActivityDaySelector from './activity-day-selector';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import { isActiveMember } from '@/lib/roles';
 
 export default async function CreatePickupNoticePage() {
   const session = await getServerSession(authOptions);
@@ -13,12 +14,7 @@ export default async function CreatePickupNoticePage() {
     redirect('/login');
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-    select: { role: true },
-  });
-
-  if (user?.role !== 'MEMBER') {
+  if (!isActiveMember(session)) {
     redirect('/profile/pickup-notices');
   }
 

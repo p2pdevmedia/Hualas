@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { isActiveAdmin, isActiveMember, isActiveProfessor } from '@/lib/roles';
 
 export default async function PickupNoticesPage() {
   const session = await getServerSession(authOptions);
@@ -12,15 +13,11 @@ export default async function PickupNoticesPage() {
     redirect('/login');
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-    select: { role: true },
-  });
-
-  const isProfessor = user?.role === 'PROFESSOR' || user?.role === 'ADMIN';
-  const isMember = user?.role === 'MEMBER';
+  const isMember = isActiveMember(session);
+  const isProfessor = isActiveProfessor(session) || isActiveAdmin(session);
 
   let where: any = { deletedAt: null };
+  let accessibleChildIds: string[] = [];
 
   if (isMember) {
     const userChildren = await prisma.child.findMany({
@@ -28,13 +25,13 @@ export default async function PickupNoticesPage() {
       select: { id: true },
     });
 
-    const childIds = userChildren.map((c) => c.id);
+    accessibleChildIds = userChildren.map((c) => c.id);
 
     where = {
       deletedAt: null,
       OR: [
         { createdById: (session.user as any).id },
-        { childId: { in: childIds } },
+        { childId: { in: accessibleChildIds } },
       ],
     };
   } else if (isProfessor) {
@@ -126,8 +123,13 @@ export default async function PickupNoticesPage() {
       ) : (
         <div className="space-y-4">
           {notices.map((notice) => {
-            const isOwnNotice =
-              isProfessor || notice.createdById === (session.user as any).id;
+            const wasCreatedByCurrentUser =
+              notice.createdById === session.user.id;
+            const isOwnNotice = isProfessor || wasCreatedByCurrentUser;
+            const canManageAsParent =
+              isMember &&
+              (wasCreatedByCurrentUser ||
+                accessibleChildIds.includes(notice.childId));
             return (
               <div
                 key={notice.id}
@@ -211,7 +213,7 @@ export default async function PickupNoticesPage() {
                     </div>
                   </div>
                 )}
-                {isMember && isOwnNotice && (
+                {canManageAsParent && (
                   <div className="mt-4 flex gap-2">
                     <Link href={`/profile/pickup-notices/${notice.id}/edit`}>
                       <Button variant="outline">Editar</Button>
