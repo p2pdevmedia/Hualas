@@ -179,12 +179,11 @@ export default function Navbar() {
       className={cn(navLinkClass('/news'), 'inline-flex items-center gap-2')}
       onClick={onClick}
     >
-      <span
-        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-current/25 bg-current/10"
+      <Newspaper
+        className="h-5 w-5 shrink-0 text-current"
+        strokeWidth={2.2}
         aria-hidden="true"
-      >
-        <Newspaper className="h-5 w-5" strokeWidth={2.2} />
-      </span>
+      />
       <span>Noticias</span>
     </Link>
   );

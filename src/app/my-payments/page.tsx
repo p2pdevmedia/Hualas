@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { formatAmount } from '@/lib/accounting';
 import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
+import type { ProfessorInvoice } from '@prisma/client';
 import ProfessorInvoicesPanel from '@/components/accounting/professor-invoices-panel';
 
 const MONTHS = [
@@ -24,24 +25,29 @@ const MONTHS = [
 export default async function MyPaymentsPage() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  const role = (session?.user as any)?.role;
+  const role =
+    (session?.user as any)?.activeRole ?? (session?.user as any)?.role;
 
   if (!userId || role !== 'PROFESSOR') redirect('/');
 
-  const [profile, invoices] = await Promise.all([
-    prisma.professorProfile.findUnique({
-      where: { userId },
-      include: {
-        payments: {
-          orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
-        },
+  const profile = await prisma.professorProfile.findUnique({
+    where: { userId },
+    include: {
+      payments: {
+        orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
       },
-    }),
-    prisma.professorInvoice.findMany({
+    },
+  });
+
+  let invoices: ProfessorInvoice[] = [];
+  try {
+    invoices = await prisma.professorInvoice.findMany({
       where: { professorId: userId },
       orderBy: { createdAt: 'desc' },
-    }),
-  ]);
+    });
+  } catch (err) {
+    console.error('[my-payments] failed to load professor invoices', err);
+  }
 
   const invoiceRows = invoices.map((invoice) => ({
     id: invoice.id,
