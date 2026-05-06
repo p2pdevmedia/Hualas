@@ -13,6 +13,7 @@ import {
   XCircle,
   Users,
   MessageSquare,
+  Newspaper,
 } from 'lucide-react';
 import type { NotificationType } from '@prisma/client';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,7 @@ const ICONS: Record<NotificationType, typeof Bell> = {
   PAYMENT_REJECTED: XCircle,
   ACTIVITY_CAPACITY_FULL: Users,
   CHAT_MESSAGE_NEW: MessageSquare,
+  NEWS_CREATED: Newspaper,
 };
 
 function relativeTime(date: Date): string {

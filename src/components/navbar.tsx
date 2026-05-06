@@ -235,17 +235,30 @@ export default function Navbar() {
               {isMember ? t.myActivities : t.activities}
             </Link>
           )}
-          {isProfessor && (
-            <Link
-              href="/professor/students"
-              className={navLinkClass('/professor/students')}
-              prefetch={true}
-            >
-              Mis grupos
+          {isMemberRole && (
+            <Link href="/news" className={navLinkClass('/news')}>
+              Noticias
             </Link>
+          )}
+          {isProfessor && (
+            <>
+              <Link
+                href="/professor/students"
+                className={navLinkClass('/professor/students')}
+                prefetch={true}
+              >
+                Mis grupos
+              </Link>
+              <Link href="/news" className={navLinkClass('/news')}>
+                Noticias
+              </Link>
+            </>
           )}
           {isAdmin && (
             <>
+              <Link href="/news" className={navLinkClass('/news')}>
+                Noticias
+              </Link>
               <Link
                 href="/admin/users"
                 className={navLinkClass('/admin/users')}
@@ -485,6 +498,15 @@ export default function Navbar() {
               )}
               {isMemberRole && (
                 <Link
+                  href="/news"
+                  className={navLinkClass('/news')}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Noticias
+                </Link>
+              )}
+              {isMemberRole && (
+                <Link
                   href="/activities/cart"
                   className={cn(
                     navLinkClass('/activities/cart'),
@@ -543,6 +565,13 @@ export default function Navbar() {
               {isAdmin && (
                 <>
                   <Link
+                    href="/news"
+                    className={navLinkClass('/news')}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Noticias
+                  </Link>
+                  <Link
                     href="/admin/users"
                     className={navLinkClass('/admin/users')}
                     onClick={() => setMenuOpen(false)}
@@ -589,14 +618,23 @@ export default function Navbar() {
                 </Link>
               )}
               {isProfessor && (
-                <Link
-                  href="/professor/students"
-                  className={navLinkClass('/professor/students')}
-                  onClick={() => setMenuOpen(false)}
-                  prefetch={true}
-                >
-                  Mis grupos
-                </Link>
+                <>
+                  <Link
+                    href="/professor/students"
+                    className={navLinkClass('/professor/students')}
+                    onClick={() => setMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    Mis grupos
+                  </Link>
+                  <Link
+                    href="/news"
+                    className={navLinkClass('/news')}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Noticias
+                  </Link>
+                </>
               )}
               {isProfessor && (
                 <Link
