@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { NewsScope, type Prisma } from '@prisma/client';
+import type { Prisma, Role } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getReadableActivityIds, isNewsAdminRole } from '@/lib/news-access';
@@ -14,6 +14,16 @@ type NewsWithRelations = Prisma.NewsGetPayload<{
     media: true;
   };
 }>;
+
+type ActivityOption = {
+  id: string;
+  name: string;
+};
+
+type NewsPageData = {
+  news: NewsWithRelations[];
+  activities: ActivityOption[];
+};
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat('es-AR', {
@@ -28,34 +38,32 @@ function creatorName(news: NewsWithRelations) {
   return parts.length > 0 ? parts.join(' ') : 'Administración';
 }
 
-export default async function NewsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    redirect('/login');
-  }
+async function loadNewsPageData({
+  isAdmin,
+  userId,
+  role,
+}: {
+  isAdmin: boolean;
+  userId: string;
+  role: Role;
+}): Promise<NewsPageData> {
+  const readableActivityIds = await getReadableActivityIds({ userId, role });
 
-  const role = session.user.activeRole ?? session.user.role;
-  const isAdmin = isNewsAdminRole(role);
-  const readableActivityIds = await getReadableActivityIds({
-    userId: session.user.id,
-    role,
-  });
+  const readableActivityWhere: Prisma.NewsWhereInput[] = [
+    { scope: 'CLUB' },
+    ...(readableActivityIds && readableActivityIds.length > 0
+      ? [
+          {
+            scope: 'ACTIVITY' as const,
+            activityId: { in: readableActivityIds },
+          },
+        ]
+      : []),
+  ];
 
   const where: Prisma.NewsWhereInput = isAdmin
     ? {}
-    : {
-        OR: [
-          { scope: NewsScope.CLUB },
-          ...(readableActivityIds && readableActivityIds.length > 0
-            ? [
-                {
-                  scope: NewsScope.ACTIVITY,
-                  activityId: { in: readableActivityIds },
-                },
-              ]
-            : []),
-        ],
-      };
+    : { OR: readableActivityWhere };
 
   const [news, activities] = await Promise.all([
     prisma.news.findMany({
@@ -76,6 +84,34 @@ export default async function NewsPage() {
       : Promise.resolve([]),
   ]);
 
+  return { news, activities };
+}
+
+export default async function NewsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  const role = session.user.activeRole ?? session.user.role;
+  const isAdmin = isNewsAdminRole(role);
+
+  let pageData: NewsPageData;
+  let loadError = false;
+  try {
+    pageData = await loadNewsPageData({
+      isAdmin,
+      userId: session.user.id,
+      role,
+    });
+  } catch (err) {
+    console.error('[news] failed to render news page', err);
+    loadError = true;
+    pageData = { news: [], activities: [] };
+  }
+
+  const { news, activities } = pageData;
+
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <header className="space-y-2">
@@ -90,7 +126,17 @@ export default async function NewsPage() {
 
       {isAdmin && <CreateNewsForm activities={activities} />}
 
-      {news.length === 0 ? (
+      {loadError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-destructive">
+            No pudimos cargar las noticias
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Intentá actualizar la página en unos minutos. Si el problema
+            continúa, avisale a administración.
+          </p>
+        </div>
+      ) : news.length === 0 ? (
         <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
           <h2 className="text-lg font-semibold">Todavía no hay noticias</h2>
           <p className="mt-1 text-sm text-muted-foreground">
