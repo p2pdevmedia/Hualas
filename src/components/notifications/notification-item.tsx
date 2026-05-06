@@ -14,6 +14,7 @@ import {
   Users,
   MessageSquare,
   Newspaper,
+  FileText,
 } from 'lucide-react';
 import type { NotificationType } from '@prisma/client';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,7 @@ const ICONS: Record<NotificationType, typeof Bell> = {
   ACTIVITY_CAPACITY_FULL: Users,
   CHAT_MESSAGE_NEW: MessageSquare,
   NEWS_CREATED: Newspaper,
+  PROFESSOR_INVOICE_CREATED: FileText,
 };
 
 function relativeTime(date: Date): string {

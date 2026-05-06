@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { Role } from '@prisma/client';
 
 export async function recipientsForActivityDay(
   dayId: string
@@ -138,15 +139,27 @@ export async function recipientsForPickupNoticeAcknowledged(
   return [ack.pickupNotice.createdById];
 }
 
-export async function recipientsForManualMovement(): Promise<string[]> {
+export async function recipientsForAccountingUsers(): Promise<string[]> {
+  const accountingRoles: Role[] = ['COUNTER', 'ADMIN', 'SUPER_ADMIN'];
   const users = await prisma.user.findMany({
     where: {
       isActive: true,
-      role: { in: ['COUNTER', 'ADMIN', 'SUPER_ADMIN'] },
+      OR: [
+        { role: { in: accountingRoles } },
+        { roleAssignments: { some: { role: { in: accountingRoles } } } },
+      ],
     },
     select: { id: true },
   });
   return users.map((u) => u.id);
+}
+
+export async function recipientsForManualMovement(): Promise<string[]> {
+  return recipientsForAccountingUsers();
+}
+
+export async function recipientsForProfessorInvoice(): Promise<string[]> {
+  return recipientsForAccountingUsers();
 }
 
 export async function recipientsForOrderPayment(

@@ -13,6 +13,7 @@ export const NOTIFICATION_TYPES = [
   'ACTIVITY_CAPACITY_FULL',
   'CHAT_MESSAGE_NEW',
   'NEWS_CREATED',
+  'PROFESSOR_INVOICE_CREATED',
 ] as const;
 
 export const notificationTypeSchema = z.enum(NOTIFICATION_TYPES);

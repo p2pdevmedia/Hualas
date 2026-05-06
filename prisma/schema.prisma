@@ -744,6 +744,7 @@ enum NotificationType {
   ACTIVITY_CAPACITY_FULL
   CHAT_MESSAGE_NEW
   NEWS_CREATED
+  PROFESSOR_INVOICE_CREATED
 }
 
 model ProfessorProfile {
