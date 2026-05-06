@@ -32,18 +32,209 @@ type Child = {
   address: string | null;
 };
 
-function getMissingChildFields(
-  child: Child,
-  parentPhone: string | null
-): string[] {
+type ChildProfileModalProps = {
+  child: Child;
+  missingFields: string[];
+  onClose: () => void;
+  onSaved: (child: Child) => void;
+};
+
+function getMissingChildFields(child: Child): string[] {
   const missing: string[] = [];
   if (!child.name?.trim()) missing.push('nombre del menor');
   if (!child.lastName?.trim()) missing.push('apellido del menor');
   if (!child.documentNumber?.trim()) missing.push('DNI del menor');
   if (!child.birthDate) missing.push('fecha de nacimiento del menor');
   if (!child.address?.trim()) missing.push('dirección del menor');
-  if (!parentPhone?.trim()) missing.push('tu teléfono');
   return missing;
+}
+
+function toDateInputValue(value: string | null) {
+  if (!value) return '';
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+
+  return parsed.toISOString().split('T')[0];
+}
+
+function ChildProfileModal({
+  child,
+  missingFields,
+  onClose,
+  onSaved,
+}: ChildProfileModalProps) {
+  const [name, setName] = useState(child.name);
+  const [lastName, setLastName] = useState(child.lastName ?? '');
+  const [documentNumber, setDocumentNumber] = useState(
+    child.documentNumber ?? ''
+  );
+  const [birthDate, setBirthDate] = useState(toDateInputValue(child.birthDate));
+  const [address, setAddress] = useState(child.address ?? '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const inputClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(`/api/children/${child.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          lastName,
+          documentNumber,
+          birthDate: birthDate || null,
+          address,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('No se pudieron guardar los datos');
+      }
+
+      const updated = await res.json();
+      onSaved({
+        id: updated.id,
+        name: updated.name,
+        lastName: updated.lastName ?? null,
+        documentNumber: updated.documentNumber ?? null,
+        birthDate: updated.birthDate
+          ? new Date(updated.birthDate).toISOString()
+          : null,
+        address: updated.address ?? null,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'No se pudieron guardar los datos'
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="child-profile-modal-title"
+    >
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border bg-card p-6 shadow-xl">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Datos del menor
+          </p>
+          <h2
+            id="child-profile-modal-title"
+            className="text-xl font-semibold tracking-tight"
+          >
+            Completar datos de {child.name}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Cargá los datos obligatorios para poder inscribir a este menor en la
+            actividad.
+          </p>
+        </div>
+
+        {missingFields.length > 0 && (
+          <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Faltan: {missingFields.join(', ')}.
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1 text-sm">
+              <span className="font-medium">Nombre</span>
+              <input
+                className={inputClass}
+                name="given-name"
+                autoComplete="given-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="font-medium">Apellido</span>
+              <input
+                className={inputClass}
+                name="family-name"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+
+          <label className="space-y-1 text-sm block">
+            <span className="font-medium">DNI del menor</span>
+            <input
+              className={inputClass}
+              name="document-number"
+              autoComplete="off"
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className="space-y-1 text-sm block">
+            <span className="font-medium">Fecha de nacimiento</span>
+            <input
+              className={inputClass}
+              name="birth-date"
+              autoComplete="bday"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className="space-y-1 text-sm block">
+            <span className="font-medium">Dirección</span>
+            <input
+              className={inputClass}
+              name="street-address"
+              autoComplete="street-address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+            />
+          </label>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              {isSaving ? 'Guardando…' : 'Guardar datos'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function calculateAge(birthDate: Date, referenceDate: Date): number {
@@ -150,6 +341,7 @@ export default function JoinEnrollmentPanel({
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedPersonId, setSelectedPersonId] = useState('');
+  const [childModalId, setChildModalId] = useState<string | null>(null);
 
   useEffect(() => {
     if (session && isMember) {
@@ -217,13 +409,27 @@ export default function JoinEnrollmentPanel({
   );
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
+  const childMissingFields = useMemo(() => {
+    if (!effectivePersonId || effectivePersonId === 'self') return [];
+    const child = children.find((c) => c.id === effectivePersonId);
+    if (!child) return [];
+    return getMissingChildFields(child);
+  }, [effectivePersonId, children]);
+
   const missingFields = useMemo(() => {
     if (!effectivePersonId) return [];
     if (effectivePersonId === 'self') return selfMissingFields ?? [];
-    const child = children.find((c) => c.id === effectivePersonId);
-    if (!child) return [];
-    return getMissingChildFields(child, userPhone ?? null);
-  }, [effectivePersonId, selfMissingFields, children, userPhone]);
+    const parentMissingFields = !userPhone?.trim() ? ['tu teléfono'] : [];
+    return [...childMissingFields, ...parentMissingFields];
+  }, [effectivePersonId, selfMissingFields, childMissingFields, userPhone]);
+
+  const selectedChild =
+    effectivePersonId && effectivePersonId !== 'self'
+      ? (children.find((c) => c.id === effectivePersonId) ?? null)
+      : null;
+  const modalChild = childModalId
+    ? (children.find((c) => c.id === childModalId) ?? null)
+    : null;
 
   useEffect(() => {
     if (selectedGroupId && !eligibleGroupIds.has(selectedGroupId)) {
@@ -254,6 +460,15 @@ export default function JoinEnrollmentPanel({
     !hasNoEligibleGroups &&
     !profileIncomplete &&
     !groupAgeError;
+
+  const handleChildSaved = (updatedChild: Child) => {
+    setChildren((currentChildren) =>
+      currentChildren.map((child) =>
+        child.id === updatedChild.id ? updatedChild : child
+      )
+    );
+    setChildModalId(null);
+  };
 
   const handleRegister = () => {
     if (!session) {
@@ -286,6 +501,14 @@ export default function JoinEnrollmentPanel({
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[1fr_auto] lg:items-start lg:gap-8">
+      {modalChild && (
+        <ChildProfileModal
+          child={modalChild}
+          missingFields={getMissingChildFields(modalChild)}
+          onClose={() => setChildModalId(null)}
+          onSaved={handleChildSaved}
+        />
+      )}
       {session && people.length > 1 && (
         <div className="rounded-xl border bg-card p-5 lg:col-start-1">
           <PersonPicker
@@ -373,13 +596,28 @@ export default function JoinEnrollmentPanel({
                 Ir a mi perfil
               </Link>
             ) : (
-              <Link
-                href="/profile"
-                prefetch={true}
-                className="underline underline-offset-4 hover:text-amber-900"
-              >
-                Completar datos del menor
-              </Link>
+              <div className="space-y-2">
+                {childMissingFields.length > 0 && selectedChild && (
+                  <button
+                    type="button"
+                    onClick={() => setChildModalId(selectedChild.id)}
+                    className="underline underline-offset-4 hover:text-amber-900"
+                  >
+                    Completar datos del menor
+                  </button>
+                )}
+                {!userPhone?.trim() && (
+                  <div>
+                    <Link
+                      href="/profile"
+                      prefetch={true}
+                      className="underline underline-offset-4 hover:text-amber-900"
+                    >
+                      Completar mi teléfono
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         ) : groupAgeError ? (
