@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { formatAmount } from '@/lib/accounting';
+import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
+import ProfessorInvoicesPanel from '@/components/accounting/professor-invoices-panel';
 
 const MONTHS = [
   'Enero',
@@ -26,14 +28,29 @@ export default async function MyPaymentsPage() {
 
   if (!userId || role !== 'PROFESSOR') redirect('/');
 
-  const profile = await prisma.professorProfile.findUnique({
-    where: { userId },
-    include: {
-      payments: {
-        orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+  const [profile, invoices] = await Promise.all([
+    prisma.professorProfile.findUnique({
+      where: { userId },
+      include: {
+        payments: {
+          orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+        },
       },
-    },
-  });
+    }),
+    prisma.professorInvoice.findMany({
+      where: { professorId: userId },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+
+  const invoiceRows = invoices.map((invoice) => ({
+    id: invoice.id,
+    originalName: invoice.originalName,
+    contentType: invoice.contentType,
+    size: invoice.size,
+    createdAt: invoice.createdAt.toISOString(),
+    fileUrl: buildProfessorInvoiceFileUrl(invoice.id),
+  }));
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
@@ -159,6 +176,16 @@ export default async function MyPaymentsPage() {
           </section>
         </>
       )}
+
+      <ProfessorInvoicesPanel
+        professorId={userId}
+        initialInvoices={invoiceRows}
+        canUpload={true}
+        canDelete={true}
+        title="Mis facturas"
+        description="Subí tus facturas en PDF o imagen para que contaduría las revise desde tu perfil de profesor."
+        emptyMessage="Todavía no subiste facturas."
+      />
     </div>
   );
 }

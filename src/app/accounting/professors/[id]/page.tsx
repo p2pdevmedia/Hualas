@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { isAccountingRole, formatPersonName } from '@/lib/accounting';
+import { formatPersonName } from '@/lib/accounting';
+import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
+import ProfessorInvoicesPanel from '@/components/accounting/professor-invoices-panel';
 import ProfessorProfileForm from './professor-profile-form';
 
 export default async function ProfessorAccountingDetailPage({
@@ -35,6 +37,9 @@ export default async function ProfessorAccountingDetailPage({
           },
         },
       },
+      professorInvoices: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 
@@ -62,6 +67,15 @@ export default async function ProfessorAccountingDetailPage({
     createdBy: p.createdBy,
   }));
 
+  const invoices = professor.professorInvoices.map((invoice) => ({
+    id: invoice.id,
+    originalName: invoice.originalName,
+    contentType: invoice.contentType,
+    size: invoice.size,
+    createdAt: invoice.createdAt.toISOString(),
+    fileUrl: buildProfessorInvoiceFileUrl(invoice.id),
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -84,6 +98,15 @@ export default async function ProfessorAccountingDetailPage({
         professorId={professor.id}
         profile={profile}
         payments={payments}
+      />
+
+      <ProfessorInvoicesPanel
+        professorId={professor.id}
+        initialInvoices={invoices}
+        canDelete={true}
+        title="Facturas"
+        description="Facturas cargadas por el profesor desde Mis pagos."
+        emptyMessage="El profesor todavía no cargó facturas."
       />
     </div>
   );

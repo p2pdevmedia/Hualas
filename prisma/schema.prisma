@@ -61,6 +61,7 @@ model User {
   notificationPreferences    NotificationPreference[]
   professorProfile           ProfessorProfile?
   professorPaymentsCreated   ProfessorPayment[] @relation("ProfessorPaymentCreatedBy")
+  professorInvoices          ProfessorInvoice[] @relation("ProfessorInvoices")
   roleAssignments            UserRoleAssignment[] @relation("UserRoleAssignmentUser")
   roleAssignmentsGranted     UserRoleAssignment[] @relation("UserRoleAssignmentAssignedBy")
 }
@@ -736,6 +737,20 @@ model ProfessorPayment {
   @@unique([professorProfileId, periodMonth, periodYear])
   @@index([professorProfileId])
   @@index([status, periodMonth, periodYear])
+}
+
+model ProfessorInvoice {
+  id           String   @id @default(cuid())
+  professorId  String
+  professor    User     @relation("ProfessorInvoices", fields: [professorId], references: [id], onDelete: Cascade)
+  originalName String
+  contentType  String
+  size         Int
+  blobUrl      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([professorId, createdAt])
 }
 
 enum ProfessorPaymentStatus {
