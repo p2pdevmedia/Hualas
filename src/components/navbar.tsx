@@ -241,7 +241,7 @@ export default function Navbar() {
               className={navLinkClass('/professor/students')}
               prefetch={true}
             >
-              Mis alumnos
+              Mis grupos
             </Link>
           )}
           {isAdmin && (
@@ -595,7 +595,7 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                   prefetch={true}
                 >
-                  Mis alumnos
+                  Mis grupos
                 </Link>
               )}
               {isProfessor && (

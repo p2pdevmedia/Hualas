@@ -155,7 +155,7 @@ export default function StudentsSearch({
   students: StudentEntry[];
   groups: ProfessorGroupEntry[];
 }) {
-  const [activeTab, setActiveTab] = useState<'students' | 'groups'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'groups'>('groups');
   const [selectedGroupId, setSelectedGroupId] = useState(groups[0]?.id ?? '');
   const [query, setQuery] = useState('');
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
@@ -182,19 +182,6 @@ export default function StudentsSearch({
       >
         <button
           type="button"
-          onClick={() => setActiveTab('students')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'students'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-          }`}
-          role="tab"
-          aria-selected={activeTab === 'students'}
-        >
-          Mis alumnos
-        </button>
-        <button
-          type="button"
           onClick={() => setActiveTab('groups')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'groups'
@@ -205,6 +192,19 @@ export default function StudentsSearch({
           aria-selected={activeTab === 'groups'}
         >
           Mis grupos
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('students')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'students'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+          role="tab"
+          aria-selected={activeTab === 'students'}
+        >
+          Mis alumnos
         </button>
       </div>
 
