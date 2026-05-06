@@ -357,7 +357,24 @@ export default async function MyActivitiesPage({
         <h1 className="text-2xl font-semibold tracking-tight">
           Mis actividades
         </h1>
-        <p className="text-sm text-muted-foreground">
+        {isProfessorView && professorAssignments.length > 0 && (
+          <nav
+            aria-label="Actividades asignadas"
+            className="mt-3 flex flex-wrap gap-2"
+          >
+            {professorAssignments.map(({ activity }) => (
+              <Link
+                key={activity.id}
+                href={`/activities/${activity.id}`}
+                prefetch={true}
+                className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:border-primary hover:bg-primary/15 hover:text-primary"
+              >
+                {activity.name}
+              </Link>
+            ))}
+          </nav>
+        )}
+        <p className="mt-2 text-sm text-muted-foreground">
           {isProfessorView
             ? 'Actividades en las que estás asignado como profesor.'
             : 'Actividades en las que estás inscripto vos o alguien de tu familia.'}
