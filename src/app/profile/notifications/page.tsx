@@ -29,6 +29,7 @@ const TYPE_ROLES: Record<NotificationType, Role[]> = {
   ACTIVITY_CAPACITY_FULL: ['ADMIN', 'SUPER_ADMIN'],
   CHAT_MESSAGE_NEW: ALL_ROLES,
   NEWS_CREATED: ALL_ROLES,
+  PROFESSOR_INVOICE_CREATED: ['COUNTER', 'ADMIN', 'SUPER_ADMIN'],
 };
 
 const TYPE_LABELS: Record<
@@ -86,6 +87,10 @@ const TYPE_LABELS: Record<
     title: 'Noticias institucionales',
     description:
       'Cuando administración publica una noticia para el club o tus actividades.',
+  },
+  PROFESSOR_INVOICE_CREATED: {
+    title: 'Facturas de profesores',
+    description: 'Cuando un profesor carga una nueva factura para contaduría.',
   },
 };
 

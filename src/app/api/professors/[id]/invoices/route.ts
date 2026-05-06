@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { isAccountingRole } from '@/lib/accounting';
 import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
 import { prisma } from '@/lib/prisma';
+import { notifyProfessorInvoiceCreated } from '@/lib/notifications/notification-service';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -150,6 +151,8 @@ export async function POST(
       blobUrl: blob.url,
     },
   });
+
+  await notifyProfessorInvoiceCreated(invoice.id);
 
   return NextResponse.json(
     { invoice: serializeInvoice(invoice) },

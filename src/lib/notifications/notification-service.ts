@@ -13,6 +13,7 @@ import {
   recipientsForCapacityFull,
   recipientsForChatMessage,
   recipientsForNews,
+  recipientsForProfessorInvoice,
 } from './recipients';
 
 function logFailure(label: string, err: unknown): void {
@@ -417,6 +418,41 @@ export async function notifyActivityCapacityFull(
     });
   } catch (err) {
     logFailure('notifyActivityCapacityFull', err);
+  }
+}
+
+export async function notifyProfessorInvoiceCreated(
+  invoiceId: string
+): Promise<void> {
+  try {
+    const invoice = await prisma.professorInvoice.findUnique({
+      where: { id: invoiceId },
+      select: {
+        id: true,
+        professorId: true,
+        originalName: true,
+        professor: { select: { name: true, lastName: true } },
+      },
+    });
+    if (!invoice) return;
+    const recipients = await recipientsForProfessorInvoice();
+    if (recipients.length === 0) return;
+    const professorName =
+      `${invoice.professor.name ?? ''}${invoice.professor.lastName ? ' ' + invoice.professor.lastName : ''}`.trim() ||
+      'Un profesor';
+    await dispatch({
+      type: 'PROFESSOR_INVOICE_CREATED',
+      recipients,
+      title: `Nueva factura — ${professorName}`,
+      body: `Se recibió la factura ${invoice.originalName}.`,
+      url: `/accounting/professors/${invoice.professorId}`,
+      data: {
+        invoiceId: invoice.id,
+        professorId: invoice.professorId,
+      } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyProfessorInvoiceCreated', err);
   }
 }
 
