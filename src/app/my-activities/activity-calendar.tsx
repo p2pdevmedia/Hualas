@@ -372,6 +372,36 @@ export default function ActivityCalendar({
 
   return (
     <div className="space-y-3">
+      {variant !== 'month' && (
+        <div className="inline-flex rounded-lg border bg-muted/30 p-1">
+          <button
+            type="button"
+            onClick={() => setShowMonthCalendar(false)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              !showMonthCalendar
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-pressed={!showMonthCalendar}
+          >
+            Día
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMonthCalendar(true)}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              showMonthCalendar
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-pressed={showMonthCalendar}
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden="true" />
+            Calendario mensual
+          </button>
+        </div>
+      )}
+
       {variant !== 'month' && !showMonthCalendar && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -554,36 +584,6 @@ export default function ActivityCalendar({
               })}
             </div>
           </div>
-        </div>
-      )}
-
-      {variant !== 'month' && (
-        <div className="inline-flex rounded-lg border bg-muted/30 p-1">
-          <button
-            type="button"
-            onClick={() => setShowMonthCalendar(false)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              !showMonthCalendar
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            aria-pressed={!showMonthCalendar}
-          >
-            Día
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMonthCalendar(true)}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              showMonthCalendar
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            aria-pressed={showMonthCalendar}
-          >
-            <CalendarDays className="h-4 w-4" aria-hidden="true" />
-            Calendario mensual
-          </button>
         </div>
       )}
 
