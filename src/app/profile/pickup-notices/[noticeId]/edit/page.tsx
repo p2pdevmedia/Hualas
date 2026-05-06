@@ -5,7 +5,11 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import { PickupNoticeForm } from '@/components/pickup-notice/parent-form';
-import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import {
+  getAccessibleChildOwnerIds,
+  getAccessibleChildrenWhere,
+} from '@/lib/family-access';
+import { isActiveMember } from '@/lib/roles';
 
 export default async function EditPickupNoticePage({
   params,
@@ -18,12 +22,7 @@ export default async function EditPickupNoticePage({
     redirect('/login');
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-    select: { role: true },
-  });
-
-  if (user?.role !== 'MEMBER') {
+  if (!isActiveMember(session)) {
     redirect('/profile/pickup-notices');
   }
 
@@ -39,7 +38,13 @@ export default async function EditPickupNoticePage({
     },
   });
 
-  if (!notice || notice.createdById !== (session.user as any).id) {
+  const accessibleOwnerIds = await getAccessibleChildOwnerIds(session.user.id);
+  const canManageNotice =
+    notice &&
+    (notice.createdById === session.user.id ||
+      accessibleOwnerIds.includes(notice.child.userId));
+
+  if (!canManageNotice) {
     redirect('/profile/pickup-notices');
   }
 
