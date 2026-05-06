@@ -130,12 +130,9 @@ export default function GroupScheduleCalendar({
   activityStartDate,
 }: Props) {
   const [currentDate, setCurrentDate] = useState(() => {
-    const parsedActivityDate = activityStartDate
-      ? new Date(activityStartDate)
-      : null;
-    return parsedActivityDate && !Number.isNaN(parsedActivityDate.getTime())
-      ? parsedActivityDate
-      : new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
   });
 
   const groupColorMap = useMemo(() => {
