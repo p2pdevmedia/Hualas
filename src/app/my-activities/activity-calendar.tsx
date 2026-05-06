@@ -806,6 +806,41 @@ export default function ActivityCalendar({
                       )}
                     </div>
                   )}
+                  {d.attendanceOptions && d.attendanceOptions.length > 0 && (
+                    <div className="mt-3 space-y-2 border-t pt-3">
+                      {d.attendanceOptions.map((option) => {
+                        const status = getAttendanceStatus(d.id, option);
+                        const optionKey = `${d.id}:${option.participantId}`;
+                        const isSaving = savingAttendanceKey === optionKey;
+                        const buttonState = getAttendanceButtonState(status);
+
+                        return (
+                          <div key={option.participantId}>
+                            <button
+                              type="button"
+                              disabled={isSaving || d.cancelled}
+                              onClick={() =>
+                                updateAttendance(
+                                  d.id,
+                                  option.participantId,
+                                  buttonState.nextStatus
+                                )
+                              }
+                              aria-pressed={buttonState.ariaPressed}
+                              className={`w-full rounded-full border px-3 py-1.5 text-left transition-colors ${buttonState.className} disabled:cursor-not-allowed disabled:opacity-60`}
+                            >
+                              <span className="block truncate text-[11px] font-semibold">
+                                {buttonState.label} · {option.label}
+                              </span>
+                              <span className="block truncate text-[10px] font-medium opacity-75">
+                                {buttonState.helper}
+                              </span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
