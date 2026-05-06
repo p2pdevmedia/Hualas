@@ -378,7 +378,7 @@ export default function Navbar() {
                       href="/my-payments"
                       className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
                     >
-                      Mis pagos
+                      Ingresos
                     </Link>
                   )}
                   <select
@@ -604,7 +604,7 @@ export default function Navbar() {
                   className={navLinkClass('/my-payments')}
                   onClick={() => setMenuOpen(false)}
                 >
-                  Mis pagos
+                  Ingresos
                 </Link>
               )}
               <ProfileSwitcher className="self-start" />
