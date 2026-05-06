@@ -384,7 +384,7 @@ export default function ActivityCalendar({
             }`}
             aria-pressed={!showMonthCalendar}
           >
-            Día
+            Semanal
           </button>
           <button
             type="button"
@@ -513,55 +513,37 @@ export default function ActivityCalendar({
                                           savingAttendanceKey === optionKey;
 
                                         return (
-                                          <div
-                                            key={option.participantId}
-                                            className="space-y-1"
-                                          >
-                                            <p className="truncate text-[11px] font-medium text-muted-foreground">
-                                              {option.label}
-                                            </p>
-                                            <div className="flex gap-2">
-                                              <button
-                                                type="button"
-                                                disabled={
-                                                  isSaving || day.cancelled
-                                                }
-                                                onClick={() =>
-                                                  updateAttendance(
-                                                    day.id,
-                                                    option.participantId,
-                                                    'GOING'
-                                                  )
-                                                }
-                                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
-                                                  status === 'GOING'
-                                                    ? 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400'
-                                                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                                                } disabled:cursor-not-allowed disabled:opacity-60`}
-                                              >
-                                                Voy
-                                              </button>
-                                              <button
-                                                type="button"
-                                                disabled={
-                                                  isSaving || day.cancelled
-                                                }
-                                                onClick={() =>
-                                                  updateAttendance(
-                                                    day.id,
-                                                    option.participantId,
-                                                    'NOT_GOING'
-                                                  )
-                                                }
-                                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
+                                          <div key={option.participantId}>
+                                            <button
+                                              type="button"
+                                              disabled={
+                                                isSaving || day.cancelled
+                                              }
+                                              onClick={() =>
+                                                updateAttendance(
+                                                  day.id,
+                                                  option.participantId,
                                                   status === 'NOT_GOING'
-                                                    ? 'border-destructive bg-destructive/10 text-destructive'
-                                                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                                                } disabled:cursor-not-allowed disabled:opacity-60`}
-                                              >
-                                                No voy
-                                              </button>
-                                            </div>
+                                                    ? 'GOING'
+                                                    : 'NOT_GOING'
+                                                )
+                                              }
+                                              aria-pressed={
+                                                status === 'NOT_GOING'
+                                              }
+                                              className={`w-full rounded-full border px-3 py-1.5 text-left text-[11px] font-semibold transition-colors ${
+                                                status === 'NOT_GOING'
+                                                  ? 'border-destructive bg-destructive/10 text-destructive'
+                                                  : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                                              } disabled:cursor-not-allowed disabled:opacity-60`}
+                                            >
+                                              <span className="block truncate">
+                                                {status === 'NOT_GOING'
+                                                  ? 'Voy'
+                                                  : 'No voy'}{' '}
+                                                · {option.label}
+                                              </span>
+                                            </button>
                                           </div>
                                         );
                                       })}
