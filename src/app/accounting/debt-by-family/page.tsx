@@ -83,6 +83,7 @@ export default async function DebtByFamilyPage({
     charges,
     orders,
     payments,
+    socialFeePayments,
     families,
     concept,
   ] = await Promise.all([
@@ -249,6 +250,19 @@ export default async function DebtByFamilyPage({
       skip: paymentsOffset,
       take: PAYMENTS_PAGE_SIZE,
     }),
+    prisma.socialFeePayment.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        userId: true,
+        childId: true,
+        amount: true,
+        createdAt: true,
+        periodMonth: true,
+        periodYear: true,
+        mercadoPagoPaymentId: true,
+      },
+    }),
     prisma.familyGroup.findMany({
       include: {
         responsibleUser: {
@@ -297,6 +311,11 @@ export default async function DebtByFamilyPage({
         (!payment.order.familyGroupId &&
           payment.order.responsibleUserId === family.responsibleUserId)
     );
+    const familySocialFeePayments = socialFeePayments.filter(
+      (payment) =>
+        payment.userId === family.responsibleUserId ||
+        family.members.some((member) => member.member.id === payment.userId)
+    );
 
     const monthlyRows = familyOrders.flatMap((order) =>
       order.items
@@ -331,6 +350,7 @@ export default async function DebtByFamilyPage({
       responsible,
       familyOrders,
       familyPayments,
+      familySocialFeePayments,
       monthlyRows,
       outstandingRows,
       totalDebt,
@@ -452,6 +472,7 @@ export default async function DebtByFamilyPage({
                     totalDebt,
                     partialCount,
                     familyPayments,
+                    familySocialFeePayments,
                   }) => {
                     const responsibleHref = responsible
                       ? `/admin/users/${responsible.id}/view`
@@ -465,7 +486,8 @@ export default async function DebtByFamilyPage({
                       );
                     }
 
-                    const lastPayment = familyPayments[0] ?? null;
+                    const lastPayment =
+                      familyPayments[0] ?? familySocialFeePayments[0] ?? null;
 
                     return (
                       <tr key={family.id} className="align-top">

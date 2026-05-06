@@ -12,6 +12,11 @@ import {
   type SocialFeeParticipant,
 } from '@/lib/social-fee';
 import {
+  parseMercadoPagoReferences,
+  syncMercadoPagoApprovedPayment,
+} from '@/lib/services/mercado-pago-accounting-service';
+import {
+  notifyOrderPaymentApproved,
   notifyActivityPaymentApproved,
   notifyActivityCapacityFull,
 } from '@/lib/notifications/notification-service';
@@ -60,15 +65,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const references: string[] = payment.external_reference.startsWith('cart|')
-      ? payment.external_reference
-          .replace('cart|', '')
-          .split(',')
-          .filter(Boolean)
-      : [payment.external_reference];
+    const references = parseMercadoPagoReferences(payment.external_reference);
 
     for (const reference of references) {
-      const [activityId, userId, childId, groupId] = reference.split(':');
+      const { activityId, userId, childId, groupId } = reference;
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -217,13 +217,12 @@ export async function POST(req: NextRequest) {
       participants.length > 0
         ? participants
         : legacyShouldChargeSocialFee
-          ? references.map((reference): SocialFeeParticipant => {
-              const [, userId, childId] = reference.split(':');
-              return {
-                userId,
-                childId: childId || null,
-              };
-            })
+          ? references.map(
+              (reference): SocialFeeParticipant => ({
+                userId: reference.userId,
+                childId: reference.childId,
+              })
+            )
           : [];
 
     if (socialFeeAmount > 0 && participantsToRegister.length > 0) {
@@ -242,6 +241,19 @@ export async function POST(req: NextRequest) {
           mercadoPagoPaymentId: payment.id?.toString() ?? id.toString(),
         });
       }
+    }
+
+    const settlement = await syncMercadoPagoApprovedPayment({
+      payment,
+      references,
+      userId: references[0]?.userId ?? String(payment.metadata?.userId ?? ''),
+      socialFeeAmount,
+      socialFeeParticipantCount: participantsToRegister.length,
+      familyDiscountAmount: Number(payment.metadata?.familyDiscountAmount ?? 0),
+    });
+
+    if (settlement?.created) {
+      await notifyOrderPaymentApproved(settlement.paymentId);
     }
   } catch (error: any) {
     if (error?.status !== 404) {

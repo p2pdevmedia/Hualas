@@ -9,6 +9,11 @@ import {
   parseSocialFeeParticipants,
   registerSocialFeePayment,
 } from '@/lib/social-fee';
+import {
+  parseMercadoPagoReferences,
+  syncMercadoPagoApprovedPayment,
+} from '@/lib/services/mercado-pago-accounting-service';
+import { notifyOrderPaymentApproved } from '@/lib/notifications/notification-service';
 
 export async function POST(
   req: Request,
@@ -98,6 +103,17 @@ export async function POST(
     const participants = parseSocialFeeParticipants(
       payment.metadata?.socialFeeParticipants
     );
+    let references = parseMercadoPagoReferences(payment.external_reference);
+    if (references.length === 0) {
+      references = [
+        {
+          activityId: params.id,
+          userId,
+          childId: participantChildId,
+          groupId: null,
+        },
+      ];
+    }
 
     if (participants.length > 0 && socialFeeAmount > 0) {
       const uniqueParticipants = new Map(
@@ -115,6 +131,18 @@ export async function POST(
           mercadoPagoPaymentId: payment.id?.toString() ?? paymentId,
         });
       }
+    }
+
+    const settlement = await syncMercadoPagoApprovedPayment({
+      payment,
+      references,
+      userId,
+      socialFeeAmount,
+      socialFeeParticipantCount: participants.length,
+    });
+
+    if (settlement?.created) {
+      await notifyOrderPaymentApproved(settlement.paymentId);
     }
 
     return NextResponse.json({ success: true });
