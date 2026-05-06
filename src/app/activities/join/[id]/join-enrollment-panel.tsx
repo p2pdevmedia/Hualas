@@ -286,6 +286,16 @@ export default function JoinEnrollmentPanel({
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[1fr_auto] lg:items-start lg:gap-8">
+      {session && people.length > 1 && (
+        <div className="rounded-xl border bg-card p-5 lg:col-start-1">
+          <PersonPicker
+            people={people}
+            value={selectedPersonId}
+            onChange={setSelectedPersonId}
+          />
+        </div>
+      )}
+
       {groups.length > 0 && (
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
@@ -298,16 +308,6 @@ export default function JoinEnrollmentPanel({
             selectedPersonAge={selectedPersonAge}
             isPersonSelected={Boolean(effectivePersonId)}
             activityStartDate={activityStartDate}
-          />
-        </div>
-      )}
-
-      {session && people.length > 1 && (
-        <div className="rounded-xl border bg-card p-5 lg:col-start-1">
-          <PersonPicker
-            people={people}
-            value={selectedPersonId}
-            onChange={setSelectedPersonId}
           />
         </div>
       )}
