@@ -361,7 +361,10 @@ export default async function MyActivitiesPage({
         </p>
       </div>
 
-      <ActivityCalendar activityDays={calendarDays} />
+      <ActivityCalendar
+        activityDays={calendarDays}
+        variant={isProfessorView ? 'professor-agenda' : 'month'}
+      />
 
       <div className="mt-6 space-y-4">
         <div className="inline-flex rounded-lg border bg-muted/30 p-1">
