@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { activityDayAttendanceSchema } from '@/lib/validations/activity';
 
 export async function PATCH(
@@ -51,9 +52,14 @@ export async function PATCH(
   }
 
   const isSelf = participant.userId === session.user.id;
-  const isParent = participant.child?.userId === session.user.id;
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
+    session.user.id
+  );
+  const canManageChild = participant.child?.userId
+    ? accessibleChildOwnerIds.includes(participant.child.userId)
+    : false;
 
-  if (!isSelf && !isParent) {
+  if (!isSelf && !canManageChild) {
     const professorAssignment = await prisma.activityDayProfessor.findUnique({
       where: {
         activityDayId_userId: {

@@ -25,6 +25,7 @@ type UpcomingSession = {
 };
 
 type ActivityParticipantSummary = {
+  id: string;
   label: string;
   isChild: boolean;
   groupId: string | null;
@@ -165,6 +166,9 @@ export default async function MyActivitiesPage({
           cancelled: true,
           activity: { select: { id: true, name: true } },
           activityGroup: { select: { name: true } },
+          attendances: {
+            select: { activityParticipantId: true, status: true },
+          },
         },
         orderBy: { date: 'asc' },
       });
@@ -173,21 +177,53 @@ export default async function MyActivitiesPage({
           if (isProfessorView) return true;
           const scope = participantScopeByActivity.get(d.activity.id);
           if (!scope) return false;
-          if (d.activityGroupId === null) return scope.hasUngroupedParticipant;
+          if (d.activityGroupId === null) return true;
           return scope.groupIds.has(d.activityGroupId);
         })
-        .map((d) => ({
-          id: d.id,
-          date: d.date.toISOString().slice(0, 10),
-          activityId: d.activity.id,
-          activityName: isProfessorView
-            ? (d.activityGroup?.name ?? d.activity.name)
-            : d.activity.name,
-          schedule: d.schedule,
-          geoLocation: d.geoLocation,
-          sportIcon: d.sportIcon,
-          cancelled: d.cancelled,
-        }));
+        .map((d) => {
+          const attendanceStatusByParticipant = new Map(
+            d.attendances.map((attendance) => [
+              attendance.activityParticipantId,
+              attendance.status,
+            ])
+          );
+          const visibleParticipants = isProfessorView
+            ? []
+            : participations.filter((participant) => {
+                if (participant.activity.id !== d.activity.id) return false;
+                const participantGroupId =
+                  participant.groupMembership?.activityGroupId ?? null;
+
+                if (d.activityGroupId === null) return true;
+                return participantGroupId === d.activityGroupId;
+              });
+
+          return {
+            id: d.id,
+            date: d.date.toISOString().slice(0, 10),
+            activityId: d.activity.id,
+            activityName: isProfessorView
+              ? (d.activityGroup?.name ?? d.activity.name)
+              : d.activity.name,
+            schedule: d.schedule,
+            geoLocation: d.geoLocation,
+            sportIcon: d.sportIcon,
+            cancelled: d.cancelled,
+            attendanceOptions: visibleParticipants.map((participant) => {
+              const label = participant.child
+                ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
+                : (session.user.name ?? 'Yo');
+
+              return {
+                participantId: participant.id,
+                label,
+                status:
+                  attendanceStatusByParticipant.get(participant.id) ??
+                  'PENDING',
+              };
+            }),
+          };
+        });
     } catch {
       calendarDays = [];
     }
@@ -223,7 +259,7 @@ export default async function MyActivitiesPage({
           const scope = participantScopeByActivity.get(s.activityId);
           if (!scope) continue;
           if (s.activityGroupId === null) {
-            if (!scope.hasUngroupedParticipant) continue;
+            // Unrestricted days are visible to every participant in the activity.
           } else if (!scope.groupIds.has(s.activityGroupId)) {
             continue;
           }
@@ -268,6 +304,7 @@ export default async function MyActivitiesPage({
     if (entry) {
       entry.labels.add(label);
       entry.participants.push({
+        id: p.id,
         label,
         isChild: Boolean(p.child),
         groupId: p.groupMembership?.activityGroupId ?? null,
@@ -278,6 +315,7 @@ export default async function MyActivitiesPage({
         labels: new Set([label]),
         participants: [
           {
+            id: p.id,
             label,
             isChild: Boolean(p.child),
             groupId: p.groupMembership?.activityGroupId ?? null,
@@ -314,15 +352,11 @@ export default async function MyActivitiesPage({
         .map((participant) => participant.groupId)
         .filter((groupId): groupId is string => Boolean(groupId))
     );
-    const hasUngroupedParticipant = entry.participants.some(
-      (participant) => participant.groupId === null
-    );
-
     const sessions = isProfessor
       ? rawSessions
       : rawSessions.filter((sessionItem) => {
           if (sessionItem.activityGroupId === null) {
-            return hasUngroupedParticipant;
+            return true;
           }
 
           return groupIds.has(sessionItem.activityGroupId);
@@ -366,7 +400,7 @@ export default async function MyActivitiesPage({
 
       <ActivityCalendar
         activityDays={calendarDays}
-        variant={isProfessorView ? 'professor-agenda' : 'month'}
+        variant={isProfessorView ? 'professor-agenda' : 'member-agenda'}
       />
 
       {!isProfessorView && (

@@ -4,6 +4,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CalendarDays } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { enqueueMutation } from '@/lib/offline/pending-mutations';
+
+type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
+
+type CalendarAttendanceOption = {
+  participantId: string;
+  label: string;
+  status: AttendanceStatus;
+};
 
 export type CalendarActivityDay = {
   id: string;
@@ -14,6 +23,7 @@ export type CalendarActivityDay = {
   geoLocation: string;
   sportIcon: string | null;
   cancelled: boolean;
+  attendanceOptions?: CalendarAttendanceOption[];
 };
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -36,7 +46,7 @@ const COMPACT_DAY_OFFSETS = Array.from(
   (_, index) => index - 14
 );
 
-type CalendarVariant = 'month' | 'professor-agenda';
+type CalendarVariant = 'month' | 'professor-agenda' | 'member-agenda';
 
 function toLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -144,13 +154,20 @@ export default function ActivityCalendar({
     variant === 'month'
   );
   const [activeCompactKey, setActiveCompactKey] = useState(todayKey);
+  const [attendanceOverrides, setAttendanceOverrides] = useState<
+    Record<string, AttendanceStatus>
+  >({});
+  const [savingAttendanceKey, setSavingAttendanceKey] = useState<string | null>(
+    null
+  );
+  const [attendanceError, setAttendanceError] = useState('');
   const todayCardRef = useRef<HTMLElement | null>(null);
   const compactScrollerRef = useRef<HTMLDivElement | null>(null);
   const compactCardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const scrollFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (variant !== 'professor-agenda' || showMonthCalendar) return;
+    if (variant === 'month' || showMonthCalendar) return;
 
     todayCardRef.current?.scrollIntoView({
       block: 'nearest',
@@ -260,6 +277,73 @@ export default function ActivityCalendar({
     }
   }
 
+  async function updateAttendance(
+    dayId: string,
+    participantId: string,
+    status: AttendanceStatus
+  ) {
+    const overrideKey = `${dayId}:${participantId}`;
+    const previous = attendanceOverrides;
+
+    setAttendanceOverrides((current) => ({
+      ...current,
+      [overrideKey]: status,
+    }));
+    setSavingAttendanceKey(overrideKey);
+    setAttendanceError('');
+
+    if (!navigator.onLine) {
+      await enqueueMutation({
+        url: `/api/activity-days/${dayId}/attendance`,
+        method: 'PATCH',
+        body: { participantId, status },
+      });
+      setSavingAttendanceKey(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/activity-days/${dayId}/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId, status }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(
+          payload?.error || 'No se pudo actualizar la asistencia'
+        );
+      }
+    } catch (err) {
+      if (!navigator.onLine) {
+        await enqueueMutation({
+          url: `/api/activity-days/${dayId}/attendance`,
+          method: 'PATCH',
+          body: { participantId, status },
+        });
+      } else {
+        setAttendanceOverrides(previous);
+        setAttendanceError(
+          err instanceof Error
+            ? err.message
+            : 'No se pudo actualizar la asistencia'
+        );
+      }
+    } finally {
+      setSavingAttendanceKey(null);
+    }
+  }
+
+  function getAttendanceStatus(
+    dayId: string,
+    option: CalendarAttendanceOption
+  ) {
+    return (
+      attendanceOverrides[`${dayId}:${option.participantId}`] ?? option.status
+    );
+  }
+
   function handleCompactScroll() {
     if (scrollFrameRef.current !== null) {
       window.cancelAnimationFrame(scrollFrameRef.current);
@@ -275,11 +359,15 @@ export default function ActivityCalendar({
 
   return (
     <div className="space-y-3">
-      {variant === 'professor-agenda' && !showMonthCalendar && (
+      {variant !== 'month' && !showMonthCalendar && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Agenda de profesor</p>
+              <p className="text-sm font-semibold">
+                {variant === 'professor-agenda'
+                  ? 'Agenda de profesor'
+                  : 'Agenda de actividades'}
+              </p>
               <p className="text-xs text-muted-foreground">
                 Deslizá para ver días anteriores o próximos.
               </p>
@@ -338,26 +426,95 @@ export default function ActivityCalendar({
                       <div className="space-y-3">
                         {visibleActivities.map((day) => {
                           const detailHref = `/activities/${day.activityId}/days/${day.id}`;
-                          const content = (
-                            <div className="space-y-3">
-                              <ActivitySummary day={day} featured={isMainDay} />
-                              {isMainDay && (
-                                <span className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline">
-                                  Ver detalle
-                                </span>
-                              )}
-                            </div>
-                          );
 
                           return (
-                            <Link
+                            <div
                               key={day.id}
-                              href={detailHref}
-                              prefetch={true}
-                              className="block rounded-xl p-2 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                              className="rounded-xl p-2 transition-colors hover:bg-muted/50"
                             >
-                              {content}
-                            </Link>
+                              <div className="space-y-3">
+                                <ActivitySummary
+                                  day={day}
+                                  featured={isMainDay}
+                                />
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Link
+                                    href={detailHref}
+                                    prefetch={true}
+                                    className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                  >
+                                    Ver detalle
+                                  </Link>
+                                </div>
+                                {day.attendanceOptions &&
+                                  day.attendanceOptions.length > 0 && (
+                                    <div className="space-y-2 border-t pt-2">
+                                      {day.attendanceOptions.map((option) => {
+                                        const status = getAttendanceStatus(
+                                          day.id,
+                                          option
+                                        );
+                                        const optionKey = `${day.id}:${option.participantId}`;
+                                        const isSaving =
+                                          savingAttendanceKey === optionKey;
+
+                                        return (
+                                          <div
+                                            key={option.participantId}
+                                            className="space-y-1"
+                                          >
+                                            <p className="truncate text-[11px] font-medium text-muted-foreground">
+                                              {option.label}
+                                            </p>
+                                            <div className="flex gap-2">
+                                              <button
+                                                type="button"
+                                                disabled={
+                                                  isSaving || day.cancelled
+                                                }
+                                                onClick={() =>
+                                                  updateAttendance(
+                                                    day.id,
+                                                    option.participantId,
+                                                    'GOING'
+                                                  )
+                                                }
+                                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
+                                                  status === 'GOING'
+                                                    ? 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400'
+                                                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                                                } disabled:cursor-not-allowed disabled:opacity-60`}
+                                              >
+                                                Voy
+                                              </button>
+                                              <button
+                                                type="button"
+                                                disabled={
+                                                  isSaving || day.cancelled
+                                                }
+                                                onClick={() =>
+                                                  updateAttendance(
+                                                    day.id,
+                                                    option.participantId,
+                                                    'NOT_GOING'
+                                                  )
+                                                }
+                                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
+                                                  status === 'NOT_GOING'
+                                                    ? 'border-destructive bg-destructive/10 text-destructive'
+                                                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                                                } disabled:cursor-not-allowed disabled:opacity-60`}
+                                              >
+                                                No voy
+                                              </button>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
                           );
                         })}
                         {activities.length > visibleActivities.length && (
@@ -376,28 +533,33 @@ export default function ActivityCalendar({
         </div>
       )}
 
-      {variant === 'professor-agenda' && (
-        <div className="flex flex-wrap gap-2">
-          {showMonthCalendar ? (
-            <button
-              type="button"
-              onClick={() => setShowMonthCalendar(false)}
-              className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
-              aria-expanded={!showMonthCalendar}
-            >
-              Día
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowMonthCalendar(true)}
-              className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
-              aria-expanded={showMonthCalendar}
-            >
-              <CalendarDays className="h-4 w-4" aria-hidden="true" />
-              Calendario
-            </button>
-          )}
+      {variant !== 'month' && (
+        <div className="inline-flex rounded-lg border bg-muted/30 p-1">
+          <button
+            type="button"
+            onClick={() => setShowMonthCalendar(false)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              !showMonthCalendar
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-pressed={!showMonthCalendar}
+          >
+            Día
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMonthCalendar(true)}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              showMonthCalendar
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-pressed={showMonthCalendar}
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden="true" />
+            Calendario mensual
+          </button>
         </div>
       )}
 
@@ -567,14 +729,14 @@ export default function ActivityCalendar({
                       </p>
                     </div>
                   </div>
-                  {(variant === 'professor-agenda' || onEdit) && (
+                  {(variant !== 'month' || onEdit) && (
                     <div className="mt-2 flex gap-2">
                       <Link
                         href={`/activities/${d.activityId}/days/${d.id}`}
                         prefetch={true}
                         className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                       >
-                        Ver sesión
+                        Ver detalle
                       </Link>
                       {onEdit && (
                         <button
@@ -592,6 +754,12 @@ export default function ActivityCalendar({
             </div>
           )}
         </div>
+      )}
+
+      {attendanceError && (
+        <p className="text-sm font-medium text-destructive">
+          {attendanceError}
+        </p>
       )}
     </div>
   );
