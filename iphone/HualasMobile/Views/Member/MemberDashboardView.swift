@@ -314,6 +314,7 @@ struct ActivityPurchaseDetailView: View {
   @State private var selectedTarget: ActivityTargetChoice
   @State private var selectedGroupId: String?
   @State private var selectedDayId: String?
+  @State private var displayedMonth: Date
   @State private var statusMessage: String?
   @State private var statusIsError = false
 
@@ -332,12 +333,26 @@ struct ActivityPurchaseDetailView: View {
       children: children,
       homeBirthDate: homeBirthDate
     )
+    let initialTemporaryDays = Self.filteredTemporaryDays(
+      in: activity.days,
+      groupId: initialGroupId
+    )
+    let initialTemporaryDayId = Self.nearestSessionId(in: initialTemporaryDays)
+    let initialDisplayedMonth = Self.displayedMonth(
+      for: initialTemporaryDayId,
+      in: initialTemporaryDays
+    )
     _selectedTarget = State(initialValue: defaultTarget)
     _selectedGroupId = State(initialValue: initialGroupId)
     _selectedDayId = State(
-      initialValue: activity.activityType == "ANNUAL"
-        ? Self.firstCurrentWeekSessionId(in: activity.days, groupId: initialGroupId)
-        : Self.firstSessionId(in: activity.days, groupId: initialGroupId)
+      initialValue: activity.activityType == "TEMPORARY"
+        ? initialTemporaryDayId
+        : nil
+    )
+    _displayedMonth = State(
+      initialValue: activity.activityType == "TEMPORARY"
+        ? initialDisplayedMonth
+        : Date()
     )
   }
 
@@ -351,10 +366,9 @@ struct ActivityPurchaseDetailView: View {
           if !activity.groups.isEmpty {
             groupSection
           }
-          currentWeekSection
         } else {
-          if !activity.days.isEmpty {
-            daySection
+          if !availableDays.isEmpty {
+            temporaryCalendarSection
           }
           if !activity.groups.isEmpty {
             groupSection
@@ -438,21 +452,32 @@ struct ActivityPurchaseDetailView: View {
     }
   }
 
-  private var daySection: some View {
+  private var temporaryCalendarSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Sesión")
-        .font(.headline)
-      Text("Elegí una fecha para esta actividad.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
+      monthHeader
+      weekdayHeader
+      monthGrid
 
-      ForEach(activity.days) { day in
-        Button {
-          selectedDayId = day.id
-        } label: {
-          dayCard(day, selected: selectedDayId == day.id)
+      if let selectedDayKey,
+         let sessions = temporarySessionsByDay[selectedDayKey],
+         !sessions.isEmpty {
+        selectedDaySummary(for: selectedDayKey, sessions: sessions)
+      } else if availableDays.isEmpty {
+        infoCard {
+          Text("No hay sesiones disponibles para esta persona.")
+            .font(.headline)
+          Text("Probá con otro participante o consultá con administración.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
+      } else {
+        infoCard {
+          Text("Tocá un día con sesiones para verlas en detalle.")
+            .font(.headline)
+          Text("El calendario muestra todas las sesiones disponibles del mes.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
       }
     }
   }
@@ -463,49 +488,28 @@ struct ActivityPurchaseDetailView: View {
         .font(.headline)
       Text(
         activity.activityType == "ANNUAL"
-          ? "Elegí el grupo para ver sus sesiones semanales."
+          ? "Elegí el grupo para continuar con la inscripción."
           : "Seleccioná el grupo que corresponde a esta inscripción."
       )
         .font(.footnote)
         .foregroundStyle(.secondary)
 
-      ForEach(activity.groups) { group in
-        Button {
-          selectedGroupId = group.id
-        } label: {
-          groupCard(group, selected: selectedGroupId == group.id)
-        }
-        .buttonStyle(.plain)
-      }
-    }
-  }
-
-  private var currentWeekSection: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text("Sesiones de esta semana")
-        .font(.headline)
-      Text("Mostramos solo las sesiones de la semana actual.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-
-      if currentWeekDays.isEmpty {
+      if eligibleGroups.isEmpty && !activity.groups.isEmpty {
         infoCard {
-          Text("No hay sesiones esta semana para este grupo.")
+          Text("No hay grupos disponibles para la edad de esta persona.")
             .font(.headline)
-          Text("Probá cambiando de grupo o revisá la próxima semana.")
+          Text("Probá con otro participante o consultá con administración.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
       } else {
-        VStack(spacing: 10) {
-          ForEach(currentWeekDays) { day in
-            Button {
-              selectedDayId = day.id
-            } label: {
-              dayCard(day, selected: selectedDayId == day.id)
-            }
-            .buttonStyle(.plain)
+        ForEach(eligibleGroups) { group in
+          Button {
+            selectedGroupId = group.id
+          } label: {
+            groupCard(group, selected: selectedGroupId == group.id)
           }
+          .buttonStyle(.plain)
         }
       }
     }
@@ -521,47 +525,330 @@ struct ActivityPurchaseDetailView: View {
     return [ActivityTargetChoice(target: "self", label: "Para mí")] + childrenChoices
   }
 
-  private var currentWeekDays: [MobileActivityCatalogResponse.Day] {
-    guard activity.activityType == "ANNUAL" else {
+  private var selectedParticipantBirthDate: String? {
+    if selectedTarget.target == "self" {
+      return homeBirthDate
+    }
+    return children.first(where: { $0.id == selectedTarget.target })?.birthDate
+  }
+
+  private var selectedParticipantAge: Int? {
+    Self.age(
+      birthDate: selectedParticipantBirthDate,
+      activityDate: activity.date
+    )
+  }
+
+  private var eligibleGroups: [MobileActivityCatalogResponse.Group] {
+    activity.groups.filter { group in
+      Self.isGroupEligibleForAge(group, age: selectedParticipantAge)
+    }
+  }
+
+  private var eligibleGroupIds: Set<String> {
+    Set(eligibleGroups.map(\.id))
+  }
+
+  private var availableDays: [MobileActivityCatalogResponse.Day] {
+    guard activity.activityType == "TEMPORARY" else {
       return []
     }
 
-    let daysThisWeek = activity.days.filter { day in
-      guard
-        let dateString = day.date,
-        let date = Self.dateFormatter.date(from: dateString)
-      else {
-        return false
+    return activity.days.filter { day in
+      guard let groupId = day.activityGroupId else {
+        return true
       }
-      return Self.calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+      return eligibleGroupIds.contains(groupId)
+    }
+  }
+
+  private var selectedDayKey: String? {
+    guard
+      let selectedDayId,
+      let day = availableDays.first(where: { $0.id == selectedDayId }),
+      let date = day.date
+    else {
+      return nil
     }
 
-    guard let selectedGroupId else {
-      return daysThisWeek
+    return date
+  }
+
+  private var temporarySessionsByDay: [String: [MobileActivityCatalogResponse.Day]] {
+    Dictionary(grouping: availableDays) { $0.date ?? "" }
+  }
+
+  private var temporaryMonthTitle: String {
+    Self.monthTitleFormatter.string(from: displayedMonth).capitalized
+  }
+
+  private var monthGridDays: [Date?] {
+    let calendar = Self.calendar
+    guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: displayedMonth)),
+          let dayRange = calendar.range(of: .day, in: .month, for: monthStart) else {
+      return []
     }
 
-    return daysThisWeek.filter { $0.activityGroupId == selectedGroupId }
+    let weekday = calendar.component(.weekday, from: monthStart)
+    let leadingDays = (weekday - calendar.firstWeekday + 7) % 7
+    let totalCells = leadingDays + dayRange.count
+    let paddedCells = totalCells.isMultiple(of: 7) ? totalCells : totalCells + (7 - totalCells % 7)
+
+    return (0..<paddedCells).map { index in
+      let dayOffset = index - leadingDays
+      guard dayOffset >= 0, dayOffset < dayRange.count,
+            let date = calendar.date(byAdding: .day, value: dayOffset, to: monthStart) else {
+        return nil
+      }
+      return date
+    }
+  }
+
+  private var weekdayHeader: some View {
+    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+      ForEach(Self.weekdaySymbols, id: \.self) { symbol in
+        Text(symbol)
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity)
+      }
+    }
+  }
+
+  private var monthGrid: some View {
+    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+      ForEach(monthGridDays.indices, id: \.self) { index in
+        if let day = monthGridDays[index] {
+          temporaryDayCell(for: day)
+        } else {
+          Color.clear
+            .frame(height: 74)
+        }
+      }
+    }
+  }
+
+  private var monthHeader: some View {
+    HStack {
+      Button {
+        shiftMonth(by: -1)
+      } label: {
+        Image(systemName: "chevron.left")
+          .font(.headline)
+          .frame(width: 36, height: 36)
+          .background(.thinMaterial, in: Circle())
+      }
+      .accessibilityLabel("Mes anterior")
+
+      Spacer()
+
+      VStack(spacing: 2) {
+        Text(temporaryMonthTitle)
+          .font(.title2.bold())
+        Text("Calendario mensual de sesiones")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+
+      Spacer()
+
+      Button {
+        shiftMonth(by: 1)
+      } label: {
+        Image(systemName: "chevron.right")
+          .font(.headline)
+          .frame(width: 36, height: 36)
+          .background(.thinMaterial, in: Circle())
+      }
+      .accessibilityLabel("Mes siguiente")
+    }
+  }
+
+  private func selectedDaySummary(
+    for dayKey: String,
+    sessions: [MobileActivityCatalogResponse.Day]
+  ) -> some View {
+    infoCard {
+      VStack(alignment: .leading, spacing: 10) {
+        HStack {
+          VStack(alignment: .leading, spacing: 2) {
+            Text(selectedDayTitle(for: dayKey))
+              .font(.headline)
+            Text(dayKey)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+          Spacer()
+          Text("\(sessions.count) sesión\(sessions.count == 1 ? "" : "es")")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.secondary.opacity(0.08), in: Capsule())
+        }
+
+        Text("Tocá una sesión para verla seleccionada.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+
+        ForEach(sortedSessions(sessions)) { session in
+          Button {
+            selectedDayId = session.id
+            updateDisplayedMonth(for: session.date)
+          } label: {
+            HStack(alignment: .top, spacing: 12) {
+              VStack(alignment: .leading, spacing: 2) {
+                Text(session.schedule)
+                  .font(.caption.weight(.semibold))
+                  .foregroundStyle(.secondary)
+                if let groupName = session.groupName {
+                  Text(groupName)
+                    .font(.headline)
+                } else {
+                  Text("Sesión")
+                    .font(.headline)
+                }
+              }
+
+              Spacer(minLength: 8)
+
+              VStack(alignment: .trailing, spacing: 4) {
+                Text(session.geoLocation)
+                  .font(.caption2)
+                  .foregroundStyle(.secondary)
+                  .lineLimit(2)
+                  .multilineTextAlignment(.trailing)
+              }
+
+              Image(systemName: selectedDayId == session.id ? "checkmark.circle.fill" : "circle")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(selectedDayId == session.id ? Color.accentColor : Color.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.secondary.opacity(0.06))
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+            )
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    }
+  }
+
+  private func temporaryDayCell(for date: Date) -> some View {
+    let dayKey = Self.dayKey(for: date)
+    let sessions = temporarySessionsByDay[dayKey] ?? []
+    let isSelected = selectedDayKey == dayKey
+    let isToday = Self.calendar.isDateInToday(date)
+    let hasSessions = !sessions.isEmpty
+
+    return Button {
+      guard hasSessions else { return }
+      if let selectedSession = sortedSessions(sessions).first {
+        selectedDayId = selectedSession.id
+      }
+      updateDisplayedMonth(for: dayKey)
+    } label: {
+      VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top) {
+          Text("\(Self.calendar.component(.day, from: date))")
+            .font(.headline)
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .fixedSize(horizontal: true, vertical: false)
+            .foregroundStyle(.primary)
+
+          Spacer()
+
+          if isToday {
+            Text("Hoy")
+              .font(.caption2.weight(.semibold))
+              .foregroundStyle(isSelected ? Color.primary : Color.accentColor)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.accentColor.opacity(isSelected ? 0.14 : 0.08), in: Capsule())
+          }
+        }
+
+        Spacer(minLength: 0)
+
+        if hasSessions {
+          HStack(spacing: 4) {
+            ForEach(0..<min(3, sessions.count), id: \.self) { index in
+              Circle()
+                .fill(Color.accentColor.opacity(0.85 - Double(index) * 0.15))
+                .frame(width: 7, height: 7)
+            }
+
+            if sessions.count > 3 {
+              Text("+\(sessions.count - 3)")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          Text("\(sessions.count) sesión\(sessions.count == 1 ? "" : "es")")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(isSelected ? .primary : .secondary)
+            .lineLimit(1)
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .frame(height: 74)
+      .padding(10)
+      .background(
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+          .fill(backgroundColor(isSelected: isSelected, hasSessions: hasSessions))
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+          .stroke(isToday ? Color.accentColor : Color.clear, lineWidth: 1.5)
+      )
+    }
+    .buttonStyle(.plain)
   }
 
   private func addToCart() {
     let target = selectedTarget.target
 
-    let chosenDay = activity.days.first(where: { $0.id == selectedDayId })
-    let groupId = chosenDay?.activityGroupId ?? selectedGroupId
+    let chosenDay = activity.activityType == "TEMPORARY"
+      ? availableDays.first(where: { $0.id == selectedDayId })
+      : nil
+    let groupId = activity.activityType == "TEMPORARY"
+      ? (chosenDay?.activityGroupId ?? selectedGroupId)
+      : selectedGroupId
 
-    if !activity.days.isEmpty && chosenDay == nil {
+    if activity.activityType == "TEMPORARY",
+       !activity.days.isEmpty,
+       chosenDay == nil {
       statusMessage = "Elegí una sesión para continuar."
       statusIsError = true
       return
     }
 
-    if !activity.groups.isEmpty && groupId == nil {
-      statusMessage = "Elegí un grupo para continuar."
-      statusIsError = true
-      return
+    if activity.activityType == "ANNUAL" {
+      if !activity.groups.isEmpty && eligibleGroups.isEmpty {
+        statusMessage = "No hay grupos disponibles para la edad de esta persona."
+        statusIsError = true
+        return
+      }
+
+      if groupId == nil {
+        statusMessage = "Elegí un grupo para continuar."
+        statusIsError = true
+        return
+      }
     }
 
-    let selectedGroup = activity.groups.first(where: { $0.id == groupId })
+    let selectedGroup = eligibleGroups.first(where: { $0.id == groupId })
+      ?? activity.groups.first(where: { $0.id == groupId })
     let entry = MemberCartEntry(
       activityId: activity.id,
       activityName: activity.name,
@@ -569,8 +856,8 @@ struct ActivityPurchaseDetailView: View {
       targetLabel: selectedTarget.label,
       groupId: groupId,
       groupLabel: selectedGroup?.name,
-      activityDayId: chosenDay?.id,
-      activityDayLabel: chosenDay.map(dayLabel),
+      activityDayId: activity.activityType == "TEMPORARY" ? chosenDay?.id : nil,
+      activityDayLabel: activity.activityType == "TEMPORARY" ? chosenDay.map(dayLabel) : nil,
       amount: activity.price
     )
 
@@ -580,35 +867,51 @@ struct ActivityPurchaseDetailView: View {
   }
 
   private func syncGroupWithSelectedDay() {
+    guard activity.activityType == "TEMPORARY" else {
+      return
+    }
+
     guard
       let selectedDayId,
-      let day = activity.days.first(where: { $0.id == selectedDayId }),
-      let dayGroupId = day.activityGroupId
+      let day = availableDays.first(where: { $0.id == selectedDayId })
     else {
       return
     }
-    selectedGroupId = dayGroupId
+
+    if let dayGroupId = day.activityGroupId {
+      selectedGroupId = dayGroupId
+    }
+    updateDisplayedMonth(for: day.date)
   }
 
   private func syncDayWithSelectedGroup() {
-    if let selectedDayId,
-       activity.days.contains(where: { $0.id == selectedDayId && $0.activityGroupId == selectedGroupId }) {
+    guard activity.activityType == "TEMPORARY" else {
       return
     }
 
-    if activity.activityType == "ANNUAL" {
-      selectedDayId = currentWeekDays.first?.id
-    } else {
-      selectedDayId = Self.firstSessionId(in: activity.days, groupId: selectedGroupId)
+    if let selectedDayId,
+       availableDays.contains(where: { $0.id == selectedDayId && $0.activityGroupId == selectedGroupId }) {
+      if let currentDay = availableDays.first(where: { $0.id == selectedDayId }) {
+        updateDisplayedMonth(for: currentDay.date)
+      }
+      return
+    }
+
+    selectedDayId = Self.nearestSessionId(in: availableDays, groupId: selectedGroupId)
+    if let selectedDayId,
+       let day = availableDays.first(where: { $0.id == selectedDayId }) {
+      updateDisplayedMonth(for: day.date)
     }
   }
 
   private func syncGroupWithSelectedTarget() {
+    if let selectedGroupId, eligibleGroupIds.contains(selectedGroupId) {
+      syncDayWithSelectedGroup()
+      return
+    }
+
     selectedGroupId = Self.bestMatchingGroupId(
-      for: selectedTarget,
-      activity: activity,
-      children: children,
-      homeBirthDate: homeBirthDate
+      in: eligibleGroups
     )
     syncDayWithSelectedGroup()
   }
@@ -733,25 +1036,79 @@ struct ActivityPurchaseDetailView: View {
     [day.date, day.schedule].compactMap { $0 }.joined(separator: " · ")
   }
 
-  private static func firstCurrentWeekSessionId(
-    in days: [MobileActivityCatalogResponse.Day],
-    groupId: String?
-  ) -> String? {
-    let daysThisWeek = days.filter { day in
-      guard
-        let dateString = day.date,
-        let date = dateFormatter.date(from: dateString)
-      else {
+  private func selectedDayTitle(for dayKey: String) -> String {
+    guard let date = Self.isoDayFormatter.date(from: dayKey) else {
+      return "Día seleccionado"
+    }
+    return Self.prettyDayFormatter.string(from: date).capitalized
+  }
+
+  private func updateDisplayedMonth(for dateString: String?) {
+    guard
+      let dateString,
+      let date = Self.dateFormatter.date(from: dateString)
+    else {
+      return
+    }
+
+    updateDisplayedMonth(for: date)
+  }
+
+  private func updateDisplayedMonth(for date: Date) {
+    let calendar = Self.calendar
+    let components = calendar.dateComponents([.year, .month], from: date)
+    guard let monthStart = calendar.date(from: components) else {
+      return
+    }
+    displayedMonth = monthStart
+  }
+
+  private func shiftMonth(by offset: Int) {
+    guard let newMonth = Self.calendar.date(byAdding: .month, value: offset, to: displayedMonth) else {
+      return
+    }
+    displayedMonth = newMonth
+  }
+
+  private func sortedSessions(
+    _ sessions: [MobileActivityCatalogResponse.Day]
+  ) -> [MobileActivityCatalogResponse.Day] {
+    sessions.sorted { lhs, rhs in
+      switch (Self.sessionDate(lhs), Self.sessionDate(rhs)) {
+      case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+        return lhsDate < rhsDate
+      case (.some, nil):
+        return true
+      case (nil, .some):
         return false
+      default:
+        return lhs.schedule.localizedStandardCompare(rhs.schedule) == .orderedAscending
       }
-      return calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
     }
+  }
 
-    if let groupId {
-      return daysThisWeek.first(where: { $0.activityGroupId == groupId })?.id
+  private static func sessionDate(_ day: MobileActivityCatalogResponse.Day) -> Date? {
+    guard let dateString = day.date else {
+      return nil
     }
+    return dateFormatter.date(from: dateString)
+  }
 
-    return daysThisWeek.first?.id
+  private func backgroundColor(isSelected: Bool, hasSessions: Bool) -> AnyShapeStyle {
+    if isSelected {
+      return AnyShapeStyle(Color.accentColor.opacity(0.2))
+    }
+    if hasSessions {
+      return AnyShapeStyle(LinearGradient(
+        colors: [
+          Color.accentColor.opacity(0.18),
+          Color.accentColor.opacity(0.08),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      ))
+    }
+    return AnyShapeStyle(Color.secondary.opacity(0.05))
   }
 
   private static func bestMatchingGroupId(
@@ -767,39 +1124,48 @@ struct ActivityPurchaseDetailView: View {
       birthDateString = children.first(where: { $0.id == target.target })?.birthDate
     }
 
-    guard
-      let birthDateString,
-      let birthDate = dateFormatter.date(from: birthDateString)
-    else {
-      return activity.groups.first?.id
-    }
-
-    guard let age = calendar.dateComponents([.year], from: birthDate, to: Date()).year else {
-      return activity.groups.first?.id
-    }
-
-    let daysThisWeek = activity.days.filter { day in
-      guard
-        let dateString = day.date,
-        let date = dateFormatter.date(from: dateString)
-      else {
-        return false
-      }
-      return calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
-    }
-
+    let age = Self.age(
+      birthDate: birthDateString,
+      activityDate: activity.date
+    )
     let matchingGroups = activity.groups.filter { group in
-      if let minAge = group.minAge, age < minAge { return false }
-      if let maxAge = group.maxAge, age > maxAge { return false }
-      return true
+      Self.isGroupEligibleForAge(group, age: age)
     }
 
-    return matchingGroups
-      .sorted { lhs, rhs in
-        let lhsWeekCount = daysThisWeek.filter { $0.activityGroupId == lhs.id }.count
-        let rhsWeekCount = daysThisWeek.filter { $0.activityGroupId == rhs.id }.count
-        if lhsWeekCount != rhsWeekCount { return lhsWeekCount > rhsWeekCount }
+    if activity.activityType == "TEMPORARY" {
+      let sessionAwareGroups = matchingGroups.sorted { lhs, rhs in
+        switch (
+          nearestSessionDate(for: lhs.id, in: activity.days),
+          nearestSessionDate(for: rhs.id, in: activity.days)
+        ) {
+        case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+          return lhsDate < rhsDate
+        case (.some, nil):
+          return true
+        case (nil, .some):
+          return false
+        default:
+          return false
+        }
+      }
 
+      if let sessionAwareGroup = sessionAwareGroups.first {
+        return sessionAwareGroup.id
+      }
+    }
+
+    return Self.bestMatchingGroupId(in: matchingGroups)
+  }
+
+  private static func bestMatchingGroupId(
+    in groups: [MobileActivityCatalogResponse.Group]
+  ) -> String? {
+    guard !groups.isEmpty else {
+      return nil
+    }
+
+    return groups
+      .sorted { lhs, rhs in
         let lhsMin = lhs.minAge ?? Int.min
         let rhsMin = rhs.minAge ?? Int.min
         if lhsMin != rhsMin { return lhsMin > rhsMin }
@@ -811,18 +1177,147 @@ struct ActivityPurchaseDetailView: View {
         return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
       }
       .first?
-      .id ?? activity.groups.first?.id
+      .id
   }
 
   private static func firstSessionId(
     in days: [MobileActivityCatalogResponse.Day],
     groupId: String?
   ) -> String? {
-    guard let groupId else {
-      return days.first?.id
+    nearestSessionId(in: days, groupId: groupId)
+  }
+
+  private static func nearestSessionId(
+    in days: [MobileActivityCatalogResponse.Day],
+    groupId: String? = nil
+  ) -> String? {
+    let filteredDays = filteredTemporaryDays(in: days, groupId: groupId)
+    return filteredDays.first?.id
+  }
+
+  private static func nearestSessionDate(
+    for groupId: String?,
+    in days: [MobileActivityCatalogResponse.Day]
+  ) -> Date? {
+    filteredTemporaryDays(in: days, groupId: groupId).first.flatMap(sessionDate)
+  }
+
+  private static func filteredTemporaryDays(
+    in days: [MobileActivityCatalogResponse.Day],
+    groupId: String?
+  ) -> [MobileActivityCatalogResponse.Day] {
+    let filtered = days.filter { day in
+      guard let dayDate = day.date, dateFormatter.date(from: dayDate) != nil else {
+        return false
+      }
+      guard let groupId else {
+        return true
+      }
+      return day.activityGroupId == groupId
+    }
+    return filtered.sorted { lhs, rhs in
+      switch (sessionDate(lhs), sessionDate(rhs)) {
+      case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+        return lhsDate < rhsDate
+      case (.some, nil):
+        return true
+      case (nil, .some):
+        return false
+      default:
+        return lhs.schedule.localizedStandardCompare(rhs.schedule) == .orderedAscending
+      }
+    }
+  }
+
+  private static func displayedMonth(
+    for dayId: String?,
+    in days: [MobileActivityCatalogResponse.Day]
+  ) -> Date {
+    guard
+      let dayId,
+      let dateString = days.first(where: { $0.id == dayId })?.date,
+      let date = dateFormatter.date(from: dateString)
+    else {
+      return Date()
     }
 
-    return days.first(where: { $0.activityGroupId == groupId })?.id
+    let calendar = Self.calendar
+    let components = calendar.dateComponents([.year, .month], from: date)
+    return calendar.date(from: components) ?? date
+  }
+
+  private static func isGroupEligibleForAge(
+    _ group: MobileActivityCatalogResponse.Group,
+    age: Int?
+  ) -> Bool {
+    guard let age else {
+      return true
+    }
+    if let minAge = group.minAge, age < minAge { return false }
+    if let maxAge = group.maxAge, age > maxAge { return false }
+    return true
+  }
+
+  private static func age(
+    birthDate: String?,
+    activityDate: String?
+  ) -> Int? {
+    guard let birthDate else {
+      return nil
+    }
+
+    guard let parsedBirthDate = dateFormatter.date(from: birthDate) else {
+      return nil
+    }
+
+    let referenceDate = referenceDate(for: activityDate)
+    return calendar.dateComponents([.year], from: parsedBirthDate, to: referenceDate).year
+  }
+
+  private static func referenceDate(for activityDate: String?) -> Date {
+    let today = Date()
+    guard
+      let activityDate,
+      let parsedActivityDate = dateFormatter.date(from: activityDate)
+    else {
+      return today
+    }
+
+    return parsedActivityDate > today ? parsedActivityDate : today
+  }
+
+  private static let weekdaySymbols = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
+
+  private static let isoDayFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.calendar = calendar
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
+  }()
+
+  private static let prettyDayFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.calendar = calendar
+    formatter.dateFormat = "EEEE d MMMM"
+    return formatter
+  }()
+
+  private static let monthTitleFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.dateFormat = "LLLL yyyy"
+    return formatter
+  }()
+
+  private static func dayKey(for date: Date) -> String {
+    let calendar = Self.calendar
+    let components = calendar.dateComponents([.year, .month, .day], from: date)
+    let year = components.year ?? calendar.component(.year, from: date)
+    let month = components.month ?? calendar.component(.month, from: date)
+    let day = components.day ?? calendar.component(.day, from: date)
+    return String(format: "%04d-%02d-%02d", year, month, day)
   }
 
   private func currency(_ amount: Int) -> String {

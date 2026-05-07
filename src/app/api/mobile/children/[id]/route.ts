@@ -16,28 +16,51 @@ function parseBirthDate(value: string | null | undefined) {
   return date;
 }
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getMobileSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(session.userId);
-  const children = await prisma.child.findMany({
-    where: { userId: { in: accessibleChildOwnerIds } },
+  const ownerIds = await getAccessibleChildOwnerIds(session.userId);
+  const child = await prisma.child.findFirst({
+    where: {
+      id: params.id,
+      userId: { in: ownerIds },
+    },
     select: mobileChildSelect,
-    orderBy: { createdAt: 'asc' },
   });
 
-  return NextResponse.json({
-    children: children.map(serializeMobileChild),
-  });
+  if (!child) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(serializeMobileChild(child));
 }
 
-export async function POST(req: Request) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getMobileSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const ownerIds = await getAccessibleChildOwnerIds(session.userId);
+  const child = await prisma.child.findFirst({
+    where: {
+      id: params.id,
+      userId: { in: ownerIds },
+    },
+    select: { id: true },
+  });
+
+  if (!child) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const data = childCreateSchema.parse(await req.json());
@@ -50,9 +73,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const child = await prisma.child.create({
+  const updated = await prisma.child.update({
+    where: { id: params.id },
     data: {
-      userId: session.userId,
       name: data.name,
       lastName: data.lastName,
       documentType: data.documentType,
@@ -78,5 +101,5 @@ export async function POST(req: Request) {
     select: mobileChildSelect,
   });
 
-  return NextResponse.json(serializeMobileChild(child));
+  return NextResponse.json(serializeMobileChild(updated));
 }

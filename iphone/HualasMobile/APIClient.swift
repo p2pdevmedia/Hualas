@@ -121,6 +121,38 @@ final class APIClient {
     try await send(path: "/api/mobile/children", token: token)
   }
 
+  func child(
+    token: String,
+    childId: String
+  ) async throws -> MobileChildrenResponse.Child {
+    try await send(path: "/api/mobile/children/\(childId)", token: token)
+  }
+
+  func createChild(
+    token: String,
+    payload: MobileChildUpsertRequest
+  ) async throws -> MobileChildrenResponse.Child {
+    try await send(
+      path: "/api/mobile/children",
+      method: "POST",
+      token: token,
+      body: payload
+    )
+  }
+
+  func updateChild(
+    token: String,
+    childId: String,
+    payload: MobileChildUpsertRequest
+  ) async throws -> MobileChildrenResponse.Child {
+    try await send(
+      path: "/api/mobile/children/\(childId)",
+      method: "PUT",
+      token: token,
+      body: payload
+    )
+  }
+
   func activitiesCalendar(
     token: String,
     month: Date = Date()

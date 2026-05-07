@@ -230,9 +230,20 @@ struct MobileChildrenResponse: Codable {
     let id: String
     let name: String
     let lastName: String?
+    let profilePhoto: String?
+    let documentType: String?
+    let documentNumber: String?
+    let documentFrontPhoto: String?
+    let documentBackPhoto: String?
     let birthDate: String?
     let address: String?
-    let profilePhoto: String?
+    let gender: String?
+    let nationality: String?
+    let maritalStatus: String?
+    let bloodGroup: String?
+    let primaryDoctor: String?
+    let doctorPhone: String?
+    let doctorCertificate: String?
     let allergies: String?
     let regularMedication: String?
     let relevantDiseases: String?
@@ -242,6 +253,31 @@ struct MobileChildrenResponse: Codable {
   }
 
   let children: [Child]
+}
+
+struct MobileChildUpsertRequest: Codable {
+  let name: String
+  let lastName: String?
+  let profilePhoto: String?
+  let documentType: String?
+  let documentNumber: String?
+  let documentFrontPhoto: String?
+  let documentBackPhoto: String?
+  let birthDate: String?
+  let address: String?
+  let gender: String?
+  let nationality: String?
+  let maritalStatus: String?
+  let allergies: String?
+  let regularMedication: String?
+  let relevantDiseases: String?
+  let previousInjuries: String?
+  let physicalRestrictions: String?
+  let bloodGroup: String?
+  let primaryDoctor: String?
+  let doctorPhone: String?
+  let doctorCertificate: String?
+  let observations: String?
 }
 
 struct MobileActivitiesResponse: Codable {
@@ -707,4 +743,20 @@ struct MobileAttendanceUpdateResponse: Codable {
   }
 
   let attendance: Attendance
+}
+
+extension MobileChildrenResponse.Child {
+  var fullName: String {
+    [name, lastName]
+      .compactMap { $0 }
+      .joined(separator: " ")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  var initials: String {
+    let first = name.first.map(String.init) ?? ""
+    let last = lastName?.first.map(String.init) ?? ""
+    let combined = "\(first)\(last)"
+    return combined.isEmpty ? "?" : combined.uppercased()
+  }
 }
