@@ -1,4 +1,4 @@
-import { BillableConceptCode } from '@prisma/client';
+import { BillableConceptCode, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 type ParticipantInput = {
@@ -10,6 +10,25 @@ export type SocialFeeParticipant = {
   userId: string;
   childId: string | null;
 };
+
+type PrismaClientLike = typeof prisma | Prisma.TransactionClient;
+
+async function resolveSocialFeeUserId(
+  db: PrismaClientLike,
+  userId: string,
+  childId?: string | null
+) {
+  if (!childId) {
+    return userId;
+  }
+
+  const child = await db.child.findUnique({
+    where: { id: childId },
+    select: { userId: true },
+  });
+
+  return child?.userId ?? userId;
+}
 
 function getCurrentPeriod() {
   const now = new Date();
@@ -33,12 +52,13 @@ export async function hasSocialFeeForCurrentMonth({
   childId,
 }: ParticipantInput) {
   const { month, year } = getCurrentPeriod();
+  const effectiveUserId = await resolveSocialFeeUserId(prisma, userId, childId);
 
   const existing = await prisma.socialFeePayment.findFirst({
     where: {
       periodMonth: month,
       periodYear: year,
-      userId,
+      userId: effectiveUserId,
       childId: childId ?? null,
     },
     select: { id: true },
@@ -147,17 +167,18 @@ export async function registerSocialFeePayment({
   }
 
   return prisma.$transaction(async (tx) => {
+    const effectiveUserId = await resolveSocialFeeUserId(tx, userId, childId);
     const payment = await tx.socialFeePayment.upsert({
       where: {
         userId_childId_periodMonth_periodYear: {
-          userId,
+          userId: effectiveUserId,
           childId,
           periodMonth: month,
           periodYear: year,
         },
       },
       create: {
-        userId,
+        userId: effectiveUserId,
         childId,
         periodMonth: month,
         periodYear: year,
@@ -171,7 +192,7 @@ export async function registerSocialFeePayment({
     });
 
     await tx.user.update({
-      where: { id: userId },
+      where: { id: effectiveUserId },
       data: { socialFeeActive: true },
     });
 

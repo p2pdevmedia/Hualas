@@ -177,19 +177,31 @@ function mapPaymentToReview(payment: {
       description: string;
     }>;
   };
-}): ManualPaymentSummary {
+}, childNameById: Map<string, string>): ManualPaymentSummary {
   const rawData = getManualPaymentRawData(payment.rawData);
   const reviews = getManualPaymentReviews(payment.rawData);
+  const validatedItems = rawData.validatedItems ?? [];
   const activities = payment.order.items
     .filter((item) => item.billableConcept.code === 'ACTIVITY_FEE')
     .map((item, index) => {
       const activity = item.activity;
       const fallbackName = item.description?.trim() || 'Sin actividad';
+      const source = validatedItems[index];
+      const targetId =
+        source?.target && source.target !== 'self' ? source.target : null;
+      const participantName = targetId
+        ? childNameById.get(targetId) ??
+          source?.targetLabel ??
+          'Menor'
+        : 'Titular';
 
       return {
         id: activity?.id ?? `${payment.id}:${index}`,
         name: activity?.name ?? fallbackName,
         description: activity?.description ?? item.description ?? null,
+        targetId,
+        targetLabel: source?.targetLabel ?? null,
+        participantName,
       };
     })
     .filter((activity, index, array) => {
@@ -311,10 +323,36 @@ export async function listManualPayments({
             (paymentOrder.get(left.id) ?? 0) - (paymentOrder.get(right.id) ?? 0)
         )
       : [];
+  const childIds = Array.from(
+    new Set(
+      payments.flatMap((payment) =>
+        (getManualPaymentRawData(payment.rawData).validatedItems ?? [])
+          .map((item) =>
+            item.target && item.target !== 'self' ? item.target : null
+          )
+          .filter((target): target is string => Boolean(target))
+      )
+    )
+  );
+  const childNameById = new Map<string, string>();
+  if (childIds.length > 0) {
+    const children = await prisma.child.findMany({
+      where: { id: { in: childIds } },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+      },
+    });
+
+    for (const child of children) {
+      childNameById.set(child.id, normalizeName(child.name, child.lastName));
+    }
+  }
 
   return {
     total: countRows[0]?.count ?? 0,
-    items: payments.map(mapPaymentToReview),
+    items: payments.map((payment) => mapPaymentToReview(payment, childNameById)),
   };
 }
 
@@ -352,7 +390,31 @@ export async function getManualPaymentById(id: string) {
     },
   });
 
-  return payment ? mapPaymentToReview(payment) : null;
+  if (!payment) {
+    return null;
+  }
+
+  const rawData = getManualPaymentRawData(payment.rawData);
+  const childIds = (rawData.validatedItems ?? [])
+    .map((item) => (item.target && item.target !== 'self' ? item.target : null))
+    .filter((target): target is string => Boolean(target));
+  const childNameById = new Map<string, string>();
+  if (childIds.length > 0) {
+    const children = await prisma.child.findMany({
+      where: { id: { in: childIds } },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+      },
+    });
+
+    for (const child of children) {
+      childNameById.set(child.id, normalizeName(child.name, child.lastName));
+    }
+  }
+
+  return mapPaymentToReview(payment, childNameById);
 }
 
 export async function createManualPaymentCheckout(input: {

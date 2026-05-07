@@ -228,22 +228,27 @@ export default function ManualPaymentDetail({
           </article>
         ) : null}
 
-        {payment.activities.length > 0 ? (
-          <article
-            className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
-              socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
-            }`}
-          >
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Actividades
-            </p>
-            <ul className="mt-2 space-y-1 text-sm">
+      {payment.activities.length > 0 ? (
+        <article
+          className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
+            socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Actividades
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
               {payment.activities.map((activity) => (
-                <li key={activity.id}>{activity.name}</li>
+                <li key={activity.id} className="space-y-0.5">
+                  <div className="font-medium">{activity.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {activity.participantName}
+                  </div>
+                </li>
               ))}
-            </ul>
-          </article>
-        ) : null}
+          </ul>
+        </article>
+      ) : null}
       </div>
 
       {payment.accountantComments ? (

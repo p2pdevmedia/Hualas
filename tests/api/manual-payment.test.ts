@@ -59,6 +59,30 @@ jest.mock('@/lib/prisma', () => ({
         .mockResolvedValueOnce({ id: 'concept_social' })
         .mockResolvedValueOnce({ id: 'concept_discount' }),
     },
+    familyGroup: {
+      findFirst: jest.fn().mockResolvedValue({
+        id: 'family_1',
+        responsibleUserId: 'user_1',
+        responsibleUser: {
+          id: 'user_1',
+          name: 'Test User',
+          lastName: null,
+          email: 'test@hualas.com',
+        },
+        members: [],
+      }),
+      create: jest.fn().mockResolvedValue({
+        id: 'family_1',
+        responsibleUserId: 'user_1',
+        responsibleUser: {
+          id: 'user_1',
+          name: 'Test User',
+          lastName: null,
+          email: 'test@hualas.com',
+        },
+        members: [],
+      }),
+    },
   },
 }));
 

@@ -7,6 +7,12 @@ jest.mock('@/lib/prisma', () => ({
     activity: {
       findMany: jest.fn(),
     },
+    familyGroup: {
+      findMany: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+    },
     child: {
       findMany: jest.fn(),
     },
@@ -34,6 +40,8 @@ import {
 
 const mockPrisma = prisma as unknown as {
   activity: { findMany: jest.Mock };
+  familyGroup: { findMany: jest.Mock };
+  user: { findUnique: jest.Mock };
   child: { findMany: jest.Mock };
   activityParticipant: { findMany: jest.Mock };
 };
@@ -48,12 +56,20 @@ describe('buildCartQuote', () => {
         price: 5000,
         capacity: null,
         participants: [],
+        days: [],
+        groups: [],
       },
+    ]);
+    mockPrisma.familyGroup.findMany.mockResolvedValue([
+      { responsibleUserId: 'user_1' },
     ]);
     mockPrisma.child.findMany.mockResolvedValue([
       { id: 'child_1', name: 'Ana', lastName: 'Lopez' },
       { id: 'child_2', name: 'Beto', lastName: 'Lopez' },
     ]);
+    mockPrisma.user.findUnique.mockResolvedValue({
+      birthDate: new Date('2010-01-01T00:00:00Z'),
+    });
     mockPrisma.activityParticipant.findMany.mockResolvedValue([]);
     (getSocialFeeAmount as jest.Mock).mockResolvedValue(2500);
     (hasSocialFeeForCurrentMonth as jest.Mock).mockResolvedValue(false);
