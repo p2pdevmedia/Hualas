@@ -173,6 +173,9 @@ export default async function SocialFeePage({
     const memberName = formatPersonName(member);
     const memberKey = `user:${member.id}`;
     const memberPayment = paymentByKey.get(memberKey);
+    const memberPaymentAmount = memberPayment
+      ? memberPayment.amount / 100
+      : null;
 
     people.push({
       key: memberKey,
@@ -181,7 +184,7 @@ export default async function SocialFeePage({
       href: getAccountingUserProfileHref(member.id),
       email: member.email,
       status: memberPayment ? 'PAID' : 'PENDING',
-      amount: memberPayment?.amount ?? socialFeeAmount,
+      amount: memberPaymentAmount ?? socialFeeAmount,
       paymentId: memberPayment?.mercadoPagoPaymentId,
       paidAt: memberPayment?.createdAt ?? null,
       createdAt: memberPayment?.createdAt ?? member.createdAt,
@@ -194,6 +197,7 @@ export default async function SocialFeePage({
     for (const child of member.children) {
       const childKey = `child:${member.id}:${child.id}`;
       const childPayment = paymentByKey.get(childKey);
+      const childPaymentAmount = childPayment ? childPayment.amount / 100 : null;
 
       people.push({
         key: childKey,
@@ -201,7 +205,7 @@ export default async function SocialFeePage({
         name: formatPersonName(child),
         href: getAccountingChildProfileHref(member.id, child.id),
         status: childPayment ? 'PAID' : 'PENDING',
-        amount: childPayment?.amount ?? socialFeeAmount,
+        amount: childPaymentAmount ?? socialFeeAmount,
         paymentId: childPayment?.mercadoPagoPaymentId,
         paidAt: childPayment?.createdAt ?? null,
         createdAt: childPayment?.createdAt ?? child.createdAt,
