@@ -1,0 +1,322 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1B2C3D4E5F60718293A1001 /* HualasMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2001 /* HualasMobileApp.swift */; };
+		A1B2C3D4E5F60718293A1002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2002 /* AppDelegate.swift */; };
+		A1B2C3D4E5F60718293A1003 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2003 /* AppConfig.swift */; };
+		A1B2C3D4E5F60718293A1004 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2004 /* APIClient.swift */; };
+		A1B2C3D4E5F60718293A1005 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2005 /* KeychainStore.swift */; };
+		A1B2C3D4E5F60718293A1006 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2006 /* Models.swift */; };
+		A1B2C3D4E5F60718293A1007 /* PushRegistrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2007 /* PushRegistrationService.swift */; };
+		A1B2C3D4E5F60718293A1008 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2008 /* RootView.swift */; };
+		A1B2C3D4E5F60718293A1009 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2009 /* SessionStore.swift */; };
+		A1B2C3D4E5F60718293A1010 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2010 /* LoginView.swift */; };
+		A1B2C3D4E5F60718293A1011 /* MemberDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2011 /* MemberDashboardView.swift */; };
+		A1B2C3D4E5F60718293A1012 /* ChildrenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2012 /* ChildrenView.swift */; };
+		A1B2C3D4E5F60718293A1013 /* ActivitiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2013 /* ActivitiesView.swift */; };
+		A1B2C3D4E5F60718293A1014 /* PaymentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2014 /* PaymentsView.swift */; };
+		A1B2C3D4E5F60718293A1015 /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2015 /* NewsView.swift */; };
+		A1B2C3D4E5F60718293A1016 /* ProfessorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2016 /* ProfessorDashboardView.swift */; };
+		A1B2C3D4E5F60718293A1017 /* GroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2017 /* GroupsView.swift */; };
+		A1B2C3D4E5F60718293A1018 /* StudentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2018 /* StudentsView.swift */; };
+		A1B2C3D4E5F60718293A1019 /* AttendanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2019 /* AttendanceView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1B2C3D4E5F60718293A3001 /* HualasMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = HualasMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F60718293A2001 /* HualasMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HualasMobileApp.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2003 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2004 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2005 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2006 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2007 /* PushRegistrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationService.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2008 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2009 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2010 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2011 /* MemberDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberDashboardView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2012 /* ChildrenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildrenView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2013 /* ActivitiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitiesView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2014 /* PaymentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2015 /* NewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2016 /* ProfessorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfessorDashboardView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2017 /* GroupsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2018 /* StudentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2019 /* AttendanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttendanceView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2021 /* HualasMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HualasMobile.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		A1B2C3D4E5F60718293A4001 = {isa = PBXGroup; children = (A1B2C3D4E5F60718293A4002, A1B2C3D4E5F60718293A5001); sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4002 /* HualasMobile */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A2001,
+				A1B2C3D4E5F60718293A2002,
+				A1B2C3D4E5F60718293A2003,
+				A1B2C3D4E5F60718293A2004,
+				A1B2C3D4E5F60718293A2005,
+				A1B2C3D4E5F60718293A2006,
+				A1B2C3D4E5F60718293A2007,
+				A1B2C3D4E5F60718293A2008,
+				A1B2C3D4E5F60718293A2009,
+				A1B2C3D4E5F60718293A2020,
+				A1B2C3D4E5F60718293A2021,
+				A1B2C3D4E5F60718293A6001,
+			);
+			path = HualasMobile;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A6001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A2010,
+				A1B2C3D4E5F60718293A6002,
+				A1B2C3D4E5F60718293A6003,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A6002 /* Member */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A2011,
+				A1B2C3D4E5F60718293A2012,
+				A1B2C3D4E5F60718293A2013,
+				A1B2C3D4E5F60718293A2014,
+				A1B2C3D4E5F60718293A2015,
+			);
+			path = Member;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A6003 /* Professor */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A2016,
+				A1B2C3D4E5F60718293A2017,
+				A1B2C3D4E5F60718293A2018,
+				A1B2C3D4E5F60718293A2019,
+			);
+			path = Professor;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A5001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A3001,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1B2C3D4E5F60718293A7001 /* HualasMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F60718293A9001 /* Build configuration list for PBXNativeTarget "HualasMobile" */;
+			buildPhases = (
+				A1B2C3D4E5F60718293A8001 /* Sources */,
+				A1B2C3D4E5F60718293A8002 /* Frameworks */,
+				A1B2C3D4E5F60718293A8003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HualasMobile;
+			productName = HualasMobile;
+			productReference = A1B2C3D4E5F60718293A3001 /* HualasMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1B2C3D4E5F60718293A8000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A1B2C3D4E5F60718293A7001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A1B2C3D4E5F60718293A9002 /* Build configuration list for PBXProject "HualasMobile" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = es;
+			hasScannedForEncodings = 0;
+			mainGroup = A1B2C3D4E5F60718293A4001;
+			productRefGroup = A1B2C3D4E5F60718293A5001;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1B2C3D4E5F60718293A7001,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1B2C3D4E5F60718293A8003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1B2C3D4E5F60718293A8001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F60718293A1001,
+				A1B2C3D4E5F60718293A1002,
+				A1B2C3D4E5F60718293A1003,
+				A1B2C3D4E5F60718293A1004,
+				A1B2C3D4E5F60718293A1005,
+				A1B2C3D4E5F60718293A1006,
+				A1B2C3D4E5F60718293A1007,
+				A1B2C3D4E5F60718293A1008,
+				A1B2C3D4E5F60718293A1009,
+				A1B2C3D4E5F60718293A1010,
+				A1B2C3D4E5F60718293A1011,
+				A1B2C3D4E5F60718293A1012,
+				A1B2C3D4E5F60718293A1013,
+				A1B2C3D4E5F60718293A1014,
+				A1B2C3D4E5F60718293A1015,
+				A1B2C3D4E5F60718293A1016,
+				A1B2C3D4E5F60718293A1017,
+				A1B2C3D4E5F60718293A1018,
+				A1B2C3D4E5F60718293A1019,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1B2C3D4E5F60718293A9003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = HualasMobile/HualasMobile.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HualasMobile/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hualas.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F60718293A9004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = HualasMobile/HualasMobile.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HualasMobile/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hualas.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Release;
+		};
+		A1B2C3D4E5F60718293A9005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hualas.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F60718293A9006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hualas.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1B2C3D4E5F60718293A9001 /* Build configuration list for PBXNativeTarget "HualasMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F60718293A9003,
+				A1B2C3D4E5F60718293A9004,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F60718293A9002 /* Build configuration list for PBXProject "HualasMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F60718293A9005,
+				A1B2C3D4E5F60718293A9006,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1B2C3D4E5F60718293A8000 /* Project object */;
+}
