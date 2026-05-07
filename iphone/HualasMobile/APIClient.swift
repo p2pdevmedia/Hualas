@@ -39,6 +39,10 @@ final class APIClient {
     try await send(path: "/api/mobile/me", token: token)
   }
 
+  func home(token: String) async throws -> MobileHomeResponse {
+    try await send(path: "/api/mobile/home", token: token)
+  }
+
   func children(token: String) async throws -> MobileChildrenResponse {
     try await send(path: "/api/mobile/children", token: token)
   }
