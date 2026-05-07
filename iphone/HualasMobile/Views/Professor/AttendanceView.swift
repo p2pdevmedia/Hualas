@@ -22,6 +22,7 @@ struct AttendanceView: View {
         }
       }
       .navigationTitle("Asistencia")
+      .toolbar(.hidden, for: .navigationBar)
       .task { await loadDays() }
       .refreshable {
         await loadDays()

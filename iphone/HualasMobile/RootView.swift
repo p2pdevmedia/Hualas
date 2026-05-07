@@ -32,19 +32,18 @@ struct MemberShellView: View {
   @State private var showingNotifications = false
 
   var body: some View {
-    ZStack {
-      TabView {
-        MemberDashboardView()
-          .tabItem { Label("Inicio", systemImage: "house.fill") }
-        ActivitiesView()
-          .tabItem { Label("Mis actividades", systemImage: "calendar") }
-        ChildrenView()
-          .tabItem { Label("Hijos", systemImage: "person.2") }
-        MoreTabView()
-          .tabItem { Label("Más", systemImage: "ellipsis.circle") }
-      }
-      .environmentObject(cartStore)
-
+    TabView {
+      MemberDashboardView()
+        .tabItem { Label("Inicio", systemImage: "house.fill") }
+      ActivitiesView()
+        .tabItem { Label("Mis actividades", systemImage: "calendar") }
+      ChildrenView()
+        .tabItem { Label("Hijos", systemImage: "person.2") }
+      MoreTabView()
+        .tabItem { Label("Más", systemImage: "ellipsis.circle") }
+    }
+    .environmentObject(cartStore)
+    .safeAreaInset(edge: .top, spacing: 0) {
       HStack {
         Button {
           showingCart = true
@@ -74,8 +73,7 @@ struct MemberShellView: View {
         }
       }
       .padding(.horizontal, 16)
-      .padding(.bottom, 76)
-      .frame(maxHeight: .infinity, alignment: .bottom)
+      .padding(.vertical, 8)
     }
     .sheet(isPresented: $showingNotifications) {
       NotificationsView()
@@ -131,6 +129,7 @@ struct MoreTabView: View {
         }
       }
       .navigationTitle("Más")
+      .toolbar(.hidden, for: .navigationBar)
     }
   }
 }
@@ -140,18 +139,17 @@ struct ProfessorShellView: View {
   @State private var showingNotifications = false
 
   var body: some View {
-    ZStack {
-      TabView {
-        ActivitiesView()
-          .tabItem { Label("Mis actividades", systemImage: "calendar") }
-        GroupsView()
-          .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
-        AttendanceView()
-          .tabItem { Label("Asistencia", systemImage: "checklist") }
-        ProfileView()
-          .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
-      }
-
+    TabView {
+      ActivitiesView()
+        .tabItem { Label("Mis actividades", systemImage: "calendar") }
+      GroupsView()
+        .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
+      AttendanceView()
+        .tabItem { Label("Asistencia", systemImage: "checklist") }
+      ProfileView()
+        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+    }
+    .safeAreaInset(edge: .top, spacing: 0) {
       HStack {
         Spacer()
         NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
@@ -159,8 +157,7 @@ struct ProfessorShellView: View {
         }
       }
       .padding(.horizontal, 16)
-      .padding(.bottom, 76)
-      .frame(maxHeight: .infinity, alignment: .bottom)
+      .padding(.vertical, 8)
     }
     .sheet(isPresented: $showingNotifications) {
       NotificationsView()

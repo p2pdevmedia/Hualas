@@ -25,6 +25,7 @@ struct ChildrenView: View {
         }
       }
       .navigationTitle("Mis hijos")
+      .toolbar(.hidden, for: .navigationBar)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Button {

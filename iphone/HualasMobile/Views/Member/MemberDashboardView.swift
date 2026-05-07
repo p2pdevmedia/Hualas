@@ -64,6 +64,7 @@ struct MemberDashboardView: View {
         .padding()
       }
       .navigationTitle("Inicio")
+      .toolbar(.hidden, for: .navigationBar)
       .task {
         await load()
       }

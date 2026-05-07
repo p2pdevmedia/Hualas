@@ -64,6 +64,7 @@ struct ActivitiesView: View {
       }
       .navigationTitle("Mis actividades")
       .navigationBarTitleDisplayMode(.inline)
+      .toolbar(.hidden, for: .navigationBar)
       .task(id: monthKey) {
         await loadMonth()
       }

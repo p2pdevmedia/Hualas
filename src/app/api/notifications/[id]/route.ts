@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getNotificationUserIdFromRequest } from '@/lib/notifications/notification-access';
 
 export async function PATCH(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await getNotificationUserIdFromRequest(req);
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = (session.user as { id: string }).id;
 
   const notification = await prisma.notification.findUnique({
     where: { id: params.id },

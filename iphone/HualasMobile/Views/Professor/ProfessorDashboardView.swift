@@ -37,6 +37,7 @@ struct ProfessorDashboardView: View {
       }
       .task { await load() }
       .refreshable { await load() }
+      .toolbar(.hidden, for: .navigationBar)
     }
   }
 

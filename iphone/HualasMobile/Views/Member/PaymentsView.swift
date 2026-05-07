@@ -31,6 +31,7 @@ struct PaymentsView: View {
         }
       }
       .navigationTitle("Pagos")
+      .toolbar(.hidden, for: .navigationBar)
       .task { await load() }
       .refreshable { await load() }
     }

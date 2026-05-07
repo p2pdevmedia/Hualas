@@ -20,6 +20,7 @@ struct GroupsView: View {
         }
       }
       .navigationTitle("Grupos")
+      .toolbar(.hidden, for: .navigationBar)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Button {

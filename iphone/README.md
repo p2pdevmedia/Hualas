@@ -32,9 +32,9 @@ The app expects these endpoints:
 - `GET /api/mobile/payments`
 - `GET /api/mobile/news`
 - `POST /api/mobile/devices`
-- `GET /api/mobile/notifications`
-- `PATCH /api/mobile/notifications`
-- `PATCH /api/mobile/notifications/[id]`
+- `GET /api/notifications`
+- `PATCH /api/notifications`
+- `PATCH /api/notifications/[id]`
 - `GET /api/mobile/professor/groups`
 - `GET /api/mobile/professor/students`
 - `GET /api/mobile/professor/attendance`

@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getNotificationUserIdFromRequest } from '@/lib/notifications/notification-access';
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await getNotificationUserIdFromRequest(req);
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = (session.user as { id: string }).id;
   const url = new URL(req.url);
   const unreadOnly = url.searchParams.get('unread') === '1';
   const limitRaw = parseInt(url.searchParams.get('limit') ?? '20', 10);
@@ -45,12 +43,11 @@ export async function GET(req: Request) {
   return NextResponse.json({ notifications, unreadCount, chatUnreadCount });
 }
 
-export async function PATCH() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+export async function PATCH(req: Request) {
+  const userId = await getNotificationUserIdFromRequest(req);
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const userId = (session.user as { id: string }).id;
   const result = await prisma.notification.updateMany({
     where: { userId, readAt: null },
     data: { readAt: new Date() },

@@ -35,6 +35,7 @@ struct ProfileView: View {
         .padding()
       }
       .navigationTitle("Perfil")
+      .toolbar(.hidden, for: .navigationBar)
       .task { await loadProfessorProfileIfNeeded() }
       .refreshable { await loadProfessorProfileIfNeeded() }
     }

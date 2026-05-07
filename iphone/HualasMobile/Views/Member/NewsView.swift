@@ -18,6 +18,7 @@ struct NewsView: View {
         .padding(.vertical, 4)
       }
       .navigationTitle("Noticias")
+      .toolbar(.hidden, for: .navigationBar)
       .task { await load() }
       .refreshable { await load() }
     }
