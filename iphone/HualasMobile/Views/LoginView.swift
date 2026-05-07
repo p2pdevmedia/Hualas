@@ -4,7 +4,6 @@ struct LoginView: View {
   @EnvironmentObject private var sessionStore: SessionStore
   @State private var email = ""
   @State private var password = ""
-  @State private var role: MobileRole = .member
 
   var body: some View {
     NavigationStack {
@@ -12,14 +11,8 @@ struct LoginView: View {
         VStack(alignment: .leading, spacing: 20) {
           Text("Hualas")
             .font(.largeTitle.bold())
-          Text("Acceso móvil para socios y profesores.")
+          Text("Acceso móvil para socios y profesores con un solo ingreso.")
             .foregroundStyle(.secondary)
-
-          Picker("Rol", selection: $role) {
-            Text("Socio").tag(MobileRole.member)
-            Text("Profesor").tag(MobileRole.professor)
-          }
-          .pickerStyle(.segmented)
 
           VStack(spacing: 14) {
             TextField("Email", text: $email)
@@ -38,7 +31,7 @@ struct LoginView: View {
 
             Button {
               Task {
-                await sessionStore.login(email: email, password: password, role: role)
+                await sessionStore.login(email: email, password: password)
               }
             } label: {
               Text("Ingresar")
@@ -56,4 +49,3 @@ struct LoginView: View {
     }
   }
 }
-

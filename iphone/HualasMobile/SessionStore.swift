@@ -23,6 +23,10 @@ final class SessionStore: ObservableObject {
     me?.user.mobileRole
   }
 
+  var allowedRoles: [MobileRole] {
+    me?.user.allowedRoles ?? []
+  }
+
   func restoreSession() async {
     defer { isLoading = false }
     guard let stored = KeychainStore.shared.string(for: tokenKey) else {
@@ -60,6 +64,43 @@ final class SessionStore: ObservableObject {
       errorMessage = error.localizedDescription
     }
     isLoading = false
+  }
+
+  func login(email: String, password: String) async {
+    errorMessage = nil
+    isLoading = true
+    do {
+      let response = try await APIClient.shared.login(
+        MobileLoginRequest(
+          email: email,
+          password: password,
+          role: nil,
+          platform: "iOS",
+          deviceName: UIDevice.current.name,
+          deviceModel: UIDevice.current.model,
+          appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        )
+      )
+      token = response.token
+      me = try await APIClient.shared.me(token: response.token)
+      KeychainStore.shared.save(response.token, for: tokenKey)
+      await PushRegistrationService.shared.syncIfNeeded(authToken: response.token)
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+    isLoading = false
+  }
+
+  func switchRole(to role: MobileRole) async {
+    guard let token else { return }
+    do {
+      let result = try await APIClient.shared.switchRole(token: token, role: role)
+      if result.ok {
+        me = try await APIClient.shared.me(token: token)
+      }
+    } catch {
+      errorMessage = error.localizedDescription
+    }
   }
 
   func logout() async {

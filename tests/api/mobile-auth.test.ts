@@ -6,14 +6,14 @@ jest.mock('bcrypt', () => ({
   compare: jest.fn(),
 }));
 
-const mockMobileSessionCreate = jest.fn().mockResolvedValue({
+const mockMobileSessionCreate = jest.fn().mockImplementation(async ({ data }: { data: { userId: string; appRole: string } }) => ({
   id: 'mobile_session_1',
-  userId: 'user_1',
-  appRole: 'MEMBER',
+  userId: data.userId,
+  appRole: data.appRole,
   expiresAt: new Date('2026-06-01T00:00:00.000Z'),
   createdAt: new Date('2026-05-07T00:00:00.000Z'),
   lastUsedAt: new Date('2026-05-07T00:00:00.000Z'),
-});
+}));
 
 const mockUserUpdate = jest.fn().mockResolvedValue({});
 const mockAuditCreate = jest.fn().mockResolvedValue({});
@@ -65,7 +65,6 @@ describe('mobile auth login', () => {
         body: JSON.stringify({
           email: 'member@hualas.com',
           password: 'secret',
-          role: 'MEMBER',
           platform: 'iOS',
           deviceName: 'iPhone 15',
         }),
@@ -90,17 +89,17 @@ describe('mobile auth login', () => {
     expect(mockAuditCreate).toHaveBeenCalled();
   });
 
-  it('rejects PROFESSOR login when the account is not enabled for it', async () => {
+  it('starts as PROFESSOR when the active profile is professor', async () => {
     mockUserFindUnique.mockResolvedValue({
       id: 'user_1',
-      email: 'member@hualas.com',
+      email: 'prof@hualas.com',
       password: 'hashed-password',
       isActive: true,
-      role: 'MEMBER',
-      activeRole: 'MEMBER',
-      name: 'Marta',
-      lastName: 'Paz',
-      roleAssignments: [],
+      role: 'PROFESSOR',
+      activeRole: 'PROFESSOR',
+      name: 'Ana',
+      lastName: 'López',
+      roleAssignments: [{ role: 'PROFESSOR' }],
     });
 
     const response = await loginPOST(
@@ -108,14 +107,22 @@ describe('mobile auth login', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          email: 'member@hualas.com',
+          email: 'prof@hualas.com',
           password: 'secret',
-          role: 'PROFESSOR',
         }),
       })
     );
 
-    expect(response.status).toBe(403);
-    expect(mockMobileSessionCreate).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.session.appRole).toBe('PROFESSOR');
+    expect(mockMobileSessionCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: 'user_1',
+          appRole: 'PROFESSOR',
+        }),
+      })
+    );
   });
 });

@@ -1,8 +1,57 @@
 import { NextResponse } from 'next/server';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
-import { formatFullName, formatMobileDateOnly } from '@/lib/mobile-format';
 import { prisma } from '@/lib/prisma';
+
+function parseMonthRange(value: string | null) {
+  const now = new Date();
+  const fallbackYear = now.getFullYear();
+  const fallbackMonth = now.getMonth();
+
+  const match = value?.match(/^(\d{4})-(\d{2})$/);
+  const year = match ? Number(match[1]) : fallbackYear;
+  const monthIndex = match ? Number(match[2]) - 1 : fallbackMonth;
+
+  const start = new Date(year, monthIndex, 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(year, monthIndex + 1, 1);
+  end.setHours(0, 0, 0, 0);
+
+  const monthLabel = new Intl.DateTimeFormat('es-AR', {
+    month: 'long',
+    year: 'numeric',
+  }).format(start);
+
+  const monthKey = `${String(start.getFullYear())}-${String(
+    start.getMonth() + 1
+  ).padStart(2, '0')}`;
+
+  return { start, end, monthKey, monthLabel };
+}
+
+function toDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
+}
+
+function formatDateOnly(value: Date) {
+  return toDateKey(value);
+}
+
+function isVisibleForMember(
+  day: { activityGroupId: string | null; activityId: string },
+  scope:
+    | {
+        groupIds: Set<string>;
+        hasUngroupedParticipant: boolean;
+      }
+    | undefined
+) {
+  if (day.activityGroupId === null) return true;
+  if (!scope) return false;
+  return scope.groupIds.has(day.activityGroupId);
+}
 
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
@@ -10,60 +59,88 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const url = new URL(req.url);
+  const { start, end, monthKey, monthLabel } = parseMonthRange(
+    url.searchParams.get('month')
+  );
 
   if (session.appRole === 'PROFESSOR') {
-    const assignments = await prisma.activityProfessor.findMany({
-      where: { userId: session.userId },
-      select: {
-        activity: {
+    const [activityAssignments, directDays] = await Promise.all([
+      prisma.activityProfessor.findMany({
+        where: { userId: session.userId },
+        select: { activityId: true },
+      }),
+      prisma.activityDay.findMany({
+        where: {
+          date: { gte: start, lt: end },
+          professors: { some: { userId: session.userId } },
+        },
+        select: {
+          id: true,
+          activityId: true,
+          date: true,
+          schedule: true,
+          geoLocation: true,
+          cancelled: true,
+          activityGroupId: true,
+          activity: { select: { id: true, name: true } },
+          activityGroup: { select: { name: true } },
+        },
+        orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
+      }),
+    ]);
+
+    const assignedActivityIds = new Set(
+      activityAssignments.map((assignment) => assignment.activityId)
+    );
+
+    const assignedDays = assignedActivityIds.size
+      ? await prisma.activityDay.findMany({
+          where: {
+            date: { gte: start, lt: end },
+            activityId: { in: [...assignedActivityIds] },
+          },
           select: {
             id: true,
-            name: true,
+            activityId: true,
             date: true,
-            endDate: true,
-            frequency: true,
-            price: true,
-            description: true,
-            groups: { select: { id: true } },
-            days: {
-              where: { date: { gte: today } },
-              select: {
-                id: true,
-                date: true,
-                schedule: true,
-                activityGroupId: true,
-                activityGroup: { select: { name: true } },
-              },
-              orderBy: { date: 'asc' },
-              take: 5,
-            },
+            schedule: true,
+            geoLocation: true,
+            cancelled: true,
+            activityGroupId: true,
+            activity: { select: { id: true, name: true } },
+            activityGroup: { select: { name: true } },
           },
-        },
-      },
-      orderBy: { activity: { date: 'asc' } },
-    });
+          orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
+        })
+      : [];
+
+    const merged = new Map<string, (typeof directDays)[number]>();
+    [...assignedDays, ...directDays].forEach((day) => merged.set(day.id, day));
+
+    const sessions = [...merged.values()]
+      .sort((a, b) => {
+        const diff = a.date.getTime() - b.date.getTime();
+        if (diff !== 0) return diff;
+        return a.schedule.localeCompare(b.schedule);
+      })
+      .map((day) => ({
+        id: day.id,
+        date: formatDateOnly(day.date),
+        activityId: day.activity.id,
+        activityName: day.activity.name,
+        schedule: day.schedule,
+        geoLocation: day.geoLocation,
+        groupName: day.activityGroup?.name ?? null,
+        activityGroupId: day.activityGroupId,
+        cancelled: day.cancelled,
+      }));
 
     return NextResponse.json({
       role: 'PROFESSOR',
-      activities: assignments.map((assignment) => ({
-        id: assignment.activity.id,
-        name: assignment.activity.name,
-        date: formatMobileDateOnly(assignment.activity.date),
-        endDate: formatMobileDateOnly(assignment.activity.endDate),
-        frequency: assignment.activity.frequency,
-        price: assignment.activity.price,
-        description: assignment.activity.description,
-        groupsCount: assignment.activity.groups.length,
-        upcomingDays: assignment.activity.days.map((day) => ({
-          id: day.id,
-          date: formatMobileDateOnly(day.date),
-          schedule: day.schedule,
-          groupName: day.activityGroup?.name ?? null,
-          activityGroupId: day.activityGroupId,
-        })),
-      })),
+      month: monthKey,
+      monthLabel,
+      sessions,
     });
   }
 
@@ -76,88 +153,78 @@ export async function GET(req: Request) {
       ],
     },
     select: {
-      id: true,
-      userId: true,
-      activity: {
-        select: {
-          id: true,
-          name: true,
-          date: true,
-          endDate: true,
-          frequency: true,
-          price: true,
-          description: true,
-          days: {
-            where: { date: { gte: today } },
-            select: {
-              id: true,
-              date: true,
-              schedule: true,
-              activityGroupId: true,
-              activityGroup: { select: { name: true } },
-            },
-            orderBy: { date: 'asc' },
-            take: 5,
-          },
-        },
-      },
-      child: { select: { id: true, name: true, lastName: true } },
+      activityId: true,
+      childId: true,
       groupMembership: {
         select: {
           activityGroupId: true,
           activityGroup: { select: { name: true } },
         },
       },
-      payments: {
-        select: {
-          id: true,
-          amount: true,
-          paymentReference: true,
-          paidAt: true,
-        },
-        orderBy: { paidAt: 'desc' },
-        take: 1,
-      },
     },
-    orderBy: { activity: { date: 'asc' } },
   });
 
-  const uniqueActivities = new Map<string, (typeof participations)[number]['activity']>();
+  const activityIds = [...new Set(participations.map((p) => p.activityId))];
+  const scopeByActivityId = new Map<
+    string,
+    { groupIds: Set<string>; hasUngroupedParticipant: boolean }
+  >();
+
   for (const participation of participations) {
-    uniqueActivities.set(participation.activity.id, participation.activity);
+    const current = scopeByActivityId.get(participation.activityId) ?? {
+      groupIds: new Set<string>(),
+      hasUngroupedParticipant: false,
+    };
+
+    const groupId = participation.groupMembership?.activityGroupId ?? null;
+    if (groupId) {
+      current.groupIds.add(groupId);
+    } else {
+      current.hasUngroupedParticipant = true;
+    }
+
+    scopeByActivityId.set(participation.activityId, current);
   }
+
+  const days = activityIds.length
+    ? await prisma.activityDay.findMany({
+        where: {
+          date: { gte: start, lt: end },
+          activityId: { in: activityIds },
+        },
+        select: {
+          id: true,
+          activityId: true,
+          date: true,
+          schedule: true,
+          geoLocation: true,
+          cancelled: true,
+          activityGroupId: true,
+          activity: { select: { id: true, name: true } },
+          activityGroup: { select: { name: true } },
+        },
+        orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
+      })
+    : [];
+
+  const sessions = days
+    .filter((day) => isVisibleForMember(day, scopeByActivityId.get(day.activityId)))
+    .map((day) => ({
+      id: day.id,
+      date: formatDateOnly(day.date),
+      activityId: day.activity.id,
+      activityName: day.activity.name,
+      schedule: day.schedule,
+      geoLocation: day.geoLocation,
+      groupName: day.activityGroup?.name ?? null,
+      activityGroupId: day.activityGroupId,
+      cancelled: day.cancelled,
+    }));
 
   return NextResponse.json({
     role: 'MEMBER',
-    activities: Array.from(uniqueActivities.values()).map((activity) => {
-      const labels = participations
-        .filter((participation) => participation.activity.id === activity.id)
-        .map((participation) =>
-          participation.child ? formatFullName(participation.child) : 'Yo'
-        );
-
-      const participation = participations.find(
-        (item) => item.activity.id === activity.id
-      );
-
-      return {
-        id: activity.id,
-        name: activity.name,
-        date: formatMobileDateOnly(activity.date),
-        endDate: formatMobileDateOnly(activity.endDate),
-        frequency: activity.frequency,
-        price: activity.price,
-        description: activity.description,
-        participantLabels: labels,
-        groupName: participation?.groupMembership?.activityGroup?.name ?? null,
-        nextDays: activity.days.map((day) => ({
-          id: day.id,
-          date: formatMobileDateOnly(day.date),
-          schedule: day.schedule,
-          groupName: day.activityGroup?.name ?? null,
-          activityGroupId: day.activityGroupId,
-        })),
-      };
-    }),
+    month: monthKey,
+    monthLabel,
+    sessions,
   });
 }

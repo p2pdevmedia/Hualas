@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 import {
   createMobileSession,
   getMobileAllowedRoles,
-  resolveMobileRole,
 } from '@/lib/mobile-auth';
 import { loginSchema } from '@/lib/validations/auth';
 
@@ -44,14 +43,10 @@ export async function POST(req: Request) {
   }
 
   const allowedRoles = getMobileAllowedRoles(user);
-  const role = resolveMobileRole(allowedRoles, parsed.data.role);
-
-  if (!role) {
-    return NextResponse.json(
-      { error: 'No tenés acceso móvil habilitado' },
-      { status: 403 }
-    );
-  }
+  const role =
+    user.activeRole === 'PROFESSOR' && allowedRoles.includes('PROFESSOR')
+      ? 'PROFESSOR'
+      : 'MEMBER';
 
   const { token, session } = await createMobileSession({
     userId: user.id,

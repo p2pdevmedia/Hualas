@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getMobileAllowedRoles } from '@/lib/mobile-auth';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 
 export async function GET(req: Request) {
@@ -16,6 +17,10 @@ export async function GET(req: Request) {
       role: session.user.role,
       activeRole: session.user.activeRole,
       mobileRole: session.appRole,
+      allowedRoles: getMobileAllowedRoles({
+        role: session.user.role,
+        roleAssignments: session.user.roleAssignments,
+      }),
       isActive: session.user.isActive,
     },
     session: {

@@ -23,16 +23,16 @@ struct RootView: View {
 struct MemberShellView: View {
   var body: some View {
     TabView {
-      MemberDashboardView()
-        .tabItem { Label("Home", systemImage: "house") }
+      ActivitiesView()
+        .tabItem { Label("Mis actividades", systemImage: "calendar") }
       ChildrenView()
         .tabItem { Label("Hijos", systemImage: "person.2") }
-      ActivitiesView()
-        .tabItem { Label("Actividades", systemImage: "calendar") }
       PaymentsView()
         .tabItem { Label("Pagos", systemImage: "creditcard") }
       NewsView()
         .tabItem { Label("Noticias", systemImage: "newspaper") }
+      ProfileView()
+        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
     }
   }
 }
@@ -40,8 +40,8 @@ struct MemberShellView: View {
 struct ProfessorShellView: View {
   var body: some View {
     TabView {
-      ProfessorDashboardView()
-        .tabItem { Label("Home", systemImage: "house") }
+      ActivitiesView()
+        .tabItem { Label("Mis actividades", systemImage: "calendar") }
       GroupsView()
         .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
       StudentsView()
@@ -50,7 +50,8 @@ struct ProfessorShellView: View {
         .tabItem { Label("Asistencia", systemImage: "checklist") }
       PaymentsView()
         .tabItem { Label("Pagos", systemImage: "creditcard") }
+      ProfileView()
+        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
     }
   }
 }
-

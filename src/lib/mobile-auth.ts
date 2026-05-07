@@ -84,6 +84,25 @@ export async function createMobileSession(input: {
   };
 }
 
+export async function switchMobileSessionRole(input: {
+  sessionId: string;
+  appRole: MobileAllowedRole;
+}) {
+  const result = await prisma.mobileSession.updateMany({
+    where: {
+      id: input.sessionId,
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    data: {
+      appRole: input.appRole,
+      lastUsedAt: new Date(),
+    },
+  });
+
+  return result.count > 0;
+}
+
 function extractBearerToken(req: Request) {
   const authorization = req.headers.get('authorization');
   if (authorization?.startsWith('Bearer ')) {
@@ -124,6 +143,9 @@ export async function getMobileSessionFromRequest(req: Request) {
           role: true,
           activeRole: true,
           isActive: true,
+          roleAssignments: {
+            select: { role: true },
+          },
         },
       },
     },

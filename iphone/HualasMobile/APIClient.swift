@@ -26,20 +26,39 @@ final class APIClient {
     )
   }
 
-  func me(token: String) async throws -> MobileMeResponse {
-    try await send(path: "/api/mobile/me", token: token)
+  func switchRole(token: String, role: MobileRole) async throws -> MobileSwitchRoleResponse {
+    try await send(
+      path: "/api/mobile/auth/switch-role",
+      method: "POST",
+      token: token,
+      body: MobileSwitchRoleRequest(role: role)
+    )
   }
 
-  func home(token: String) async throws -> MobileHomeResponse {
-    try await send(path: "/api/mobile/home", token: token)
+  func me(token: String) async throws -> MobileMeResponse {
+    try await send(path: "/api/mobile/me", token: token)
   }
 
   func children(token: String) async throws -> MobileChildrenResponse {
     try await send(path: "/api/mobile/children", token: token)
   }
 
-  func activities(token: String) async throws -> MobileActivitiesResponse {
-    try await send(path: "/api/mobile/activities", token: token)
+  func activitiesCalendar(
+    token: String,
+    month: Date = Date()
+  ) async throws -> MobileActivitiesCalendarResponse {
+    let monthKey = APIClient.monthKey(for: month)
+    return try await send(
+      path: "/api/mobile/activities?month=\(monthKey)",
+      token: token
+    )
+  }
+
+  func activitySessionDetail(
+    token: String,
+    dayId: String
+  ) async throws -> MobileActivitySessionDetailResponse {
+    try await send(path: "/api/mobile/activities/\(dayId)", token: token)
   }
 
   func payments(token: String) async throws -> MobilePaymentsResponse {
@@ -61,6 +80,13 @@ final class APIClient {
 
   func professorGroups(token: String) async throws -> MobileGroupsResponse {
     try await send(path: "/api/mobile/professor/groups", token: token)
+  }
+
+  func professorGroupDetail(
+    token: String,
+    groupId: String
+  ) async throws -> MobileProfessorGroupDetailResponse {
+    try await send(path: "/api/mobile/professor/groups/\(groupId)", token: token)
   }
 
   func professorStudents(
@@ -104,6 +130,38 @@ final class APIClient {
       token: token,
       body: EmptyRequest()
     )
+  }
+
+  func conversations(token: String) async throws -> MobileConversationListResponse {
+    try await send(path: "/api/mobile/messages", token: token)
+  }
+
+  func conversationThread(
+    token: String,
+    userId: String
+  ) async throws -> MobileConversationThreadResponse {
+    try await send(path: "/api/mobile/messages/\(userId)", token: token)
+  }
+
+  func sendMessage(
+    token: String,
+    userId: String,
+    content: String
+  ) async throws -> MobileConversationThreadResponse.Message {
+    try await send(
+      path: "/api/mobile/messages/\(userId)",
+      method: "POST",
+      token: token,
+      body: MobileSendMessageRequest(content: content)
+    )
+  }
+
+  private static func monthKey(for date: Date) -> String {
+    let calendar = Calendar(identifier: .gregorian)
+    let components = calendar.dateComponents([.year, .month], from: date)
+    let year = components.year ?? calendar.component(.year, from: date)
+    let month = components.month ?? calendar.component(.month, from: date)
+    return String(format: "%04d-%02d", year, month)
   }
 
   private func send<T: Decodable>(
@@ -170,9 +228,23 @@ struct MobileDeviceRegistrationResponse: Codable {
   let device: Device
 }
 
+struct MobileSwitchRoleRequest: Codable {
+  let role: MobileRole
+}
+
+struct MobileSwitchRoleResponse: Codable {
+  let ok: Bool
+  let appRole: MobileRole
+  let allowedRoles: [MobileRole]
+}
+
 struct MobileAttendanceUpdateRequest: Codable {
   let participantId: String
   let status: String
+}
+
+struct MobileSendMessageRequest: Codable {
+  let content: String
 }
 
 struct EmptyRequest: Codable {}

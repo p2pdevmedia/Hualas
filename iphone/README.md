@@ -50,6 +50,7 @@ The app expects these endpoints:
 
 1. Start the web app locally with `pnpm dev`.
 2. Edit `API_BASE_URL` to reach that backend from the iPhone.
-3. Sign in with a `MEMBER` or `PROFESSOR` account.
-4. Verify the home tabs load data.
-5. On a real device, confirm APNs permission is requested and the token is stored through `POST /api/mobile/devices`.
+3. Sign in once with your email and password.
+4. Open `Perfil` to switch between socio and profesor if the account has both profiles.
+5. Verify the home tabs load data in the selected profile.
+6. On a real device, confirm APNs permission is requested and the token is stored through `POST /api/mobile/devices`.

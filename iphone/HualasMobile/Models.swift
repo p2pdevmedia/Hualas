@@ -8,7 +8,7 @@ enum MobileRole: String, Codable {
 struct MobileLoginRequest: Codable {
   let email: String
   let password: String
-  let role: MobileRole
+  let role: MobileRole?
   let platform: String?
   let deviceName: String?
   let deviceModel: String?
@@ -46,6 +46,7 @@ struct MobileMeResponse: Codable {
     let role: String
     let activeRole: String
     let mobileRole: MobileRole
+    let allowedRoles: [MobileRole]
     let isActive: Bool
   }
 
@@ -218,6 +219,74 @@ struct MobileActivitiesResponse: Codable {
   let activities: [Activity]
 }
 
+struct MobileActivitiesCalendarResponse: Codable {
+  struct Session: Codable, Identifiable {
+    let id: String
+    let date: String
+    let activityId: String
+    let activityName: String
+    let schedule: String
+    let geoLocation: String
+    let groupName: String?
+    let activityGroupId: String?
+    let cancelled: Bool
+  }
+
+  let role: MobileRole
+  let month: String
+  let monthLabel: String
+  let sessions: [Session]
+}
+
+struct MobileActivitySessionDetailResponse: Codable, Identifiable {
+  struct Day: Codable {
+    let id: String
+    let date: String
+    let schedule: String
+    let geoLocation: String
+    let description: String?
+    let planificacion: String?
+    let devolucion: String?
+    let cancelled: Bool
+    let cancellationReason: String?
+    let activity: Activity
+    let groupName: String?
+  }
+
+  struct Activity: Codable {
+    let id: String
+    let name: String
+    let price: Int
+  }
+
+  struct Professor: Codable, Identifiable {
+    let id: String
+    let label: String
+    let phone: String?
+  }
+
+  struct Participant: Codable, Identifiable {
+    struct Attendance: Codable {
+      let status: String
+      let confirmedAt: String?
+    }
+
+    let id: String
+    let userId: String
+    let childId: String?
+    let label: String
+    let groupName: String?
+    let attendance: Attendance
+  }
+
+  let role: MobileRole
+  let day: Day
+  let professors: [Professor]
+  let participants: [Participant]
+
+  var id: String { day.id }
+}
+
 struct MobileNewsResponse: Codable {
   struct NewsItem: Codable, Identifiable {
     struct Media: Codable, Identifiable {
@@ -270,6 +339,46 @@ struct MobileGroupsResponse: Codable {
   let groups: [Group]
 }
 
+struct MobileProfessorGroupDetailResponse: Codable {
+  struct Group: Codable {
+    let id: String
+    let name: String
+    let description: String?
+    let capacity: Int?
+    let minAge: Int?
+    let maxAge: Int?
+    let createdAt: String
+    let memberCount: Int
+    let activity: Activity
+  }
+
+  struct Activity: Codable {
+    let id: String
+    let name: String
+    let description: String?
+    let date: String
+    let endDate: String
+  }
+
+  struct Member: Codable, Identifiable {
+    struct Contact: Codable {
+      let name: String
+      let email: String?
+      let phone: String?
+    }
+
+    let id: String
+    let userId: String
+    let childId: String?
+    let label: String
+    let childLabel: String?
+    let contact: Contact
+  }
+
+  let group: Group
+  let members: [Member]
+}
+
 struct MobileStudentsResponse: Codable {
   struct Student: Codable, Identifiable {
     let id: String
@@ -296,6 +405,62 @@ struct MobileStudentsResponse: Codable {
   }
 
   let students: [Student]
+}
+
+struct MobileConversationListResponse: Codable {
+  struct Conversation: Codable, Identifiable {
+    struct Peer: Codable {
+      let id: String
+      let name: String?
+      let lastName: String?
+      let email: String?
+      let phone: String?
+      let role: String
+      let profilePhoto: String?
+    }
+
+    struct Message: Codable {
+      let id: String
+      let from: String
+      let content: String
+      let createdAt: String
+      let readAt: String?
+    }
+
+    let id: String
+    let peer: Peer?
+    let title: String
+    let subtitle: String?
+    let lastMessage: Message?
+    let unreadCount: Int
+  }
+
+  let conversations: [Conversation]
+}
+
+struct MobileConversationThreadResponse: Codable {
+  struct Peer: Codable {
+    let id: String
+    let name: String?
+    let lastName: String?
+    let email: String?
+    let phone: String?
+    let role: String
+    let profilePhoto: String?
+    let label: String
+  }
+
+  struct Message: Codable, Identifiable {
+    let id: String
+    let from: String
+    let content: String
+    let createdAt: String
+    let readAt: String?
+  }
+
+  let conversationId: String?
+  let peer: Peer?
+  var messages: [Message]
 }
 
 struct MobileAttendanceListResponse: Codable {
@@ -368,4 +533,3 @@ struct MobileAttendanceUpdateResponse: Codable {
 
   let attendance: Attendance
 }
-
