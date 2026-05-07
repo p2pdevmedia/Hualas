@@ -286,6 +286,7 @@ struct MobileActivityCatalogResponse: Codable {
   struct Day: Codable, Identifiable {
     let id: String
     let date: String?
+    let weekday: Int
     let schedule: String
     let geoLocation: String
     let activityGroupId: String?

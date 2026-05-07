@@ -11,7 +11,7 @@ struct PaymentsView: View {
       List {
         if let profile {
           Section("Datos bancarios") {
-            Text("Sueldo: $\(profile.monthlySalary)")
+            Text("Sueldo: \(currency(profile.monthlySalary))")
             if let bankName = profile.bankName { Text(bankName) }
             if let alias = profile.alias { Text("Alias: \(alias)") }
             if let cbu = profile.cbu { Text("CBU: \(cbu)") }
@@ -47,5 +47,15 @@ struct PaymentsView: View {
       print("[payments] load failed", error)
     }
   }
-}
 
+  private func currency(_ amount: Int) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.currencyCode = "ARS"
+    formatter.maximumFractionDigits = 0
+    formatter.minimumFractionDigits = 0
+    return formatter.string(from: NSNumber(value: amount))
+      ?? "ARS \(amount)"
+  }
+}

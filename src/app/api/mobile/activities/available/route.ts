@@ -58,6 +58,10 @@ function getCapacity(activity: ActivityRow) {
   );
 }
 
+function getMondayBasedWeekday(date: Date) {
+  return ((date.getUTCDay() + 6) % 7) + 1;
+}
+
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
   if (!session) {
@@ -165,6 +169,7 @@ export async function GET(req: Request) {
         days: activity.days.map((day) => ({
           id: day.id,
           date: formatMobileDateOnly(day.date),
+          weekday: getMondayBasedWeekday(day.date),
           schedule: day.schedule,
           geoLocation: day.geoLocation,
           activityGroupId: day.activityGroupId,

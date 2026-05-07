@@ -216,7 +216,9 @@ struct ProfileView: View {
     formatter.numberStyle = .currency
     formatter.locale = Locale(identifier: "es_AR")
     formatter.currencyCode = "ARS"
-    return formatter.string(from: NSNumber(value: Double(amount) / 100.0))
+    formatter.maximumFractionDigits = 0
+    formatter.minimumFractionDigits = 0
+    return formatter.string(from: NSNumber(value: amount))
       ?? "ARS \(amount)"
   }
 }
