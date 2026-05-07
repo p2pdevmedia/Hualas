@@ -36,6 +36,7 @@ type PersonRecord = {
   amount: number;
   paymentId?: string | null;
   paidAt?: Date | null;
+  createdAt: Date;
   payerLabel?: string;
   payerHref?: string;
 };
@@ -120,11 +121,13 @@ export default async function SocialFeePage({
         name: true,
         lastName: true,
         email: true,
+        createdAt: true,
         children: {
           select: {
             id: true,
             name: true,
             lastName: true,
+            createdAt: true,
           },
           orderBy: [{ lastName: 'asc' }, { name: 'asc' }],
         },
@@ -181,6 +184,7 @@ export default async function SocialFeePage({
       amount: memberPayment?.amount ?? socialFeeAmount,
       paymentId: memberPayment?.mercadoPagoPaymentId,
       paidAt: memberPayment?.createdAt ?? null,
+      createdAt: memberPayment?.createdAt ?? member.createdAt,
       payerLabel: memberPayment ? 'Titular' : undefined,
       payerHref: memberPayment
         ? getAccountingUserProfileHref(member.id)
@@ -200,16 +204,25 @@ export default async function SocialFeePage({
         amount: childPayment?.amount ?? socialFeeAmount,
         paymentId: childPayment?.mercadoPagoPaymentId,
         paidAt: childPayment?.createdAt ?? null,
+        createdAt: childPayment?.createdAt ?? child.createdAt,
         payerLabel: memberName,
         payerHref: getAccountingUserProfileHref(member.id),
       });
     }
   }
 
-  // Keep paid rows at the top so recent approvals are visible on the first page.
+  // Keep the newest records at the top so newly added children do not get buried
+  // behind older alphabetical entries.
   const orderedPeople = [...people].sort((left, right) => {
     if (left.status !== right.status) {
       return left.status === 'PAID' ? -1 : 1;
+    }
+
+    const leftDate = left.paidAt ?? left.createdAt;
+    const rightDate = right.paidAt ?? right.createdAt;
+
+    if (leftDate.getTime() !== rightDate.getTime()) {
+      return rightDate.getTime() - leftDate.getTime();
     }
 
     return left.name.localeCompare(right.name, 'es-AR');
