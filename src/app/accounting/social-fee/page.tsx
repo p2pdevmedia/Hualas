@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
+  formatAmount,
   getAccountingChildProfileHref,
   getAccountingUserProfileHref,
   isAccountingRole,
@@ -40,14 +41,6 @@ type PersonRecord = {
   payerLabel?: string;
   payerHref?: string;
 };
-
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatPeriodLabel(month: number, year: number) {
   return new Intl.DateTimeFormat('es-AR', {
@@ -159,6 +152,7 @@ export default async function SocialFeePage({
   ]);
 
   const socialFeeAmount = concept?.defaultAmount ?? 0;
+  const socialFeeAmountCents = socialFeeAmount * 100;
   const paymentByKey = new Map<string, (typeof payments)[number]>();
   for (const payment of payments) {
     const key = payment.childId
@@ -173,9 +167,6 @@ export default async function SocialFeePage({
     const memberName = formatPersonName(member);
     const memberKey = `user:${member.id}`;
     const memberPayment = paymentByKey.get(memberKey);
-    const memberPaymentAmount = memberPayment
-      ? memberPayment.amount / 100
-      : null;
 
     people.push({
       key: memberKey,
@@ -184,7 +175,7 @@ export default async function SocialFeePage({
       href: getAccountingUserProfileHref(member.id),
       email: member.email,
       status: memberPayment ? 'PAID' : 'PENDING',
-      amount: memberPaymentAmount ?? socialFeeAmount,
+      amount: memberPayment?.amount ?? socialFeeAmountCents,
       paymentId: memberPayment?.mercadoPagoPaymentId,
       paidAt: memberPayment?.createdAt ?? null,
       createdAt: memberPayment?.createdAt ?? member.createdAt,
@@ -197,7 +188,6 @@ export default async function SocialFeePage({
     for (const child of member.children) {
       const childKey = `child:${member.id}:${child.id}`;
       const childPayment = paymentByKey.get(childKey);
-      const childPaymentAmount = childPayment ? childPayment.amount / 100 : null;
 
       people.push({
         key: childKey,
@@ -205,7 +195,7 @@ export default async function SocialFeePage({
         name: formatPersonName(child),
         href: getAccountingChildProfileHref(member.id, child.id),
         status: childPayment ? 'PAID' : 'PENDING',
-        amount: childPaymentAmount ?? socialFeeAmount,
+        amount: childPayment?.amount ?? socialFeeAmountCents,
         paymentId: childPayment?.mercadoPagoPaymentId,
         paidAt: childPayment?.createdAt ?? null,
         createdAt: childPayment?.createdAt ?? child.createdAt,
@@ -273,7 +263,7 @@ export default async function SocialFeePage({
     (sum, person) => sum + person.amount,
     0
   );
-  const expectedAmount = people.length * socialFeeAmount;
+  const expectedAmount = people.length * socialFeeAmountCents;
   const visiblePaidRangeLabel =
     paidPeople.length === 0
       ? 'Sin resultados'
@@ -304,7 +294,7 @@ export default async function SocialFeePage({
         {[
           {
             label: 'Cuota configurada',
-            value: formatMoney(socialFeeAmount),
+            value: formatAmount(socialFeeAmountCents),
             helper: 'Monto actual para nuevos cobros',
           },
           {
@@ -315,12 +305,12 @@ export default async function SocialFeePage({
           {
             label: 'Pagos registrados',
             value: paidPeople.length.toString(),
-            helper: formatMoney(collectedAmount),
+            helper: formatAmount(collectedAmount),
           },
           {
             label: 'Pendientes',
             value: pendingPeople.length.toString(),
-            helper: formatMoney(expectedAmount - collectedAmount),
+            helper: formatAmount(expectedAmount - collectedAmount),
           },
         ].map((card) => (
           <article
@@ -423,7 +413,7 @@ export default async function SocialFeePage({
                           </td>
                           <td className="px-4 py-3">{person.type}</td>
                           <td className="px-4 py-3 font-medium">
-                            {formatMoney(person.amount)}
+                            {formatAmount(person.amount)}
                           </td>
                           <td className="px-4 py-3">
                             {person.paidAt
@@ -521,7 +511,7 @@ export default async function SocialFeePage({
                           </td>
                           <td className="px-4 py-3">{person.type}</td>
                           <td className="px-4 py-3 font-medium">
-                            {formatMoney(socialFeeAmount)}
+                            {formatAmount(socialFeeAmountCents)}
                           </td>
                           <td className="px-4 py-3">
                             {person.type === 'Titular'
