@@ -24,6 +24,12 @@ For every task:
 8. Run tests or explain why tests were not run.
 9. Perform a short review step before finalizing.
 
+## iPhone App Rule
+
+- When a task mentions the iPhone app, always assume it refers to the native code under `iphone/HualasMobile`.
+- Use `iphone/README.md` for iPhone-specific setup and workflow details.
+- Do not treat iPhone work as part of the Next.js web app unless the user explicitly says otherwise.
+
 ## Review Requirement
 
 Never finish a non-trivial task without a review step.

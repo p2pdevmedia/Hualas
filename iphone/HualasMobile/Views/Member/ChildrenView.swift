@@ -75,7 +75,12 @@ struct ChildrenView: View {
 
   private func childRow(_ child: MobileChildrenResponse.Child) -> some View {
     HStack(spacing: 12) {
-      childAvatar(for: child)
+      AuthenticatedAvatarView(
+        path: "/api/mobile/children/\(child.id)/photo",
+        initials: child.initials,
+        diameter: 46,
+        reloadKey: child.profilePhoto ?? ""
+      )
 
       VStack(alignment: .leading, spacing: 4) {
         Text(child.fullName.isEmpty ? "Sin nombre" : child.fullName)
@@ -123,41 +128,6 @@ struct ChildrenView: View {
     }
   }
 
-  private func childAvatar(for child: MobileChildrenResponse.Child) -> some View {
-    Group {
-      if let url = resolvedImageURL(child.profilePhoto) {
-        AsyncImage(url: url) { phase in
-          switch phase {
-          case .empty:
-            avatarFallback(for: child)
-          case .success(let image):
-            image
-              .resizable()
-              .scaledToFill()
-              .clipShape(Circle())
-          case .failure:
-            avatarFallback(for: child)
-          @unknown default:
-            avatarFallback(for: child)
-          }
-        }
-      } else {
-        avatarFallback(for: child)
-      }
-    }
-    .frame(width: 46, height: 46)
-  }
-
-  private func avatarFallback(for child: MobileChildrenResponse.Child) -> some View {
-    Circle()
-      .fill(Color.accentColor.opacity(0.12))
-      .overlay(
-        Text(child.initials)
-          .font(.subheadline.weight(.semibold))
-          .foregroundStyle(Color.accentColor)
-      )
-  }
-
   private func formattedBirthDate(_ value: String?) -> String? {
     guard let value, !value.isEmpty,
           let date = Self.birthDateFormatter.date(from: value) else {
@@ -165,19 +135,6 @@ struct ChildrenView: View {
     }
 
     return Self.displayBirthDateFormatter.string(from: date)
-  }
-
-  private func resolvedImageURL(_ value: String?) -> URL? {
-    guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
-          !value.isEmpty else {
-      return nil
-    }
-
-    if let absoluteURL = URL(string: value), absoluteURL.scheme != nil {
-      return absoluteURL
-    }
-
-    return URL(string: value, relativeTo: AppConfig.apiBaseURL)?.absoluteURL
   }
 
   private static let birthDateFormatter: DateFormatter = {

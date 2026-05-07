@@ -10,6 +10,7 @@ function serializeProfileUser(user: {
   email: string;
   name: string | null;
   lastName: string | null;
+  profilePhoto: string | null;
   dni: string | null;
   birthDate: Date | null;
   gender: string | null;
@@ -33,6 +34,7 @@ function serializeProfileUser(user: {
     email: user.email,
     name: user.name,
     lastName: user.lastName,
+    profilePhoto: user.profilePhoto,
     dni: user.dni,
     birthDate: formatMobileDateOnly(user.birthDate),
     gender: user.gender,
@@ -66,6 +68,7 @@ export async function GET(req: Request) {
       email: true,
       name: true,
       lastName: true,
+      profilePhoto: true,
       dni: true,
       birthDate: true,
       gender: true,
@@ -196,6 +199,7 @@ export async function PATCH(req: Request) {
       email: true,
       name: true,
       lastName: true,
+      profilePhoto: true,
       dni: true,
       birthDate: true,
       gender: true,

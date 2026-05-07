@@ -14,6 +14,7 @@ export async function GET(req: Request) {
       email: session.user.email,
       name: session.user.name,
       lastName: session.user.lastName,
+      profilePhoto: session.user.profilePhoto,
       role: session.user.role,
       activeRole: session.user.activeRole,
       mobileRole: session.appRole,

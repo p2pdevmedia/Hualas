@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct ProfileEditView: View {
   @Environment(\.dismiss) private var dismiss
@@ -29,9 +31,49 @@ struct ProfileEditView: View {
   @State private var didLoad = false
   @State private var feedbackMessage: String?
   @State private var feedbackIsError = false
+  @State private var selectedProfilePhotoItem: PhotosPickerItem?
+  @State private var photoFeedbackMessage: String?
+  @State private var photoFeedbackIsError = false
+  @State private var isUploadingPhoto = false
+  @State private var photoReloadKey = UUID().uuidString
 
   var body: some View {
     Form {
+      Section("Foto de perfil") {
+        HStack(alignment: .center, spacing: 14) {
+          AuthenticatedAvatarView(
+            path: "/api/mobile/profile/photo",
+            initials: profileInitials,
+            diameter: 84,
+            reloadKey: photoReloadKey
+          )
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text("La foto se muestra en tu perfil y en el menú.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+
+            PhotosPicker(selection: $selectedProfilePhotoItem, matching: .images) {
+              Label(
+                isUploadingPhoto ? "Subiendo foto..." : "Cambiar foto",
+                systemImage: "camera"
+              )
+            }
+            .disabled(isUploadingPhoto)
+          }
+        }
+
+        if isUploadingPhoto {
+          ProgressView("Subiendo foto...")
+        }
+
+        if let photoFeedbackMessage {
+          Text(photoFeedbackMessage)
+            .font(.footnote)
+            .foregroundStyle(photoFeedbackIsError ? .red : .secondary)
+        }
+      }
+
       if isLoading && !didLoad {
         Section {
           HStack {
@@ -150,6 +192,9 @@ struct ProfileEditView: View {
     .task(id: sessionStore.token) {
       await loadProfile()
     }
+    .onChange(of: selectedProfilePhotoItem?.itemIdentifier) { _ in
+      Task { await uploadSelectedPhoto() }
+    }
   }
 
   private func loadProfile() async {
@@ -258,6 +303,45 @@ struct ProfileEditView: View {
     }
   }
 
+  private func uploadSelectedPhoto() async {
+    guard let token = sessionStore.token else {
+      photoFeedbackMessage = "No hay sesión activa."
+      photoFeedbackIsError = true
+      return
+    }
+    guard let selectedProfilePhotoItem else { return }
+
+    isUploadingPhoto = true
+    photoFeedbackMessage = nil
+    photoFeedbackIsError = false
+    defer {
+      isUploadingPhoto = false
+      self.selectedProfilePhotoItem = nil
+    }
+
+    do {
+      guard let data = try await selectedProfilePhotoItem.loadTransferable(type: Data.self),
+            let image = UIImage(data: data),
+            let jpegData = image.hualasJPEGData() else {
+        throw NSError(
+          domain: "PhotoUpload",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "No se pudo leer la imagen"]
+        )
+      }
+
+      try await APIClient.shared.uploadProfilePhoto(token: token, imageData: jpegData)
+      photoReloadKey = UUID().uuidString
+      photoFeedbackMessage = "Foto actualizada"
+      photoFeedbackIsError = false
+      await sessionStore.refreshMe(silent: true)
+    } catch {
+      guard !error.isCancellationError else { return }
+      photoFeedbackMessage = error.localizedDescription
+      photoFeedbackIsError = true
+    }
+  }
+
   private func trimmedValue(_ value: String) -> String? {
     let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.isEmpty ? nil : trimmed
@@ -268,6 +352,13 @@ struct ProfileEditView: View {
     guard !trimmed.isEmpty else { return nil }
     guard let date = Self.birthDateFormatter.date(from: trimmed) else { return nil }
     return Self.birthDateFormatter.string(from: date)
+  }
+
+  private var profileInitials: String {
+    let first = name.first.map(String.init) ?? ""
+    let last = lastName.first.map(String.init) ?? ""
+    let combined = "\(first)\(last)"
+    return combined.isEmpty ? "U" : combined.uppercased()
   }
 
   private func displayBirthDate(_ value: String?) -> String {

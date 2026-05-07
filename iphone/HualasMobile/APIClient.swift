@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 struct AnyEncodable: Encodable {
   private let encodeImpl: (Encoder) throws -> Void
@@ -41,6 +42,20 @@ final class APIClient {
 
   func mobileProfile(token: String) async throws -> MobileProfileResponse {
     try await send(path: "/api/mobile/profile", token: token)
+  }
+
+  func uploadProfilePhoto(token: String, imageData: Data) async throws {
+    let _: EmptyResponse = try await sendMultipart(
+      path: "/api/mobile/profile/photo",
+      token: token,
+      fields: [:],
+      file: MultipartFile(
+        fieldName: "photo",
+        fileName: "profile-photo.jpg",
+        mimeType: "image/jpeg",
+        data: imageData
+      )
+    ) as EmptyResponse
   }
 
   func updateMobileProfile(
@@ -126,6 +141,25 @@ final class APIClient {
     childId: String
   ) async throws -> MobileChildrenResponse.Child {
     try await send(path: "/api/mobile/children/\(childId)", token: token)
+  }
+
+  func uploadChildPhoto(
+    token: String,
+    childId: String,
+    imageData: Data
+  ) async throws -> MobileChildrenResponse.Child {
+    let response: MobileChildPhotoUploadResponse = try await sendMultipart(
+      path: "/api/mobile/children/\(childId)/photo",
+      token: token,
+      fields: [:],
+      file: MultipartFile(
+        fieldName: "photo",
+        fileName: "child-photo.jpg",
+        mimeType: "image/jpeg",
+        data: imageData
+      )
+    )
+    return response.child
   }
 
   func createChild(
@@ -264,6 +298,33 @@ final class APIClient {
       token: token,
       body: MobileSendMessageRequest(content: content)
     )
+  }
+
+  func authenticatedImage(
+    path: String,
+    token: String
+  ) async throws -> UIImage? {
+    let url = URL(string: path, relativeTo: baseURL)?.absoluteURL ?? baseURL
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.setValue("image/*", forHTTPHeaderField: "Accept")
+    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard let http = response as? HTTPURLResponse else {
+      throw APIError.invalidResponse
+    }
+
+    if http.statusCode == 404 {
+      return nil
+    }
+
+    guard 200..<300 ~= http.statusCode else {
+      let message = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
+      throw APIError.server(statusCode: http.statusCode, message: message)
+    }
+
+    return UIImage(data: data)
   }
 
   private static func monthKey(for date: Date) -> String {
@@ -429,6 +490,11 @@ struct MobileDeviceRegistrationResponse: Codable {
 
 struct MobileSwitchRoleRequest: Codable {
   let role: MobileRole
+}
+
+struct MobileChildPhotoUploadResponse: Codable {
+  let ok: Bool
+  let child: MobileChildrenResponse.Child
 }
 
 struct MobileActivityCartItemsRequest: Codable {

@@ -41,14 +41,23 @@ struct ProfileView: View {
   }
 
   private var header: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      Text(sessionStore.me?.user.name ?? "Usuario")
-        .font(.largeTitle.bold())
-      Text(sessionStore.me?.user.email ?? "")
-        .foregroundStyle(.secondary)
-      Text("Perfil activo: \(sessionStore.currentRole?.rawValue ?? "MEMBER")")
-        .font(.footnote.weight(.semibold))
-        .foregroundStyle(.secondary)
+    HStack(alignment: .center, spacing: 14) {
+      AuthenticatedAvatarView(
+        path: "/api/mobile/profile/photo",
+        initials: profileInitials,
+        diameter: 72,
+        reloadKey: sessionStore.me?.user.profilePhoto ?? ""
+      )
+
+      VStack(alignment: .leading, spacing: 4) {
+        Text(sessionStore.me?.user.name ?? "Usuario")
+          .font(.largeTitle.bold())
+        Text(sessionStore.me?.user.email ?? "")
+          .foregroundStyle(.secondary)
+        Text("Perfil activo: \(sessionStore.currentRole?.rawValue ?? "MEMBER")")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.secondary)
+      }
     }
   }
 
@@ -62,7 +71,7 @@ struct ProfileView: View {
       } label: {
         profileActionRow(
           title: "Editar perfil",
-          subtitle: "Actualizar tus datos personales.",
+          subtitle: "Actualizar tus datos y tu foto.",
           systemImage: "pencil"
         )
       }
@@ -221,5 +230,12 @@ struct ProfileView: View {
     formatter.minimumFractionDigits = 0
     return formatter.string(from: NSNumber(value: amount))
       ?? "ARS \(amount)"
+  }
+
+  private var profileInitials: String {
+    let first = sessionStore.me?.user.name?.first.map(String.init) ?? ""
+    let last = sessionStore.me?.user.lastName?.first.map(String.init) ?? ""
+    let combined = "\(first)\(last)"
+    return combined.isEmpty ? "U" : combined.uppercased()
   }
 }

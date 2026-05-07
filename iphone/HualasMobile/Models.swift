@@ -43,6 +43,7 @@ struct MobileMeResponse: Codable {
     let email: String
     let name: String?
     let lastName: String?
+    let profilePhoto: String?
     let role: String
     let activeRole: String
     let mobileRole: MobileRole
@@ -67,6 +68,7 @@ struct MobileProfileResponse: Codable {
     let email: String
     let name: String?
     let lastName: String?
+    let profilePhoto: String?
     let dni: String?
     let birthDate: String?
     let gender: String?

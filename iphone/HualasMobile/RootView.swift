@@ -31,14 +31,39 @@ struct MemberShellView: View {
         .tabItem { Label("Mis actividades", systemImage: "calendar") }
       ChildrenView()
         .tabItem { Label("Hijos", systemImage: "person.2") }
-      PaymentsView()
-        .tabItem { Label("Pagos", systemImage: "creditcard") }
-      NewsView()
-        .tabItem { Label("Noticias", systemImage: "newspaper") }
-      ProfileView()
-        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+      MoreTabView()
+        .tabItem { Label("Más", systemImage: "ellipsis.circle") }
     }
     .environmentObject(cartStore)
+  }
+}
+
+struct MoreTabView: View {
+  var body: some View {
+    NavigationStack {
+      List {
+        Section {
+          NavigationLink {
+            ProfileView()
+          } label: {
+            Label("Perfil", systemImage: "person.crop.circle")
+          }
+
+          NavigationLink {
+            PaymentsView()
+          } label: {
+            Label("Pagos", systemImage: "creditcard")
+          }
+
+          NavigationLink {
+            NewsView()
+          } label: {
+            Label("Noticias", systemImage: "newspaper")
+          }
+        }
+      }
+      .navigationTitle("Más")
+    }
   }
 }
 

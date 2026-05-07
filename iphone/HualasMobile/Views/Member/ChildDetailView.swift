@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct ChildDetailView: View {
   @EnvironmentObject private var sessionStore: SessionStore
@@ -6,6 +8,11 @@ struct ChildDetailView: View {
   @State private var isLoading = false
   @State private var errorMessage: String?
   @State private var showingEditor = false
+  @State private var selectedPhotoItem: PhotosPickerItem?
+  @State private var photoFeedbackMessage: String?
+  @State private var photoFeedbackIsError = false
+  @State private var isUploadingPhoto = false
+  @State private var photoReloadKey = UUID().uuidString
 
   let childId: String
   let onChildUpdated: (MobileChildrenResponse.Child) -> Void
@@ -29,6 +36,7 @@ struct ChildDetailView: View {
             .padding(.vertical, 24)
         } else if let child {
           headerCard(child)
+          photoSection
           detailsCard(child)
         }
 
@@ -56,6 +64,9 @@ struct ChildDetailView: View {
     .refreshable {
       await load()
     }
+    .onChange(of: selectedPhotoItem?.itemIdentifier) { _ in
+      Task { await uploadSelectedPhoto() }
+    }
     .sheet(isPresented: $showingEditor) {
       if let child {
         NavigationStack {
@@ -80,7 +91,12 @@ struct ChildDetailView: View {
   private func headerCard(_ child: MobileChildrenResponse.Child) -> some View {
     infoCard {
       HStack(alignment: .center, spacing: 14) {
-        childAvatar(for: child)
+        AuthenticatedAvatarView(
+          path: "/api/mobile/children/\(child.id)/photo",
+          initials: child.initials,
+          diameter: 60,
+          reloadKey: photoReloadKey
+        )
 
         VStack(alignment: .leading, spacing: 4) {
           Text(child.fullName.isEmpty ? "Sin nombre" : child.fullName)
@@ -97,6 +113,37 @@ struct ChildDetailView: View {
               .font(.footnote.weight(.semibold))
               .foregroundStyle(.secondary)
           }
+        }
+      }
+    }
+  }
+
+  private var photoSection: some View {
+    infoCard {
+      VStack(alignment: .leading, spacing: 12) {
+        Text("Foto de perfil")
+          .font(.headline)
+
+        Text("Podés cambiar la foto del hijo desde acá.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+
+        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+          Label(
+            isUploadingPhoto ? "Subiendo foto..." : "Cambiar foto",
+            systemImage: "camera"
+          )
+        }
+        .disabled(isUploadingPhoto)
+
+        if isUploadingPhoto {
+          ProgressView("Subiendo foto...")
+        }
+
+        if let photoFeedbackMessage {
+          Text(photoFeedbackMessage)
+            .font(.footnote)
+            .foregroundStyle(photoFeedbackIsError ? .red : .secondary)
         }
       }
     }
@@ -195,41 +242,6 @@ struct ChildDetailView: View {
     }
   }
 
-  private func childAvatar(for child: MobileChildrenResponse.Child) -> some View {
-    Group {
-      if let url = resolvedImageURL(child.profilePhoto) {
-        AsyncImage(url: url) { phase in
-          switch phase {
-          case .empty:
-            avatarFallback(for: child)
-          case .success(let image):
-            image
-              .resizable()
-              .scaledToFill()
-              .clipShape(Circle())
-          case .failure:
-            avatarFallback(for: child)
-          @unknown default:
-            avatarFallback(for: child)
-          }
-        }
-      } else {
-        avatarFallback(for: child)
-      }
-    }
-    .frame(width: 60, height: 60)
-  }
-
-  private func avatarFallback(for child: MobileChildrenResponse.Child) -> some View {
-    Circle()
-      .fill(Color.accentColor.opacity(0.12))
-      .overlay(
-        Text(child.initials)
-          .font(.headline.weight(.semibold))
-          .foregroundStyle(Color.accentColor)
-      )
-  }
-
   private func displayValue(_ value: String?) -> String {
     guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
       return "Sin dato"
@@ -294,17 +306,45 @@ struct ChildDetailView: View {
     return "\(age) años"
   }
 
-  private func resolvedImageURL(_ value: String?) -> URL? {
-    guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
-          !value.isEmpty else {
-      return nil
+  private func uploadSelectedPhoto() async {
+    guard let child else { return }
+    guard let token = sessionStore.token else {
+      photoFeedbackMessage = "No hay sesión activa."
+      photoFeedbackIsError = true
+      return
+    }
+    guard let selectedPhotoItem else { return }
+
+    isUploadingPhoto = true
+    photoFeedbackMessage = nil
+    photoFeedbackIsError = false
+    defer {
+      isUploadingPhoto = false
+      self.selectedPhotoItem = nil
     }
 
-    if let absoluteURL = URL(string: value), absoluteURL.scheme != nil {
-      return absoluteURL
-    }
+    do {
+      guard let data = try await selectedPhotoItem.loadTransferable(type: Data.self),
+            let image = UIImage(data: data),
+            let jpegData = image.hualasJPEGData() else {
+        throw NSError(domain: "PhotoUpload", code: 1, userInfo: [NSLocalizedDescriptionKey: "No se pudo leer la imagen"])
+      }
 
-    return URL(string: value, relativeTo: AppConfig.apiBaseURL)?.absoluteURL
+      let updated = try await APIClient.shared.uploadChildPhoto(
+        token: token,
+        childId: child.id,
+        imageData: jpegData
+      )
+      photoReloadKey = UUID().uuidString
+      photoFeedbackMessage = "Foto actualizada"
+      photoFeedbackIsError = false
+      self.child = updated
+      onChildUpdated(updated)
+    } catch {
+      guard !error.isCancellationError else { return }
+      photoFeedbackMessage = error.localizedDescription
+      photoFeedbackIsError = true
+    }
   }
 
   private static let birthDateFormatter: DateFormatter = {
