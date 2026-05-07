@@ -125,7 +125,7 @@ export async function GET(req: Request) {
       },
     },
     orderBy: { date: 'asc' },
-  }) as Promise<ActivityRow[]>;
+  }) as ActivityRow[];
 
   const availableActivities = activities
     .map((activity) => {
