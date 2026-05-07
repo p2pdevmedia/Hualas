@@ -15,6 +15,7 @@ type QuoteResponse = {
     name: string;
     amount: number;
     targetLabel: string;
+    activityDayLabel?: string;
   }>;
   discountLines: Array<{
     amount: number;
@@ -190,6 +191,8 @@ export default function ActivitiesCartPage() {
     target: item.target === 'self' ? 'self' : item.target,
     targetLabel: item.targetLabel,
     groupId: item.groupId,
+    activityDayId: item.activityDayId,
+    activityDayLabel: item.activityDayLabel,
   }));
 
   return (
@@ -230,6 +233,11 @@ export default function ActivitiesCartPage() {
                   {item.groupName && (
                     <p className="text-sm text-muted-foreground">
                       Grupo: {item.groupName}
+                    </p>
+                  )}
+                  {item.activityDayLabel && (
+                    <p className="text-sm text-muted-foreground">
+                      Sesión: {item.activityDayLabel}
                     </p>
                   )}
                 </div>
@@ -274,6 +282,9 @@ export default function ActivitiesCartPage() {
                       >
                         <span>
                           {line.name} · {line.targetLabel}
+                          {line.activityDayLabel
+                            ? ` · ${line.activityDayLabel}`
+                            : ''}
                         </span>
                         <span className="font-medium">
                           {formatMoney(line.amount)}

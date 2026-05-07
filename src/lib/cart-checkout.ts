@@ -14,6 +14,8 @@ export type CartCheckoutItem = {
   target?: string;
   targetLabel?: string;
   groupId?: string;
+  activityDayId?: string;
+  activityDayLabel?: string;
 };
 
 type ActivitySummary = {
@@ -21,6 +23,7 @@ type ActivitySummary = {
   name: string;
   amount: number;
   targetLabel: string;
+  activityDayLabel?: string;
 };
 
 type SocialFeeSummary = {
@@ -116,6 +119,16 @@ export async function buildCartQuote({
     where: { id: { in: uniqueIds } },
     include: {
       participants: { select: { id: true } },
+      days: {
+        where: { cancelled: false },
+        select: {
+          id: true,
+          activityId: true,
+          activityGroupId: true,
+          date: true,
+          schedule: true,
+        },
+      },
       groups: {
         select: {
           id: true,
@@ -150,11 +163,20 @@ export async function buildCartQuote({
       throw new CartQuoteError(404, 'Una actividad no existe.');
     }
 
-    const selectedGroup = item.groupId
-      ? activity.groups.find((group) => group.id === item.groupId)
+    const selectedActivityDay = item.activityDayId
+      ? activity.days.find((day) => day.id === item.activityDayId)
+      : null;
+    const selectedGroupId =
+      item.groupId ?? selectedActivityDay?.activityGroupId ?? undefined;
+    const selectedGroup = selectedGroupId
+      ? activity.groups.find((group) => group.id === selectedGroupId)
       : null;
 
-    if (activity.groups.length > 0 && !selectedGroup) {
+    if (
+      activity.groups.length > 0 &&
+      !selectedGroup &&
+      activity.activityType !== 'TEMPORARY'
+    ) {
       throw new CartQuoteError(
         400,
         `Seleccioná un grupo válido para ${activity.name}.`
@@ -171,6 +193,26 @@ export async function buildCartQuote({
         409,
         `El grupo ${selectedGroup.name} no tiene cupo.`
       );
+    }
+
+    if (activity.activityType === 'TEMPORARY' && activity.days.length > 0) {
+      if (!selectedActivityDay) {
+        throw new CartQuoteError(
+          400,
+          `Seleccioná una sesión válida para ${activity.name}.`
+        );
+      }
+
+      if (
+        item.groupId &&
+        selectedActivityDay.activityGroupId &&
+        selectedActivityDay.activityGroupId !== item.groupId
+      ) {
+        throw new CartQuoteError(
+          400,
+          `La sesión seleccionada no corresponde al grupo de ${activity.name}.`
+        );
+      }
     }
 
     const activityCapacity =
@@ -287,19 +329,105 @@ export async function buildCartQuote({
       ],
     },
     select: {
+      id: true,
       participantKey: true,
+      activityId: true,
       activity: { select: { name: true } },
     },
   });
 
   if (existingParticipants.length > 0) {
-    const repeatedActivityName = existingParticipants[0]?.activity.name;
-    throw new CartQuoteError(
-      409,
-      repeatedActivityName
-        ? `Ya existe una inscripción para ${repeatedActivityName}.`
-        : 'Ya existe una inscripción para una de las actividades seleccionadas.'
+    const participantByKey = new Map(
+      existingParticipants.map((participant) => [
+        participant.participantKey,
+        participant,
+      ])
     );
+    const potentiallyRepeatableTemporaryItems = items.filter((item) => {
+      const key = getActivityParticipantKey(
+        item.activityId,
+        userId,
+        normalizeTarget(item.target)
+      );
+      const participant = participantByKey.get(key);
+      const activity = activityById.get(item.activityId);
+      return (
+        participant &&
+        activity?.activityType === 'TEMPORARY' &&
+        Boolean(item.activityDayId)
+      );
+    });
+
+    const existingSessionPayments =
+      potentiallyRepeatableTemporaryItems.length > 0
+        ? await prisma.activityParticipantPayment.findMany({
+            where: {
+              OR: potentiallyRepeatableTemporaryItems
+                .map((item) => {
+                  const key = getActivityParticipantKey(
+                    item.activityId,
+                    userId,
+                    normalizeTarget(item.target)
+                  );
+                  const participant = participantByKey.get(key);
+                  return participant && item.activityDayId
+                    ? {
+                        activityParticipantId: participant.id,
+                        activityDayId: item.activityDayId,
+                      }
+                    : null;
+                })
+                .filter(
+                  (
+                    entry
+                  ): entry is {
+                    activityParticipantId: string;
+                    activityDayId: string;
+                  } => Boolean(entry)
+                ),
+            },
+            select: {
+              activityParticipantId: true,
+              activityDayId: true,
+            },
+          })
+        : [];
+    const paidSessionKeys = new Set(
+      existingSessionPayments.map(
+        (payment) => `${payment.activityParticipantId}:${payment.activityDayId}`
+      )
+    );
+
+    for (const existingParticipant of existingParticipants) {
+      const matchingItem = items.find((item) => {
+        const key = getActivityParticipantKey(
+          item.activityId,
+          userId,
+          normalizeTarget(item.target)
+        );
+        return key === existingParticipant.participantKey;
+      });
+      const activity = activityById.get(existingParticipant.activityId);
+      const isRepeatableTemporary =
+        activity?.activityType === 'TEMPORARY' &&
+        Boolean(matchingItem?.activityDayId);
+      if (
+        isRepeatableTemporary &&
+        matchingItem?.activityDayId &&
+        !paidSessionKeys.has(
+          `${existingParticipant.id}:${matchingItem.activityDayId}`
+        )
+      ) {
+        continue;
+      }
+
+      throw new CartQuoteError(
+        409,
+        existingParticipant.activity.name
+          ? `Ya existe una inscripción o pago para ${existingParticipant.activity.name}.`
+          : 'Ya existe una inscripción o pago para una de las actividades seleccionadas.'
+      );
+    }
   }
 
   const activityLines = items.map((item) => {
@@ -310,6 +438,7 @@ export async function buildCartQuote({
       amount: Number(activity.price),
       targetLabel:
         item.targetLabel ?? (item.target === 'self' ? 'Para mí' : 'Menor'),
+      activityDayLabel: item.activityDayLabel,
     };
   });
 

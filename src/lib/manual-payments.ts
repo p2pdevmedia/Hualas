@@ -46,6 +46,9 @@ export type ManualPaymentRawData = {
     activityId: string;
     target?: string;
     targetLabel?: string;
+    groupId?: string;
+    activityDayId?: string;
+    activityDayLabel?: string;
   }>;
   reviews?: ManualPaymentReviewEntry[];
 };
@@ -124,7 +127,28 @@ export function getManualPaymentRawData(
             typeof (entry as { targetLabel?: unknown }).targetLabel === 'string'
               ? (entry as { targetLabel: string }).targetLabel
               : undefined;
-          return { activityId, target, targetLabel };
+          const groupId =
+            typeof (entry as { groupId?: unknown }).groupId === 'string'
+              ? (entry as { groupId: string }).groupId
+              : undefined;
+          const activityDayId =
+            typeof (entry as { activityDayId?: unknown }).activityDayId ===
+            'string'
+              ? (entry as { activityDayId: string }).activityDayId
+              : undefined;
+          const activityDayLabel =
+            typeof (entry as { activityDayLabel?: unknown })
+              .activityDayLabel === 'string'
+              ? (entry as { activityDayLabel: string }).activityDayLabel
+              : undefined;
+          return {
+            activityId,
+            target,
+            targetLabel,
+            groupId,
+            activityDayId,
+            activityDayLabel,
+          };
         })
         .filter(
           (
@@ -133,6 +157,9 @@ export function getManualPaymentRawData(
             activityId: string;
             target: string | undefined;
             targetLabel: string | undefined;
+            groupId: string | undefined;
+            activityDayId: string | undefined;
+            activityDayLabel: string | undefined;
           } => Boolean(entry)
         )
     : undefined;
@@ -258,6 +285,9 @@ export function createManualPaymentRawData(input: {
     activityId: string;
     target?: string;
     targetLabel?: string;
+    groupId?: string;
+    activityDayId?: string;
+    activityDayLabel?: string;
   }>;
 }) {
   return {

@@ -27,6 +27,7 @@ export default async function EditUserPage({
       nationality: true,
       maritalStatus: true,
       isActive: true,
+      socialFeeActive: true,
       observations: true,
       allergies: true,
       regularMedication: true,

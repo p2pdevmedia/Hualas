@@ -7,6 +7,7 @@ type MercadoPagoReference = {
   userId: string;
   childId: string | null;
   groupId: string | null;
+  activityDayId: string | null;
 };
 
 type MercadoPagoPayer = {
@@ -44,7 +45,8 @@ function currentPeriod() {
 }
 
 function parseReference(value: string): MercadoPagoReference | null {
-  const [activityId, userId, childId, groupId] = value.split(':');
+  const [activityId, userId, childId, groupId, activityDayId] =
+    value.split(':');
   if (!activityId || !userId) {
     return null;
   }
@@ -54,6 +56,7 @@ function parseReference(value: string): MercadoPagoReference | null {
     userId,
     childId: childId || null,
     groupId: groupId || null,
+    activityDayId: activityDayId || null,
   };
 }
 

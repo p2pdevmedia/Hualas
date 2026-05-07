@@ -29,4 +29,5 @@ export const profileUpdateSchema = z.object({
   primaryDoctor: z.string().optional(),
   doctorPhone: z.string().optional(),
   doctorCertificate: z.string().optional(),
+  socialFeeActive: z.literal(false).optional(),
 });

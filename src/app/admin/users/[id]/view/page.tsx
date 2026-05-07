@@ -195,6 +195,15 @@ export default async function ViewUserPage({
             <span className="text-xs rounded-full bg-muted px-3 py-1 font-medium">
               {user.role}
             </span>
+            <span
+              className={`text-xs rounded-full px-3 py-1 font-medium ${
+                user.socialFeeActive
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              Cuota social {user.socialFeeActive ? 'activa' : 'inactiva'}
+            </span>
             <Button asChild variant="outline" className="h-9 px-4">
               <Link href={`/admin/users/${user.id}`} prefetch={true}>
                 Editar usuario

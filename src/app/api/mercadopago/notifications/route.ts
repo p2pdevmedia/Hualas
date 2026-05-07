@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
+import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
     const references = parseMercadoPagoReferences(payment.external_reference);
 
     for (const reference of references) {
-      const { activityId, userId, childId, groupId } = reference;
+      const { activityId, userId, childId, groupId, activityDayId } = reference;
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
               id: true,
             },
           },
+          price: true,
         },
       });
 
@@ -183,6 +185,18 @@ export async function POST(req: NextRequest) {
           update: { activityGroupId: selectedGroup.id },
         });
       }
+
+      await registerActivityParticipantPayment({
+        activityParticipantId: participant.id,
+        activityId,
+        userId,
+        childId: participantChildId,
+        groupId,
+        activityDayId,
+        amount: Number(activity.price),
+        paymentReference: payment.id?.toString() ?? id.toString(),
+        paidAt: participantData.receiptDate,
+      });
 
       if (!existingParticipant) {
         notifyActivityPaymentApproved(participant.id).catch((err) =>

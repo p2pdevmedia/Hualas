@@ -8,6 +8,8 @@ export type ActivityCartItem = {
   targetLabel: string;
   groupId?: string;
   groupName?: string;
+  activityDayId?: string;
+  activityDayLabel?: string;
 };
 
 export const ACTIVITY_CART_STORAGE_KEY = 'hualas-activity-cart';

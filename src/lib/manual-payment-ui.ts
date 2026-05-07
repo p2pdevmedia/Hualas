@@ -68,6 +68,9 @@ export type ManualPaymentSummary = {
       activityId: string;
       target?: string;
       targetLabel?: string;
+      groupId?: string;
+      activityDayId?: string;
+      activityDayLabel?: string;
     }>;
     reviews?: ManualPaymentReviewEntry[];
   };

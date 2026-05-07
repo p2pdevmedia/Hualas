@@ -34,6 +34,7 @@ model User {
   role                        Role                         @default(MEMBER)
   activeRole                  Role                         @default(MEMBER)
   isActive                    Boolean                      @default(true)
+  socialFeeActive             Boolean                      @default(false)
   createdAt                   DateTime                     @default(now())
   updatedAt                   DateTime                     @updatedAt
   lastLogin                   DateTime?
@@ -42,6 +43,7 @@ model User {
   passwordResetTokens         PasswordResetToken[]
   formResponses               FormResponse[]
   activityParticipants        ActivityParticipant[]
+  activityParticipantPayments ActivityParticipantPayment[]
   activityProfessors          ActivityProfessor[]
   createdActivityDays         ActivityDay[]                @relation("ActivityDayCreatedBy")
   activityDayProfessors       ActivityDayProfessor[]
@@ -162,6 +164,7 @@ model Activity {
   description  String?
   price        Int                   @default(0)
   participants ActivityParticipant[]
+  participantPayments ActivityParticipantPayment[]
   news         News[]
   professors   ActivityProfessor[]
   groups       ActivityGroup[]
@@ -183,6 +186,36 @@ model ActivityParticipant {
   child           Child?                  @relation(fields: [childId], references: [id])
   groupMembership ActivityGroupMember?
   attendances     ActivityDayAttendance[]
+  payments         ActivityParticipantPayment[]
+}
+
+model ActivityParticipantPayment {
+  id                    String                         @id @default(cuid())
+  activityParticipantId String
+  activityId            String
+  userId                String
+  childId               String?
+  activityDayId         String?
+  paymentType           ActivityParticipantPaymentType
+  periodMonth           Int?
+  periodYear            Int?
+  amount                Int
+  paymentReference      String
+  paidAt                DateTime
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
+  activityParticipant   ActivityParticipant            @relation(fields: [activityParticipantId], references: [id], onDelete: Cascade)
+  activity              Activity                       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user                  User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child                 Child?                         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  activityDay           ActivityDay?                   @relation(fields: [activityDayId], references: [id], onDelete: SetNull)
+
+  @@unique([activityParticipantId, periodMonth, periodYear])
+  @@unique([activityParticipantId, activityDayId])
+  @@index([activityId, periodYear, periodMonth])
+  @@index([activityDayId])
+  @@index([userId])
+  @@index([childId])
 }
 
 model ActivityProfessor {
@@ -249,6 +282,7 @@ model ActivityDay {
   attendances        ActivityDayAttendance[]
   professors         ActivityDayProfessor[]
   pickupNotices      PickupNotice[]
+  participantPayments ActivityParticipantPayment[]
 
   @@index([activityId, date])
   @@index([activityGroupId])
@@ -350,6 +384,7 @@ model Child {
   observations         String?
   createdAt            DateTime              @default(now())
   activityParticipants ActivityParticipant[]
+  activityParticipantPayments ActivityParticipantPayment[]
   socialFeePayments    SocialFeePayment[]
   pickupNotices        PickupNotice[]
 }
@@ -592,6 +627,11 @@ enum ActivityFrequency {
 enum ActivityType {
   TEMPORARY
   ANNUAL
+}
+
+enum ActivityParticipantPaymentType {
+  MONTHLY
+  SESSION
 }
 
 enum Gender {

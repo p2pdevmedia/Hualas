@@ -23,6 +23,7 @@ interface User {
   dni: string | null;
   role: string;
   roles: string[];
+  socialFeeActive: boolean;
   profilePhoto: string | null;
   updatedAt: Date;
   children: Child[];
@@ -134,6 +135,15 @@ export default function UsersList({
                 </span>
                 <span className="ml-2 text-xs rounded-full bg-muted px-2 py-0.5 font-medium">
                   {u.role}
+                </span>
+                <span
+                  className={`ml-2 text-xs rounded-full px-2 py-0.5 font-medium ${
+                    u.socialFeeActive
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  Cuota social {u.socialFeeActive ? 'activa' : 'inactiva'}
                 </span>
               </Link>
               {!readOnly && (

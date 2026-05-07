@@ -16,6 +16,9 @@ type ManualPaymentFormProps = {
     activityId: string;
     target?: string;
     targetLabel?: string;
+    groupId?: string;
+    activityDayId?: string;
+    activityDayLabel?: string;
   }>;
   totalAmount: number;
   activitySummary?: string;

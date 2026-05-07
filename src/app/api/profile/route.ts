@@ -73,6 +73,7 @@ export async function PATCH(req: Request) {
   if (data.doctorCertificate !== undefined)
     updateData.doctorCertificate = data.doctorCertificate;
   if (data.email !== undefined) updateData.email = data.email;
+  if (data.socialFeeActive === false) updateData.socialFeeActive = false;
   if (data.password !== undefined) {
     updateData.password = await hash(data.password, 12);
   }
@@ -93,6 +94,7 @@ export async function PATCH(req: Request) {
       phone: true,
       nationality: true,
       maritalStatus: true,
+      socialFeeActive: true,
       doctorCertificate: true,
     },
   });

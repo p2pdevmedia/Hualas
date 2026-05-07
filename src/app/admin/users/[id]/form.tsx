@@ -30,6 +30,7 @@ type User = {
   nationality: string | null;
   maritalStatus: string | null;
   isActive: boolean;
+  socialFeeActive: boolean;
   observations: string | null;
   allergies: string | null;
   regularMedication: string | null;
@@ -53,6 +54,7 @@ export default function EditUserForm({ user }: { user: User }) {
   const [maritalStatus, setMaritalStatus] = useState(user.maritalStatus ?? '');
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
+  const [socialFeeActive, setSocialFeeActive] = useState(user.socialFeeActive);
   const [roles, setRoles] = useState<ElevatedRole[]>(
     user.roles.filter((r): r is ElevatedRole =>
       ['PROFESSOR', 'COUNTER', 'ADMIN', 'SUPER_ADMIN'].includes(r)
@@ -101,6 +103,7 @@ export default function EditUserForm({ user }: { user: User }) {
         maritalStatus,
         email,
         isActive,
+        socialFeeActive,
         observations,
         allergies,
         regularMedication,
@@ -268,6 +271,35 @@ export default function EditUserForm({ user }: { user: User }) {
         />
         Usuario activo
       </label>
+      <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <p className="font-semibold">Cuota social</p>
+            <p className="text-muted-foreground">
+              Los usuarios nuevos quedan inactivos por defecto. Un pago aprobado
+              que incluya cuota social la activa automáticamente.
+            </p>
+          </div>
+          <span
+            className={`w-fit rounded-full border px-3 py-1 text-xs font-medium ${
+              socialFeeActive
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 bg-slate-50 text-slate-700'
+            }`}
+          >
+            {socialFeeActive ? 'Activa' : 'Inactiva'}
+          </span>
+        </div>
+        <label className="mt-4 flex items-center gap-2 text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={socialFeeActive}
+            onChange={(e) => setSocialFeeActive(e.target.checked)}
+            className="accent-primary"
+          />
+          Mantener cuota social activa
+        </label>
+      </div>
       {canEditRole && (
         <fieldset className="rounded-lg border bg-muted/20 p-4 space-y-2">
           <legend className="px-1 text-sm font-semibold">

@@ -33,4 +33,5 @@ export const userUpdateSchema = z.object({
   primaryDoctor: z.string().optional(),
   doctorPhone: z.string().optional(),
   isActive: z.boolean().optional(),
+  socialFeeActive: z.boolean().optional(),
 });

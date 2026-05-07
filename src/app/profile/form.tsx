@@ -26,6 +26,7 @@ type User = {
   primaryDoctor: string | null;
   doctorPhone: string | null;
   doctorCertificate: string | null;
+  socialFeeActive: boolean;
 };
 
 export default function ProfileForm({
@@ -62,6 +63,7 @@ export default function ProfileForm({
   const [doctorCertificate, setDoctorCertificate] = useState(
     user.doctorCertificate ?? ''
   );
+  const [socialFeeActive, setSocialFeeActive] = useState(user.socialFeeActive);
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone ?? '');
   const [password, setPassword] = useState('');
@@ -107,31 +109,36 @@ export default function ProfileForm({
     setError('');
     setSuccess('');
     try {
+      const profilePayload: Record<string, unknown> = {
+        name,
+        lastName,
+        dni: dni || null,
+        birthDate,
+        gender: gender || undefined,
+        address,
+        nationality,
+        maritalStatus,
+        allergies,
+        regularMedication,
+        relevantDiseases,
+        previousInjuries,
+        physicalRestrictions,
+        bloodGroup,
+        primaryDoctor,
+        doctorPhone,
+        doctorCertificate,
+        email,
+        phone,
+        ...(password ? { password } : {}),
+      };
+      if (user.socialFeeActive && !socialFeeActive) {
+        profilePayload.socialFeeActive = false;
+      }
+
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          lastName,
-          dni: dni || null,
-          birthDate,
-          gender: gender || undefined,
-          address,
-          nationality,
-          maritalStatus,
-          allergies,
-          regularMedication,
-          relevantDiseases,
-          previousInjuries,
-          physicalRestrictions,
-          bloodGroup,
-          primaryDoctor,
-          doctorPhone,
-          doctorCertificate,
-          email,
-          phone,
-          ...(password ? { password } : {}),
-        }),
+        body: JSON.stringify(profilePayload),
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Perfil actualizado');
@@ -371,6 +378,38 @@ export default function ProfileForm({
           onChange={(e) => setPassword(e.target.value)}
         />
       </label>
+      <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <p className="font-semibold">Cuota social</p>
+            <p className="text-muted-foreground">
+              {socialFeeActive
+                ? 'Tu cuota social está activa. Si te das de baja no se te deberán generar nuevos cargos de cuota social.'
+                : 'Tu cuota social está inactiva. Se reactiva automáticamente al pagar una actividad que incluya cuota social, o por administración.'}
+            </p>
+          </div>
+          <span
+            className={`w-fit rounded-full border px-3 py-1 text-xs font-medium ${
+              socialFeeActive
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 bg-slate-50 text-slate-700'
+            }`}
+          >
+            {socialFeeActive ? 'Activa' : 'Inactiva'}
+          </span>
+        </div>
+        {user.socialFeeActive && (
+          <label className="mt-4 flex items-start gap-2 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={!socialFeeActive}
+              onChange={(e) => setSocialFeeActive(!e.target.checked)}
+              className="mt-1 accent-primary"
+            />
+            <span>Dar de baja mi cuota social al guardar cambios.</span>
+          </label>
+        )}
+      </div>
       <input type="hidden" name="username" value={user.email} />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}

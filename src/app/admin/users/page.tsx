@@ -26,6 +26,7 @@ export default async function UsersPage() {
         role: true,
         roleAssignments: { select: { role: true } },
         profilePhoto: true,
+        socialFeeActive: true,
         updatedAt: true,
       },
     }),

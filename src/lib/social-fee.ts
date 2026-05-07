@@ -107,58 +107,74 @@ export async function registerSocialFeePayment({
   const { month, year } = getCurrentPeriod();
 
   if (childId == null) {
-    const existing = await prisma.socialFeePayment.findFirst({
-      where: {
-        periodMonth: month,
-        periodYear: year,
-        userId,
-        childId: null,
-      },
-      select: { id: true },
-    });
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.socialFeePayment.findFirst({
+        where: {
+          periodMonth: month,
+          periodYear: year,
+          userId,
+          childId: null,
+        },
+        select: { id: true },
+      });
 
-    if (existing) {
-      return prisma.socialFeePayment.update({
-        where: { id: existing.id },
+      await tx.user.update({
+        where: { id: userId },
+        data: { socialFeeActive: true },
+      });
+
+      if (existing) {
+        return tx.socialFeePayment.update({
+          where: { id: existing.id },
+          data: {
+            amount,
+            mercadoPagoPaymentId,
+          },
+        });
+      }
+
+      return tx.socialFeePayment.create({
         data: {
+          userId,
+          childId: null,
+          periodMonth: month,
+          periodYear: year,
           amount,
           mercadoPagoPaymentId,
         },
       });
-    }
+    });
+  }
 
-    return prisma.socialFeePayment.create({
-      data: {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.socialFeePayment.upsert({
+      where: {
+        userId_childId_periodMonth_periodYear: {
+          userId,
+          childId,
+          periodMonth: month,
+          periodYear: year,
+        },
+      },
+      create: {
         userId,
-        childId: null,
+        childId,
         periodMonth: month,
         periodYear: year,
         amount,
         mercadoPagoPaymentId,
       },
-    });
-  }
-
-  return prisma.socialFeePayment.upsert({
-    where: {
-      userId_childId_periodMonth_periodYear: {
-        userId,
-        childId,
-        periodMonth: month,
-        periodYear: year,
+      update: {
+        amount,
+        mercadoPagoPaymentId,
       },
-    },
-    create: {
-      userId,
-      childId,
-      periodMonth: month,
-      periodYear: year,
-      amount,
-      mercadoPagoPaymentId,
-    },
-    update: {
-      amount,
-      mercadoPagoPaymentId,
-    },
+    });
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { socialFeeActive: true },
+    });
+
+    return payment;
   });
 }

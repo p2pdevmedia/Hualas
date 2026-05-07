@@ -11,6 +11,8 @@ type CartItem = {
   target?: string;
   targetLabel?: string;
   groupId?: string;
+  activityDayId?: string;
+  activityDayLabel?: string;
 };
 
 export async function POST(req: Request) {

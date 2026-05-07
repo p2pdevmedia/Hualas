@@ -35,6 +35,8 @@ type CartItem = {
   target?: string;
   targetLabel?: string;
   groupId?: string;
+  activityDayId?: string;
+  activityDayLabel?: string;
 };
 
 function isManualPaymentMethod(value: unknown) {
@@ -240,7 +242,7 @@ export async function POST(req: Request) {
     (item) =>
       `${item.activityId}:${(session.user as { id: string }).id}:${
         item.target && item.target !== 'self' ? item.target : ''
-      }:${item.groupId ?? ''}`
+      }:${item.groupId ?? ''}:${item.activityDayId ?? ''}`
   );
 
   const result = await new Preference(client).create({

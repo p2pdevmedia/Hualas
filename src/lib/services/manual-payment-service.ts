@@ -2,6 +2,7 @@ import { del, put } from '@vercel/blob';
 import { BillableConceptCode, PaymentStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
+import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { registerSocialFeePayment } from '@/lib/social-fee';
 import { familyGroupService } from '@/lib/services/family-group-service';
 import {
@@ -559,6 +560,7 @@ export async function approveManualPayment({
       order: {
         select: {
           id: true,
+          responsibleUserId: true,
         },
       },
     },
@@ -622,6 +624,38 @@ export async function approveManualPayment({
         mercadoPagoPaymentId: updatedPayment.id,
       });
     }
+  }
+
+  const validatedItems = rawData.validatedItems ?? [];
+  for (const item of validatedItems) {
+    const childId = item.target && item.target !== 'self' ? item.target : null;
+    const participantKey = getActivityParticipantKey(
+      item.activityId,
+      payment.order.responsibleUserId ?? reviewer.id,
+      childId
+    );
+    const participant = await prisma.activityParticipant.upsert({
+      where: { participantKey },
+      create: {
+        activityId: item.activityId,
+        userId: payment.order.responsibleUserId ?? reviewer.id,
+        childId,
+        participantKey,
+      },
+      update: {},
+      select: { id: true },
+    });
+
+    await registerActivityParticipantPayment({
+      activityParticipantId: participant.id,
+      activityId: item.activityId,
+      userId: payment.order.responsibleUserId ?? reviewer.id,
+      childId,
+      groupId: item.groupId,
+      activityDayId: item.activityDayId,
+      paymentReference: updatedPayment.id,
+      paidAt: updatedPayment.paidAt ?? now,
+    });
   }
 
   notifyManualPaymentApproved(updatedPayment.id);

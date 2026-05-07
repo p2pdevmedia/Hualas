@@ -24,6 +24,7 @@ type InscriptosParticipant = {
   age: number | null;
   whatsappPhone?: string | null;
   detailHref: string;
+  paymentLabels: string[];
 };
 
 function getWhatsAppUrl(phone: string) {
@@ -358,6 +359,17 @@ export default function InscriptosPanel({
                                 {participant.age} años
                               </p>
                             )}
+                            {participant.paymentLabels.length > 0 && (
+                              <p className="mt-1 text-[11px] text-emerald-700">
+                                Pagos:{' '}
+                                {participant.paymentLabels
+                                  .slice(0, 3)
+                                  .join(', ')}
+                                {participant.paymentLabels.length > 3
+                                  ? ` +${participant.paymentLabels.length - 3}`
+                                  : ''}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </li>
@@ -435,6 +447,17 @@ export default function InscriptosPanel({
                                   {member.age != null && (
                                     <p className="text-[11px] text-muted-foreground">
                                       {member.age} años
+                                    </p>
+                                  )}
+                                  {member.paymentLabels.length > 0 && (
+                                    <p className="mt-1 text-[11px] text-emerald-700">
+                                      Pagos:{' '}
+                                      {member.paymentLabels
+                                        .slice(0, 3)
+                                        .join(', ')}
+                                      {member.paymentLabels.length > 3
+                                        ? ` +${member.paymentLabels.length - 3}`
+                                        : ''}
                                     </p>
                                   )}
                                 </div>

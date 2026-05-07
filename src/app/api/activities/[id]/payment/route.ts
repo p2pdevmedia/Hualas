@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
+import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 import {
@@ -81,7 +82,7 @@ export async function POST(
       },
     });
 
-    await prisma.activityParticipant.upsert({
+    const participant = await prisma.activityParticipant.upsert({
       where: {
         participantKey,
       },
@@ -97,6 +98,16 @@ export async function POST(
         receipt,
         receiptDate,
       },
+      select: { id: true },
+    });
+
+    await registerActivityParticipantPayment({
+      activityParticipantId: participant.id,
+      activityId: params.id,
+      userId,
+      childId: participantChildId,
+      paymentReference: payment.id?.toString() ?? paymentId,
+      paidAt: receiptDate,
     });
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
@@ -111,6 +122,7 @@ export async function POST(
           userId,
           childId: participantChildId,
           groupId: null,
+          activityDayId: null,
         },
       ];
     }

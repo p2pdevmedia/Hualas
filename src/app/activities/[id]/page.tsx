@@ -21,6 +21,11 @@ type ActivityDetail = Prisma.ActivityGetPayload<{
       include: {
         user: true;
         child: true;
+        payments: {
+          include: {
+            activityDay: true;
+          };
+        };
       };
     };
   };
@@ -58,6 +63,27 @@ function getParticipantSubtitle(participant: ActivityParticipantDetail) {
   }
 
   return participant.user.email;
+}
+
+function getPaymentLabel(
+  payment: ActivityParticipantDetail['payments'][number]
+) {
+  if (
+    payment.paymentType === 'MONTHLY' &&
+    payment.periodMonth &&
+    payment.periodYear
+  ) {
+    return `${String(payment.periodMonth).padStart(2, '0')}/${payment.periodYear}`;
+  }
+
+  if (payment.activityDay) {
+    return `${payment.activityDay.date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+    })} ${payment.activityDay.schedule}`;
+  }
+
+  return payment.paidAt.toLocaleDateString('es-AR');
 }
 
 function transformAttendanceList(
@@ -113,6 +139,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         include: {
           user: true,
           child: true,
+          payments: {
+            orderBy: [
+              { periodYear: 'desc' },
+              { periodMonth: 'desc' },
+              { paidAt: 'desc' },
+            ],
+            include: {
+              activityDay: true,
+            },
+          },
           groupMembership: {
             select: {
               activityGroupId: true,
@@ -575,6 +611,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 : null,
               whatsappPhone: p.user.phone ?? null,
               detailHref: `/activities/${activity.id}/participants/${p.id}`,
+              paymentLabels: p.payments.map(getPaymentLabel),
             }))}
             groups={activityGroupOptions}
             canAssignGroups={isAdmin}

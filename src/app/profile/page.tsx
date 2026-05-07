@@ -39,6 +39,7 @@ export default async function ProfilePage({
       primaryDoctor: true,
       doctorPhone: true,
       doctorCertificate: true,
+      socialFeeActive: true,
     },
   });
   if (!user) {

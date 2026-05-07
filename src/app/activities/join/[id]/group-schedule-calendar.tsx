@@ -23,7 +23,9 @@ type Props = {
   groups: Group[];
   sessions: Session[];
   selectedGroupId: string;
+  selectedSessionId?: string;
   onGroupChange: (value: string) => void;
+  onSessionChange?: (value: string) => void;
   selectedPersonBirthDate?: string | null;
   selectedPersonAge?: number | null;
   isPersonSelected?: boolean;
@@ -123,7 +125,9 @@ export default function GroupScheduleCalendar({
   groups,
   sessions,
   selectedGroupId,
+  selectedSessionId,
   onGroupChange,
+  onSessionChange,
   selectedPersonBirthDate,
   selectedPersonAge,
   isPersonSelected = false,
@@ -166,7 +170,6 @@ export default function GroupScheduleCalendar({
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, Session[]>();
     for (const session of sessions) {
-      if (!session.activityGroupId) continue;
       const key = getDateKey(session.date);
       const list = map.get(key) ?? [];
       list.push(session);
@@ -259,7 +262,6 @@ export default function GroupScheduleCalendar({
         .filter((session) => {
           const date = new Date(session.date);
           return (
-            session.activityGroupId &&
             date.getFullYear() === currentDate.getFullYear() &&
             date.getMonth() === currentDate.getMonth()
           );
@@ -269,7 +271,6 @@ export default function GroupScheduleCalendar({
           dateObject: new Date(session.date),
           group: groups.find((group) => group.id === session.activityGroupId),
         }))
-        .filter((session) => session.group)
         .sort((a, b) => a.dateObject.getTime() - b.dateObject.getTime()),
     [sessions, groups, currentDate]
   );
@@ -281,9 +282,9 @@ export default function GroupScheduleCalendar({
           Elegí grupo y horarios
         </h2>
         <p className="text-sm text-muted-foreground font-body">
-          Hacé clic en un horario del calendario para elegir el grupo al que
-          querés inscribirte. Las opciones se filtran por la edad de la persona
-          seleccionada.
+          {activityType === 'TEMPORARY'
+            ? 'Hacé clic en una sesión del calendario para elegir qué encuentro querés pagar. Las opciones se filtran por la edad de la persona seleccionada.'
+            : 'Hacé clic en un horario del calendario para elegir el grupo al que querés inscribirte. Las opciones se filtran por la edad de la persona seleccionada.'}
         </p>
 
         {isPersonSelected &&
@@ -303,12 +304,18 @@ export default function GroupScheduleCalendar({
           <div className="flex flex-wrap gap-2">
             {groups.map((group) => {
               const colors = groupColorMap.get(group.id)!;
-              const isSelected = group.id === selectedGroupId;
+              const isSelected =
+                activityType === 'ANNUAL' && group.id === selectedGroupId;
               return (
                 <button
                   key={group.id}
                   type="button"
-                  onClick={() => onGroupChange(group.id)}
+                  onClick={() => {
+                    onGroupChange(group.id);
+                    if (activityType === 'TEMPORARY') {
+                      onSessionChange?.('');
+                    }
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${
                     isSelected ? colors.pillSelected : colors.pill
                   }`}
@@ -424,14 +431,20 @@ export default function GroupScheduleCalendar({
           })
         ) : monthlySessions.length > 0 ? (
           monthlySessions.map((session) => {
-            const group = session.group!;
-            const colors = groupColorMap.get(group.id)!;
-            const isSelected = group.id === selectedGroupId;
+            const group = session.group ?? null;
+            const colors =
+              group && groupColorMap.has(group.id)
+                ? groupColorMap.get(group.id)!
+                : GROUP_COLORS[0];
+            const isSelected = session.id === selectedSessionId;
             return (
               <button
                 key={session.id}
                 type="button"
-                onClick={() => onGroupChange(group.id)}
+                onClick={() => {
+                  onGroupChange(group?.id ?? '');
+                  onSessionChange?.(session.id);
+                }}
                 className={`w-full rounded-xl border p-4 text-left shadow-sm transition-colors ${
                   isSelected
                     ? `${colors.slotSelected} shadow-md`
@@ -455,11 +468,13 @@ export default function GroupScheduleCalendar({
                     </p>
                     <p className="text-sm font-medium">{session.schedule}</p>
                     <p className="text-xs opacity-80">
-                      {group.name} · {formatAgeRange(group)}
+                      {group
+                        ? `${group.name} · ${formatAgeRange(group)}`
+                        : 'Sin grupo asignado'}
                     </p>
                     <p className="text-xs opacity-80">
                       Profe:{' '}
-                      {group.professors.length > 0
+                      {group && group.professors.length > 0
                         ? group.professors.join(', ')
                         : 'a confirmar'}
                     </p>
@@ -507,17 +522,27 @@ export default function GroupScheduleCalendar({
               </p>
               <div className="mt-1 space-y-0.5">
                 {daySessions.map((session) => {
-                  const group = groups.find(
-                    (g) => g.id === session.activityGroupId
-                  );
-                  if (!group) return null;
-                  const colors = groupColorMap.get(group.id)!;
-                  const isSelected = group.id === selectedGroupId;
+                  const group =
+                    groups.find((g) => g.id === session.activityGroupId) ??
+                    null;
+                  const colors =
+                    group && groupColorMap.has(group.id)
+                      ? groupColorMap.get(group.id)!
+                      : GROUP_COLORS[0];
+                  const isSelected =
+                    activityType === 'TEMPORARY'
+                      ? session.id === selectedSessionId
+                      : group?.id === selectedGroupId;
                   return (
                     <button
                       key={session.id}
                       type="button"
-                      onClick={() => onGroupChange(group.id)}
+                      onClick={() => {
+                        onGroupChange(group?.id ?? '');
+                        if (activityType === 'TEMPORARY') {
+                          onSessionChange?.(session.id);
+                        }
+                      }}
                       className={`w-full rounded border px-1.5 py-0.5 text-left text-xs transition-colors cursor-pointer ${
                         isSelected ? colors.slotSelected : colors.slot
                       }`}
@@ -535,7 +560,7 @@ export default function GroupScheduleCalendar({
                         </div>
                       )}
                       <p className="font-medium truncate leading-tight">
-                        {group.name}
+                        {group?.name ?? 'Sesión'}
                       </p>
                       <p className="leading-tight opacity-80">
                         {session.schedule}

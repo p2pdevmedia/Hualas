@@ -80,6 +80,8 @@ export async function PATCH(
   if (data.doctorPhone !== undefined) updateData.doctorPhone = data.doctorPhone;
   if (data.email !== undefined) updateData.email = data.email;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  if (data.socialFeeActive !== undefined)
+    updateData.socialFeeActive = data.socialFeeActive;
 
   const rolePriority: Role[] = ['SUPER_ADMIN', 'ADMIN', 'COUNTER', 'PROFESSOR'];
   const pickLegacyRole = (roles: Role[]): Role => {
@@ -165,6 +167,7 @@ export async function PATCH(
         maritalStatus: true,
         observations: true,
         isActive: true,
+        socialFeeActive: true,
         roleAssignments: { select: { role: true } },
       },
     });

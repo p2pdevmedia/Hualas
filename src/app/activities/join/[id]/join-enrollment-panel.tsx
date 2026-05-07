@@ -276,6 +276,17 @@ function getPersonAge(
   return calculateAge(parsedBirthDate, getReferenceDate(activityStartDate));
 }
 
+function formatSessionLabel(session: Session | null) {
+  if (!session) return undefined;
+  const date = new Date(session.date);
+  const label = date.toLocaleDateString('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  return `${label} · ${session.schedule}`;
+}
+
 function isGroupEligibleForAge(group: Group, age: number | null) {
   if (age === null) return true;
   if (group.minAge !== null && age < group.minAge) return false;
@@ -339,6 +350,7 @@ export default function JoinEnrollmentPanel({
   const userId = (session?.user as any)?.id as string | undefined;
 
   const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [selectedActivityDayId, setSelectedActivityDayId] = useState('');
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedPersonId, setSelectedPersonId] = useState('');
   const [childModalId, setChildModalId] = useState<string | null>(null);
@@ -398,16 +410,30 @@ export default function JoinEnrollmentPanel({
     () => new Set(eligibleGroups.map((group) => group.id)),
     [eligibleGroups]
   );
-  const eligibleSessions = useMemo(
-    () =>
-      sessions.filter(
+  const eligibleSessions = useMemo(() => {
+    if (activity.activityType === 'TEMPORARY') {
+      return sessions.filter(
         (activitySession) =>
-          activitySession.activityGroupId &&
+          !activitySession.activityGroupId ||
           eligibleGroupIds.has(activitySession.activityGroupId)
-      ),
-    [sessions, eligibleGroupIds]
-  );
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+      );
+    }
+
+    return sessions.filter(
+      (activitySession) =>
+        activitySession.activityGroupId &&
+        eligibleGroupIds.has(activitySession.activityGroupId)
+    );
+  }, [activity.activityType, sessions, eligibleGroupIds]);
+  const selectedActivityDay =
+    sessions.find(
+      (activitySession) => activitySession.id === selectedActivityDayId
+    ) ?? null;
+  const effectiveGroupId =
+    activity.activityType === 'TEMPORARY'
+      ? (selectedActivityDay?.activityGroupId ?? selectedGroupId)
+      : selectedGroupId;
+  const selectedGroup = groups.find((g) => g.id === effectiveGroupId);
 
   const childMissingFields = useMemo(() => {
     if (!effectivePersonId || effectivePersonId === 'self') return [];
@@ -434,8 +460,20 @@ export default function JoinEnrollmentPanel({
   useEffect(() => {
     if (selectedGroupId && !eligibleGroupIds.has(selectedGroupId)) {
       setSelectedGroupId('');
+      setSelectedActivityDayId('');
     }
   }, [selectedGroupId, eligibleGroupIds]);
+
+  useEffect(() => {
+    if (
+      selectedActivityDayId &&
+      !eligibleSessions.some(
+        (activitySession) => activitySession.id === selectedActivityDayId
+      )
+    ) {
+      setSelectedActivityDayId('');
+    }
+  }, [eligibleSessions, selectedActivityDayId]);
 
   const groupAgeError = useMemo(
     () =>
@@ -451,11 +489,19 @@ export default function JoinEnrollmentPanel({
   const needsPersonSelection = Boolean(
     session && people.length > 1 && !selectedPersonId
   );
-  const needsGroupSelection = eligibleGroups.length > 0 && !selectedGroupId;
+  const needsSessionSelection =
+    activity.activityType === 'TEMPORARY' &&
+    eligibleSessions.length > 0 &&
+    !selectedActivityDayId;
+  const needsGroupSelection =
+    activity.activityType === 'ANNUAL' &&
+    eligibleGroups.length > 0 &&
+    !selectedGroupId;
   const hasNoEligibleGroups = groups.length > 0 && eligibleGroups.length === 0;
   const canRegister =
     !isFull &&
     !needsPersonSelection &&
+    !needsSessionSelection &&
     !needsGroupSelection &&
     !hasNoEligibleGroups &&
     !profileIncomplete &&
@@ -483,8 +529,16 @@ export default function JoinEnrollmentPanel({
       price: activity.price,
       target: effectivePersonId,
       targetLabel: personLabel,
-      groupId: selectedGroupId || undefined,
+      groupId: effectiveGroupId || undefined,
       groupName: selectedGroup?.name,
+      activityDayId:
+        activity.activityType === 'TEMPORARY'
+          ? selectedActivityDayId || undefined
+          : undefined,
+      activityDayLabel:
+        activity.activityType === 'TEMPORARY'
+          ? formatSessionLabel(selectedActivityDay)
+          : undefined,
     };
     const raw = window.localStorage.getItem(ACTIVITY_CART_STORAGE_KEY);
     const existing = raw ? (JSON.parse(raw) as ActivityCartItem[]) : [];
@@ -519,14 +573,17 @@ export default function JoinEnrollmentPanel({
         </div>
       )}
 
-      {groups.length > 0 && (
+      {(groups.length > 0 ||
+        (activity.activityType === 'TEMPORARY' && sessions.length > 0)) && (
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
             activityType={activity.activityType}
             groups={eligibleGroups}
             sessions={eligibleSessions}
             selectedGroupId={selectedGroupId}
+            selectedSessionId={selectedActivityDayId}
             onGroupChange={setSelectedGroupId}
+            onSessionChange={setSelectedActivityDayId}
             selectedPersonBirthDate={selectedPerson?.birthDate}
             selectedPersonAge={selectedPersonAge}
             isPersonSelected={Boolean(effectivePersonId)}
@@ -568,6 +625,10 @@ export default function JoinEnrollmentPanel({
         ) : needsPersonSelection ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
             Seleccioná para quién es la actividad.
+          </div>
+        ) : needsSessionSelection ? (
+          <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
+            Seleccioná una sesión en el calendario para continuar.
           </div>
         ) : needsGroupSelection ? (
           <div className="rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground font-body">
