@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy, QrCode } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -186,89 +185,67 @@ export default function ManualPaymentForm({
         </p>
       </div>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_280px]">
-        <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <h4 className="text-sm font-semibold">Datos bancarios</h4>
-              <p className="text-xs text-muted-foreground">
-                Copiá el CBU o el alias por separado, o llevate todos los datos
-                juntos para transferir desde el celular.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0"
-              onClick={() =>
-                copyToClipboard(MANUAL_PAYMENT_BANK_COPY_TEXT, 'all')
-              }
-            >
-              <Copy className="mr-2 h-4 w-4" />
-              {copyTarget === 'all'
-                ? 'Datos copiados'
-                : 'Copiar datos bancarios'}
-            </Button>
+      <section className="space-y-4 rounded-xl border bg-muted/20 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold">Datos bancarios</h4>
+            <p className="text-xs text-muted-foreground">
+              Copiá el CBU o el alias por separado, o llevate todos los datos
+              juntos para transferir desde el celular.
+            </p>
           </div>
-
-          <dl className="grid gap-3 sm:grid-cols-2">
-            <BankDetail
-              label="Banco"
-              value={MANUAL_PAYMENT_BANK_DETAILS.bankName}
-            />
-            <BankDetail
-              label="Cuenta"
-              value={MANUAL_PAYMENT_BANK_DETAILS.account}
-            />
-            <CopyableBankDetail
-              label="CBU"
-              value={MANUAL_PAYMENT_BANK_DETAILS.cbu}
-              onCopy={() =>
-                copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.cbu, 'cbu')
-              }
-              copied={copyTarget === 'cbu'}
-            />
-            <CopyableBankDetail
-              label="Alias"
-              value={MANUAL_PAYMENT_BANK_DETAILS.alias}
-              onCopy={() =>
-                copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.alias, 'alias')
-              }
-              copied={copyTarget === 'alias'}
-            />
-            <BankDetail
-              label="CUIT/CUIL"
-              value={MANUAL_PAYMENT_BANK_DETAILS.cuit}
-            />
-            <BankDetail
-              label="Concepto sugerido"
-              value={MANUAL_PAYMENT_BANK_DETAILS.concept}
-              className="sm:col-span-2"
-            />
-          </dl>
-
-          {copyError ? (
-            <p className="text-xs text-destructive">{copyError}</p>
-          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            className="shrink-0"
+            onClick={() =>
+              copyToClipboard(MANUAL_PAYMENT_BANK_COPY_TEXT, 'all')
+            }
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {copyTarget === 'all' ? 'Datos copiados' : 'Copiar datos bancarios'}
+          </Button>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-4 text-center">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <QrCode className="h-4 w-4" />
-            QR del CBU
-          </div>
-          <div className="rounded-2xl border bg-white p-3 shadow-sm">
-            <QRCodeSVG
-              value={MANUAL_PAYMENT_BANK_DETAILS.cbu}
-              size={180}
-              level="M"
-              includeMargin
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Escanealo para cargar el CBU directamente.
-          </p>
-        </div>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <BankDetail
+            label="Banco"
+            value={MANUAL_PAYMENT_BANK_DETAILS.bankName}
+          />
+          <BankDetail
+            label="Cuenta"
+            value={MANUAL_PAYMENT_BANK_DETAILS.account}
+          />
+          <CopyableBankDetail
+            label="CBU"
+            value={MANUAL_PAYMENT_BANK_DETAILS.cbu}
+            onCopy={() =>
+              copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.cbu, 'cbu')
+            }
+            copied={copyTarget === 'cbu'}
+          />
+          <CopyableBankDetail
+            label="Alias"
+            value={MANUAL_PAYMENT_BANK_DETAILS.alias}
+            onCopy={() =>
+              copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.alias, 'alias')
+            }
+            copied={copyTarget === 'alias'}
+          />
+          <BankDetail
+            label="CUIT/CUIL"
+            value={MANUAL_PAYMENT_BANK_DETAILS.cuit}
+          />
+          <BankDetail
+            label="Concepto sugerido"
+            value={MANUAL_PAYMENT_BANK_DETAILS.concept}
+            className="sm:col-span-2"
+          />
+        </dl>
+
+        {copyError ? (
+          <p className="text-xs text-destructive">{copyError}</p>
+        ) : null}
       </section>
 
       {activitySummary ? (
