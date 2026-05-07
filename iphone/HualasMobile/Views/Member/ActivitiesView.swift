@@ -210,6 +210,7 @@ struct ActivitiesView: View {
                 Text(session.activityName)
                   .font(.headline)
                   .foregroundStyle(.primary)
+                participantSummaryView(for: session)
               }
 
               Spacer(minLength: 8)
@@ -429,6 +430,33 @@ struct ActivitiesView: View {
         return $0.activityName.localizedCaseInsensitiveCompare($1.activityName) == .orderedAscending
       }
       return $0.schedule.localizedStandardCompare($1.schedule) == .orderedAscending
+    }
+  }
+
+  private func participantSummary(
+    for session: MobileActivitiesCalendarResponse.Session
+  ) -> String? {
+    let labels = (session.participantLabels ?? [])
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+
+    guard !labels.isEmpty else {
+      return nil
+    }
+
+    let prefix = labels.count == 1 ? "Participante" : "Participantes"
+    return "\(prefix): \(labels.joined(separator: ", "))"
+  }
+
+  @ViewBuilder
+  private func participantSummaryView(
+    for session: MobileActivitiesCalendarResponse.Session
+  ) -> some View {
+    if let participantSummary = participantSummary(for: session) {
+      Text(verbatim: participantSummary)
+        .font(.caption2.weight(.medium))
+        .foregroundStyle(Color.accentColor)
+        .lineLimit(2)
     }
   }
 

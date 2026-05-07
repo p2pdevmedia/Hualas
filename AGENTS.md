@@ -30,6 +30,14 @@ For every task:
 - Use `iphone/README.md` for iPhone-specific setup and workflow details.
 - Do not treat iPhone work as part of the Next.js web app unless the user explicitly says otherwise.
 
+## Xcode Build Note
+
+- This workspace has `Xcode.app` installed at `/Applications/Xcode.app`.
+- For terminal verification of `iphone/HualasMobile`, prefer `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild ...` if `xcode-select` still points to Command Line Tools.
+- Do not assume a global `xcode-select` change is available; it may require `sudo` and is not necessary for local build checks.
+- A TestFlight-ready or device-installable archive also needs a valid Apple Development certificate and provisioning profiles on the Mac.
+- If `xcodebuild archive` fails with "requires a development team", do not guess a team ID; ask for signing credentials or have the user select the team in Xcode.
+
 ## Review Requirement
 
 Never finish a non-trivial task without a review step.

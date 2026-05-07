@@ -144,7 +144,9 @@ export async function GET(req: Request) {
     });
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(session.userId);
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
+    session.userId
+  );
   const participations = await prisma.activityParticipant.findMany({
     where: {
       OR: [
@@ -155,6 +157,8 @@ export async function GET(req: Request) {
     select: {
       activityId: true,
       childId: true,
+      child: { select: { name: true, lastName: true } },
+      user: { select: { name: true, lastName: true } },
       groupMembership: {
         select: {
           activityGroupId: true,
@@ -208,18 +212,41 @@ export async function GET(req: Request) {
     : [];
 
   const sessions = days
-    .filter((day) => isVisibleForMember(day, scopeByActivityId.get(day.activityId)))
-    .map((day) => ({
-      id: day.id,
-      date: formatDateOnly(day.date),
-      activityId: day.activity.id,
-      activityName: day.activity.name,
-      schedule: day.schedule,
-      geoLocation: day.geoLocation,
-      groupName: day.activityGroup?.name ?? null,
-      activityGroupId: day.activityGroupId,
-      cancelled: day.cancelled,
-    }));
+    .filter((day) =>
+      isVisibleForMember(day, scopeByActivityId.get(day.activityId))
+    )
+    .map((day) => {
+      const visibleParticipants = participations.filter((participant) => {
+        if (participant.activityId !== day.activityId) return false;
+
+        if (day.activityGroupId === null) return true;
+
+        const participantGroupId =
+          participant.groupMembership?.activityGroupId ?? null;
+        return participantGroupId === day.activityGroupId;
+      });
+
+      const participantLabels = [
+        ...new Set(
+          visibleParticipants.map((participant) =>
+            formatParticipationLabel(participant)
+          )
+        ),
+      ];
+
+      return {
+        id: day.id,
+        date: formatDateOnly(day.date),
+        activityId: day.activity.id,
+        activityName: day.activity.name,
+        schedule: day.schedule,
+        geoLocation: day.geoLocation,
+        groupName: day.activityGroup?.name ?? null,
+        activityGroupId: day.activityGroupId,
+        cancelled: day.cancelled,
+        participantLabels,
+      };
+    });
 
   return NextResponse.json({
     role: 'MEMBER',
@@ -227,4 +254,29 @@ export async function GET(req: Request) {
     monthLabel,
     sessions,
   });
+}
+
+function formatParticipationLabel(participation: {
+  child?: { name?: string | null; lastName?: string | null } | null;
+  user?: { name?: string | null; lastName?: string | null } | null;
+}) {
+  if (participation.child) {
+    return (
+      [participation.child.name, participation.child.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || 'Sin nombre'
+    );
+  }
+
+  if (participation.user) {
+    return (
+      [participation.user.name, participation.user.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || 'Yo'
+    );
+  }
+
+  return 'Yo';
 }

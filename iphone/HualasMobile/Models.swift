@@ -257,6 +257,64 @@ struct MobileChildrenResponse: Codable {
   let children: [Child]
 }
 
+enum MobileFamilyRelationship: String, Codable, CaseIterable {
+  case parent = "PARENT"
+  case responsible = "RESPONSIBLE"
+  case other = "OTHER"
+}
+
+struct MobileAddFamilyGroupMemberRequest: Codable {
+  let email: String
+  let relationship: MobileFamilyRelationship
+}
+
+struct MobilePickupNoticesResponse: Codable {
+  struct Notice: Codable, Identifiable {
+    let id: String
+    let activityDayId: String
+    let childId: String
+    let childLabel: String
+    let activityDayLabel: String
+    let alternatePersonUserId: String?
+    let alternatePersonName: String?
+    let alternatePersonLabel: String
+    let description: String
+    let createdByLabel: String
+    let createdAt: String?
+  }
+
+  let notices: [Notice]
+}
+
+struct MobilePickupNoticeOptionsResponse: Codable {
+  struct Child: Codable, Identifiable {
+    let id: String
+    let label: String
+  }
+
+  struct User: Codable, Identifiable {
+    let id: String
+    let label: String
+  }
+
+  struct ActivityDay: Codable, Identifiable {
+    let id: String
+    let label: String
+  }
+
+  let children: [Child]
+  let users: [User]
+  let activityDays: [ActivityDay]
+}
+
+struct MobilePickupNoticeUpsertRequest: Codable {
+  let childId: String
+  let activityDayId: String
+  let alternatePersonUserId: String?
+  let alternatePersonName: String?
+  let description: String
+}
+
 struct MobileChildUpsertRequest: Codable {
   let name: String
   let lastName: String?
@@ -443,6 +501,7 @@ struct MobileActivitiesCalendarResponse: Codable {
     let groupName: String?
     let activityGroupId: String?
     let cancelled: Bool
+    let participantLabels: [String]?
   }
 
   let role: MobileRole

@@ -32,6 +32,7 @@
 		A1B2C3D4E5F60718293A1023 /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2025 /* ProfileEditView.swift */; };
 		A1B2C3D4E5F60718293A1024 /* ChildDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2026 /* ChildDetailView.swift */; };
 		A1B2C3D4E5F60718293A1025 /* ChildFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2027 /* ChildFormView.swift */; };
+		A1B2C3D4E5F60718293A1026 /* FamilyToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2028 /* FamilyToolsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +63,7 @@
 		A1B2C3D4E5F60718293A2025 /* ProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2026 /* ChildDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildDetailView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2027 /* ChildFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildFormView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2028 /* FamilyToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyToolsView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A3001 /* HualasMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = HualasMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -122,6 +124,7 @@
 				A1B2C3D4E5F60718293A2012 /* ChildrenView.swift */,
 				A1B2C3D4E5F60718293A2026 /* ChildDetailView.swift */,
 				A1B2C3D4E5F60718293A2027 /* ChildFormView.swift */,
+				A1B2C3D4E5F60718293A2028 /* FamilyToolsView.swift */,
 				A1B2C3D4E5F60718293A2013 /* ActivitiesView.swift */,
 				A1B2C3D4E5F60718293A2014 /* PaymentsView.swift */,
 				A1B2C3D4E5F60718293A2015 /* NewsView.swift */,
@@ -222,6 +225,7 @@
 				A1B2C3D4E5F60718293A1012 /* ChildrenView.swift in Sources */,
 				A1B2C3D4E5F60718293A1024 /* ChildDetailView.swift in Sources */,
 				A1B2C3D4E5F60718293A1025 /* ChildFormView.swift in Sources */,
+				A1B2C3D4E5F60718293A1026 /* FamilyToolsView.swift in Sources */,
 				A1B2C3D4E5F60718293A1013 /* ActivitiesView.swift in Sources */,
 				A1B2C3D4E5F60718293A1014 /* PaymentsView.swift in Sources */,
 				A1B2C3D4E5F60718293A1015 /* NewsView.swift in Sources */,

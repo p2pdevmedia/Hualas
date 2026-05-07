@@ -187,6 +187,22 @@ final class APIClient {
     )
   }
 
+  func addFamilyGroupMember(
+    token: String,
+    email: String,
+    relationship: MobileFamilyRelationship
+  ) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/family-groups/current/members",
+      method: "POST",
+      token: token,
+      body: MobileAddFamilyGroupMemberRequest(
+        email: email,
+        relationship: relationship
+      )
+    )
+  }
+
   func activitiesCalendar(
     token: String,
     month: Date = Date()
@@ -203,6 +219,52 @@ final class APIClient {
     dayId: String
   ) async throws -> MobileActivitySessionDetailResponse {
     try await send(path: "/api/mobile/activities/\(dayId)", token: token)
+  }
+
+  func pickupNotices(token: String) async throws -> MobilePickupNoticesResponse {
+    try await send(path: "/api/mobile/pickup-notices", token: token)
+  }
+
+  func pickupNoticeOptions(
+    token: String
+  ) async throws -> MobilePickupNoticeOptionsResponse {
+    try await send(path: "/api/mobile/pickup-notices/options", token: token)
+  }
+
+  func createPickupNotice(
+    token: String,
+    payload: MobilePickupNoticeUpsertRequest
+  ) async throws -> MobilePickupNoticesResponse.Notice {
+    try await send(
+      path: "/api/mobile/pickup-notices",
+      method: "POST",
+      token: token,
+      body: payload
+    )
+  }
+
+  func updatePickupNotice(
+    token: String,
+    noticeId: String,
+    payload: MobilePickupNoticeUpsertRequest
+  ) async throws -> MobilePickupNoticesResponse.Notice {
+    try await send(
+      path: "/api/mobile/pickup-notices/\(noticeId)",
+      method: "PUT",
+      token: token,
+      body: payload
+    )
+  }
+
+  func deletePickupNotice(
+    token: String,
+    noticeId: String
+  ) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/pickup-notices/\(noticeId)",
+      method: "DELETE",
+      token: token
+    )
   }
 
   func payments(token: String) async throws -> MobilePaymentsResponse {
