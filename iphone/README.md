@@ -32,6 +32,9 @@ The app expects these endpoints:
 - `GET /api/mobile/payments`
 - `GET /api/mobile/news`
 - `POST /api/mobile/devices`
+- `GET /api/mobile/notifications`
+- `PATCH /api/mobile/notifications`
+- `PATCH /api/mobile/notifications/[id]`
 - `GET /api/mobile/professor/groups`
 - `GET /api/mobile/professor/students`
 - `GET /api/mobile/professor/attendance`
@@ -45,6 +48,19 @@ The app expects these endpoints:
 - For a physical iPhone, change `API_BASE_URL` in `iphone/HualasMobile/Info.plist` to the IP or tunnel URL of your Mac, not `localhost`.
 - Keep Push Notifications capability enabled and Remote Notifications in Background Modes.
 - Install and run on the connected iPhone from Xcode.
+
+## APNs delivery
+
+The app registers the APNs device token automatically and sends it through `POST /api/mobile/devices`.
+To actually deliver remote pushes to the device, the backend needs these environment variables:
+
+- `APPLE_APNS_TEAM_ID`
+- `APPLE_APNS_KEY_ID`
+- `APPLE_APNS_PRIVATE_KEY`
+- `APPLE_APNS_BUNDLE_ID`
+
+`APPLE_APNS_PRIVATE_KEY` should contain the Apple `.p8` key contents with escaped newlines or literal newlines.
+Debug builds use the APNs development endpoint; release builds use the production endpoint.
 
 ## Quick test checklist
 

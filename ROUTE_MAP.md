@@ -269,6 +269,20 @@ Agents should check this before searching the codebase.
 - `POST /api/mobile/activities/cart/checkout` → Mercado Pago or manual checkout for the mobile cart
   - File: `src/app/api/mobile/activities/cart/checkout/route.ts`
 
+- `POST /api/mobile/devices` → register or update the current iPhone APNs token
+  - File: `src/app/api/mobile/devices/route.ts`
+
+### Mobile notifications
+
+- `GET /api/mobile/notifications` → list the current user's in-app notifications and unread counts
+  - File: `src/app/api/mobile/notifications/route.ts`
+
+- `PATCH /api/mobile/notifications` → mark every mobile notification as read
+  - File: `src/app/api/mobile/notifications/route.ts`
+
+- `PATCH /api/mobile/notifications/[id]` → mark a single mobile notification as read
+  - File: `src/app/api/mobile/notifications/[id]/route.ts`
+
 ### Forms
 
 - `GET /api/forms` → list forms

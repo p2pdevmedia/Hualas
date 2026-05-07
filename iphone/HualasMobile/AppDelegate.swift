@@ -36,5 +36,22 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
   ) {
     print("[push] failed to register", error)
   }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    NotificationCenter.default.post(
+      name: .hualasRemoteNotificationReceived,
+      object: nil,
+      userInfo: notification.request.content.userInfo
+    )
+    completionHandler([.banner, .sound, .badge])
+  }
 }
 
+extension Notification.Name {
+  static let hualasRemoteNotificationReceived =
+    Notification.Name("hualasRemoteNotificationReceived")
+}

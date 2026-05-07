@@ -21,7 +21,7 @@ actor PushRegistrationService {
         token: apnsToken,
         platform: "iOS",
         bundleId: Bundle.main.bundleIdentifier,
-        environment: Bundle.main.object(forInfoDictionaryKey: "APS_ENVIRONMENT") as? String,
+        environment: AppConfig.apnsEnvironment,
         deviceName: UIDevice.current.name,
         deviceModel: UIDevice.current.model,
         appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String

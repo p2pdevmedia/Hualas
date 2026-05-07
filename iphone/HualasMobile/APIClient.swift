@@ -275,6 +275,37 @@ final class APIClient {
     try await send(path: "/api/mobile/news", token: token)
   }
 
+  func notifications(
+    token: String,
+    unreadOnly: Bool = false,
+    limit: Int = 20
+  ) async throws -> MobileNotificationsResponse {
+    let limitValue = min(max(limit, 1), 50)
+    let unreadQuery = unreadOnly ? "&unread=1" : ""
+    return try await send(
+      path: "/api/mobile/notifications?limit=\(limitValue)\(unreadQuery)",
+      token: token
+    )
+  }
+
+  func markNotificationRead(token: String, id: String) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/notifications/\(id)",
+      method: "PATCH",
+      token: token,
+      body: EmptyRequest()
+    )
+  }
+
+  func markAllNotificationsRead(token: String) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/notifications",
+      method: "PATCH",
+      token: token,
+      body: EmptyRequest()
+    )
+  }
+
   func registerDevice(token: String, payload: MobileDeviceRegistration) async throws {
     _ = try await send(
       path: "/api/mobile/devices",

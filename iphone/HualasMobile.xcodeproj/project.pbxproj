@@ -33,6 +33,9 @@
 		A1B2C3D4E5F60718293A1024 /* ChildDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2026 /* ChildDetailView.swift */; };
 		A1B2C3D4E5F60718293A1025 /* ChildFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2027 /* ChildFormView.swift */; };
 		A1B2C3D4E5F60718293A1026 /* FamilyToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2028 /* FamilyToolsView.swift */; };
+		A1B2C3D4E5F60718293A1027 /* MobileNotificationsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2029 /* MobileNotificationsStore.swift */; };
+		A1B2C3D4E5F60718293A1028 /* NotificationsBellButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */; };
+		A1B2C3D4E5F60718293A1029 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +67,9 @@
 		A1B2C3D4E5F60718293A2026 /* ChildDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildDetailView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2027 /* ChildFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildFormView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2028 /* FamilyToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyToolsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2029 /* MobileNotificationsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileNotificationsStore.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsBellButton.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A3001 /* HualasMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = HualasMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -86,6 +92,7 @@
 				A1B2C3D4E5F60718293A2005 /* KeychainStore.swift */,
 				A1B2C3D4E5F60718293A2006 /* Models.swift */,
 				A1B2C3D4E5F60718293A2007 /* PushRegistrationService.swift */,
+				A1B2C3D4E5F60718293A2029 /* MobileNotificationsStore.swift */,
 				A1B2C3D4E5F60718293A2008 /* RootView.swift */,
 				A1B2C3D4E5F60718293A2009 /* SessionStore.swift */,
 				A1B2C3D4E5F60718293A2020 /* Info.plist */,
@@ -113,6 +120,8 @@
 				A1B2C3D4E5F60718293A2022 /* ProfileView.swift */,
 				A1B2C3D4E5F60718293A2025 /* ProfileEditView.swift */,
 				A1B2C3D4E5F60718293A2023 /* GroupDetailView.swift */,
+				A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */,
+				A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -226,6 +235,9 @@
 				A1B2C3D4E5F60718293A1024 /* ChildDetailView.swift in Sources */,
 				A1B2C3D4E5F60718293A1025 /* ChildFormView.swift in Sources */,
 				A1B2C3D4E5F60718293A1026 /* FamilyToolsView.swift in Sources */,
+				A1B2C3D4E5F60718293A1027 /* MobileNotificationsStore.swift in Sources */,
+				A1B2C3D4E5F60718293A1028 /* NotificationsBellButton.swift in Sources */,
+				A1B2C3D4E5F60718293A1029 /* NotificationsView.swift in Sources */,
 				A1B2C3D4E5F60718293A1013 /* ActivitiesView.swift in Sources */,
 				A1B2C3D4E5F60718293A1014 /* PaymentsView.swift in Sources */,
 				A1B2C3D4E5F60718293A1015 /* NewsView.swift in Sources */,

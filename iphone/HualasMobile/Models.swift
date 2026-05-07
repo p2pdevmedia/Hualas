@@ -196,6 +196,22 @@ struct MobileHomeResponse: Codable {
   let recentNews: [NewsItem]
 }
 
+struct MobileNotificationsResponse: Codable {
+  struct NotificationItem: Codable, Identifiable {
+    let id: String
+    let type: String
+    let title: String
+    let body: String
+    let url: String?
+    var readAt: String?
+    let createdAt: String
+  }
+
+  let notifications: [NotificationItem]
+  let unreadCount: Int
+  let chatUnreadCount: Int
+}
+
 struct MobilePaymentsResponse: Codable {
   struct Profile: Codable {
     let id: String

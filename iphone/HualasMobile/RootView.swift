@@ -3,6 +3,7 @@ import UIKit
 
 struct RootView: View {
   @EnvironmentObject private var sessionStore: SessionStore
+  @EnvironmentObject private var notificationsStore: MobileNotificationsStore
 
   var body: some View {
     Group {
@@ -18,11 +19,16 @@ struct RootView: View {
         LoginView()
       }
     }
+    .task(id: sessionStore.token) {
+      await notificationsStore.sync(token: sessionStore.token)
+    }
   }
 }
 
 struct MemberShellView: View {
   @StateObject private var cartStore = MemberCartStore()
+  @EnvironmentObject private var notificationsStore: MobileNotificationsStore
+  @State private var showingNotifications = false
 
   var body: some View {
     TabView {
@@ -36,6 +42,20 @@ struct MemberShellView: View {
         .tabItem { Label("Más", systemImage: "ellipsis.circle") }
     }
     .environmentObject(cartStore)
+    .safeAreaInset(edge: .top) {
+      HStack {
+        Spacer()
+        NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
+          showingNotifications = true
+        }
+      }
+      .padding(.horizontal, 16)
+      .padding(.top, 8)
+      .padding(.bottom, 4)
+    }
+    .sheet(isPresented: $showingNotifications) {
+      NotificationsView()
+    }
   }
 }
 
@@ -87,6 +107,9 @@ struct MoreTabView: View {
 }
 
 struct ProfessorShellView: View {
+  @EnvironmentObject private var notificationsStore: MobileNotificationsStore
+  @State private var showingNotifications = false
+
   var body: some View {
     TabView {
       ActivitiesView()
@@ -97,6 +120,20 @@ struct ProfessorShellView: View {
         .tabItem { Label("Asistencia", systemImage: "checklist") }
       ProfileView()
         .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+    }
+    .safeAreaInset(edge: .top) {
+      HStack {
+        Spacer()
+        NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
+          showingNotifications = true
+        }
+      }
+      .padding(.horizontal, 16)
+      .padding(.top, 8)
+      .padding(.bottom, 4)
+    }
+    .sheet(isPresented: $showingNotifications) {
+      NotificationsView()
     }
   }
 }

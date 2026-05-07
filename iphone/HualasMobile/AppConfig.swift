@@ -8,5 +8,12 @@ enum AppConfig {
     }
     return URL(string: "http://localhost:3000")!
   }
-}
 
+  static var apnsEnvironment: String {
+    #if DEBUG
+      return "development"
+    #else
+      return "production"
+    #endif
+  }
+}

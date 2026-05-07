@@ -2,6 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { Prisma, type NotificationType } from '@prisma/client';
 import { resolvePreferences } from './preferences';
 import { sendPushAlert, PushAlertError } from '@/lib/pushalert';
+import {
+  sendMobilePushNotifications,
+  type MobilePushDevice,
+} from '@/lib/mobile-push';
 
 export type DispatchInput = {
   type: NotificationType;
@@ -73,6 +77,42 @@ export async function dispatch(input: DispatchInput): Promise<void> {
   const pushUsers = candidates.filter((id) => prefs.get(id)?.push ?? true);
   if (pushUsers.length === 0) return;
 
+  const mobileDevices = await prisma.mobileDeviceToken.findMany({
+    where: {
+      userId: { in: pushUsers },
+      revokedAt: null,
+    },
+    select: {
+      id: true,
+      token: true,
+      environment: true,
+      bundleId: true,
+      userId: true,
+    },
+  });
+
+  if (mobileDevices.length > 0) {
+    const mobileResults = await sendMobilePushNotifications(
+      mobileDevices.map(normalizeMobileDevice),
+      {
+        type,
+        title,
+        body,
+        url: url ?? null,
+        data: data ?? null,
+      }
+    );
+    const revokedIds = mobileResults
+      .filter((result) => shouldRevokeMobileToken(result.status, result.reason))
+      .map((result) => result.deviceId);
+    if (revokedIds.length > 0) {
+      await prisma.mobileDeviceToken.updateMany({
+        where: { id: { in: revokedIds } },
+        data: { revokedAt: new Date() },
+      });
+    }
+  }
+
   const subs = await prisma.pushAlertSubscription.findMany({
     where: { userId: { in: pushUsers }, failedAt: null },
     select: { id: true, subscriberId: true, userId: true },
@@ -97,4 +137,32 @@ export async function dispatch(input: DispatchInput): Promise<void> {
       status: err instanceof PushAlertError ? err.statusCode : undefined,
     });
   }
+}
+
+function normalizeMobileDevice(device: {
+  id: string;
+  token: string;
+  environment: string | null;
+  bundleId: string | null;
+  userId: string;
+}): MobilePushDevice {
+  return {
+    id: device.id,
+    token: device.token,
+    environment: device.environment,
+    bundleId: device.bundleId,
+    userId: device.userId,
+  };
+}
+
+function shouldRevokeMobileToken(status?: number, reason?: string): boolean {
+  if (!status) return false;
+  if (status === 410 || status === 400) {
+    return (
+      reason === 'BadDeviceToken' ||
+      reason === 'Unregistered' ||
+      reason === 'DeviceTokenNotForTopic'
+    );
+  }
+  return false;
 }
