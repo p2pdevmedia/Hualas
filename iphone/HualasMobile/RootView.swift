@@ -21,8 +21,12 @@ struct RootView: View {
 }
 
 struct MemberShellView: View {
+  @StateObject private var cartStore = MemberCartStore()
+
   var body: some View {
     TabView {
+      MemberDashboardView()
+        .tabItem { Label("Inicio", systemImage: "house.fill") }
       ActivitiesView()
         .tabItem { Label("Mis actividades", systemImage: "calendar") }
       ChildrenView()
@@ -34,6 +38,7 @@ struct MemberShellView: View {
       ProfileView()
         .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
     }
+    .environmentObject(cartStore)
   }
 }
 

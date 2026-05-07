@@ -258,6 +258,17 @@ Agents should check this before searching the codebase.
 - `DELETE /api/activity-groups/[groupId]/members` → leave activity group
   - File: `src/app/api/activity-groups/[groupId]/members/route.ts`
 
+### Mobile activities
+
+- `GET /api/mobile/activities/available` → catalog of open activities for the member home
+  - File: `src/app/api/mobile/activities/available/route.ts`
+
+- `POST /api/mobile/activities/cart/quote` → quote the mobile activity cart
+  - File: `src/app/api/mobile/activities/cart/quote/route.ts`
+
+- `POST /api/mobile/activities/cart/checkout` → Mercado Pago or manual checkout for the mobile cart
+  - File: `src/app/api/mobile/activities/cart/checkout/route.ts`
+
 ### Forms
 
 - `GET /api/forms` → list forms

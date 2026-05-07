@@ -251,6 +251,127 @@ struct MobileActivitiesResponse: Codable {
   let activities: [Activity]
 }
 
+struct MobileActivityCatalogResponse: Codable {
+  struct Group: Codable, Identifiable {
+    let id: String
+    let name: String
+    let description: String?
+    let capacity: Int?
+    let minAge: Int?
+    let maxAge: Int?
+    let memberCount: Int
+    let remainingCapacity: Int?
+  }
+
+  struct Day: Codable, Identifiable {
+    let id: String
+    let date: String?
+    let schedule: String
+    let geoLocation: String
+    let activityGroupId: String?
+    let groupName: String?
+    let cancelled: Bool
+  }
+
+  struct Activity: Codable, Identifiable {
+    let id: String
+    let name: String
+    let date: String?
+    let endDate: String?
+    let activityType: String
+    let frequency: String
+    let image: String?
+    let description: String?
+    let price: Int
+    let participantCount: Int
+    let groupCount: Int
+    let hasAvailability: Bool
+    let availabilityStatus: String
+    let availabilityLabel: String
+    let groups: [Group]
+    let days: [Day]
+  }
+
+  let role: MobileRole
+  let activities: [Activity]
+}
+
+struct MobileActivityCartItem: Codable, Identifiable, Hashable {
+  let activityId: String
+  let target: String?
+  let targetLabel: String?
+  let groupId: String?
+  let activityDayId: String?
+  let activityDayLabel: String?
+
+  var id: String {
+    [activityId, target ?? "self"].joined(separator: ":")
+  }
+}
+
+struct MobileActivityCartQuoteResponse: Codable {
+  struct ActivityLine: Codable, Identifiable {
+    let id: String
+    let name: String
+    let amount: Int
+    let targetLabel: String
+    let activityDayLabel: String?
+  }
+
+  struct DiscountLine: Codable, Identifiable {
+    let amount: Int
+    let label: String
+    var id: String { label }
+  }
+
+  struct SocialFeeParticipant: Codable, Identifiable, Hashable {
+    let userId: String
+    let childId: String?
+
+    var id: String {
+      [userId, childId ?? "self"].joined(separator: ":")
+    }
+  }
+
+  struct SocialFeeLine: Codable, Identifiable {
+    let participant: SocialFeeParticipant
+    let amount: Int
+    let label: String
+    var id: String { participant.id }
+  }
+
+  struct MercadoPagoFeeLine: Codable, Identifiable {
+    let amount: Int
+    let label: String
+    var id: String { label }
+  }
+
+  let activityLines: [ActivityLine]
+  let discountLines: [DiscountLine]
+  let socialFeeLines: [SocialFeeLine]
+  let mercadoPagoFeeLines: [MercadoPagoFeeLine]
+  let totalActivityAmount: Int
+  let totalDiscountAmount: Int
+  let totalSocialFeeAmount: Int
+  let totalMercadoPagoFeeAmount: Int
+  let totalAmount: Int
+  let totalAmountWithMercadoPagoFee: Int
+  let socialFeeAmount: Int
+}
+
+enum MobileActivityPaymentMethod: String, Codable {
+  case mercadoPago = "MERCADO_PAGO"
+  case manualTransfer = "MANUAL_TRANSFER"
+}
+
+struct MobileActivityCheckoutResponse: Codable {
+  let success: Bool?
+  let paymentId: String?
+  let orderId: String?
+  let redirectUrl: String?
+  let error: String?
+}
+
 struct MobileActivitiesCalendarResponse: Codable {
   struct Session: Codable, Identifiable {
     let id: String

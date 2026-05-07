@@ -59,6 +59,64 @@ final class APIClient {
     try await send(path: "/api/mobile/home", token: token)
   }
 
+  func availableActivities(token: String) async throws -> MobileActivityCatalogResponse {
+    try await send(path: "/api/mobile/activities/available", token: token)
+  }
+
+  func cartQuote(
+    token: String,
+    items: [MobileActivityCartItem]
+  ) async throws -> MobileActivityCartQuoteResponse {
+    try await send(
+      path: "/api/mobile/activities/cart/quote",
+      method: "POST",
+      token: token,
+      body: MobileActivityCartItemsRequest(items: items)
+    )
+  }
+
+  func cartCheckout(
+    token: String,
+    items: [MobileActivityCartItem],
+    paymentMethod: MobileActivityPaymentMethod,
+    proofData: Data? = nil,
+    proofFileName: String = "comprobante.jpg"
+  ) async throws -> MobileActivityCheckoutResponse {
+    if paymentMethod == .manualTransfer {
+      guard let proofData else {
+        throw APIError.invalidResponse
+      }
+
+      return try await sendMultipart(
+        path: "/api/mobile/activities/cart/checkout",
+        token: token,
+        fields: [
+          "paymentMethod": paymentMethod.rawValue,
+          "items": String(
+            data: try JSONEncoder().encode(items),
+            encoding: .utf8
+          ) ?? "[]",
+        ],
+        file: MultipartFile(
+          fieldName: "proof",
+          fileName: proofFileName,
+          mimeType: mimeType(for: proofFileName),
+          data: proofData
+        )
+      )
+    }
+
+    return try await send(
+      path: "/api/mobile/activities/cart/checkout",
+      method: "POST",
+      token: token,
+      body: MobileActivityCartCheckoutRequest(
+        items: items,
+        paymentMethod: paymentMethod
+      )
+    )
+  }
+
   func children(token: String) async throws -> MobileChildrenResponse {
     try await send(path: "/api/mobile/children", token: token)
   }
@@ -213,6 +271,80 @@ final class APIClient {
     }
     return try decoder.decode(T.self, from: data)
   }
+
+  private func sendMultipart<T: Decodable>(
+    path: String,
+    token: String,
+    fields: [String: String],
+    file: MultipartFile
+  ) async throws -> T {
+    let boundary = "Boundary-\(UUID().uuidString)"
+    let url = URL(string: path, relativeTo: baseURL)?.absoluteURL ?? baseURL
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue(
+      "multipart/form-data; boundary=\(boundary)",
+      forHTTPHeaderField: "Content-Type"
+    )
+    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    request.httpBody = makeMultipartBody(
+      boundary: boundary,
+      fields: fields,
+      file: file
+    )
+
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard let http = response as? HTTPURLResponse else {
+      throw APIError.invalidResponse
+    }
+    guard 200..<300 ~= http.statusCode else {
+      let message = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
+      throw APIError.server(statusCode: http.statusCode, message: message)
+    }
+    return try decoder.decode(T.self, from: data)
+  }
+
+  private func makeMultipartBody(
+    boundary: String,
+    fields: [String: String],
+    file: MultipartFile
+  ) -> Data {
+    var data = Data()
+
+    for (name, value) in fields {
+      data.appendString("--\(boundary)\r\n")
+      data.appendString("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n")
+      data.appendString("\(value)\r\n")
+    }
+
+    data.appendString("--\(boundary)\r\n")
+    data.appendString(
+      "Content-Disposition: form-data; name=\"\(file.fieldName)\"; filename=\"\(file.fileName)\"\r\n"
+    )
+    data.appendString("Content-Type: \(file.mimeType)\r\n\r\n")
+    data.append(file.data)
+    data.appendString("\r\n")
+    data.appendString("--\(boundary)--\r\n")
+
+    return data
+  }
+
+  private func mimeType(for fileName: String) -> String {
+    let extensionLower = URL(fileURLWithPath: fileName).pathExtension.lowercased()
+    switch extensionLower {
+    case "jpg", "jpeg":
+      return "image/jpeg"
+    case "png":
+      return "image/png"
+    case "heic":
+      return "image/heic"
+    case "pdf":
+      return "application/pdf"
+    default:
+      return "application/octet-stream"
+    }
+  }
 }
 
 enum APIError: Error, LocalizedError {
@@ -250,6 +382,30 @@ struct MobileDeviceRegistrationResponse: Codable {
 
 struct MobileSwitchRoleRequest: Codable {
   let role: MobileRole
+}
+
+struct MobileActivityCartItemsRequest: Codable {
+  let items: [MobileActivityCartItem]
+}
+
+struct MobileActivityCartCheckoutRequest: Codable {
+  let items: [MobileActivityCartItem]
+  let paymentMethod: MobileActivityPaymentMethod
+}
+
+private struct MultipartFile {
+  let fieldName: String
+  let fileName: String
+  let mimeType: String
+  let data: Data
+}
+
+private extension Data {
+  mutating func appendString(_ string: String) {
+    if let data = string.data(using: .utf8) {
+      append(data)
+    }
+  }
 }
 
 struct MobileSwitchRoleResponse: Codable {
