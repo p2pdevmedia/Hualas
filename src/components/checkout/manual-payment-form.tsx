@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Copy, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  MANUAL_PAYMENT_INSTRUCTIONS,
+  MANUAL_PAYMENT_BANK_DETAILS,
   validateManualPaymentFile,
 } from '@/lib/manual-payment-ui';
 
@@ -33,6 +35,18 @@ function formatAmount(amount: number) {
   }).format(amount);
 }
 
+const MANUAL_PAYMENT_BANK_COPY_TEXT = [
+  'Transferencia bancaria manual',
+  `Banco: ${MANUAL_PAYMENT_BANK_DETAILS.bankName}`,
+  `CBU: ${MANUAL_PAYMENT_BANK_DETAILS.cbu}`,
+  `Alias: ${MANUAL_PAYMENT_BANK_DETAILS.alias}`,
+  `Cuenta: ${MANUAL_PAYMENT_BANK_DETAILS.account}`,
+  `CUIT/CUIL: ${MANUAL_PAYMENT_BANK_DETAILS.cuit}`,
+  `Concepto: ${MANUAL_PAYMENT_BANK_DETAILS.concept}`,
+].join('\n');
+
+type CopyTarget = 'all' | 'cbu' | 'alias' | null;
+
 export default function ManualPaymentForm({
   endpoint,
   items,
@@ -46,12 +60,56 @@ export default function ManualPaymentForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [copyTarget, setCopyTarget] = useState<CopyTarget>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
 
   const preview = useMemo(
     () =>
       file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB` : '',
     [file]
   );
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const updateCopyTarget = (nextTarget: CopyTarget) => {
+    setCopyTarget(nextTarget);
+    if (copyTimeoutRef.current) {
+      window.clearTimeout(copyTimeoutRef.current);
+    }
+    copyTimeoutRef.current = window.setTimeout(() => {
+      setCopyTarget(null);
+    }, 1800);
+  };
+
+  const copyToClipboard = async (text: string, target: CopyTarget) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopyError(null);
+      updateCopyTarget(target);
+    } catch {
+      setCopyError('No se pudo copiar el dato bancario.');
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -128,10 +186,89 @@ export default function ManualPaymentForm({
         </p>
       </div>
 
-      <section className="rounded-xl border bg-muted/20 p-4 text-sm">
-        <pre className="whitespace-pre-wrap font-sans text-foreground">
-          {MANUAL_PAYMENT_INSTRUCTIONS}
-        </pre>
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_280px]">
+        <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold">Datos bancarios</h4>
+              <p className="text-xs text-muted-foreground">
+                Copiá el CBU o el alias por separado, o llevate todos los datos
+                juntos para transferir desde el celular.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              onClick={() =>
+                copyToClipboard(MANUAL_PAYMENT_BANK_COPY_TEXT, 'all')
+              }
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {copyTarget === 'all'
+                ? 'Datos copiados'
+                : 'Copiar datos bancarios'}
+            </Button>
+          </div>
+
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <BankDetail
+              label="Banco"
+              value={MANUAL_PAYMENT_BANK_DETAILS.bankName}
+            />
+            <BankDetail
+              label="Cuenta"
+              value={MANUAL_PAYMENT_BANK_DETAILS.account}
+            />
+            <CopyableBankDetail
+              label="CBU"
+              value={MANUAL_PAYMENT_BANK_DETAILS.cbu}
+              onCopy={() =>
+                copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.cbu, 'cbu')
+              }
+              copied={copyTarget === 'cbu'}
+            />
+            <CopyableBankDetail
+              label="Alias"
+              value={MANUAL_PAYMENT_BANK_DETAILS.alias}
+              onCopy={() =>
+                copyToClipboard(MANUAL_PAYMENT_BANK_DETAILS.alias, 'alias')
+              }
+              copied={copyTarget === 'alias'}
+            />
+            <BankDetail
+              label="CUIT/CUIL"
+              value={MANUAL_PAYMENT_BANK_DETAILS.cuit}
+            />
+            <BankDetail
+              label="Concepto sugerido"
+              value={MANUAL_PAYMENT_BANK_DETAILS.concept}
+              className="sm:col-span-2"
+            />
+          </dl>
+
+          {copyError ? (
+            <p className="text-xs text-destructive">{copyError}</p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-4 text-center">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <QrCode className="h-4 w-4" />
+            QR del CBU
+          </div>
+          <div className="rounded-2xl border bg-white p-3 shadow-sm">
+            <QRCodeSVG
+              value={MANUAL_PAYMENT_BANK_DETAILS.cbu}
+              size={180}
+              level="M"
+              includeMargin
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Escanealo para cargar el CBU directamente.
+          </p>
+        </div>
       </section>
 
       {activitySummary ? (
@@ -185,5 +322,62 @@ export default function ManualPaymentForm({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {success ? <p className="text-sm text-success">{success}</p> : null}
     </form>
+  );
+}
+
+function BankDetail({
+  label,
+  value,
+  className = '',
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={`rounded-lg border bg-background p-3 ${className}`.trim()}>
+      <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-1 break-all text-sm font-medium text-foreground">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function CopyableBankDetail({
+  label,
+  value,
+  onCopy,
+  copied,
+}: {
+  label: string;
+  value: string;
+  onCopy: () => void;
+  copied: boolean;
+}) {
+  return (
+    <div className="rounded-lg border bg-background p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+            {label}
+          </dt>
+          <dd className="mt-1 break-all font-mono text-sm text-foreground">
+            {value}
+          </dd>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="shrink-0 px-3 text-xs"
+          onClick={onCopy}
+        >
+          <Copy className="mr-2 h-3.5 w-3.5" />
+          {copied ? 'Copiado' : 'Copiar'}
+        </Button>
+      </div>
+    </div>
   );
 }

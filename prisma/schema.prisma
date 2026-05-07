@@ -60,6 +60,8 @@ model User {
   notifications               Notification[]
   createdNews                 News[]                       @relation("NewsCreatedBy")
   pushAlertSubscriptions      PushAlertSubscription[]
+  mobileSessions              MobileSession[]
+  mobileDeviceTokens          MobileDeviceToken[]
   notificationPreferences     NotificationPreference[]
   professorProfile            ProfessorProfile?
   professorPaymentsCreated    ProfessorPayment[]           @relation("ProfessorPaymentCreatedBy")
@@ -590,6 +592,46 @@ model PushAlertSubscription {
   failedAt     DateTime?
 
   @@index([userId])
+}
+
+model MobileSession {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String         @unique
+  appRole    Role
+  platform   String?
+  deviceName String?
+  deviceModel String?
+  appVersion String?
+  expiresAt  DateTime
+  lastUsedAt DateTime       @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime       @default(now())
+
+  @@index([userId, appRole])
+  @@index([expiresAt, revokedAt])
+}
+
+model MobileDeviceToken {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique
+  platform     String   @default("iOS")
+  bundleId     String?
+  environment  String?
+  deviceName   String?
+  deviceModel  String?
+  appVersion   String?
+  sessionId    String?
+  lastSeenAt   DateTime @default(now())
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([platform, environment])
 }
 
 model NotificationPreference {

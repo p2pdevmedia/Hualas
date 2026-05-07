@@ -5,14 +5,23 @@ export const MANUAL_PAYMENT_ACCEPTED_MIME_TYPES = [
   'application/pdf',
 ] as const;
 
+export const MANUAL_PAYMENT_BANK_DETAILS = {
+  bankName: 'Banco Provincia Del Neuquén (BPN)',
+  cbu: '0970005510009746770016',
+  alias: 'clubhualas',
+  account: 'Cuenta Corriente 5-974677/1',
+  cuit: '30717495353',
+  concept: 'Club Hualas - nombre de la actividad',
+} as const;
+
 export const MANUAL_PAYMENT_INSTRUCTIONS = [
   'Transferencia bancaria manual',
-  'Banco: Banco Provincia Del Neuquén (BPN)',
-  'CBU: 0970005510009746770016',
-  'Alias: clubhualas',
-  'Cuenta: Cuenta Corriente 5-974677/1',
-  'CUIT/CUIL: 30717495353',
-  'Concepto: Club Hualas - nombre de la actividad',
+  `Banco: ${MANUAL_PAYMENT_BANK_DETAILS.bankName}`,
+  `CBU: ${MANUAL_PAYMENT_BANK_DETAILS.cbu}`,
+  `Alias: ${MANUAL_PAYMENT_BANK_DETAILS.alias}`,
+  `Cuenta: ${MANUAL_PAYMENT_BANK_DETAILS.account}`,
+  `CUIT/CUIL: ${MANUAL_PAYMENT_BANK_DETAILS.cuit}`,
+  `Concepto: ${MANUAL_PAYMENT_BANK_DETAILS.concept}`,
 ].join('\n');
 
 export type ManualPaymentReviewAction = 'uploaded' | 'approved' | 'rejected';
