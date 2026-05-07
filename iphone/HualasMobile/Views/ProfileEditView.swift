@@ -14,6 +14,16 @@ struct ProfileEditView: View {
   @State private var phone = ""
   @State private var nationality = ""
   @State private var maritalStatus = ""
+  @State private var allergies = ""
+  @State private var regularMedication = ""
+  @State private var relevantDiseases = ""
+  @State private var previousInjuries = ""
+  @State private var physicalRestrictions = ""
+  @State private var bloodGroup = ""
+  @State private var primaryDoctor = ""
+  @State private var doctorPhone = ""
+  @State private var doctorCertificate = ""
+  @State private var socialFeeActive = true
   @State private var isLoading = false
   @State private var isSaving = false
   @State private var didLoad = false
@@ -68,6 +78,50 @@ struct ProfileEditView: View {
           TextField("Nacionalidad", text: $nationality)
           TextField("Estado civil", text: $maritalStatus)
         }
+
+        Section("Ficha médica") {
+          TextField("Alergias", text: $allergies, axis: .vertical)
+            .lineLimit(2...4)
+          TextField("Medicación habitual", text: $regularMedication, axis: .vertical)
+            .lineLimit(2...4)
+          TextField("Enfermedades relevantes", text: $relevantDiseases, axis: .vertical)
+            .lineLimit(2...4)
+          TextField("Lesiones previas", text: $previousInjuries, axis: .vertical)
+            .lineLimit(2...4)
+          TextField("Restricciones físicas", text: $physicalRestrictions, axis: .vertical)
+            .lineLimit(2...4)
+          TextField("Grupo sanguíneo", text: $bloodGroup)
+          TextField("Médico de cabecera", text: $primaryDoctor)
+          TextField("Teléfono médico", text: $doctorPhone)
+
+          if doctorCertificate.isEmpty {
+            Text("Certificado médico: sin adjunto")
+              .foregroundStyle(.secondary)
+          } else {
+            Text("Certificado médico: cargado")
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        Section("Cuota social") {
+          if socialFeeActive {
+            Button(role: .destructive) {
+              socialFeeActive = false
+            } label: {
+              Text("Dar de baja mi cuota social")
+            }
+
+            Text("Al guardar, se desactiva la cuota social de la cuenta.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          } else {
+            Text("La cuota social está inactiva.")
+              .foregroundStyle(.secondary)
+            Text("La reactivación se gestiona desde administración.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+        }
       }
 
       if let feedbackMessage {
@@ -93,7 +147,7 @@ struct ProfileEditView: View {
         .disabled(isLoading || isSaving)
       }
     }
-    .task {
+    .task(id: sessionStore.token) {
       await loadProfile()
     }
   }
@@ -135,6 +189,16 @@ struct ProfileEditView: View {
     phone = user.phone ?? ""
     nationality = user.nationality ?? ""
     maritalStatus = user.maritalStatus ?? ""
+    allergies = user.allergies ?? ""
+    regularMedication = user.regularMedication ?? ""
+    relevantDiseases = user.relevantDiseases ?? ""
+    previousInjuries = user.previousInjuries ?? ""
+    physicalRestrictions = user.physicalRestrictions ?? ""
+    bloodGroup = user.bloodGroup ?? ""
+    primaryDoctor = user.primaryDoctor ?? ""
+    doctorPhone = user.doctorPhone ?? ""
+    doctorCertificate = user.doctorCertificate ?? ""
+    socialFeeActive = user.socialFeeActive
   }
 
   private func saveProfile() async {
@@ -168,6 +232,16 @@ struct ProfileEditView: View {
       phone: trimmedValue(phone),
       nationality: trimmedValue(nationality),
       maritalStatus: trimmedValue(maritalStatus),
+      allergies: trimmedValue(allergies),
+      regularMedication: trimmedValue(regularMedication),
+      relevantDiseases: trimmedValue(relevantDiseases),
+      previousInjuries: trimmedValue(previousInjuries),
+      physicalRestrictions: trimmedValue(physicalRestrictions),
+      bloodGroup: trimmedValue(bloodGroup),
+      primaryDoctor: trimmedValue(primaryDoctor),
+      doctorPhone: trimmedValue(doctorPhone),
+      doctorCertificate: trimmedValue(doctorCertificate),
+      socialFeeActive: socialFeeActive ? nil : false,
       email: trimmedValue(email),
       password: nil
     )

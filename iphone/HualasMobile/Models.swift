@@ -74,6 +74,16 @@ struct MobileProfileResponse: Codable {
     let phone: String?
     let nationality: String?
     let maritalStatus: String?
+    let allergies: String?
+    let regularMedication: String?
+    let relevantDiseases: String?
+    let previousInjuries: String?
+    let physicalRestrictions: String?
+    let bloodGroup: String?
+    let primaryDoctor: String?
+    let doctorPhone: String?
+    let doctorCertificate: String?
+    let socialFeeActive: Bool
   }
 
   let user: User
@@ -89,6 +99,16 @@ struct MobileProfileUpdateRequest: Codable {
   let phone: String?
   let nationality: String?
   let maritalStatus: String?
+  let allergies: String?
+  let regularMedication: String?
+  let relevantDiseases: String?
+  let previousInjuries: String?
+  let physicalRestrictions: String?
+  let bloodGroup: String?
+  let primaryDoctor: String?
+  let doctorPhone: String?
+  let doctorCertificate: String?
+  let socialFeeActive: Bool?
   let email: String?
   let password: String?
 }

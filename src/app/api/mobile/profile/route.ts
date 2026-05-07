@@ -17,6 +17,16 @@ function serializeProfileUser(user: {
   phone: string | null;
   nationality: string | null;
   maritalStatus: string | null;
+  allergies: string | null;
+  regularMedication: string | null;
+  relevantDiseases: string | null;
+  previousInjuries: string | null;
+  physicalRestrictions: string | null;
+  bloodGroup: string | null;
+  primaryDoctor: string | null;
+  doctorPhone: string | null;
+  doctorCertificate: string | null;
+  socialFeeActive: boolean;
 }) {
   return {
     id: user.id,
@@ -30,6 +40,16 @@ function serializeProfileUser(user: {
     phone: user.phone,
     nationality: user.nationality,
     maritalStatus: user.maritalStatus,
+    allergies: user.allergies,
+    regularMedication: user.regularMedication,
+    relevantDiseases: user.relevantDiseases,
+    previousInjuries: user.previousInjuries,
+    physicalRestrictions: user.physicalRestrictions,
+    bloodGroup: user.bloodGroup,
+    primaryDoctor: user.primaryDoctor,
+    doctorPhone: user.doctorPhone,
+    doctorCertificate: user.doctorCertificate,
+    socialFeeActive: user.socialFeeActive,
   };
 }
 
@@ -53,6 +73,16 @@ export async function GET(req: Request) {
       phone: true,
       nationality: true,
       maritalStatus: true,
+      allergies: true,
+      regularMedication: true,
+      relevantDiseases: true,
+      previousInjuries: true,
+      physicalRestrictions: true,
+      bloodGroup: true,
+      primaryDoctor: true,
+      doctorPhone: true,
+      doctorCertificate: true,
+      socialFeeActive: true,
     },
   });
 
@@ -129,6 +159,30 @@ export async function PATCH(req: Request) {
   if (data.maritalStatus !== undefined) {
     updateData.maritalStatus = data.maritalStatus;
   }
+  if (data.allergies !== undefined) updateData.allergies = data.allergies;
+  if (data.regularMedication !== undefined) {
+    updateData.regularMedication = data.regularMedication;
+  }
+  if (data.relevantDiseases !== undefined) {
+    updateData.relevantDiseases = data.relevantDiseases;
+  }
+  if (data.previousInjuries !== undefined) {
+    updateData.previousInjuries = data.previousInjuries;
+  }
+  if (data.physicalRestrictions !== undefined) {
+    updateData.physicalRestrictions = data.physicalRestrictions;
+  }
+  if (data.bloodGroup !== undefined) updateData.bloodGroup = data.bloodGroup;
+  if (data.primaryDoctor !== undefined) {
+    updateData.primaryDoctor = data.primaryDoctor;
+  }
+  if (data.doctorPhone !== undefined) updateData.doctorPhone = data.doctorPhone;
+  if (data.doctorCertificate !== undefined) {
+    updateData.doctorCertificate = data.doctorCertificate;
+  }
+  if (data.socialFeeActive !== undefined) {
+    updateData.socialFeeActive = data.socialFeeActive;
+  }
   if (data.email !== undefined) updateData.email = data.email;
   if (data.password !== undefined) {
     updateData.password = await hash(data.password, 12);
@@ -149,6 +203,16 @@ export async function PATCH(req: Request) {
       phone: true,
       nationality: true,
       maritalStatus: true,
+      allergies: true,
+      regularMedication: true,
+      relevantDiseases: true,
+      previousInjuries: true,
+      physicalRestrictions: true,
+      bloodGroup: true,
+      primaryDoctor: true,
+      doctorPhone: true,
+      doctorCertificate: true,
+      socialFeeActive: true,
     },
   });
 
