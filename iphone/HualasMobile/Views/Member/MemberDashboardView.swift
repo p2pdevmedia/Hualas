@@ -46,7 +46,8 @@ struct MemberDashboardView: View {
                 NavigationLink {
                   ActivityPurchaseDetailView(
                     activity: activity,
-                    children: home?.children ?? []
+                    children: home?.children ?? [],
+                    homeBirthDate: home?.profile.birthDate
                   )
                 } label: {
                   activityCard(activity)
@@ -293,12 +294,21 @@ struct ActivityPurchaseDetailView: View {
 
   let activity: MobileActivityCatalogResponse.Activity
   let children: [MobileHomeResponse.Child]
+  let homeBirthDate: String?
 
   private static let calendar: Calendar = {
     var calendar = Calendar(identifier: .gregorian)
     calendar.locale = Locale(identifier: "es_AR")
     calendar.firstWeekday = 2
     return calendar
+  }()
+
+  private static let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.calendar = calendar
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
   }()
 
   @State private var selectedTarget: ActivityTargetChoice
@@ -309,21 +319,25 @@ struct ActivityPurchaseDetailView: View {
 
   init(
     activity: MobileActivityCatalogResponse.Activity,
-    children: [MobileHomeResponse.Child]
+    children: [MobileHomeResponse.Child],
+    homeBirthDate: String?
   ) {
     self.activity = activity
     self.children = children
+    self.homeBirthDate = homeBirthDate
     let defaultTarget = ActivityTargetChoice(target: "self", label: "Para mí")
-    let initialGroupId =
-      activity.days.first(where: { $0.activityGroupId != nil })?.activityGroupId
-      ?? activity.groups.first?.id
+    let initialGroupId = Self.bestMatchingGroupId(
+      for: defaultTarget,
+      activity: activity,
+      children: children,
+      homeBirthDate: homeBirthDate
+    )
     _selectedTarget = State(initialValue: defaultTarget)
     _selectedGroupId = State(initialValue: initialGroupId)
     _selectedDayId = State(
-      initialValue: Self.firstSessionId(
-        in: activity.days,
-        groupId: initialGroupId
-      ) ?? activity.days.first?.id
+      initialValue: activity.activityType == "ANNUAL"
+        ? Self.firstCurrentWeekSessionId(in: activity.days, groupId: initialGroupId)
+        : Self.firstSessionId(in: activity.days, groupId: initialGroupId)
     )
   }
 
@@ -337,7 +351,7 @@ struct ActivityPurchaseDetailView: View {
           if !activity.groups.isEmpty {
             groupSection
           }
-          annualScheduleSection
+          currentWeekSection
         } else {
           if !activity.days.isEmpty {
             daySection
@@ -367,6 +381,9 @@ struct ActivityPurchaseDetailView: View {
     }
     .navigationTitle(activity.name)
     .navigationBarTitleDisplayMode(.inline)
+    .onChange(of: selectedTarget) { _ in
+      syncGroupWithSelectedTarget()
+    }
     .onChange(of: selectedGroupId) { _ in
       syncDayWithSelectedGroup()
     }
@@ -463,26 +480,31 @@ struct ActivityPurchaseDetailView: View {
     }
   }
 
-  private var annualScheduleSection: some View {
+  private var currentWeekSection: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Calendario semanal")
+      Text("Sesiones de esta semana")
         .font(.headline)
-      Text("Tocá una sesión para agregarla al carrito.")
+      Text("Mostramos solo las sesiones de la semana actual.")
         .font(.footnote)
         .foregroundStyle(.secondary)
 
-      if annualWeekdayBuckets.allSatisfy({ $0.sessions.isEmpty }) {
+      if currentWeekDays.isEmpty {
         infoCard {
-          Text("No hay sesiones cargadas para este grupo.")
+          Text("No hay sesiones esta semana para este grupo.")
             .font(.headline)
-          Text("Probá cambiando de grupo.")
+          Text("Probá cambiando de grupo o revisá la próxima semana.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
       } else {
         VStack(spacing: 10) {
-          ForEach(annualWeekdayBuckets) { bucket in
-            annualWeekdayCard(bucket)
+          ForEach(currentWeekDays) { day in
+            Button {
+              selectedDayId = day.id
+            } label: {
+              dayCard(day, selected: selectedDayId == day.id)
+            }
+            .buttonStyle(.plain)
           }
         }
       }
@@ -499,26 +521,26 @@ struct ActivityPurchaseDetailView: View {
     return [ActivityTargetChoice(target: "self", label: "Para mí")] + childrenChoices
   }
 
-  private var annualFilteredDays: [MobileActivityCatalogResponse.Day] {
+  private var currentWeekDays: [MobileActivityCatalogResponse.Day] {
     guard activity.activityType == "ANNUAL" else {
       return []
     }
 
+    let daysThisWeek = activity.days.filter { day in
+      guard
+        let dateString = day.date,
+        let date = Self.dateFormatter.date(from: dateString)
+      else {
+        return false
+      }
+      return Self.calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+    }
+
     guard let selectedGroupId else {
-      return activity.days
+      return daysThisWeek
     }
 
-    return activity.days.filter { $0.activityGroupId == selectedGroupId }
-  }
-
-  private var annualWeekdayBuckets: [AnnualWeekdayBucket] {
-    let groupedDays = Dictionary(grouping: annualFilteredDays, by: \.weekday)
-    return Self.weekdayOrder.map { weekday in
-      AnnualWeekdayBucket(
-        weekday: weekday,
-        sessions: groupedDays[weekday] ?? []
-      )
-    }
+    return daysThisWeek.filter { $0.activityGroupId == selectedGroupId }
   }
 
   private func addToCart() {
@@ -569,16 +591,26 @@ struct ActivityPurchaseDetailView: View {
   }
 
   private func syncDayWithSelectedGroup() {
-    guard let selectedGroupId else {
-      return
-    }
-
     if let selectedDayId,
        activity.days.contains(where: { $0.id == selectedDayId && $0.activityGroupId == selectedGroupId }) {
       return
     }
 
-    selectedDayId = Self.firstSessionId(in: activity.days, groupId: selectedGroupId)
+    if activity.activityType == "ANNUAL" {
+      selectedDayId = currentWeekDays.first?.id
+    } else {
+      selectedDayId = Self.firstSessionId(in: activity.days, groupId: selectedGroupId)
+    }
+  }
+
+  private func syncGroupWithSelectedTarget() {
+    selectedGroupId = Self.bestMatchingGroupId(
+      for: selectedTarget,
+      activity: activity,
+      children: children,
+      homeBirthDate: homeBirthDate
+    )
+    syncDayWithSelectedGroup()
   }
 
   private func targetCard(_ choice: ActivityTargetChoice, selected: Bool) -> some View {
@@ -593,79 +625,6 @@ struct ActivityPurchaseDetailView: View {
         }
       }
       Spacer()
-      Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-        .foregroundStyle(selected ? Color.accentColor : Color.secondary)
-    }
-    .padding()
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(
-      RoundedRectangle(cornerRadius: 16, style: .continuous)
-        .fill(selected ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.06))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 16, style: .continuous)
-        .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 1)
-    )
-  }
-
-  private func annualWeekdayCard(
-    _ bucket: AnnualWeekdayBucket
-  ) -> some View {
-    infoCard {
-      VStack(alignment: .leading, spacing: 10) {
-        HStack {
-          Text(Self.weekdayLabel(for: bucket.weekday))
-            .font(.headline)
-          Spacer()
-          Text("\(bucket.sessions.count) sesión\(bucket.sessions.count == 1 ? "" : "es")")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.secondary.opacity(0.08), in: Capsule())
-        }
-
-        if bucket.sessions.isEmpty {
-          Text("Sin sesiones")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        } else {
-          VStack(spacing: 8) {
-            ForEach(bucket.sessions) { day in
-              Button {
-                selectedDayId = day.id
-              } label: {
-                annualSessionCard(day, selected: selectedDayId == day.id)
-              }
-              .buttonStyle(.plain)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private func annualSessionCard(
-    _ day: MobileActivityCatalogResponse.Day,
-    selected: Bool
-  ) -> some View {
-    HStack(alignment: .top, spacing: 12) {
-      VStack(alignment: .leading, spacing: 4) {
-        Text(day.schedule)
-          .font(.headline)
-        if let date = day.date {
-          Text(date)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        Text(day.geoLocation)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .lineLimit(2)
-      }
-
-      Spacer()
-
       Image(systemName: selected ? "checkmark.circle.fill" : "circle")
         .foregroundStyle(selected ? Color.accentColor : Color.secondary)
     }
@@ -774,6 +733,87 @@ struct ActivityPurchaseDetailView: View {
     [day.date, day.schedule].compactMap { $0 }.joined(separator: " · ")
   }
 
+  private static func firstCurrentWeekSessionId(
+    in days: [MobileActivityCatalogResponse.Day],
+    groupId: String?
+  ) -> String? {
+    let daysThisWeek = days.filter { day in
+      guard
+        let dateString = day.date,
+        let date = dateFormatter.date(from: dateString)
+      else {
+        return false
+      }
+      return calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+    }
+
+    if let groupId {
+      return daysThisWeek.first(where: { $0.activityGroupId == groupId })?.id
+    }
+
+    return daysThisWeek.first?.id
+  }
+
+  private static func bestMatchingGroupId(
+    for target: ActivityTargetChoice,
+    activity: MobileActivityCatalogResponse.Activity,
+    children: [MobileHomeResponse.Child],
+    homeBirthDate: String?
+  ) -> String? {
+    let birthDateString: String?
+    if target.target == "self" {
+      birthDateString = homeBirthDate
+    } else {
+      birthDateString = children.first(where: { $0.id == target.target })?.birthDate
+    }
+
+    guard
+      let birthDateString,
+      let birthDate = dateFormatter.date(from: birthDateString)
+    else {
+      return activity.groups.first?.id
+    }
+
+    guard let age = calendar.dateComponents([.year], from: birthDate, to: Date()).year else {
+      return activity.groups.first?.id
+    }
+
+    let daysThisWeek = activity.days.filter { day in
+      guard
+        let dateString = day.date,
+        let date = dateFormatter.date(from: dateString)
+      else {
+        return false
+      }
+      return calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+    }
+
+    let matchingGroups = activity.groups.filter { group in
+      if let minAge = group.minAge, age < minAge { return false }
+      if let maxAge = group.maxAge, age > maxAge { return false }
+      return true
+    }
+
+    return matchingGroups
+      .sorted { lhs, rhs in
+        let lhsWeekCount = daysThisWeek.filter { $0.activityGroupId == lhs.id }.count
+        let rhsWeekCount = daysThisWeek.filter { $0.activityGroupId == rhs.id }.count
+        if lhsWeekCount != rhsWeekCount { return lhsWeekCount > rhsWeekCount }
+
+        let lhsMin = lhs.minAge ?? Int.min
+        let rhsMin = rhs.minAge ?? Int.min
+        if lhsMin != rhsMin { return lhsMin > rhsMin }
+
+        let lhsMax = lhs.maxAge ?? Int.max
+        let rhsMax = rhs.maxAge ?? Int.max
+        if lhsMax != rhsMax { return lhsMax < rhsMax }
+
+        return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+      }
+      .first?
+      .id ?? activity.groups.first?.id
+  }
+
   private static func firstSessionId(
     in days: [MobileActivityCatalogResponse.Day],
     groupId: String?
@@ -785,29 +825,6 @@ struct ActivityPurchaseDetailView: View {
     return days.first(where: { $0.activityGroupId == groupId })?.id
   }
 
-  private static func weekdayLabel(for weekday: Int) -> String {
-    switch weekday {
-    case 1:
-      return "Lunes"
-    case 2:
-      return "Martes"
-    case 3:
-      return "Miércoles"
-    case 4:
-      return "Jueves"
-    case 5:
-      return "Viernes"
-    case 6:
-      return "Sábado"
-    case 7:
-      return "Domingo"
-    default:
-      return "Día"
-    }
-  }
-
-  private static let weekdayOrder = [1, 2, 3, 4, 5, 6, 7]
-
   private func currency(_ amount: Int) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .currency
@@ -818,13 +835,6 @@ struct ActivityPurchaseDetailView: View {
     return formatter.string(from: NSNumber(value: amount))
       ?? "ARS \(amount)"
   }
-}
-
-private struct AnnualWeekdayBucket: Identifiable {
-  let weekday: Int
-  let sessions: [MobileActivityCatalogResponse.Day]
-
-  var id: Int { weekday }
 }
 
 struct MemberCartView: View {

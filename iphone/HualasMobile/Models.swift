@@ -118,6 +118,7 @@ struct MobileHomeResponse: Codable {
     let id: String
     let name: String
     let email: String
+    let birthDate: String?
   }
 
   struct Stats: Codable {

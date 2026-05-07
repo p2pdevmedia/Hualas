@@ -191,6 +191,7 @@ export async function GET(req: Request) {
       id: session.user.id,
       name: formatFullName(session.user),
       email: session.user.email,
+      birthDate: formatMobileDateOnly(session.user.birthDate),
     },
     stats: {
       childrenCount: children.length,

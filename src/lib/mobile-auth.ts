@@ -140,6 +140,7 @@ export async function getMobileSessionFromRequest(req: Request) {
           email: true,
           name: true,
           lastName: true,
+          birthDate: true,
           role: true,
           activeRole: true,
           isActive: true,
