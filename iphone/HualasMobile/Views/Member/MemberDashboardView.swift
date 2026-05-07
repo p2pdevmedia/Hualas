@@ -13,6 +13,11 @@ private func infoCard<Content: View>(
 
 struct MemberDashboardView: View {
   @EnvironmentObject private var sessionStore: SessionStore
+  let cartStore: MemberCartStore
+
+  init(cartStore: MemberCartStore) {
+    self.cartStore = cartStore
+  }
 
   @State private var home: MobileHomeResponse?
   @State private var catalog: MobileActivityCatalogResponse?
@@ -43,6 +48,7 @@ struct MemberDashboardView: View {
               ForEach(availableActivities) { activity in
                 NavigationLink {
                   ActivityPurchaseDetailView(
+                    cartStore: cartStore,
                     activity: activity,
                     children: home?.children ?? [],
                     homeBirthDate: home?.profile.birthDate
@@ -276,7 +282,7 @@ final class MemberCartStore: ObservableObject {
 }
 
 struct ActivityPurchaseDetailView: View {
-  @EnvironmentObject private var cartStore: MemberCartStore
+  let cartStore: MemberCartStore
 
   let activity: MobileActivityCatalogResponse.Activity
   let children: [MobileHomeResponse.Child]
@@ -305,10 +311,12 @@ struct ActivityPurchaseDetailView: View {
   @State private var statusIsError = false
 
   init(
+    cartStore: MemberCartStore,
     activity: MobileActivityCatalogResponse.Activity,
     children: [MobileHomeResponse.Child],
     homeBirthDate: String?
   ) {
+    self.cartStore = cartStore
     self.activity = activity
     self.children = children
     self.homeBirthDate = homeBirthDate
@@ -1322,7 +1330,7 @@ struct MemberCartView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.openURL) private var openURL
   @EnvironmentObject private var sessionStore: SessionStore
-  @EnvironmentObject private var cartStore: MemberCartStore
+  let cartStore: MemberCartStore
 
   @State private var quote: MobileActivityCartQuoteResponse?
   @State private var isLoading = false
@@ -1332,6 +1340,10 @@ struct MemberCartView: View {
   @State private var proofData: Data?
   @State private var feedbackMessage: String?
   @State private var feedbackIsError = false
+
+  init(cartStore: MemberCartStore) {
+    self.cartStore = cartStore
+  }
 
   var body: some View {
     ScrollView {

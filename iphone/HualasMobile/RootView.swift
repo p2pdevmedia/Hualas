@@ -19,8 +19,10 @@ struct RootView: View {
         LoginView()
       }
     }
-    .task(id: sessionStore.token) {
-      await notificationsStore.sync(token: sessionStore.token)
+    .task(id: sessionStore.isAuthenticated ? sessionStore.token : nil) {
+      await notificationsStore.sync(
+        token: sessionStore.isAuthenticated ? sessionStore.token : nil
+      )
     }
   }
 }
@@ -33,7 +35,7 @@ struct MemberShellView: View {
 
   var body: some View {
     TabView {
-      MemberDashboardView()
+      MemberDashboardView(cartStore: cartStore)
         .tabItem { Label("Inicio", systemImage: "house.fill") }
       ActivitiesView()
         .tabItem { Label("Mis actividades", systemImage: "calendar") }
@@ -42,7 +44,6 @@ struct MemberShellView: View {
       MoreTabView()
         .tabItem { Label("Más", systemImage: "ellipsis.circle") }
     }
-    .environmentObject(cartStore)
     .safeAreaInset(edge: .top, spacing: 0) {
       HStack {
         Spacer()
@@ -82,7 +83,7 @@ struct MemberShellView: View {
     }
     .sheet(isPresented: $showingCart) {
       NavigationStack {
-        MemberCartView()
+        MemberCartView(cartStore: cartStore)
       }
     }
   }
