@@ -13,13 +13,11 @@ private func infoCard<Content: View>(
 
 struct MemberDashboardView: View {
   @EnvironmentObject private var sessionStore: SessionStore
-  @EnvironmentObject private var cartStore: MemberCartStore
 
   @State private var home: MobileHomeResponse?
   @State private var catalog: MobileActivityCatalogResponse?
   @State private var isLoading = false
   @State private var errorMessage: String?
-  @State private var showingCart = false
 
   var body: some View {
     NavigationStack {
@@ -66,21 +64,6 @@ struct MemberDashboardView: View {
         .padding()
       }
       .navigationTitle("Inicio")
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            showingCart = true
-          } label: {
-            Label("Carrito", systemImage: "cart")
-          }
-          .disabled(cartStore.itemCount == 0)
-        }
-      }
-      .sheet(isPresented: $showingCart) {
-        NavigationStack {
-          MemberCartView()
-        }
-      }
       .task {
         await load()
       }

@@ -28,33 +28,62 @@ struct RootView: View {
 struct MemberShellView: View {
   @StateObject private var cartStore = MemberCartStore()
   @EnvironmentObject private var notificationsStore: MobileNotificationsStore
+  @State private var showingCart = false
   @State private var showingNotifications = false
 
   var body: some View {
-    TabView {
-      MemberDashboardView()
-        .tabItem { Label("Inicio", systemImage: "house.fill") }
-      ActivitiesView()
-        .tabItem { Label("Mis actividades", systemImage: "calendar") }
-      ChildrenView()
-        .tabItem { Label("Hijos", systemImage: "person.2") }
-      MoreTabView()
-        .tabItem { Label("Más", systemImage: "ellipsis.circle") }
-    }
-    .environmentObject(cartStore)
-    .safeAreaInset(edge: .top) {
+    ZStack {
+      TabView {
+        MemberDashboardView()
+          .tabItem { Label("Inicio", systemImage: "house.fill") }
+        ActivitiesView()
+          .tabItem { Label("Mis actividades", systemImage: "calendar") }
+        ChildrenView()
+          .tabItem { Label("Hijos", systemImage: "person.2") }
+        MoreTabView()
+          .tabItem { Label("Más", systemImage: "ellipsis.circle") }
+      }
+      .environmentObject(cartStore)
+
       HStack {
+        Button {
+          showingCart = true
+        } label: {
+          Label {
+            Text("Carrito")
+          } icon: {
+            Image(systemName: "cart.fill")
+          }
+          .padding(.horizontal, 14)
+          .padding(.vertical, 12)
+          .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+              .fill(Color.accentColor)
+          )
+          .foregroundStyle(.white)
+          .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .disabled(cartStore.itemCount == 0)
+        .opacity(cartStore.itemCount == 0 ? 0.55 : 1)
+
         Spacer()
+
         NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
           showingNotifications = true
         }
       }
       .padding(.horizontal, 16)
-      .padding(.top, 8)
-      .padding(.bottom, 4)
+      .padding(.bottom, 76)
+      .frame(maxHeight: .infinity, alignment: .bottom)
     }
     .sheet(isPresented: $showingNotifications) {
       NotificationsView()
+    }
+    .sheet(isPresented: $showingCart) {
+      NavigationStack {
+        MemberCartView()
+      }
     }
   }
 }
@@ -111,17 +140,18 @@ struct ProfessorShellView: View {
   @State private var showingNotifications = false
 
   var body: some View {
-    TabView {
-      ActivitiesView()
-        .tabItem { Label("Mis actividades", systemImage: "calendar") }
-      GroupsView()
-        .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
-      AttendanceView()
-        .tabItem { Label("Asistencia", systemImage: "checklist") }
-      ProfileView()
-        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
-    }
-    .safeAreaInset(edge: .top) {
+    ZStack {
+      TabView {
+        ActivitiesView()
+          .tabItem { Label("Mis actividades", systemImage: "calendar") }
+        GroupsView()
+          .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
+        AttendanceView()
+          .tabItem { Label("Asistencia", systemImage: "checklist") }
+        ProfileView()
+          .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+      }
+
       HStack {
         Spacer()
         NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
@@ -129,8 +159,8 @@ struct ProfessorShellView: View {
         }
       }
       .padding(.horizontal, 16)
-      .padding(.top, 8)
-      .padding(.bottom, 4)
+      .padding(.bottom, 76)
+      .frame(maxHeight: .infinity, alignment: .bottom)
     }
     .sheet(isPresented: $showingNotifications) {
       NotificationsView()
