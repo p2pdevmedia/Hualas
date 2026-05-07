@@ -60,6 +60,9 @@ export type ManualPaymentSummary = {
     id: string;
     name: string;
     description: string | null;
+    targetId: string | null;
+    targetLabel: string | null;
+    participantName: string;
   }>;
   reviews: ManualPaymentReviewEntry[];
   rawData: ReturnType<typeof getManualPaymentRawData>;

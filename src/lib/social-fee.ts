@@ -1,4 +1,4 @@
-import { BillableConceptCode, Prisma } from '@prisma/client';
+import { BillableConceptCode } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 type ParticipantInput = {
@@ -11,7 +11,14 @@ export type SocialFeeParticipant = {
   childId: string | null;
 };
 
-type PrismaClientLike = typeof prisma | Prisma.TransactionClient;
+type PrismaClientLike = {
+  child: {
+    findUnique: (args: {
+      where: { id: string };
+      select: { userId: true };
+    }) => Promise<{ userId: string } | null>;
+  };
+};
 
 async function resolveSocialFeeUserId(
   db: PrismaClientLike,
