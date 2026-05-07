@@ -36,6 +36,7 @@
 		A1B2C3D4E5F60718293A1027 /* MobileNotificationsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2029 /* MobileNotificationsStore.swift */; };
 		A1B2C3D4E5F60718293A1028 /* NotificationsBellButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */; };
 		A1B2C3D4E5F60718293A1029 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */; };
+		A1B2C3D4E5F60718293A1030 /* AuthenticatedAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2032 /* AuthenticatedAvatarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +71,7 @@
 		A1B2C3D4E5F60718293A2029 /* MobileNotificationsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileNotificationsStore.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsBellButton.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2032 /* AuthenticatedAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedAvatarView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A3001 /* HualasMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = HualasMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -122,6 +124,7 @@
 				A1B2C3D4E5F60718293A2023 /* GroupDetailView.swift */,
 				A1B2C3D4E5F60718293A2030 /* NotificationsBellButton.swift */,
 				A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */,
+				A1B2C3D4E5F60718293A2032 /* AuthenticatedAvatarView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -248,6 +251,7 @@
 				A1B2C3D4E5F60718293A1020 /* ProfileView.swift in Sources */,
 				A1B2C3D4E5F60718293A1023 /* ProfileEditView.swift in Sources */,
 				A1B2C3D4E5F60718293A1021 /* GroupDetailView.swift in Sources */,
+				A1B2C3D4E5F60718293A1030 /* AuthenticatedAvatarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

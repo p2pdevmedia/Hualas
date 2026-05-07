@@ -131,6 +131,7 @@ final class SessionStore: ObservableObject {
   private func clearSession() {
     token = nil
     me = nil
+    AvatarImageCache.shared.removeAll()
     KeychainStore.shared.delete(tokenKey)
   }
 }

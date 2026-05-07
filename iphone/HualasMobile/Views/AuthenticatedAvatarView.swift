@@ -1,6 +1,25 @@
 import SwiftUI
 import UIKit
 
+@MainActor
+final class AvatarImageCache {
+  static let shared = AvatarImageCache()
+
+  private let cache = NSCache<NSString, UIImage>()
+
+  func image(for key: String) -> UIImage? {
+    cache.object(forKey: key as NSString)
+  }
+
+  func insert(_ image: UIImage, for key: String) {
+    cache.setObject(image, forKey: key as NSString)
+  }
+
+  func removeAll() {
+    cache.removeAllObjects()
+  }
+}
+
 struct AuthenticatedAvatarView: View {
   @EnvironmentObject private var sessionStore: SessionStore
 
@@ -50,9 +69,23 @@ struct AuthenticatedAvatarView: View {
     .joined(separator: "|")
   }
 
+  private var cacheKey: String {
+    [
+      path ?? "",
+      reloadKey,
+    ]
+    .joined(separator: "|")
+  }
+
+  @MainActor
   private func loadImage() async {
     guard let path, let token = sessionStore.token else {
       image = nil
+      return
+    }
+
+    if let cachedImage = AvatarImageCache.shared.image(for: cacheKey) {
+      image = cachedImage
       return
     }
 
@@ -60,7 +93,16 @@ struct AuthenticatedAvatarView: View {
     defer { isLoading = false }
 
     do {
-      image = try await APIClient.shared.authenticatedImage(path: path, token: token)
+      guard let downloadedImage = try await APIClient.shared.authenticatedImage(
+        path: path,
+        token: token
+      ) else {
+        image = nil
+        return
+      }
+
+      AvatarImageCache.shared.insert(downloadedImage, for: cacheKey)
+      image = downloadedImage
     } catch {
       guard !error.isCancellationError else { return }
       image = nil

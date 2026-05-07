@@ -45,31 +45,33 @@ struct MemberShellView: View {
     .environmentObject(cartStore)
     .safeAreaInset(edge: .top, spacing: 0) {
       HStack {
-        Button {
-          showingCart = true
-        } label: {
-          Label {
-            Text("Carrito")
-          } icon: {
-            Image(systemName: "cart.fill")
-          }
-          .padding(.horizontal, 14)
-          .padding(.vertical, 12)
-          .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-              .fill(Color.accentColor)
-          )
-          .foregroundStyle(.white)
-          .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 6)
-        }
-        .buttonStyle(.plain)
-        .disabled(cartStore.itemCount == 0)
-        .opacity(cartStore.itemCount == 0 ? 0.55 : 1)
-
         Spacer()
 
-        NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
-          showingNotifications = true
+        HStack(spacing: 10) {
+          Button {
+            showingCart = true
+          } label: {
+            Image(systemName: "cart.fill")
+              .font(.system(size: 17, weight: .semibold))
+              .foregroundStyle(cartStore.itemCount == 0 ? Color.primary.opacity(0.45) : Color.white)
+              .frame(width: 38, height: 38)
+              .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                  .fill(cartStore.itemCount == 0 ? Color.secondary.opacity(0.12) : Color.accentColor)
+              )
+              .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                  .stroke(Color.white.opacity(0.08), lineWidth: 1)
+              )
+          }
+          .buttonStyle(.plain)
+          .disabled(cartStore.itemCount == 0)
+          .opacity(cartStore.itemCount == 0 ? 0.55 : 1)
+          .accessibilityLabel("Carrito")
+
+          NotificationsBellButton(unreadCount: notificationsStore.unreadCount) {
+            showingNotifications = true
+          }
         }
       }
       .padding(.horizontal, 16)
@@ -161,73 +163,6 @@ struct ProfessorShellView: View {
     }
     .sheet(isPresented: $showingNotifications) {
       NotificationsView()
-    }
-  }
-}
-
-struct AuthenticatedAvatarView: View {
-  @EnvironmentObject private var sessionStore: SessionStore
-
-  let path: String?
-  let initials: String
-  let diameter: CGFloat
-  let reloadKey: String
-
-  @State private var image: UIImage?
-  @State private var isLoading = false
-
-  var body: some View {
-    ZStack {
-      Circle()
-        .fill(Color.accentColor.opacity(0.12))
-
-      if let image {
-        Image(uiImage: image)
-          .resizable()
-          .scaledToFill()
-      } else if isLoading {
-        ProgressView()
-          .tint(Color.accentColor)
-      } else {
-        Text(initials)
-          .font(.system(size: diameter * 0.3, weight: .semibold))
-          .foregroundStyle(Color.accentColor)
-      }
-    }
-    .frame(width: diameter, height: diameter)
-    .clipShape(Circle())
-    .overlay(
-      Circle()
-        .stroke(Color.secondary.opacity(0.1), lineWidth: 1)
-    )
-    .task(id: taskKey) {
-      await loadImage()
-    }
-  }
-
-  private var taskKey: String {
-    [
-      path ?? "",
-      reloadKey,
-      sessionStore.token ?? "",
-    ]
-    .joined(separator: "|")
-  }
-
-  private func loadImage() async {
-    guard let path, let token = sessionStore.token else {
-      image = nil
-      return
-    }
-
-    isLoading = true
-    defer { isLoading = false }
-
-    do {
-      image = try await APIClient.shared.authenticatedImage(path: path, token: token)
-    } catch {
-      guard !error.isCancellationError else { return }
-      image = nil
     }
   }
 }
