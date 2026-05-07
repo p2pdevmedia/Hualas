@@ -161,7 +161,7 @@ beforeEach(() => {
     {
       id: 'activity_1',
       name: 'Escalada',
-      date: new Date('2026-06-01T00:00:00.000Z'),
+      date: new Date('2026-04-01T00:00:00.000Z'),
       endDate: new Date('2026-06-30T00:00:00.000Z'),
       activityType: 'TEMPORARY',
       frequency: 'ONE_TIME',

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { formatMobileDateOnly } from '@/lib/mobile-format';
 import { prisma } from '@/lib/prisma';
@@ -36,12 +35,10 @@ type ActivityRow = {
   _count: { participants: number };
 };
 
-function getStatusLabel(status: 'OPEN' | 'FULL' | 'REGISTERED') {
+function getStatusLabel(status: 'OPEN' | 'FULL') {
   switch (status) {
     case 'FULL':
       return 'Sin cupo';
-    case 'REGISTERED':
-      return 'Ya inscripto';
     default:
       return 'Disponible';
   }
@@ -74,97 +71,68 @@ export async function GET(req: Request) {
     );
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
-    session.userId
-  );
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
-  const [activities, familyParticipants] = await Promise.all([
-    prisma.activity.findMany({
-      where: {
-        date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        date: true,
-        endDate: true,
-        activityType: true,
-        frequency: true,
-        image: true,
-        description: true,
-        price: true,
-        participants: { select: { id: true } },
-        groups: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            capacity: true,
-            minAge: true,
-            maxAge: true,
-            _count: {
-              select: { members: true },
-            },
+  const activities = await prisma.activity.findMany({
+    where: {
+      endDate: { gte: todayStart },
+    },
+    select: {
+      id: true,
+      name: true,
+      date: true,
+      endDate: true,
+      activityType: true,
+      frequency: true,
+      image: true,
+      description: true,
+      price: true,
+      participants: { select: { id: true } },
+      groups: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          capacity: true,
+          minAge: true,
+          maxAge: true,
+          _count: {
+            select: { members: true },
           },
         },
-        days: {
-          where: {
-            cancelled: false,
-            date: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            },
-          },
-          select: {
-            id: true,
-            date: true,
-            schedule: true,
-            geoLocation: true,
-            activityGroupId: true,
-            activityGroup: {
-              select: { name: true },
-            },
-            cancelled: true,
-          },
-          orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
+      },
+      days: {
+        where: {
+          cancelled: false,
+          date: { gte: todayStart },
         },
-        _count: {
-          select: { participants: true },
+        select: {
+          id: true,
+          date: true,
+          schedule: true,
+          geoLocation: true,
+          activityGroupId: true,
+          activityGroup: {
+            select: { name: true },
+          },
+          cancelled: true,
         },
+        orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
       },
-      orderBy: { date: 'asc' },
-    }) as Promise<ActivityRow[]>,
-    prisma.activityParticipant.findMany({
-      where: {
-        OR: [
-          { userId: session.userId },
-          { child: { userId: { in: accessibleChildOwnerIds } } },
-        ],
+      _count: {
+        select: { participants: true },
       },
-      select: {
-        activityId: true,
-      },
-    }),
-  ]);
-
-  const registeredActivityIds = new Set(
-    familyParticipants.map((participant) => participant.activityId)
-  );
+    },
+    orderBy: { date: 'asc' },
+  }) as Promise<ActivityRow[]>;
 
   const availableActivities = activities
     .map((activity) => {
       const capacity = getCapacity(activity);
       const hasAvailability =
         capacity == null || activity._count.participants < capacity;
-      const hasExistingRegistration = registeredActivityIds.has(activity.id);
-      const status: 'OPEN' | 'FULL' | 'REGISTERED' =
-        !hasAvailability
-          ? 'FULL'
-          : hasExistingRegistration &&
-              (activity.activityType !== 'TEMPORARY' || activity.days.length === 0)
-            ? 'REGISTERED'
-            : 'OPEN';
+      const status: 'OPEN' | 'FULL' = hasAvailability ? 'OPEN' : 'FULL';
 
       return {
         id: activity.id,
@@ -205,7 +173,7 @@ export async function GET(req: Request) {
         })),
       };
     })
-    .filter((activity) => activity.hasAvailability && activity.availabilityStatus === 'OPEN');
+    .filter((activity) => activity.hasAvailability);
 
   return NextResponse.json({
     role: 'MEMBER',
