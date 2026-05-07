@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { CalendarDays } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, MessageCircle, Phone } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { enqueueMutation } from '@/lib/offline/pending-mutations';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
@@ -12,6 +12,12 @@ type CalendarAttendanceOption = {
   participantId: string;
   label: string;
   status: AttendanceStatus;
+};
+
+type CalendarProfessor = {
+  id: string;
+  label: string;
+  phone: string | null;
 };
 
 export type CalendarActivityDay = {
@@ -26,6 +32,10 @@ export type CalendarActivityDay = {
   latitude: number | null;
   longitude: number | null;
   cancelled: boolean;
+  activityGroupName?: string | null;
+  professors?: CalendarProfessor[];
+  capacity?: number | null;
+  enrolledCount?: number | null;
   attendanceOptions?: CalendarAttendanceOption[];
 };
 
@@ -137,6 +147,52 @@ function ActivitySummary({
         <p className="text-xs text-muted-foreground">{day.schedule}</p>
         {featured && day.geoLocation && (
           <p className="text-xs text-muted-foreground">{day.geoLocation}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DetailCard({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border bg-muted/20 p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1 text-sm font-medium text-foreground">{children}</div>
+    </div>
+  );
+}
+
+function ProfessorContactRow({ professor }: { professor: CalendarProfessor }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2">
+      <span className="min-w-0 truncate">{professor.label}</span>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          href={`/chat?with=${professor.id}`}
+          prefetch={true}
+          title={`Iniciar chat con ${professor.label}`}
+          aria-label={`Iniciar chat con ${professor.label}`}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden="true" />
+        </Link>
+        {professor.phone && (
+          <a
+            href={`tel:${professor.phone}`}
+            title={`Llamar a ${professor.label}`}
+            aria-label={`Llamar a ${professor.label}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
+          >
+            <Phone className="h-4 w-4" aria-hidden="true" />
+          </a>
         )}
       </div>
     </div>
@@ -404,6 +460,8 @@ export default function ActivityCalendar({
   const selectedActivities = selectedKey ? (dayMap.get(selectedKey) ?? []) : [];
   const shouldLinkToSessionPage =
     variant === 'professor-agenda' || enableSessionDetailLinks || !!onEdit;
+  const canOpenDetailModal =
+    variant === 'member-agenda' || variant === 'professor-agenda';
 
   return (
     <div className="space-y-3">
@@ -526,13 +584,13 @@ export default function ActivityCalendar({
                                   featured={isMainDay}
                                 />
                                 <div className="flex flex-wrap items-center gap-2">
-                                  {isMemberAgenda ? (
+                                  {canOpenDetailModal ? (
                                     <button
                                       type="button"
                                       onClick={() => setDetailDay(day)}
                                       className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
-                                      Ver detalle
+                                      {sessionDetailLabel}
                                     </button>
                                   ) : (
                                     <Link
@@ -776,8 +834,32 @@ export default function ActivityCalendar({
                       </p>
                     </div>
                   </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {d.activityGroupName && (
+                      <DetailCard label="Grupo">
+                        {d.activityGroupName}
+                      </DetailCard>
+                    )}
+                    {d.professors && d.professors.length > 0 && (
+                      <DetailCard label="Profesores">
+                        <div className="space-y-2">
+                          {d.professors.map((professor) => (
+                            <ProfessorContactRow
+                              key={professor.id}
+                              professor={professor}
+                            />
+                          ))}
+                        </div>
+                      </DetailCard>
+                    )}
+                    {(d.capacity != null || d.enrolledCount != null) && (
+                      <DetailCard label="Cupo / inscriptos">
+                        {`${d.enrolledCount ?? 0} inscriptos${d.capacity != null ? ` de ${d.capacity} cupos` : ''}`}
+                      </DetailCard>
+                    )}
+                  </div>
                   {(variant !== 'month' || shouldLinkToSessionPage) && (
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {variant === 'member-agenda' ? (
                         <button
                           type="button"
@@ -795,28 +877,17 @@ export default function ActivityCalendar({
                           {sessionDetailLabel}
                         </Link>
                       )}
-                      {onEdit && (
-                        <button
-                          type="button"
-                          onClick={() => onEdit(d.id)}
-                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                        >
-                          Editar sesión
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {d.attendanceOptions && d.attendanceOptions.length > 0 && (
-                    <div className="mt-3 space-y-2 border-t pt-3">
-                      {d.attendanceOptions.map((option) => {
-                        const status = getAttendanceStatus(d.id, option);
-                        const optionKey = `${d.id}:${option.participantId}`;
-                        const isSaving = savingAttendanceKey === optionKey;
-                        const buttonState = getAttendanceButtonState(status);
+                      {d.attendanceOptions &&
+                        d.attendanceOptions.length > 0 &&
+                        d.attendanceOptions.map((option) => {
+                          const status = getAttendanceStatus(d.id, option);
+                          const optionKey = `${d.id}:${option.participantId}`;
+                          const isSaving = savingAttendanceKey === optionKey;
+                          const buttonState = getAttendanceButtonState(status);
 
-                        return (
-                          <div key={option.participantId}>
+                          return (
                             <button
+                              key={option.participantId}
                               type="button"
                               disabled={isSaving || d.cancelled}
                               onClick={() =>
@@ -827,7 +898,7 @@ export default function ActivityCalendar({
                                 )
                               }
                               aria-pressed={buttonState.ariaPressed}
-                              className={`w-full rounded-full border px-3 py-1.5 text-left transition-colors ${buttonState.className} disabled:cursor-not-allowed disabled:opacity-60`}
+                              className={`inline-flex flex-col rounded-full border px-3 py-1.5 text-left transition-colors ${buttonState.className} disabled:cursor-not-allowed disabled:opacity-60`}
                             >
                               <span className="block truncate text-[11px] font-semibold">
                                 {buttonState.label} · {option.label}
@@ -836,9 +907,17 @@ export default function ActivityCalendar({
                                 {buttonState.helper}
                               </span>
                             </button>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      {onEdit && (
+                        <button
+                          type="button"
+                          onClick={() => onEdit(d.id)}
+                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          Editar sesión
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -876,6 +955,29 @@ export default function ActivityCalendar({
             </div>
 
             <div className="mt-4 space-y-4">
+              {(detailDay.activityGroupName ||
+                detailDay.professors?.length) && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {detailDay.activityGroupName && (
+                    <DetailCard label="Grupo">
+                      {detailDay.activityGroupName}
+                    </DetailCard>
+                  )}
+                  {detailDay.professors && detailDay.professors.length > 0 && (
+                    <DetailCard label="Profesores">
+                      <div className="space-y-2">
+                        {detailDay.professors.map((professor) => (
+                          <ProfessorContactRow
+                            key={professor.id}
+                            professor={professor}
+                          />
+                        ))}
+                      </div>
+                    </DetailCard>
+                  )}
+                </div>
+              )}
+
               <div className="rounded-xl border bg-muted/20 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Materiales

@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { MessageCircle, Phone } from 'lucide-react';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -169,6 +170,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               id: true,
               name: true,
               lastName: true,
+              phone: true,
             },
           },
         },
@@ -188,6 +190,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           name: true,
           lastName: true,
           email: true,
+          phone: true,
         },
         orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
       })
@@ -306,10 +309,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     pickupNotices: pickupNoticesMap.get(day.id) || [],
   }));
 
-  const activityTypeLabels: Record<string, string> = {
-    TEMPORARY: 'Temporal',
-    ANNUAL: 'Anual',
-  };
   const activityDateRange = `${activity.date.toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'long',
@@ -386,6 +385,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     return {
       id: professor.id,
       label,
+      phone: professor.phone,
     };
   });
   const activityGroupOptions = activityGroups.map((group: any) => ({
@@ -455,33 +455,77 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  label: 'Tipo',
-                  value:
-                    activityTypeLabels[activity.activityType] ??
-                    activity.activityType,
-                },
-                { label: 'Precio', value: `$${activity.price}` },
-                {
-                  label: 'Inscriptos',
-                  value: `${enrolledCount} personas`,
-                },
-                {
-                  label: 'Cupo',
-                  value: hasCapacity ? `${capacity} lugares` : 'Ilimitado',
+                  label: 'Precio, cupo e inscriptos',
+                  value: (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Precio
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">
+                          ${activity.price}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Cupo
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {hasCapacity ? `${capacity} lugares` : 'Ilimitado'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Inscriptos
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {enrolledCount} personas
+                        </p>
+                      </div>
+                    </div>
+                  ),
                 },
                 activityProfessors.length > 0 && {
                   label: 'Profesores',
                   value: (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
                       {professorLabels.map((professor) => (
-                        <Link
+                        <div
                           key={professor.id}
-                          href={`/professors/${professor.id}`}
-                          prefetch={true}
-                          className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                          className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2"
                         >
-                          {professor.label}
-                        </Link>
+                          <Link
+                            href={`/professors/${professor.id}`}
+                            prefetch={true}
+                            className="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+                          >
+                            {professor.label}
+                          </Link>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <Link
+                              href={`/chat?with=${professor.id}`}
+                              prefetch={true}
+                              title={`Iniciar chat con ${professor.label}`}
+                              aria-label={`Iniciar chat con ${professor.label}`}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <MessageCircle
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
+                            </Link>
+                            {professor.phone && (
+                              <a
+                                href={`tel:${professor.phone}`}
+                                title={`Llamar a ${professor.label}`}
+                                aria-label={`Llamar a ${professor.label}`}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
+                              >
+                                <Phone className="h-4 w-4" aria-hidden="true" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   ),
@@ -578,6 +622,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   name: assignment.user.name,
                   lastName: assignment.user.lastName,
                   email: assignment.user.email,
+                  phone: assignment.user.phone,
                 })),
                 attendances: day.attendances.map((attendance: any) => ({
                   activityParticipantId: attendance.activityParticipantId,

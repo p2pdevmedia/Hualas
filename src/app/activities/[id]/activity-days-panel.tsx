@@ -14,6 +14,7 @@ type ProfessorOption = {
   name: string | null;
   lastName: string | null;
   email: string;
+  phone: string | null;
 };
 
 type Registration = {
@@ -26,6 +27,7 @@ type Registration = {
 type GroupOption = {
   id: string;
   name: string;
+  capacity: number | null;
 };
 
 type ActivityDay = {
@@ -75,11 +77,17 @@ export default function ActivityDaysPanel({
   professors,
   groups,
   defaultProfessorIds,
+  registrations,
   days,
 }: ActivityDaysPanelProps) {
   const router = useRouter();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const capacity =
+    groups.length === 0 || groups.some((group) => group.capacity == null)
+      ? null
+      : groups.reduce((sum, group) => sum + (group.capacity ?? 0), 0);
+  const enrolledCount = registrations.length;
 
   const calendarDays: CalendarActivityDay[] = days.map((day) => ({
     id: day.id,
@@ -93,6 +101,14 @@ export default function ActivityDaysPanel({
     latitude: day.latitude,
     longitude: day.longitude,
     cancelled: false,
+    activityGroupName: day.activityGroup?.name ?? null,
+    professors: day.assignedProfessors.map((professor) => ({
+      id: professor.id,
+      label: `${professor.name ?? 'Sin nombre'}${professor.lastName ? ` ${professor.lastName}` : ''}`,
+      phone: professor.phone,
+    })),
+    capacity,
+    enrolledCount,
   }));
 
   const existingDayDates = days.map((day) => day.date.slice(0, 10));
@@ -115,11 +131,12 @@ export default function ActivityDaysPanel({
             <h2 className="font-heading text-2xl font-semibold">
               Días de la actividad
             </h2>
-            <p className="text-sm text-muted-foreground font-body mt-1">
-              {hideSessionDetails
-                ? 'Las sesiones se visualizan desde el calendario. Como administrador podés hacer click en un día para ver su detalle y editarlo.'
-                : 'El profesor puede programar días y los inscriptos confirman si van a asistir.'}
-            </p>
+            {!hideSessionDetails && (
+              <p className="mt-1 text-sm text-muted-foreground font-body">
+                El profesor puede programar días y los inscriptos confirman si
+                van a asistir.
+              </p>
+            )}
           </div>
           {canManageDays && (
             <div className="flex flex-col items-start gap-2 sm:items-end">

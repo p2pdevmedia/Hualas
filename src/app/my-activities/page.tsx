@@ -146,6 +146,18 @@ export default async function MyActivitiesPage() {
           cancelled: true,
           activity: { select: { id: true, name: true } },
           activityGroup: { select: { name: true } },
+          professors: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  lastName: true,
+                  phone: true,
+                },
+              },
+            },
+          },
           attendances: {
             select: { activityParticipantId: true, status: true },
           },
@@ -191,7 +203,13 @@ export default async function MyActivitiesPage() {
             sportIcon: d.sportIcon,
             latitude: d.latitude,
             longitude: d.longitude,
+            activityGroupName: d.activityGroup?.name ?? null,
             cancelled: d.cancelled,
+            professors: d.professors.map((assignment) => ({
+              id: assignment.user.id,
+              label: `${assignment.user.name ?? 'Sin nombre'}${assignment.user.lastName ? ` ${assignment.user.lastName}` : ''}`,
+              phone: assignment.user.phone,
+            })),
             attendanceOptions: visibleParticipants.map((participant) => {
               const label = participant.child
                 ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
