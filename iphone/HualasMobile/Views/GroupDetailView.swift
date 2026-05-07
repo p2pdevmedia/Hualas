@@ -153,6 +153,7 @@ struct GroupDetailView: View {
     do {
       detail = try await APIClient.shared.professorGroupDetail(token: token, groupId: group.id)
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[groups] detail load failed", error)
     }
@@ -288,6 +289,7 @@ struct GlobalChatView: View {
     do {
       conversations = try await APIClient.shared.conversations(token: token).conversations
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[chat] load failed", error)
     }
@@ -403,6 +405,7 @@ struct ConversationView: View {
     do {
       thread = try await APIClient.shared.conversationThread(token: token, userId: userId)
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[chat] thread load failed", error)
     }
@@ -432,6 +435,7 @@ struct ConversationView: View {
         thread = currentThread
       }
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[chat] send failed", error)
     }

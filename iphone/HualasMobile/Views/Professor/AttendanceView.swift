@@ -43,6 +43,7 @@ struct AttendanceView: View {
       let response = try await APIClient.shared.professorAttendance(token: token)
       days = response.days
     } catch {
+      guard !error.isCancellationError else { return }
       print("[attendance] load days failed", error)
     }
   }
@@ -52,6 +53,7 @@ struct AttendanceView: View {
     do {
       detail = try await APIClient.shared.professorAttendanceDetail(token: token, dayId: dayId)
     } catch {
+      guard !error.isCancellationError else { return }
       print("[attendance] load detail failed", error)
     }
   }
@@ -131,6 +133,7 @@ private struct AttendanceDetailView: View {
       )
       return response.attendance
     } catch {
+      guard !error.isCancellationError else { return nil }
       print("[attendance] update failed", error)
       return nil
     }

@@ -361,6 +361,7 @@ struct ActivitiesView: View {
         self.selectedDayKey = response.sessions.first?.date
       }
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[activities] load month failed", error)
     }
@@ -378,6 +379,7 @@ struct ActivitiesView: View {
         dayId: session.id
       )
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[activities] load detail failed", error)
     }
@@ -712,6 +714,7 @@ private struct SessionAttendanceView: View {
       )
       return response.attendance
     } catch {
+      guard !error.isCancellationError else { return nil }
       print("[activities] quick attendance update failed", error)
       return nil
     }

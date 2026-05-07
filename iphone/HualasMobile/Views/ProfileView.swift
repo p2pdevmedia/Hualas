@@ -153,6 +153,7 @@ struct ProfileView: View {
       let response = try await APIClient.shared.payments(token: token)
       professorProfile = response.profile
     } catch {
+      guard !error.isCancellationError else { return }
       print("[profile] load professor profile failed", error)
     }
   }

@@ -29,8 +29,8 @@ struct NewsView: View {
       let response = try await APIClient.shared.news(token: token)
       news = response.news
     } catch {
+      guard !error.isCancellationError else { return }
       print("[news] load failed", error)
     }
   }
 }
-

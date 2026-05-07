@@ -43,6 +43,7 @@ struct GroupsView: View {
       let response = try await APIClient.shared.professorGroups(token: token)
       groups = response.groups
     } catch {
+      guard !error.isCancellationError else { return }
       print("[groups] load failed", error)
     }
   }

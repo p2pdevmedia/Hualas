@@ -45,6 +45,7 @@ struct ProfessorDashboardView: View {
     do {
       home = try await APIClient.shared.home(token: token)
     } catch {
+      guard !error.isCancellationError else { return }
       print("[professor home] load failed", error)
     }
   }

@@ -150,6 +150,7 @@ struct ChildDetailView: View {
     do {
       child = try await APIClient.shared.child(token: token, childId: childId)
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[children] detail load failed", error)
     }

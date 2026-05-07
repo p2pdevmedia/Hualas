@@ -109,6 +109,7 @@ struct ChildrenView: View {
       let response = try await APIClient.shared.children(token: token)
       children = response.children
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[children] load failed", error)
     }

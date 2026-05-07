@@ -116,6 +116,7 @@ struct MemberDashboardView: View {
     do {
       home = try await homeRequest
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[member home] home load failed", error)
     }
@@ -123,6 +124,7 @@ struct MemberDashboardView: View {
     do {
       catalog = try await catalogRequest
     } catch {
+      guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
       print("[member home] catalog load failed", error)
     }

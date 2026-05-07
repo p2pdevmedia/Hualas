@@ -173,6 +173,7 @@ struct ProfileEditView: View {
       feedbackMessage = nil
       feedbackIsError = false
     } catch {
+      guard !error.isCancellationError else { return }
       feedbackMessage = error.localizedDescription
       feedbackIsError = true
     }
@@ -251,6 +252,7 @@ struct ProfileEditView: View {
       await sessionStore.refreshMe(silent: true)
       dismiss()
     } catch {
+      guard !error.isCancellationError else { return }
       feedbackMessage = error.localizedDescription
       feedbackIsError = true
     }

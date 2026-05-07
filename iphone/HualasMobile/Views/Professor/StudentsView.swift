@@ -27,6 +27,7 @@ struct StudentsView: View {
       let response = try await APIClient.shared.professorStudents(token: token)
       students = response.students
     } catch {
+      guard !error.isCancellationError else { return }
       print("[students] load failed", error)
     }
   }

@@ -44,6 +44,7 @@ struct PaymentsView: View {
       profile = response.profile
       role = response.role
     } catch {
+      guard !error.isCancellationError else { return }
       print("[payments] load failed", error)
     }
   }
