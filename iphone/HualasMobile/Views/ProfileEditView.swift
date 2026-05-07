@@ -1,0 +1,236 @@
+import SwiftUI
+
+struct ProfileEditView: View {
+  @Environment(\.dismiss) private var dismiss
+  @EnvironmentObject private var sessionStore: SessionStore
+
+  @State private var name = ""
+  @State private var lastName = ""
+  @State private var email = ""
+  @State private var dni = ""
+  @State private var birthDateText = ""
+  @State private var gender = ""
+  @State private var address = ""
+  @State private var phone = ""
+  @State private var nationality = ""
+  @State private var maritalStatus = ""
+  @State private var isLoading = false
+  @State private var isSaving = false
+  @State private var didLoad = false
+  @State private var feedbackMessage: String?
+  @State private var feedbackIsError = false
+
+  var body: some View {
+    Form {
+      if isLoading && !didLoad {
+        Section {
+          HStack {
+            Spacer()
+            ProgressView("Cargando perfil...")
+            Spacer()
+          }
+        }
+      } else {
+        Section("Datos personales") {
+          TextField("Nombre", text: $name)
+            .textInputAutocapitalization(.words)
+
+          TextField("Apellido", text: $lastName)
+            .textInputAutocapitalization(.words)
+
+          TextField("DNI", text: $dni)
+            .keyboardType(.numbersAndPunctuation)
+        }
+
+        Section("Contacto") {
+          TextField("Email", text: $email)
+            .textInputAutocapitalization(.never)
+            .keyboardType(.emailAddress)
+            .disableAutocorrection(true)
+
+          TextField("Teléfono", text: $phone)
+            .keyboardType(.phonePad)
+
+          TextField("Dirección", text: $address)
+        }
+
+        Section("Otros datos") {
+          TextField("Fecha de nacimiento (AAAA-MM-DD)", text: $birthDateText)
+            .textInputAutocapitalization(.never)
+
+          Picker("Género", selection: $gender) {
+            ForEach(Self.genderOptions, id: \.value) { option in
+              Text(option.title).tag(option.value)
+            }
+          }
+          .pickerStyle(.menu)
+
+          TextField("Nacionalidad", text: $nationality)
+          TextField("Estado civil", text: $maritalStatus)
+        }
+      }
+
+      if let feedbackMessage {
+        Section {
+          Text(feedbackMessage)
+            .foregroundStyle(feedbackIsError ? .red : .secondary)
+        }
+      }
+    }
+    .navigationTitle("Editar perfil")
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Cerrar") {
+          dismiss()
+        }
+      }
+
+      ToolbarItem(placement: .confirmationAction) {
+        Button(isSaving ? "Guardando..." : "Guardar") {
+          Task { await saveProfile() }
+        }
+        .disabled(isLoading || isSaving)
+      }
+    }
+    .task {
+      await loadProfile()
+    }
+  }
+
+  private func loadProfile() async {
+    guard let token = sessionStore.token else {
+      feedbackMessage = "No hay sesión activa."
+      feedbackIsError = true
+      return
+    }
+
+    isLoading = true
+    feedbackMessage = nil
+    feedbackIsError = false
+    defer {
+      isLoading = false
+      didLoad = true
+    }
+
+    do {
+      let response = try await APIClient.shared.mobileProfile(token: token)
+      populate(from: response.user)
+      feedbackMessage = nil
+      feedbackIsError = false
+    } catch {
+      feedbackMessage = error.localizedDescription
+      feedbackIsError = true
+    }
+  }
+
+  private func populate(from user: MobileProfileResponse.User) {
+    name = user.name ?? ""
+    lastName = user.lastName ?? ""
+    email = user.email
+    dni = user.dni ?? ""
+    birthDateText = displayBirthDate(user.birthDate)
+    gender = user.gender ?? ""
+    address = user.address ?? ""
+    phone = user.phone ?? ""
+    nationality = user.nationality ?? ""
+    maritalStatus = user.maritalStatus ?? ""
+  }
+
+  private func saveProfile() async {
+    guard let token = sessionStore.token else {
+      feedbackMessage = "No hay sesión activa."
+      feedbackIsError = true
+      return
+    }
+
+    if !birthDateText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+       normalizedBirthDate() == nil {
+      feedbackMessage = "La fecha de nacimiento debe tener formato AAAA-MM-DD."
+      feedbackIsError = true
+      return
+    }
+
+    let normalizedBirthDate = normalizedBirthDate()
+
+    isSaving = true
+    feedbackMessage = nil
+    feedbackIsError = false
+    defer { isSaving = false }
+
+    let payload = MobileProfileUpdateRequest(
+      name: trimmedValue(name),
+      lastName: trimmedValue(lastName),
+      dni: trimmedValue(dni),
+      birthDate: normalizedBirthDate,
+      gender: trimmedValue(gender),
+      address: trimmedValue(address),
+      phone: trimmedValue(phone),
+      nationality: trimmedValue(nationality),
+      maritalStatus: trimmedValue(maritalStatus),
+      email: trimmedValue(email),
+      password: nil
+    )
+
+    do {
+      _ = try await APIClient.shared.updateMobileProfile(token: token, payload: payload)
+      await sessionStore.refreshMe(silent: true)
+      dismiss()
+    } catch {
+      feedbackMessage = error.localizedDescription
+      feedbackIsError = true
+    }
+  }
+
+  private func trimmedValue(_ value: String) -> String? {
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+  }
+
+  private func normalizedBirthDate() -> String? {
+    let trimmed = birthDateText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+    guard let date = Self.birthDateFormatter.date(from: trimmed) else { return nil }
+    return Self.birthDateFormatter.string(from: date)
+  }
+
+  private func displayBirthDate(_ value: String?) -> String {
+    guard let value, !value.isEmpty else { return "" }
+
+    if let date = Self.isoDateFormatter.date(from: value) ??
+      Self.birthDateFormatter.date(from: value) {
+      return Self.birthDateFormatter.string(from: date)
+    }
+
+    return value
+  }
+
+  private struct GenderOption {
+    let title: String
+    let value: String
+  }
+
+  private static let genderOptions: [GenderOption] = [
+    GenderOption(title: "Sin definir", value: ""),
+    GenderOption(title: "Femenino", value: "FEMALE"),
+    GenderOption(title: "Masculino", value: "MALE"),
+    GenderOption(title: "No binario", value: "NON_BINARY"),
+    GenderOption(title: "Prefiero no decir", value: "UNDISCLOSED"),
+    GenderOption(title: "Otro", value: "OTHER"),
+  ]
+
+  private static let birthDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
+  }()
+
+  private static let isoDateFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+}

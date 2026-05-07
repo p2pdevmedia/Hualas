@@ -3,10 +3,11 @@ import SwiftUI
 struct ActivitiesView: View {
   @EnvironmentObject private var sessionStore: SessionStore
 
+  private static let selectedDaySummaryScrollID = "selected-day-summary"
+
   @State private var displayedMonth = Date()
   @State private var monthResponse: MobileActivitiesCalendarResponse?
   @State private var selectedDayKey: String?
-  @State private var selectedDaySheet: DaySessionsSheet?
   @State private var selectedSessionDetail: MobileActivitySessionDetailResponse?
   @State private var isLoading = false
   @State private var isLoadingDetail = false
@@ -21,32 +22,45 @@ struct ActivitiesView: View {
 
   var body: some View {
     NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 16) {
-          monthHeader
-          weekdayHeader
-          monthGrid
+      ScrollViewReader { proxy in
+        ScrollView {
+          VStack(alignment: .leading, spacing: 16) {
+            calendarCard
 
-          if let selectedDayKey, let sessions = sessionsByDay[selectedDayKey], !sessions.isEmpty {
-            selectedDaySummary(for: selectedDayKey, sessions: sessions)
-          } else {
-            emptyState
+            if let selectedDayKey, let sessions = sessionsByDay[selectedDayKey], !sessions.isEmpty {
+              selectedDaySummary(for: selectedDayKey, sessions: sessions)
+                .id(Self.selectedDaySummaryScrollID)
+            } else {
+              emptyState
+            }
+
+            if isLoading {
+              ProgressView("Cargando calendario...")
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 8)
+            }
+
+            if let errorMessage {
+              Text(errorMessage)
+                .font(.footnote)
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
           }
-
-          if isLoading {
-            ProgressView("Cargando calendario...")
-              .frame(maxWidth: .infinity, alignment: .center)
-              .padding(.top, 8)
+          .padding()
+        }
+        .onChange(of: selectedDayKey) { newValue in
+          guard
+            let newValue,
+            let sessions = sessionsByDay[newValue],
+            !sessions.isEmpty
+          else {
+            return
           }
-
-          if let errorMessage {
-            Text(errorMessage)
-              .font(.footnote)
-              .foregroundStyle(.red)
-              .frame(maxWidth: .infinity, alignment: .leading)
+          withAnimation(.easeInOut) {
+            proxy.scrollTo(Self.selectedDaySummaryScrollID, anchor: .top)
           }
         }
-        .padding()
       }
       .navigationTitle("Mis actividades")
       .navigationBarTitleDisplayMode(.inline)
@@ -55,16 +69,6 @@ struct ActivitiesView: View {
       }
       .refreshable {
         await loadMonth()
-      }
-      .sheet(item: $selectedDaySheet) { sheet in
-        DaySessionsSheetView(
-          sheet: sheet,
-          onSelectSession: { session in
-            selectedDaySheet = nil
-            Task { await loadSessionDetail(for: session) }
-          }
-        )
-        .presentationDetents([.medium, .large])
       }
       .sheet(item: $selectedSessionDetail) { detail in
         SessionDetailView(detail: detail)
@@ -83,6 +87,16 @@ struct ActivitiesView: View {
 
   private var monthTitle: String {
     monthResponse?.monthLabel ?? Self.monthTitleFormatter.string(from: displayedMonth)
+  }
+
+  private var calendarCard: some View {
+    infoCard {
+      VStack(alignment: .leading, spacing: 14) {
+        monthHeader
+        weekdayHeader
+        monthGrid
+      }
+    }
   }
 
   private var monthHeader: some View {
@@ -139,7 +153,7 @@ struct ActivitiesView: View {
           dayCell(for: day)
         } else {
           Color.clear
-            .frame(height: 64)
+            .frame(height: 74)
         }
       }
     }
@@ -148,9 +162,9 @@ struct ActivitiesView: View {
   private var emptyState: some View {
     infoCard {
       VStack(alignment: .leading, spacing: 6) {
-        Text("No hay sesiones para este mes")
+        Text("Elegí un día con sesiones")
           .font(.headline)
-        Text("Las actividades asignadas van a aparecer marcadas en el calendario. Tocá un dia con actividad para ver la info completa.")
+        Text("Los días con actividad se destacan en el calendario. Tocá uno para desplegar sus sesiones.")
           .font(.footnote)
           .foregroundStyle(.secondary)
       }
@@ -164,32 +178,70 @@ struct ActivitiesView: View {
     infoCard {
       VStack(alignment: .leading, spacing: 10) {
         HStack {
-          Text(dayKey)
-            .font(.headline)
+          VStack(alignment: .leading, spacing: 2) {
+            Text(selectedDayTitle(for: dayKey))
+              .font(.headline)
+            Text(dayKey)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
           Spacer()
-          Text("\(sessions.count) actividad\(sessions.count == 1 ? "" : "es")")
+          Text("\(sessions.count) sesión\(sessions.count == 1 ? "" : "es")")
             .font(.footnote.weight(.semibold))
             .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.secondary.opacity(0.08), in: Capsule())
         }
 
-        ForEach(sessions) { session in
+        Text("Tocá una sesión para ver el detalle completo.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+
+        ForEach(sortedSessions(sessions)) { session in
           Button {
             Task { await loadSessionDetail(for: session) }
           } label: {
-            VStack(alignment: .leading, spacing: 4) {
-              Text(session.activityName)
-                .font(.headline)
-                .foregroundStyle(.primary)
-              Text("\(session.schedule) • \(session.groupName ?? "Sin grupo")")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-              Text(session.geoLocation)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 12) {
+              VStack(alignment: .leading, spacing: 2) {
+                Text(session.schedule)
+                  .font(.caption.weight(.semibold))
+                  .foregroundStyle(.secondary)
+                Text(session.activityName)
+                  .font(.headline)
+                  .foregroundStyle(.primary)
+              }
+
+              Spacer(minLength: 8)
+
+              VStack(alignment: .trailing, spacing: 4) {
+                if let groupName = session.groupName {
+                  Text(groupName)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                }
+                Text(session.geoLocation)
+                  .font(.caption2)
+                  .foregroundStyle(.secondary)
+                  .lineLimit(2)
+                  .multilineTextAlignment(.trailing)
+              }
+
+              Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .padding(14)
+            .background(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.secondary.opacity(0.06))
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+            )
           }
           .buttonStyle(.plain)
         }
@@ -202,68 +254,93 @@ struct ActivitiesView: View {
     let sessions = sessionsByDay[dayKey] ?? []
     let isSelected = selectedDayKey == dayKey
     let isToday = Self.calendar.isDateInToday(date)
+    let hasSessions = !sessions.isEmpty
 
     return Button {
-      guard !sessions.isEmpty else { return }
-      selectDay(dayKey: dayKey, sessions: sessions)
+      guard hasSessions else { return }
+      selectDay(dayKey: dayKey)
     } label: {
-      VStack(spacing: 4) {
-        HStack {
+      VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top) {
           Text("\(Self.calendar.component(.day, from: date))")
             .font(.headline)
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(.primary)
+
           Spacer()
+
+          if isToday {
+            Text("Hoy")
+              .font(.caption2.weight(.semibold))
+              .foregroundStyle(isSelected ? Color.primary : Color.accentColor)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.accentColor.opacity(isSelected ? 0.14 : 0.08), in: Capsule())
+          }
         }
 
         Spacer(minLength: 0)
 
-        if !sessions.isEmpty {
-          Text("\(sessions.count)")
-            .font(.caption2.weight(.bold))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(.blue.opacity(0.18), in: Capsule())
-        } else {
-          Image(systemName: "circle.dashed")
-            .font(.caption2)
-            .foregroundStyle(.clear)
+        if hasSessions {
+          HStack(spacing: 4) {
+            ForEach(0..<min(3, sessions.count), id: \.self) { index in
+              Circle()
+                .fill(Color.accentColor.opacity(0.85 - Double(index) * 0.15))
+                .frame(width: 7, height: 7)
+            }
+
+            if sessions.count > 3 {
+              Text("+\(sessions.count - 3)")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          Text("\(sessions.count) sesión\(sessions.count == 1 ? "" : "es")")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(isSelected ? .primary : .secondary)
+            .lineLimit(1)
         }
       }
       .frame(maxWidth: .infinity)
-      .frame(height: 64)
-      .padding(8)
-      .background(backgroundColor(isSelected: isSelected, hasSessions: !sessions.isEmpty), in: RoundedRectangle(cornerRadius: 16))
+      .frame(height: 74)
+      .padding(10)
+      .background(
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+          .fill(backgroundColor(isSelected: isSelected, hasSessions: hasSessions))
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: 16)
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
           .stroke(isToday ? Color.accentColor : Color.clear, lineWidth: 1.5)
       )
     }
     .buttonStyle(.plain)
-    .disabled(sessions.isEmpty)
-    .opacity(sessions.isEmpty ? 0.45 : 1)
   }
 
-  private func backgroundColor(isSelected: Bool, hasSessions: Bool) -> Color {
-    if isSelected { return Color.accentColor.opacity(0.16) }
-    if hasSessions { return Color.secondary.opacity(0.08) }
-    return Color.secondary.opacity(0.04)
+  private func backgroundColor(isSelected: Bool, hasSessions: Bool) -> AnyShapeStyle {
+    if isSelected {
+      return AnyShapeStyle(Color.accentColor.opacity(0.2))
+    }
+    if hasSessions {
+      return AnyShapeStyle(LinearGradient(
+        colors: [
+          Color.accentColor.opacity(0.18),
+          Color.accentColor.opacity(0.08),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      ))
+    }
+    return AnyShapeStyle(Color.secondary.opacity(0.05))
   }
 
   private func selectDay(
-    dayKey: String,
-    sessions: [MobileActivitiesCalendarResponse.Session]
+    dayKey: String
   ) {
     selectedDayKey = dayKey
-
-    if sessions.count == 1 {
-      Task { await loadSessionDetail(for: sessions[0]) }
-      return
-    }
-
-    selectedDaySheet = DaySessionsSheet(
-      dayKey: dayKey,
-      sessions: sessions
-    )
   }
 
   private func loadMonth() async {
@@ -342,7 +419,41 @@ struct ActivitiesView: View {
       .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
   }
 
+  private func sortedSessions(
+    _ sessions: [MobileActivitiesCalendarResponse.Session]
+  ) -> [MobileActivitiesCalendarResponse.Session] {
+    sessions.sorted {
+      if $0.schedule == $1.schedule {
+        return $0.activityName.localizedCaseInsensitiveCompare($1.activityName) == .orderedAscending
+      }
+      return $0.schedule.localizedStandardCompare($1.schedule) == .orderedAscending
+    }
+  }
+
+  private func selectedDayTitle(for dayKey: String) -> String {
+    guard let date = Self.isoDayFormatter.date(from: dayKey) else {
+      return "Día seleccionado"
+    }
+    return Self.prettyDayFormatter.string(from: date).capitalized
+  }
+
   private static let weekdaySymbols = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
+
+  private static let isoDayFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.calendar = calendar
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
+  }()
+
+  private static let prettyDayFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "es_AR")
+    formatter.calendar = calendar
+    formatter.dateFormat = "EEEE d MMMM"
+    return formatter
+  }()
 
   private static let monthTitleFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -366,47 +477,6 @@ struct ActivitiesView: View {
     let month = components.month ?? calendar.component(.month, from: date)
     let day = components.day ?? calendar.component(.day, from: date)
     return String(format: "%04d-%02d-%02d", year, month, day)
-  }
-}
-
-private struct DaySessionsSheet: Identifiable {
-  let dayKey: String
-  let sessions: [MobileActivitiesCalendarResponse.Session]
-
-  var id: String { dayKey }
-}
-
-private struct DaySessionsSheetView: View {
-  let sheet: DaySessionsSheet
-  let onSelectSession: (MobileActivitiesCalendarResponse.Session) -> Void
-
-  var body: some View {
-    NavigationStack {
-      List {
-        Section {
-          ForEach(sheet.sessions) { session in
-            Button {
-              onSelectSession(session)
-            } label: {
-              VStack(alignment: .leading, spacing: 4) {
-                Text(session.activityName)
-                  .font(.headline)
-                Text("\(session.schedule) • \(session.groupName ?? "Sin grupo")")
-                  .font(.footnote)
-                  .foregroundStyle(.secondary)
-                Text(session.geoLocation)
-                  .font(.footnote)
-                  .foregroundStyle(.secondary)
-              }
-            }
-          }
-        } header: {
-          Text(sheet.dayKey)
-        }
-      }
-      .navigationTitle("Sesiones del dia")
-      .navigationBarTitleDisplayMode(.inline)
-    }
   }
 }
 
@@ -468,6 +538,44 @@ private struct SessionDetailView: View {
             }
           }
 
+          if detail.role == .professor {
+            NavigationLink {
+              SessionAttendanceView(detail: detail)
+            } label: {
+              HStack(spacing: 12) {
+                Image(systemName: "checklist")
+                  .font(.headline)
+                  .foregroundStyle(Color.accentColor)
+                  .frame(width: 28, height: 28)
+                  .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+                VStack(alignment: .leading, spacing: 2) {
+                  Text("Tomar asistencia")
+                    .font(.headline)
+                  Text("Ir directo a la lista de participantes para marcar asistencia.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                  .font(.caption.weight(.semibold))
+                  .foregroundStyle(.tertiary)
+              }
+              .padding(14)
+              .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                  .fill(Color.secondary.opacity(0.06))
+              )
+              .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                  .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+              )
+            }
+            .buttonStyle(.plain)
+          }
+
           infoCard(title: "Participantes") {
             VStack(alignment: .leading, spacing: 10) {
               if detail.participants.isEmpty {
@@ -511,5 +619,159 @@ private struct SessionDetailView: View {
     }
     .padding()
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+  }
+}
+
+private struct SessionAttendanceView: View {
+  @EnvironmentObject private var sessionStore: SessionStore
+  @State private var detail: MobileActivitySessionDetailResponse
+
+  init(detail: MobileActivitySessionDetailResponse) {
+    _detail = State(initialValue: detail)
+  }
+
+  var body: some View {
+    List {
+      Section("Día") {
+        Text(detail.day.activity.name)
+        Text(detail.day.date)
+        Text(detail.day.schedule)
+        Text(detail.day.geoLocation)
+        if let groupName = detail.day.groupName {
+          Text("Grupo: \(groupName)")
+        }
+        if detail.day.cancelled {
+          Text("Cancelada")
+            .foregroundStyle(.red)
+        }
+      }
+
+      Section("Participantes") {
+        if detail.participants.isEmpty {
+          Text("No hay participantes cargados.")
+            .foregroundStyle(.secondary)
+        } else {
+          ForEach(detail.participants) { participant in
+            HStack(spacing: 12) {
+              VStack(alignment: .leading, spacing: 2) {
+                Text(participant.label)
+                Text(participant.groupName ?? "Sin grupo")
+                  .font(.footnote)
+                  .foregroundStyle(.secondary)
+              }
+
+              Spacer()
+
+              Button {
+                Task {
+                  await cycleAttendance(for: participant)
+                }
+              } label: {
+                Text(label(for: participant.attendance.status))
+                  .font(.footnote.weight(.semibold))
+                  .padding(.horizontal, 10)
+                  .padding(.vertical, 6)
+                  .background(backgroundColor(for: participant.attendance.status))
+                  .foregroundStyle(.white)
+                  .clipShape(Capsule())
+              }
+              .buttonStyle(.plain)
+            }
+          }
+        }
+      }
+    }
+    .navigationTitle("Tomar asistencia")
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private func cycleAttendance(for participant: MobileActivitySessionDetailResponse.Participant) async {
+    let nextStatus = nextStatus(after: participant.attendance.status)
+    guard let updatedAttendance = await update(participantId: participant.id, status: nextStatus) else {
+      return
+    }
+
+    detail = updatedDetail(
+      detail,
+      participantId: participant.id,
+      attendance: updatedAttendance
+    )
+  }
+
+  private func update(
+    participantId: String,
+    status: String
+  ) async -> MobileAttendanceUpdateResponse.Attendance? {
+    guard let token = sessionStore.token else { return nil }
+    do {
+      let response = try await APIClient.shared.updateAttendance(
+        token: token,
+        dayId: detail.day.id,
+        participantId: participantId,
+        status: status
+      )
+      return response.attendance
+    } catch {
+      print("[activities] quick attendance update failed", error)
+      return nil
+    }
+  }
+
+  private func label(for status: String) -> String {
+    switch status {
+    case "GOING":
+      return "Voy"
+    case "NOT_GOING":
+      return "No voy"
+    default:
+      return "Pendiente"
+    }
+  }
+
+  private func backgroundColor(for status: String) -> Color {
+    switch status {
+    case "GOING":
+      return .green
+    case "NOT_GOING":
+      return .red
+    default:
+      return .gray
+    }
+  }
+
+  private func nextStatus(after status: String) -> String {
+    switch status {
+    case "PENDING":
+      return "GOING"
+    case "GOING":
+      return "NOT_GOING"
+    default:
+      return "PENDING"
+    }
+  }
+
+  private func updatedDetail(
+    _ detail: MobileActivitySessionDetailResponse,
+    participantId: String,
+    attendance: MobileAttendanceUpdateResponse.Attendance
+  ) -> MobileActivitySessionDetailResponse {
+    let participants = detail.participants.map { participant in
+      guard participant.id == participantId else { return participant }
+      return MobileActivitySessionDetailResponse.Participant(
+        id: participant.id,
+        userId: participant.userId,
+        childId: participant.childId,
+        label: participant.label,
+        groupName: participant.groupName,
+        attendance: .init(status: attendance.status, confirmedAt: attendance.confirmedAt)
+      )
+    }
+
+    return MobileActivitySessionDetailResponse(
+      role: detail.role,
+      day: detail.day,
+      professors: detail.professors,
+      participants: participants
+    )
   }
 }

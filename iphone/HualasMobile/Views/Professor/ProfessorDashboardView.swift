@@ -10,7 +10,7 @@ struct ProfessorDashboardView: View {
         VStack(alignment: .leading, spacing: 16) {
           Text("Home profesor")
             .font(.largeTitle.bold())
-          Text("Seguimiento de grupos, alumnos y asistencia.")
+          Text("Seguimiento de grupos y asistencia.")
             .foregroundStyle(.secondary)
 
           if let home {
@@ -65,4 +65,3 @@ private extension ProfessorDashboardView {
       .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
   }
 }
-

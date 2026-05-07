@@ -16,15 +16,17 @@ actor PushRegistrationService {
       return
     }
 
-    let payload = MobileDeviceRegistration(
-      token: apnsToken,
-      platform: "iOS",
-      bundleId: Bundle.main.bundleIdentifier,
-      environment: Bundle.main.object(forInfoDictionaryKey: "APS_ENVIRONMENT") as? String,
-      deviceName: UIDevice.current.name,
-      deviceModel: UIDevice.current.model,
-      appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-    )
+    let payload = await MainActor.run {
+      MobileDeviceRegistration(
+        token: apnsToken,
+        platform: "iOS",
+        bundleId: Bundle.main.bundleIdentifier,
+        environment: Bundle.main.object(forInfoDictionaryKey: "APS_ENVIRONMENT") as? String,
+        deviceName: UIDevice.current.name,
+        deviceModel: UIDevice.current.model,
+        appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+      )
+    }
 
     do {
       _ = try await APIClient.shared.registerDevice(token: authToken, payload: payload)
@@ -33,4 +35,3 @@ actor PushRegistrationService {
     }
   }
 }
-

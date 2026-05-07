@@ -31,7 +31,7 @@ struct AttendanceView: View {
       }
       .sheet(item: $selectedDay) { day in
         NavigationStack {
-          AttendanceDetailView(dayId: day.id, detail: detail)
+          AttendanceDetailView(dayId: day.id, detail: $detail)
         }
       }
     }
@@ -60,7 +60,7 @@ struct AttendanceView: View {
 private struct AttendanceDetailView: View {
   @EnvironmentObject private var sessionStore: SessionStore
   let dayId: String
-  let detail: MobileAttendanceDetailResponse?
+  @Binding var detail: MobileAttendanceDetailResponse?
 
   var body: some View {
     Group {
@@ -71,7 +71,7 @@ private struct AttendanceDetailView: View {
             Text(detail.day.date ?? "Fecha pendiente")
             Text(detail.day.schedule)
           }
-          Section("Alumnos") {
+          Section("Participantes") {
             ForEach(detail.participants) { participant in
               HStack {
                 VStack(alignment: .leading) {
@@ -79,15 +79,9 @@ private struct AttendanceDetailView: View {
                   Text(participant.groupName ?? "Sin grupo").font(.footnote).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Menu {
-                  Button("Pendiente") {
-                    Task { await update(participantId: participant.id, status: "PENDING") }
-                  }
-                  Button("Va") {
-                    Task { await update(participantId: participant.id, status: "GOING") }
-                  }
-                  Button("No va") {
-                    Task { await update(participantId: participant.id, status: "NOT_GOING") }
+                Button {
+                  Task {
+                    await cycleAttendance(for: participant)
                   }
                 } label: {
                   Text(label(for: participant.attendance.status))
@@ -98,6 +92,7 @@ private struct AttendanceDetailView: View {
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
               }
             }
           }
@@ -109,26 +104,44 @@ private struct AttendanceDetailView: View {
     .navigationTitle("Asistencia")
   }
 
-  private func update(participantId: String, status: String) async {
-    guard let token = sessionStore.token else { return }
+  private func cycleAttendance(for participant: MobileAttendanceDetailResponse.Participant) async {
+    let nextStatus = nextStatus(after: participant.attendance.status)
+    guard let updatedAttendance = await update(participantId: participant.id, status: nextStatus) else {
+      return
+    }
+    guard let currentDetail = detail else { return }
+    detail = updatedDetail(
+      currentDetail,
+      participantId: participant.id,
+      attendance: updatedAttendance
+    )
+  }
+
+  private func update(
+    participantId: String,
+    status: String
+  ) async -> MobileAttendanceUpdateResponse.Attendance? {
+    guard let token = sessionStore.token else { return nil }
     do {
-      _ = try await APIClient.shared.updateAttendance(
+      let response = try await APIClient.shared.updateAttendance(
         token: token,
         dayId: dayId,
         participantId: participantId,
         status: status
       )
+      return response.attendance
     } catch {
       print("[attendance] update failed", error)
+      return nil
     }
   }
 
   private func label(for status: String) -> String {
     switch status {
     case "GOING":
-      return "Va"
+      return "Voy"
     case "NOT_GOING":
-      return "No va"
+      return "No voy"
     default:
       return "Pendiente"
     }
@@ -143,5 +156,42 @@ private struct AttendanceDetailView: View {
     default:
       return .gray
     }
+  }
+
+  private func nextStatus(after status: String) -> String {
+    switch status {
+    case "PENDING":
+      return "GOING"
+    case "GOING":
+      return "NOT_GOING"
+    default:
+      return "PENDING"
+    }
+  }
+
+  private func updatedDetail(
+    _ detail: MobileAttendanceDetailResponse,
+    participantId: String,
+    attendance: MobileAttendanceUpdateResponse.Attendance
+  ) -> MobileAttendanceDetailResponse {
+    let participants = detail.participants.map { participant in
+      guard participant.id == participantId else { return participant }
+      return MobileAttendanceDetailResponse.Participant(
+        id: participant.id,
+        userId: participant.userId,
+        label: participant.label,
+        groupName: participant.groupName,
+        attendance: .init(
+          id: attendance.id,
+          status: attendance.status,
+          confirmedAt: attendance.confirmedAt
+        )
+      )
+    }
+
+    return MobileAttendanceDetailResponse(
+      day: detail.day,
+      participants: participants
+    )
   }
 }

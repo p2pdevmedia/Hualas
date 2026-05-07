@@ -61,6 +61,38 @@ struct MobileMeResponse: Codable {
   let session: Session
 }
 
+struct MobileProfileResponse: Codable {
+  struct User: Codable {
+    let id: String
+    let email: String
+    let name: String?
+    let lastName: String?
+    let dni: String?
+    let birthDate: String?
+    let gender: String?
+    let address: String?
+    let phone: String?
+    let nationality: String?
+    let maritalStatus: String?
+  }
+
+  let user: User
+}
+
+struct MobileProfileUpdateRequest: Codable {
+  let name: String?
+  let lastName: String?
+  let dni: String?
+  let birthDate: String?
+  let gender: String?
+  let address: String?
+  let phone: String?
+  let nationality: String?
+  let maritalStatus: String?
+  let email: String?
+  let password: String?
+}
+
 struct MobileHomeResponse: Codable {
   struct Profile: Codable {
     let id: String

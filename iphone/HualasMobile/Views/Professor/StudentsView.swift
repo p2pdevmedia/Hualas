@@ -15,7 +15,7 @@ struct StudentsView: View {
           }
         }
       }
-      .navigationTitle("Alumnos")
+      .navigationTitle("Participantes")
       .task { await load() }
       .refreshable { await load() }
     }
@@ -31,4 +31,3 @@ struct StudentsView: View {
     }
   }
 }
-

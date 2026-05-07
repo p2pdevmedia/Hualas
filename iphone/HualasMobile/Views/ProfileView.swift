@@ -11,6 +11,8 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 16) {
           header
 
+          quickActions
+
           if sessionStore.allowedRoles.count > 1 {
             roleSwitcher
           }
@@ -47,6 +49,37 @@ struct ProfileView: View {
       Text("Perfil activo: \(sessionStore.currentRole?.rawValue ?? "MEMBER")")
         .font(.footnote.weight(.semibold))
         .foregroundStyle(.secondary)
+    }
+  }
+
+  private var quickActions: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("Accesos rápidos")
+        .font(.headline)
+
+      NavigationLink {
+        ProfileEditView()
+      } label: {
+        profileActionRow(
+          title: "Editar perfil",
+          subtitle: "Actualizar tus datos personales.",
+          systemImage: "pencil"
+        )
+      }
+      .buttonStyle(.plain)
+
+      if sessionStore.currentRole == .professor {
+        NavigationLink {
+          PaymentsView()
+        } label: {
+          profileActionRow(
+            title: "Pagos",
+            subtitle: "Ver tu información de cobros y perfil bancario.",
+            systemImage: "creditcard"
+          )
+        }
+        .buttonStyle(.plain)
+      }
     }
   }
 
@@ -129,6 +162,44 @@ struct ProfileView: View {
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding()
       .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+  }
+
+  private func profileActionRow(
+    title: String,
+    subtitle: String,
+    systemImage: String
+  ) -> some View {
+    HStack(spacing: 12) {
+      Image(systemName: systemImage)
+        .font(.headline)
+        .foregroundStyle(Color.accentColor)
+        .frame(width: 28, height: 28)
+        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.headline)
+          .foregroundStyle(.primary)
+        Text(subtitle)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+
+      Spacer()
+
+      Image(systemName: "chevron.right")
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.tertiary)
+    }
+    .padding(14)
+    .background(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .fill(Color.secondary.opacity(0.06))
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+    )
   }
 
   private func label(for role: MobileRole) -> String {

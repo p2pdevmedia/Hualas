@@ -39,6 +39,22 @@ final class APIClient {
     try await send(path: "/api/mobile/me", token: token)
   }
 
+  func mobileProfile(token: String) async throws -> MobileProfileResponse {
+    try await send(path: "/api/mobile/profile", token: token)
+  }
+
+  func updateMobileProfile(
+    token: String,
+    payload: MobileProfileUpdateRequest
+  ) async throws -> MobileProfileResponse {
+    try await send(
+      path: "/api/mobile/profile",
+      method: "PATCH",
+      token: token,
+      body: payload
+    )
+  }
+
   func home(token: String) async throws -> MobileHomeResponse {
     try await send(path: "/api/mobile/home", token: token)
   }

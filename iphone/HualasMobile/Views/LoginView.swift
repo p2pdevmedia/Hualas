@@ -9,10 +9,19 @@ struct LoginView: View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 20) {
-          Text("Hualas")
-            .font(.largeTitle.bold())
-          Text("Acceso móvil para socios y profesores con un solo ingreso.")
-            .foregroundStyle(.secondary)
+          VStack(alignment: .leading, spacing: 12) {
+            Image("favico")
+              .resizable()
+              .scaledToFit()
+              .frame(width: 84, height: 84)
+              .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+              .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 6)
+
+            Text("Hualas")
+              .font(.largeTitle.bold())
+            Text("Acceso móvil para socios y profesores con un solo ingreso.")
+              .foregroundStyle(.secondary)
+          }
 
           VStack(spacing: 14) {
             TextField("Email", text: $email)

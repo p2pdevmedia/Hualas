@@ -96,10 +96,21 @@ final class SessionStore: ObservableObject {
     do {
       let result = try await APIClient.shared.switchRole(token: token, role: role)
       if result.ok {
-        me = try await APIClient.shared.me(token: token)
+        await refreshMe()
       }
     } catch {
       errorMessage = error.localizedDescription
+    }
+  }
+
+  func refreshMe(silent: Bool = false) async {
+    guard let token else { return }
+    do {
+      me = try await APIClient.shared.me(token: token)
+    } catch {
+      if !silent {
+        errorMessage = error.localizedDescription
+      }
     }
   }
 

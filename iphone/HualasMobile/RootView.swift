@@ -44,12 +44,8 @@ struct ProfessorShellView: View {
         .tabItem { Label("Mis actividades", systemImage: "calendar") }
       GroupsView()
         .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
-      StudentsView()
-        .tabItem { Label("Alumnos", systemImage: "person.3") }
       AttendanceView()
         .tabItem { Label("Asistencia", systemImage: "checklist") }
-      PaymentsView()
-        .tabItem { Label("Pagos", systemImage: "creditcard") }
       ProfileView()
         .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
     }
