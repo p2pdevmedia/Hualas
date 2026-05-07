@@ -4,8 +4,15 @@ import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { formatFullName } from '@/lib/mobile-format';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
-import { createPickupNoticeSchema } from '@/lib/validations/pickup-notice';
+import { createPickupNoticeBaseSchema } from '@/lib/validations/pickup-notice';
 import { notifyPickupNoticeCreated } from '@/lib/notifications/notification-service';
+
+const createMobilePickupNoticeSchema = createPickupNoticeBaseSchema.extend({
+  activityDayId: z.string().min(1, 'Activity day is required'),
+}).refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
+  message: 'Either select a person or enter a name',
+  path: ['alternatePersonUserId'],
+});
 
 function formatActivityDayLabel(day: {
   date: Date;
@@ -124,7 +131,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const data = createPickupNoticeSchema.parse(await req.json());
+    const data = createMobilePickupNoticeSchema.parse(await req.json());
     const now = new Date();
     const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
       session.userId

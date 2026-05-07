@@ -1,16 +1,19 @@
 import { z } from 'zod';
 
-export const createPickupNoticeSchema = z
-  .object({
-    childId: z.string().min(1, 'Child is required'),
-    alternatePersonUserId: z.string().optional().nullable(),
-    alternatePersonName: z.string().optional().nullable(),
-    description: z.string().min(1, 'Description is required').max(500),
-  })
-  .refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
+export const createPickupNoticeBaseSchema = z.object({
+  childId: z.string().min(1, 'Child is required'),
+  alternatePersonUserId: z.string().optional().nullable(),
+  alternatePersonName: z.string().optional().nullable(),
+  description: z.string().min(1, 'Description is required').max(500),
+});
+
+export const createPickupNoticeSchema = createPickupNoticeBaseSchema.refine(
+  (data) => data.alternatePersonUserId || data.alternatePersonName,
+  {
     message: 'Either select a person or enter a name',
     path: ['alternatePersonUserId'],
-  });
+  }
+);
 
 export const updatePickupNoticeSchema = z
   .object({
