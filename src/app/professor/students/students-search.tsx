@@ -28,10 +28,16 @@ type StudentHistoryEntry = {
     devolucion: string | null;
   }[];
   reports: {
+    id: string;
+    type: 'participant' | 'day';
     date: string;
     schedule: string;
     cancelled: boolean;
     groupName: string | null;
+    body: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+    author: string | null;
     planificacion: string | null;
     devolucion: string | null;
   }[];
@@ -1031,48 +1037,71 @@ export default function StudentsSearch({
                       <ul className="mt-3 space-y-3">
                         {entry.reports.map((report) => (
                           <li
-                            key={`${entry.participantId}-report-${report.date}-${report.schedule}`}
-                            className="rounded-lg bg-muted/60 p-3 text-sm"
+                            key={`${entry.participantId}-report-${report.id}`}
                           >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="font-medium capitalize">
-                                {formatHistoryDate(report.date)}
-                              </span>
-                              {report.cancelled && (
-                                <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                                  Cancelado
+                            <details className="group rounded-lg bg-muted/60 text-sm">
+                              <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-3 py-3">
+                                <span className="font-medium capitalize">
+                                  Reporte ({formatHistoryDate(report.date)})
                                 </span>
-                              )}
-                            </div>
-                            <p className="text-muted-foreground">
-                              {report.schedule}
-                              {report.groupName &&
-                              report.groupName !== entry.groupName
-                                ? ` · ${report.groupName}`
-                                : ''}
-                            </p>
-                            <div className="mt-3 space-y-3">
-                              {report.planificacion && (
-                                <div>
-                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Planificación
+                                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  {report.cancelled && (
+                                    <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
+                                      Cancelado
+                                    </span>
+                                  )}
+                                  <span className="transition-transform group-open:rotate-180">
+                                    ↓
+                                  </span>
+                                </span>
+                              </summary>
+                              <div className="border-t px-3 py-3">
+                                <p className="text-muted-foreground">
+                                  {report.schedule}
+                                  {report.groupName &&
+                                  report.groupName !== entry.groupName
+                                    ? ` · ${report.groupName}`
+                                    : ''}
+                                </p>
+                                {report.author && (
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    Cargado por {report.author}
                                   </p>
-                                  <p className="mt-1 whitespace-pre-wrap text-foreground">
-                                    {report.planificacion}
-                                  </p>
+                                )}
+                                <div className="mt-3 space-y-3">
+                                  {report.body && (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Reporte
+                                      </p>
+                                      <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                        {report.body}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {report.planificacion && (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Planificación
+                                      </p>
+                                      <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                        {report.planificacion}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {report.devolucion && (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Devolución
+                                      </p>
+                                      <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                        {report.devolucion}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              {report.devolucion && (
-                                <div>
-                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Devolución
-                                  </p>
-                                  <p className="mt-1 whitespace-pre-wrap text-foreground">
-                                    {report.devolucion}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
+                              </div>
+                            </details>
                           </li>
                         ))}
                       </ul>

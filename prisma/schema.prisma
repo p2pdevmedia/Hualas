@@ -66,6 +66,7 @@ model User {
   professorProfile            ProfessorProfile?
   professorPaymentsCreated    ProfessorPayment[]           @relation("ProfessorPaymentCreatedBy")
   professorInvoices           ProfessorInvoice[]           @relation("ProfessorInvoices")
+  createdParticipantReports   ActivityParticipantReport[]   @relation("ActivityParticipantReportCreatedBy")
   roleAssignments             UserRoleAssignment[]         @relation("UserRoleAssignmentUser")
   roleAssignmentsGranted      UserRoleAssignment[]         @relation("UserRoleAssignmentAssignedBy")
 }
@@ -189,6 +190,7 @@ model ActivityParticipant {
   groupMembership ActivityGroupMember?
   attendances     ActivityDayAttendance[]
   payments         ActivityParticipantPayment[]
+  reports          ActivityParticipantReport[]
 }
 
 model ActivityParticipantPayment {
@@ -285,6 +287,7 @@ model ActivityDay {
   professors         ActivityDayProfessor[]
   pickupNotices      PickupNotice[]
   participantPayments ActivityParticipantPayment[]
+  participantReports  ActivityParticipantReport[]
 
   @@index([activityId, date])
   @@index([activityGroupId])
@@ -316,6 +319,23 @@ model ActivityDayAttendance {
 
   @@unique([activityDayId, activityParticipantId])
   @@index([activityParticipantId])
+}
+
+model ActivityParticipantReport {
+  id                    String              @id @default(cuid())
+  activityDayId         String
+  activityParticipantId String
+  createdById           String
+  body                  String
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  activityDay           ActivityDay         @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
+  activityParticipant   ActivityParticipant @relation(fields: [activityParticipantId], references: [id], onDelete: Cascade)
+  createdBy             User                @relation("ActivityParticipantReportCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([activityDayId, activityParticipantId])
+  @@index([activityParticipantId])
+  @@index([createdById])
 }
 
 model PickupNotice {
