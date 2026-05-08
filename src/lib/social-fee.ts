@@ -11,6 +11,16 @@ export type SocialFeeParticipant = {
   childId: string | null;
 };
 
+export function normalizeSocialFeeAmount(amount: number) {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 0;
+  }
+
+  // Legacy records were stored in pesos. Values below this threshold are
+  // treated as legacy pesos and converted to centavos on read.
+  return amount < 100000 ? amount * 100 : amount;
+}
+
 type PrismaClientLike = {
   child: {
     findUnique: (args: {
@@ -51,7 +61,7 @@ export async function getSocialFeeAmount() {
     select: { defaultAmount: true },
   });
 
-  return concept?.defaultAmount ?? 0;
+  return normalizeSocialFeeAmount(concept?.defaultAmount ?? 0);
 }
 
 export async function hasSocialFeeForCurrentMonth({

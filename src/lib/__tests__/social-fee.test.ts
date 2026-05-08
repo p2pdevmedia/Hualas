@@ -21,6 +21,7 @@ import { prisma } from '@/lib/prisma';
 import {
   hasSocialFeeForCurrentMonth,
   registerSocialFeePayment,
+  normalizeSocialFeeAmount,
 } from '../social-fee';
 
 const mockPrisma = prisma as unknown as {
@@ -128,5 +129,13 @@ describe('social fee helpers', () => {
       where: { id: 'father-user-id' },
       data: { socialFeeActive: true },
     });
+  });
+
+  it('normalizes legacy social fee amounts stored in pesos', () => {
+    expect(normalizeSocialFeeAmount(8500)).toBe(850000);
+  });
+
+  it('keeps cent-based social fee amounts unchanged', () => {
+    expect(normalizeSocialFeeAmount(850000)).toBe(850000);
   });
 });

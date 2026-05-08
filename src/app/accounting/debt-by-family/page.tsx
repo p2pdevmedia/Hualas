@@ -9,6 +9,7 @@ import {
   formatPersonName,
   getFamilyGroupMemberCount,
 } from '@/lib/accounting';
+import { normalizeSocialFeeAmount } from '@/lib/social-fee';
 import { Button } from '@/components/ui/button';
 import PersonLink from '@/components/accounting/person-link';
 
@@ -296,7 +297,7 @@ export default async function DebtByFamilyPage({
     }),
   ]);
 
-  const baseAmount = concept?.defaultAmount ?? 0;
+  const baseAmount = normalizeSocialFeeAmount(concept?.defaultAmount ?? 0);
   const orderById = new Map(orders.map((order) => [order.id, order]));
 
   const familyRows = families.map((family) => {

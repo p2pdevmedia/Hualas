@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAccountingRole } from '@/lib/accounting';
 import { prisma } from '@/lib/prisma';
+import { normalizeSocialFeeAmount } from '@/lib/social-fee';
 
 function parseAmount(value: unknown) {
   const amount = typeof value === 'string' ? Number(value) : Number(value);
@@ -36,7 +37,7 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    defaultAmount: concept?.defaultAmount ?? 0,
+    defaultAmount: normalizeSocialFeeAmount(concept?.defaultAmount ?? 0),
     name: concept?.name ?? 'Cuota social',
     active: concept?.active ?? false,
   });

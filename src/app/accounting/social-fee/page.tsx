@@ -10,6 +10,7 @@ import {
   getAccountingUserProfileHref,
   isAccountingRole,
 } from '@/lib/accounting';
+import { normalizeSocialFeeAmount } from '@/lib/social-fee';
 import PersonLink from '@/components/accounting/person-link';
 import { Button } from '@/components/ui/button';
 import { matchesAccountingSearch } from '@/lib/accounting-search';
@@ -151,7 +152,7 @@ export default async function SocialFeePage({
     }),
   ]);
 
-  const socialFeeAmount = concept?.defaultAmount ?? 0;
+  const socialFeeAmount = normalizeSocialFeeAmount(concept?.defaultAmount ?? 0);
   const paymentByKey = new Map<string, (typeof payments)[number]>();
   for (const payment of payments) {
     const key = payment.childId
