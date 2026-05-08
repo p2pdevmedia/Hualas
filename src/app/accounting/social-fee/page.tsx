@@ -152,7 +152,6 @@ export default async function SocialFeePage({
   ]);
 
   const socialFeeAmount = concept?.defaultAmount ?? 0;
-  const socialFeeAmountCents = socialFeeAmount * 100;
   const paymentByKey = new Map<string, (typeof payments)[number]>();
   for (const payment of payments) {
     const key = payment.childId
@@ -175,7 +174,7 @@ export default async function SocialFeePage({
       href: getAccountingUserProfileHref(member.id),
       email: member.email,
       status: memberPayment ? 'PAID' : 'PENDING',
-      amount: memberPayment?.amount ?? socialFeeAmountCents,
+      amount: memberPayment?.amount ?? socialFeeAmount,
       paymentId: memberPayment?.mercadoPagoPaymentId,
       paidAt: memberPayment?.createdAt ?? null,
       createdAt: memberPayment?.createdAt ?? member.createdAt,
@@ -195,7 +194,7 @@ export default async function SocialFeePage({
         name: formatPersonName(child),
         href: getAccountingChildProfileHref(member.id, child.id),
         status: childPayment ? 'PAID' : 'PENDING',
-        amount: childPayment?.amount ?? socialFeeAmountCents,
+        amount: childPayment?.amount ?? socialFeeAmount,
         paymentId: childPayment?.mercadoPagoPaymentId,
         paidAt: childPayment?.createdAt ?? null,
         createdAt: childPayment?.createdAt ?? child.createdAt,
@@ -263,7 +262,7 @@ export default async function SocialFeePage({
     (sum, person) => sum + person.amount,
     0
   );
-  const expectedAmount = people.length * socialFeeAmountCents;
+  const expectedAmount = people.length * socialFeeAmount;
   const visiblePaidRangeLabel =
     paidPeople.length === 0
       ? 'Sin resultados'
@@ -294,7 +293,7 @@ export default async function SocialFeePage({
         {[
           {
             label: 'Cuota configurada',
-            value: formatAmount(socialFeeAmountCents),
+            value: formatAmount(socialFeeAmount),
             helper: 'Monto actual para nuevos cobros',
           },
           {
@@ -511,7 +510,7 @@ export default async function SocialFeePage({
                           </td>
                           <td className="px-4 py-3">{person.type}</td>
                           <td className="px-4 py-3 font-medium">
-                            {formatAmount(socialFeeAmountCents)}
+                            {formatAmount(socialFeeAmount)}
                           </td>
                           <td className="px-4 py-3">
                             {person.type === 'Titular'

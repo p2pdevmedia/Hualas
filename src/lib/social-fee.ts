@@ -132,7 +132,7 @@ export async function registerSocialFeePayment({
   mercadoPagoPaymentId,
 }: ParticipantInput & { amount: number; mercadoPagoPaymentId: string }) {
   const { month, year } = getCurrentPeriod();
-  const amountInCents = Math.round(amount * 100);
+  const amountInCents = Math.round(amount);
 
   if (childId == null) {
     return prisma.$transaction(async (tx) => {

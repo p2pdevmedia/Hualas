@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getManualPaymentRawData } from '@/lib/manual-payments';
 import { formatManualPaymentStatus } from '@/lib/manual-payment-ui';
-import { formatAmount } from '@/lib/accounting';
+import { formatAmount, formatCurrencyFromCents } from '@/lib/accounting';
 import { hasProfessorCapability } from '@/lib/roles';
 
 const MONTHS = [
@@ -21,14 +21,6 @@ const MONTHS = [
   'Noviembre',
   'Diciembre',
 ];
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default async function ProfilePaymentsPage() {
   const session = await getServerSession(authOptions);
@@ -221,7 +213,10 @@ export default async function ProfilePaymentsPage() {
                         {rawData.accountantComments ?? '-'}
                       </td>
                       <td className="px-3 py-2 text-right font-medium">
-                        {formatCurrency(payment.amount)}
+                        {formatCurrencyFromCents(
+                          payment.amount,
+                          payment.currency
+                        )}
                       </td>
                     </tr>
                   );

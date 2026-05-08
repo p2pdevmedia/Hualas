@@ -5,13 +5,13 @@ import {
 } from '../accounting';
 
 describe('accounting helpers', () => {
-  it('returns manual payment amount as stored for accounting summaries', () => {
+  it('normalizes legacy manual payment amounts stored in pesos', () => {
     expect(
       getAccountingManualPaymentAmount({
         amount: 18,
         order: { total: 18 },
       })
-    ).toBe(18);
+    ).toBe(1800);
   });
 
   it('falls back to order total when the payment amount is zero', () => {
@@ -20,7 +20,7 @@ describe('accounting helpers', () => {
         amount: 0,
         order: { total: 9 },
       })
-    ).toBe(9);
+    ).toBe(900);
   });
 
   it('falls back to updatedAt or createdAt for manual payment dates', () => {

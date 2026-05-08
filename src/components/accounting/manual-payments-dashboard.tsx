@@ -6,10 +6,13 @@ import ManualPaymentDetail from '@/components/accounting/manual-payment-detail';
 import PersonLink from '@/components/accounting/person-link';
 import { Button } from '@/components/ui/button';
 import {
+  formatCurrencyFromCents,
+  getAccountingUserProfileHref,
+} from '@/lib/accounting';
+import {
   formatManualPaymentStatus,
   type ManualPaymentSummary,
 } from '@/lib/manual-payment-ui';
-import { getAccountingUserProfileHref } from '@/lib/accounting';
 import { useToast } from '@/hooks/use-toast';
 
 type ManualPaymentsDashboardProps = {
@@ -19,14 +22,6 @@ type ManualPaymentsDashboardProps = {
   pageSize: number;
   status: string | null;
 };
-
-function formatPesos(amount: number, currency: string) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default function ManualPaymentsDashboard({
   payments,
@@ -230,7 +225,10 @@ export default function ManualPaymentsDashboard({
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        {formatPesos(payment.amount / 100, payment.currency)}
+                        {formatCurrencyFromCents(
+                          payment.amount,
+                          payment.currency
+                        )}
                       </p>
                       <span
                         className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${statusInfo.className}`}

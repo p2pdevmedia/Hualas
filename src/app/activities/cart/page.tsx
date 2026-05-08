@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
+import { formatAmount } from '@/lib/accounting';
 import PaymentMethodSelector, {
   type PaymentMethod,
 } from '@/components/checkout/payment-method-selector';
@@ -41,14 +42,6 @@ type QuoteResponse = {
   totalAmountWithMercadoPagoFee: number;
   socialFeeAmount: number;
 };
-
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(amount / 100);
-}
 
 export default function ActivitiesCartPage() {
   const [items, setItems] = useState<ActivityCartItem[]>([]);
@@ -247,7 +240,7 @@ export default function ActivitiesCartPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold">
-                    {formatMoney(Number(item.price))}
+                    {formatAmount(Number(item.price))}
                   </span>
                   <Button
                     variant="outline"
@@ -291,7 +284,7 @@ export default function ActivitiesCartPage() {
                             : ''}
                         </span>
                         <span className="font-medium">
-                          {formatMoney(line.amount)}
+                          {formatAmount(line.amount)}
                         </span>
                       </div>
                     ))}
@@ -299,7 +292,7 @@ export default function ActivitiesCartPage() {
                   <div className="flex items-center justify-between gap-4">
                     <span>Subtotal actividades</span>
                     <span className="font-medium">
-                      {formatMoney(quote.totalActivityAmount)}
+                      {formatAmount(quote.totalActivityAmount)}
                     </span>
                   </div>
                   {quote.discountLines.map((line, index) => (
@@ -309,14 +302,14 @@ export default function ActivitiesCartPage() {
                     >
                       <span>{line.label}</span>
                       <span className="font-medium">
-                        -{formatMoney(line.amount)}
+                        -{formatAmount(line.amount)}
                       </span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between gap-4">
                     <span>Cuotas sociales</span>
                     <span className="font-medium">
-                      {formatMoney(quote.totalSocialFeeAmount)}
+                      {formatAmount(quote.totalSocialFeeAmount)}
                     </span>
                   </div>
                   {paymentMethod === 'MERCADO_PAGO' &&
@@ -327,14 +320,14 @@ export default function ActivitiesCartPage() {
                       >
                         <span>{line.label}</span>
                         <span className="font-medium">
-                          +{formatMoney(line.amount)}
+                          +{formatAmount(line.amount)}
                         </span>
                       </div>
                     ))}
                   <div className="border-t pt-2 flex items-center justify-between gap-4 text-base">
                     <span className="font-semibold">Total</span>
                     <span className="font-semibold">
-                      {formatMoney(
+                      {formatAmount(
                         paymentMethod === 'MERCADO_PAGO'
                           ? quote.totalAmountWithMercadoPagoFee
                           : quote.totalAmount
@@ -368,7 +361,7 @@ export default function ActivitiesCartPage() {
                           </p>
                         </div>
                         <span className="font-semibold">
-                          {formatMoney(line.amount)}
+                          {formatAmount(line.amount)}
                         </span>
                       </div>
                     </li>
@@ -404,7 +397,7 @@ export default function ActivitiesCartPage() {
               <p className="text-lg font-semibold">
                 Total a pagar:{' '}
                 {quote
-                  ? formatMoney(
+                  ? formatAmount(
                       paymentMethod === 'MERCADO_PAGO'
                         ? quote.totalAmountWithMercadoPagoFee
                         : quote.totalAmount

@@ -116,11 +116,11 @@ describe('social fee helpers', () => {
         childId: 'child-1',
         periodMonth: 5,
         periodYear: 2026,
-        amount: 250000,
+        amount: 2500,
         mercadoPagoPaymentId: 'mp-123',
       },
       update: {
-        amount: 250000,
+        amount: 2500,
         mercadoPagoPaymentId: 'mp-123',
       },
     });

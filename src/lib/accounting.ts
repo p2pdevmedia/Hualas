@@ -38,12 +38,19 @@ export function centsToPesos(centavos: number): number {
   return centavos / 100;
 }
 
-export function formatAmount(centavos: number): string {
+export function formatCurrencyFromCents(
+  centavos: number,
+  currency = 'ARS'
+): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'ARS',
+    currency,
     maximumFractionDigits: 0,
-  }).format(centavos / 100);
+  }).format(centsToPesos(centavos));
+}
+
+export function formatAmount(centavos: number): string {
+  return formatCurrencyFromCents(centavos);
 }
 
 export function formatAccountingDate(value: Date | string): string {

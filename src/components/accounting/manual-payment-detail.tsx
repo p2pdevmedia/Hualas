@@ -6,10 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import AuditTrail, { type AuditTrailEntry } from '@/components/audit-trail';
 import PersonLink from '@/components/accounting/person-link';
 import {
+  formatCurrencyFromCents,
+  getAccountingUserProfileHref,
+} from '@/lib/accounting';
+import {
   formatManualPaymentStatus,
   type ManualPaymentSummary,
 } from '@/lib/manual-payment-ui';
-import { getAccountingUserProfileHref } from '@/lib/accounting';
 
 type ManualPaymentDetailProps = {
   payment: ManualPaymentSummary | null;
@@ -17,14 +20,6 @@ type ManualPaymentDetailProps = {
   onReject: (id: string, comment: string) => Promise<void>;
   busy?: boolean;
 };
-
-function formatPesos(amount: number, currency: string) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default function ManualPaymentDetail({
   payment,
@@ -202,7 +197,7 @@ export default function ManualPaymentDetail({
             Monto
           </p>
           <p className="mt-1 break-words text-lg font-semibold leading-tight">
-            {formatPesos(payment.amount / 100, payment.currency)}
+            {formatCurrencyFromCents(payment.amount, payment.currency)}
           </p>
         </article>
         <article className="min-w-0 rounded-xl border bg-muted/20 p-4 sm:col-span-2">
@@ -219,7 +214,7 @@ export default function ManualPaymentDetail({
               Cuota social
             </p>
             <p className="mt-1 text-lg font-semibold">
-              {formatPesos(socialFeeAmount, payment.currency)}
+              {formatCurrencyFromCents(socialFeeAmount, payment.currency)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {socialFeeParticipants} participante
@@ -228,16 +223,16 @@ export default function ManualPaymentDetail({
           </article>
         ) : null}
 
-      {payment.activities.length > 0 ? (
-        <article
-          className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
-            socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
-          }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Actividades
-          </p>
-          <ul className="mt-2 space-y-1 text-sm">
+        {payment.activities.length > 0 ? (
+          <article
+            className={`min-w-0 rounded-xl border bg-muted/20 p-4 ${
+              socialFeeAmount > 0 ? 'sm:col-span-2' : 'sm:col-span-4'
+            }`}
+          >
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Actividades
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
               {payment.activities.map((activity) => (
                 <li key={activity.id} className="space-y-0.5">
                   <div className="font-medium">{activity.name}</div>
@@ -246,9 +241,9 @@ export default function ManualPaymentDetail({
                   </div>
                 </li>
               ))}
-          </ul>
-        </article>
-      ) : null}
+            </ul>
+          </article>
+        ) : null}
       </div>
 
       {payment.accountantComments ? (

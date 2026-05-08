@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Form } from '@/components/ui/form';
 
 function formatMoneyInput(value: number) {
-  return Number.isFinite(value) ? String(value) : '0';
+  return Number.isFinite(value) ? String(Math.round(value / 100)) : '0';
 }
 
 export default function SocialFeeSettingsForm({
@@ -38,7 +38,7 @@ export default function SocialFeeSettingsForm({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ amount: parsedAmount }),
+        body: JSON.stringify({ amount: parsedAmount * 100 }),
       });
 
       const data = (await response.json().catch(() => ({}))) as
@@ -85,7 +85,8 @@ export default function SocialFeeSettingsForm({
           className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <p className="text-xs text-muted-foreground">
-          Se guarda como valor entero en pesos y se usa en los próximos cobros.
+          Se muestra en pesos y se guarda como centavos para los próximos
+          cobros.
         </p>
       </div>
 
