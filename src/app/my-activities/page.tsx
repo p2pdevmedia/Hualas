@@ -6,6 +6,10 @@ import RoleSwitchPrompt from '@/components/role-switch-prompt';
 import { hasProfessorCapability } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import {
+  checkChildProfile,
+  checkUserProfile,
+} from '@/lib/participant-profile-check';
 import ActivityCalendar, {
   type CalendarActivityDay,
 } from './activity-calendar';
@@ -26,6 +30,52 @@ export default async function MyActivitiesPage() {
 
   const userId = session.user.id;
   const isProfessorView = activeRole === 'PROFESSOR';
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
+  const [profileForCheck, familyChildren] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        lastName: true,
+        dni: true,
+        birthDate: true,
+        address: true,
+        phone: true,
+      },
+    }),
+    prisma.child.findMany({
+      where: { userId: { in: accessibleChildOwnerIds } },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        documentNumber: true,
+        birthDate: true,
+        address: true,
+      },
+      orderBy: [{ userId: 'asc' }, { createdAt: 'asc' }],
+    }),
+  ]);
+
+  if (!profileForCheck) {
+    redirect('/login');
+  }
+
+  const missingProfileTargets = [
+    {
+      key: 'self',
+      label: 'tu perfil',
+      href: '/profile?returnTo=/my-activities&onboarding=1',
+      check: checkUserProfile(profileForCheck),
+    },
+    ...familyChildren.map((child) => ({
+      key: child.id,
+      label: `${child.name}${child.lastName ? ` ${child.lastName}` : ''}`,
+      href: `/profile/children/${child.id}/edit?returnTo=/my-activities`,
+      check: checkChildProfile(child, profileForCheck.phone),
+    })),
+  ].filter((target) => !target.check.valid);
+  const firstMissingProfileTarget = missingProfileTargets[0] ?? null;
 
   let participations: Array<{
     id: string;
@@ -61,7 +111,6 @@ export default async function MyActivitiesPage() {
         orderBy: { activity: { date: 'asc' } },
       });
     } else {
-      const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
       participations = await prisma.activityParticipant.findMany({
         where: {
           OR: [
@@ -306,6 +355,28 @@ export default async function MyActivitiesPage() {
             : 'Actividades en las que estás inscripto vos o alguien de tu familia.'}
         </p>
       </div>
+
+      {firstMissingProfileTarget && (
+        <div className="sticky top-20 z-30 mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="font-semibold">Hay datos pendientes</p>
+              <p>
+                Para completar inscripciones, actualizá los datos obligatorios
+                de{' '}
+                {missingProfileTargets.map((target) => target.label).join(', ')}
+                .
+              </p>
+            </div>
+            <Link
+              href={firstMissingProfileTarget.href}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-amber-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
+            >
+              Completar datos
+            </Link>
+          </div>
+        </div>
+      )}
 
       <ActivityCalendar
         activityDays={calendarDays}
