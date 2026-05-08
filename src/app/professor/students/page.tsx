@@ -90,6 +90,21 @@ export default async function ProfessorStudentsPage() {
       activityParticipant: {
         include: {
           activity: { select: { name: true } },
+          attendances: {
+            orderBy: { activityDay: { date: 'desc' } },
+            select: {
+              status: true,
+              confirmedAt: true,
+              activityDay: {
+                select: {
+                  date: true,
+                  schedule: true,
+                  cancelled: true,
+                  activityGroup: { select: { name: true } },
+                },
+              },
+            },
+          },
           user: {
             select: {
               id: true,
@@ -188,6 +203,7 @@ export default async function ProfessorStudentsPage() {
       parentEmail: string;
       parentDni: string | null;
       activitiesSet: Set<string>;
+      history: StudentEntry['history'];
     }
   >();
 
@@ -201,17 +217,39 @@ export default async function ProfessorStudentsPage() {
       email: string;
       dni: string | null;
       activitiesSet: Set<string>;
+      history: StudentEntry['history'];
     }
   >();
+
+  function buildParticipantHistory(gm: (typeof groupMembers)[number]) {
+    const participant = gm.activityParticipant;
+
+    return {
+      participantId: participant.id,
+      activityName: participant.activity.name,
+      groupName: gm.activityGroup.name,
+      registeredAt: gm.createdAt.toISOString(),
+      attendances: participant.attendances.map((attendance) => ({
+        date: attendance.activityDay.date.toISOString(),
+        schedule: attendance.activityDay.schedule,
+        status: attendance.status,
+        confirmedAt: attendance.confirmedAt?.toISOString() ?? null,
+        cancelled: attendance.activityDay.cancelled,
+        groupName: attendance.activityDay.activityGroup?.name ?? null,
+      })),
+    };
+  }
 
   for (const gm of groupMembers) {
     const ap = gm.activityParticipant;
     const activityName = ap.activity.name;
+    const historyEntry = buildParticipantHistory(gm);
 
     if (ap.child) {
       const existing = childrenMap.get(ap.child.id);
       if (existing) {
         existing.activitiesSet.add(activityName);
+        existing.history.push(historyEntry);
       } else {
         childrenMap.set(ap.child.id, {
           childId: ap.child.id,
@@ -227,12 +265,14 @@ export default async function ProfessorStudentsPage() {
           parentEmail: ap.user.email,
           parentDni: ap.user.dni,
           activitiesSet: new Set([activityName]),
+          history: [historyEntry],
         });
       }
     } else {
       const existing = adultsMap.get(ap.user.id);
       if (existing) {
         existing.activitiesSet.add(activityName);
+        existing.history.push(historyEntry);
       } else {
         adultsMap.set(ap.user.id, {
           userId: ap.user.id,
@@ -242,6 +282,7 @@ export default async function ProfessorStudentsPage() {
           email: ap.user.email,
           dni: ap.user.dni,
           activitiesSet: new Set([activityName]),
+          history: [historyEntry],
         });
       }
     }
@@ -314,6 +355,7 @@ export default async function ProfessorStudentsPage() {
         parentDni: c.parentDni,
         tutors: tutorsByResponsible.get(c.parentId) ?? [],
         activities: Array.from(c.activitiesSet),
+        history: c.history,
       })
     ),
     ...Array.from(adultsMap.values()).map(
@@ -327,6 +369,7 @@ export default async function ProfessorStudentsPage() {
         dni: u.dni,
         tutors: tutorsByResponsible.get(u.userId) ?? [],
         activities: Array.from(u.activitiesSet),
+        history: u.history,
       })
     ),
   ].sort((a, b) => {

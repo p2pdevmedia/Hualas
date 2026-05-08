@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { MessageCircle } from 'lucide-react';
+import { History, MessageCircle, X } from 'lucide-react';
 import { Select } from '@/components/ui/select';
 
 type Tutor = {
@@ -10,6 +10,21 @@ type Tutor = {
   phone: string | null;
   email: string;
   relationship: string;
+};
+
+type StudentHistoryEntry = {
+  participantId: string;
+  activityName: string;
+  groupName: string;
+  registeredAt: string;
+  attendances: {
+    date: string;
+    schedule: string;
+    status: 'PENDING' | 'GOING' | 'NOT_GOING';
+    confirmedAt: string | null;
+    cancelled: boolean;
+    groupName: string | null;
+  }[];
 };
 
 export type ProfessorGroupEntry = {
@@ -113,6 +128,7 @@ export type StudentEntry =
       parentDni: string | null;
       tutors: Tutor[];
       activities: string[];
+      history: StudentHistoryEntry[];
     }
   | {
       type: 'adult';
@@ -124,6 +140,7 @@ export type StudentEntry =
       dni: string | null;
       tutors: Tutor[];
       activities: string[];
+      history: StudentHistoryEntry[];
     };
 
 function normalize(s: string) {
@@ -160,6 +177,73 @@ function matches(student: StudentEntry, query: string): boolean {
   return false;
 }
 
+function getStudentKey(student: StudentEntry) {
+  return student.type === 'child' ? student.childId : student.userId;
+}
+
+function getStudentFullName(student: StudentEntry) {
+  return `${student.name} ${student.lastName ?? ''}`.trim() || 'Sin nombre';
+}
+
+function getResponsibleUserId(student: StudentEntry) {
+  return student.type === 'child' ? student.parentId : student.userId;
+}
+
+function getContactPhone(student: StudentEntry) {
+  return student.type === 'child' ? student.parentPhone : student.phone;
+}
+
+function getWhatsAppHref(phone: string | null) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
+}
+
+function formatHistoryDate(date: string) {
+  return new Date(date).toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function WhatsAppLineIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M5.2 18.8 6.1 15A7.6 7.6 0 1 1 9 17.9l-3.8.9Z" />
+      <path d="M9.2 8.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.6 1.4c.1.2.1.4-.1.6l-.4.5c.5.9 1.2 1.6 2.2 2.1l.5-.5c.2-.2.4-.2.6-.1l1.4.7c.3.1.4.3.4.6v.4c0 .3-.1.5-.4.7-.4.3-1 .5-1.7.4-2.9-.4-5.1-2.6-5.5-5.4-.1-.6.1-1.2.4-1.6Z" />
+    </svg>
+  );
+}
+
+const attendanceLabels: Record<
+  StudentHistoryEntry['attendances'][number]['status'],
+  string
+> = {
+  GOING: 'Asistió',
+  NOT_GOING: 'No asistió',
+  PENDING: 'Sin confirmar',
+};
+
+const attendanceClasses: Record<
+  StudentHistoryEntry['attendances'][number]['status'],
+  string
+> = {
+  GOING: 'border-green-500/30 bg-green-500/10 text-green-700',
+  NOT_GOING: 'border-destructive/30 bg-destructive/10 text-destructive',
+  PENDING: 'border-border bg-muted text-muted-foreground',
+};
+
 export default function StudentsSearch({
   students,
   groups,
@@ -173,6 +257,9 @@ export default function StudentsSearch({
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
   const [professorsExpanded, setProfessorsExpanded] = useState(false);
   const [schedulesExpanded, setSchedulesExpanded] = useState(false);
+  const [historyStudent, setHistoryStudent] = useState<StudentEntry | null>(
+    null
+  );
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -268,132 +355,169 @@ export default function StudentsSearch({
               </p>
               <ul className="space-y-3">
                 {visible.map((student) => {
-                  const fullName =
-                    `${student.name} ${student.lastName ?? ''}`.trim() ||
-                    'Sin nombre';
+                  const fullName = getStudentFullName(student);
                   const href =
                     student.type === 'child'
                       ? `/professor/students/child/${student.childId}`
                       : `/professor/students/parent/${student.userId}`;
+                  const responsibleUserId = getResponsibleUserId(student);
+                  const whatsappHref = getWhatsAppHref(
+                    getContactPhone(student)
+                  );
 
                   return (
-                    <li
-                      key={
-                        student.type === 'child'
-                          ? student.childId
-                          : student.userId
-                      }
-                    >
-                      <Link
-                        href={href}
-                        className="flex items-start justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm hover:border-primary/50 hover:bg-primary/5 transition-colors"
-                      >
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium">{fullName}</span>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                                student.type === 'child'
-                                  ? 'bg-sky-100 text-sky-700'
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}
-                            >
-                              {student.type === 'child' ? 'Alumno' : 'Adulto'}
-                            </span>
-                          </div>
-
-                          {student.type === 'child' && (
-                            <div className="space-y-0.5">
-                              <p className="text-sm text-muted-foreground">
-                                <span className="text-xs uppercase tracking-wide mr-1">
-                                  Responsable:
-                                </span>
-                                <span className="font-medium text-foreground">
-                                  {student.parentName}
-                                </span>
-                                {student.parentPhone && (
-                                  <span> · {student.parentPhone}</span>
-                                )}
-                              </p>
-                              {student.tutors.map((t, i) => {
-                                const relLabel: Record<string, string> = {
-                                  PARENT: 'Madre/Padre',
-                                  RESPONSIBLE: 'Responsable',
-                                  OTHER: 'Tutor/a',
-                                };
-                                return (
-                                  <p
-                                    key={i}
-                                    className="text-sm text-muted-foreground"
-                                  >
-                                    <span className="text-xs uppercase tracking-wide mr-1">
-                                      {relLabel[t.relationship] ??
-                                        t.relationship}
-                                      :
-                                    </span>
-                                    <span className="font-medium text-foreground">
-                                      {t.name}
-                                    </span>
-                                    {t.phone && <span> · {t.phone}</span>}
-                                  </p>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {student.type === 'adult' && (
-                            <div className="space-y-0.5">
-                              {student.phone && (
-                                <p className="text-sm text-muted-foreground">
-                                  {student.phone}
-                                </p>
-                              )}
-                              {student.tutors.map((t, i) => {
-                                const relLabel: Record<string, string> = {
-                                  PARENT: 'Madre/Padre',
-                                  RESPONSIBLE: 'Responsable',
-                                  OTHER: 'Tutor/a',
-                                };
-                                return (
-                                  <p
-                                    key={i}
-                                    className="text-sm text-muted-foreground"
-                                  >
-                                    <span className="text-xs uppercase tracking-wide mr-1">
-                                      {relLabel[t.relationship] ??
-                                        t.relationship}
-                                      :
-                                    </span>
-                                    <span className="font-medium text-foreground">
-                                      {t.name}
-                                    </span>
-                                    {t.phone && <span> · {t.phone}</span>}
-                                  </p>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {student.activities.map((act) => (
+                    <li key={getStudentKey(student)}>
+                      <div className="rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <Link
+                            href={href}
+                            className="min-w-0 flex-1 space-y-1"
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium">{fullName}</span>
                               <span
-                                key={act}
-                                className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                                  student.type === 'child'
+                                    ? 'bg-sky-100 text-sky-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}
                               >
-                                {act}
+                                {student.type === 'child' ? 'Alumno' : 'Adulto'}
                               </span>
-                            ))}
+                            </div>
+
+                            {student.type === 'child' && (
+                              <div className="space-y-0.5">
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="text-xs uppercase tracking-wide mr-1">
+                                    Responsable:
+                                  </span>
+                                  <span className="font-medium text-foreground">
+                                    {student.parentName}
+                                  </span>
+                                  {student.parentPhone && (
+                                    <span> · {student.parentPhone}</span>
+                                  )}
+                                </p>
+                                {student.tutors.map((t, i) => {
+                                  const relLabel: Record<string, string> = {
+                                    PARENT: 'Madre/Padre',
+                                    RESPONSIBLE: 'Responsable',
+                                    OTHER: 'Tutor/a',
+                                  };
+                                  return (
+                                    <p
+                                      key={i}
+                                      className="text-sm text-muted-foreground"
+                                    >
+                                      <span className="text-xs uppercase tracking-wide mr-1">
+                                        {relLabel[t.relationship] ??
+                                          t.relationship}
+                                        :
+                                      </span>
+                                      <span className="font-medium text-foreground">
+                                        {t.name}
+                                      </span>
+                                      {t.phone && <span> · {t.phone}</span>}
+                                    </p>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {student.type === 'adult' && (
+                              <div className="space-y-0.5">
+                                {student.phone && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {student.phone}
+                                  </p>
+                                )}
+                                {student.tutors.map((t, i) => {
+                                  const relLabel: Record<string, string> = {
+                                    PARENT: 'Madre/Padre',
+                                    RESPONSIBLE: 'Responsable',
+                                    OTHER: 'Tutor/a',
+                                  };
+                                  return (
+                                    <p
+                                      key={i}
+                                      className="text-sm text-muted-foreground"
+                                    >
+                                      <span className="text-xs uppercase tracking-wide mr-1">
+                                        {relLabel[t.relationship] ??
+                                          t.relationship}
+                                        :
+                                      </span>
+                                      <span className="font-medium text-foreground">
+                                        {t.name}
+                                      </span>
+                                      {t.phone && <span> · {t.phone}</span>}
+                                    </p>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {student.activities.map((act) => (
+                                <span
+                                  key={act}
+                                  className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                >
+                                  {act}
+                                </span>
+                              ))}
+                            </div>
+                          </Link>
+
+                          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                            {student.type === 'child' && student.birthDate && (
+                              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                {new Date(student.birthDate).toLocaleDateString(
+                                  'es-AR'
+                                )}
+                              </span>
+                            )}
+                            {whatsappHref ? (
+                              <a
+                                href={whatsappHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Contactar por WhatsApp a ${fullName}`}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-500/30 text-emerald-700 transition-colors hover:bg-emerald-500/10"
+                              >
+                                <WhatsAppLineIcon className="h-4 w-4" />
+                              </a>
+                            ) : (
+                              <span
+                                aria-label="Sin teléfono para WhatsApp"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-full border text-muted-foreground opacity-40"
+                              >
+                                <WhatsAppLineIcon className="h-4 w-4" />
+                              </span>
+                            )}
+                            <Link
+                              href={`/chat?with=${responsibleUserId}`}
+                              aria-label={`Chatear con ${
+                                student.type === 'child'
+                                  ? student.parentName
+                                  : fullName
+                              }`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setHistoryStudent(student)}
+                              className="inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <History className="h-4 w-4" />
+                              Historial
+                            </button>
                           </div>
                         </div>
-
-                        {student.type === 'child' && student.birthDate && (
-                          <span className="shrink-0 text-xs text-muted-foreground mt-1">
-                            {new Date(student.birthDate).toLocaleDateString(
-                              'es-AR'
-                            )}
-                          </span>
-                        )}
-                      </Link>
+                      </div>
                     </li>
                   );
                 })}
@@ -719,6 +843,115 @@ export default function StudentsSearch({
               )}
             </>
           )}
+        </div>
+      )}
+
+      {historyStudent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="student-history-title"
+          onClick={() => setHistoryStudent(null)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border bg-background p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-primary">Historial</p>
+                <h2
+                  id="student-history-title"
+                  className="text-xl font-semibold"
+                >
+                  {getStudentFullName(historyStudent)}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Actividades, grupos y asistencias registradas para este
+                  participante.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHistoryStudent(null)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Cerrar historial"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {historyStudent.history.length === 0 ? (
+                <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
+                  No hay historial cargado para este participante.
+                </p>
+              ) : (
+                historyStudent.history.map((entry) => (
+                  <section
+                    key={entry.participantId}
+                    className="rounded-xl border bg-card p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-medium">{entry.activityName}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Grupo: {entry.groupName}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                        Inscripción: {formatHistoryDate(entry.registeredAt)}
+                      </span>
+                    </div>
+
+                    {entry.attendances.length === 0 ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        Sin asistencias registradas todavía.
+                      </p>
+                    ) : (
+                      <ul className="mt-3 space-y-2">
+                        {entry.attendances.map((attendance) => (
+                          <li
+                            key={`${entry.participantId}-${attendance.date}-${attendance.schedule}`}
+                            className="rounded-lg bg-muted/60 p-3 text-sm"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium capitalize">
+                                {formatHistoryDate(attendance.date)}
+                              </span>
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
+                                  attendanceClasses[attendance.status]
+                                }`}
+                              >
+                                {attendance.cancelled
+                                  ? 'Cancelado'
+                                  : attendanceLabels[attendance.status]}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground">
+                              {attendance.schedule}
+                              {attendance.groupName &&
+                              attendance.groupName !== entry.groupName
+                                ? ` · ${attendance.groupName}`
+                                : ''}
+                            </p>
+                            {attendance.confirmedAt && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Confirmado:{' '}
+                                {formatHistoryDate(attendance.confirmedAt)}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
