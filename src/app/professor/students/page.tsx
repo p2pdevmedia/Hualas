@@ -139,6 +139,12 @@ export default async function ProfessorStudentsPage() {
               },
             },
           },
+          attendances: {
+            select: {
+              activityParticipantId: true,
+              status: true,
+            },
+          },
         },
       },
       members: {
@@ -341,7 +347,36 @@ export default async function ProfessorStudentsPage() {
       }
     >();
 
+    const attendanceSummaryByParticipantId = new Map<
+      string,
+      { attended: number; missed: number }
+    >();
+
     for (const day of group.days) {
+      for (const attendance of day.attendances) {
+        if (
+          attendance.status !== 'GOING' &&
+          attendance.status !== 'NOT_GOING'
+        ) {
+          continue;
+        }
+
+        const summary = attendanceSummaryByParticipantId.get(
+          attendance.activityParticipantId
+        ) ?? { attended: 0, missed: 0 };
+
+        if (attendance.status === 'GOING') {
+          summary.attended += 1;
+        } else {
+          summary.missed += 1;
+        }
+
+        attendanceSummaryByParticipantId.set(
+          attendance.activityParticipantId,
+          summary
+        );
+      }
+
       for (const professor of day.professors) {
         const existing = professorsById.get(professor.userId);
         if (existing) {
@@ -392,6 +427,12 @@ export default async function ProfessorStudentsPage() {
               name: formatFullName(participant.child),
               age: calculateAge(participant.child.birthDate),
               responsibleName: formatFullName(participant.user),
+              attendanceSummary: attendanceSummaryByParticipantId.get(
+                participant.id
+              ) ?? {
+                attended: 0,
+                missed: 0,
+              },
             };
           }
 
@@ -401,6 +442,12 @@ export default async function ProfessorStudentsPage() {
             name: formatFullName(participant.user),
             age: calculateAge(participant.user.birthDate),
             responsibleName: null,
+            attendanceSummary: attendanceSummaryByParticipantId.get(
+              participant.id
+            ) ?? {
+              attended: 0,
+              missed: 0,
+            },
           };
         })
         .sort((a, b) => a.name.localeCompare(b.name, 'es')),
