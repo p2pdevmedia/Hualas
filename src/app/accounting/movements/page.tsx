@@ -209,21 +209,21 @@ export default async function MovementsPage({
 
   const whereSql =
     filters.length > 0
-      ? Prisma.join(filters, Prisma.sql` AND `)
+      ? Prisma.join(filters, ' AND ')
       : Prisma.sql`TRUE`;
 
   const [countRows, historyRows] = await Promise.all([
     prisma.$queryRaw<CountRow[]>`
       SELECT COUNT(*)::int AS "count"
       FROM (
-        ${Prisma.join(historyBranches, Prisma.sql`\nUNION ALL\n`)}
+        ${Prisma.join(historyBranches, '\nUNION ALL\n')}
       ) AS entry
       WHERE ${whereSql}
     `,
     prisma.$queryRaw<HistoryRow[]>`
       SELECT *
       FROM (
-        ${Prisma.join(historyBranches, Prisma.sql`\nUNION ALL\n`)}
+        ${Prisma.join(historyBranches, '\nUNION ALL\n')}
       ) AS entry
       WHERE ${whereSql}
       ORDER BY entry."date" DESC NULLS LAST, entry."id" DESC
