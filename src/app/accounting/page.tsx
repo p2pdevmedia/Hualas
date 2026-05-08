@@ -11,6 +11,7 @@ import {
   getAccountingUserProfileHref,
   formatPersonName,
   getAccountingPaymentDate,
+  normalizeAccountingMovementAmount,
   isAccountingRole,
   movementTypeClass,
   movementTypeLabel,
@@ -160,10 +161,16 @@ export default async function AccountingDashboardPage({
   );
   const totalMovementIncome = monthMovements
     .filter((movement) => movement.type === 'INCOME')
-    .reduce((sum, movement) => sum + movement.amount, 0);
+    .reduce(
+      (sum, movement) => sum + normalizeAccountingMovementAmount(movement),
+      0
+    );
   const totalMovementExpense = monthMovements
     .filter((movement) => movement.type === 'EXPENSE')
-    .reduce((sum, movement) => sum + movement.amount, 0);
+    .reduce(
+      (sum, movement) => sum + normalizeAccountingMovementAmount(movement),
+      0
+    );
   const totalProfessorExpense = monthProfessorPayments.reduce(
     (sum, p) => sum + p.amount,
     0
@@ -179,7 +186,7 @@ export default async function AccountingDashboardPage({
       type: movement.type,
       category: movement.category,
       description: movement.description,
-      amount: movement.amount,
+      amount: normalizeAccountingMovementAmount(movement),
       receiptUrl: movement.receiptImage
         ? buildAccountingMovementReceiptUrl(movement.id)
         : null,

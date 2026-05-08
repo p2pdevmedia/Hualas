@@ -1,9 +1,13 @@
-import type { MovementType } from './accounting';
+import {
+  normalizeAccountingMovementAmount,
+  type MovementType,
+} from './accounting';
 
 export type AccountingMovementLike = {
   id: string;
   date: Date | string;
   amount: number;
+  createdAt?: Date | string | null;
   type: MovementType;
   category: string;
   description: string;
@@ -112,12 +116,18 @@ export function summarizeAccounting({
   mpPayments,
   professorPayments = [],
 }: AccountingSummaryInput): AccountingSummary {
-  const movementIncome = sumAmounts(
-    movements.filter((movement) => movement.type === 'INCOME')
-  );
-  const movementExpense = sumAmounts(
-    movements.filter((movement) => movement.type === 'EXPENSE')
-  );
+  const movementIncome = movements
+    .filter((movement) => movement.type === 'INCOME')
+    .reduce(
+      (sum, movement) => sum + normalizeAccountingMovementAmount(movement),
+      0
+    );
+  const movementExpense = movements
+    .filter((movement) => movement.type === 'EXPENSE')
+    .reduce(
+      (sum, movement) => sum + normalizeAccountingMovementAmount(movement),
+      0
+    );
   const manualIncome = sumAmounts(manualPayments);
   const mpIncome = sumAmounts(mpPayments);
   const professorExpense = sumAmounts(professorPayments);
@@ -153,7 +163,7 @@ export function buildAccountingReportEntries({
       type: movement.type,
       category: movement.category,
       description: movement.description,
-      amount: movement.amount,
+      amount: normalizeAccountingMovementAmount(movement),
       reference: movement.receiptNumber ?? null,
     })),
     ...manualPayments.map((payment) => ({

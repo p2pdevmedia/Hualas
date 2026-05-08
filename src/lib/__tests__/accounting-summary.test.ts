@@ -53,6 +53,7 @@ describe('accounting summary helpers', () => {
       movementExpense: 250,
       manualIncome: 400,
       mpIncome: 600,
+      professorExpense: 0,
       totalIncome: 2000,
       totalExpense: 250,
       netBalance: 1750,
@@ -168,5 +169,44 @@ describe('accounting summary helpers', () => {
         createdAt: '2026-05-01T12:00:00.000Z',
       })?.toISOString()
     ).toBe('2026-05-01T12:00:00.000Z');
+  });
+
+  it('normalizes legacy movement amounts in summaries and export entries', () => {
+    const summary = summarizeAccounting({
+      movements: [
+        {
+          id: 'legacy-movement',
+          date: '2026-05-07T10:00:00.000Z',
+          createdAt: '2026-05-07T10:00:00.000Z',
+          amount: 18,
+          type: 'INCOME',
+          category: 'Cuotas',
+          description: 'Movimiento legacy',
+        },
+      ],
+      manualPayments: [],
+      mpPayments: [],
+    });
+
+    expect(summary.movementIncome).toBe(1800);
+    expect(summary.totalIncome).toBe(1800);
+
+    expect(
+      buildAccountingReportEntries({
+        movements: [
+          {
+            id: 'legacy-movement',
+            date: '2026-05-07T10:00:00.000Z',
+            createdAt: '2026-05-07T10:00:00.000Z',
+            amount: 18,
+            type: 'INCOME',
+            category: 'Cuotas',
+            description: 'Movimiento legacy',
+          },
+        ],
+        manualPayments: [],
+        mpPayments: [],
+      })[0].amount
+    ).toBe(1800);
   });
 });

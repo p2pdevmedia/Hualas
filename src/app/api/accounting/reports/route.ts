@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import {
   getAccountingManualPaymentAmount,
   getAccountingPaymentDate,
+  normalizeAccountingMovementAmount,
   isAccountingRole,
 } from '@/lib/accounting';
 import {
@@ -173,7 +174,6 @@ export async function GET(request: Request) {
     totalMp,
     totalProfessorExpense: summary.professorExpense,
     byCategory,
-    movements,
     manualPayments: manualIncomePayments,
     professorPayments: reportProfessorPayments,
     mpPayments: mpPayments.map((p) => ({
@@ -185,6 +185,10 @@ export async function GET(request: Request) {
       participantName: p.child
         ? `${p.child.name} ${p.child.lastName ?? ''}`.trim()
         : `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim(),
+    })),
+    movements: movements.map((movement) => ({
+      ...movement,
+      amount: normalizeAccountingMovementAmount(movement),
     })),
     entries,
   });
