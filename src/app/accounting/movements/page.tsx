@@ -4,10 +4,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import {
-  isAccountingRole,
-  normalizeAccountingMovementAmount,
-} from '@/lib/accounting';
+import { isAccountingRole } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
 import MovementsTable from './movements-table';
 import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
@@ -109,7 +106,7 @@ export default async function MovementsPage({
         movements={movements.map((movement) => ({
           id: movement.id,
           date: movement.date.toISOString(),
-          amount: normalizeAccountingMovementAmount(movement),
+          amount: movement.amount,
           type: movement.type,
           category: movement.category,
           description: movement.description,

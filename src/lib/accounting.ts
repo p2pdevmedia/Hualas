@@ -53,36 +53,6 @@ export function formatAmount(centavos: number): string {
   return formatCurrencyFromCents(centavos);
 }
 
-// Movements created before the centavos rollout were stored in pesos.
-// This boundary marks the moment the rollout became active in the app.
-const ACCOUNTING_MOVEMENT_CENTAVOS_ROLLOUT_AT = new Date(
-  '2026-05-08T17:18:07.000Z'
-);
-
-export function normalizeAccountingMovementAmount(
-  movement:
-    | {
-        amount: number;
-        createdAt?: Date | string | null;
-      }
-    | null
-    | undefined
-): number {
-  if (!movement) return 0;
-
-  const amount = movement.amount;
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return 0;
-  }
-
-  const createdAt = movement.createdAt ? new Date(movement.createdAt) : null;
-  if (createdAt && createdAt < ACCOUNTING_MOVEMENT_CENTAVOS_ROLLOUT_AT) {
-    return amount * 100;
-  }
-
-  return amount;
-}
-
 export function formatAccountingDate(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
   return new Intl.DateTimeFormat('es-AR', {

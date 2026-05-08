@@ -1,5 +1,4 @@
 import {
-  normalizeAccountingMovementAmount,
   getAccountingManualPaymentAmount,
   getAccountingPaymentDate,
   getFamilyGroupMemberCount,
@@ -22,24 +21,6 @@ describe('accounting helpers', () => {
         order: { total: 9 },
       })
     ).toBe(900);
-  });
-
-  it('normalizes legacy accounting movement amounts created before the cents rollout', () => {
-    expect(
-      normalizeAccountingMovementAmount({
-        amount: 18,
-        createdAt: '2026-05-08T12:00:00.000Z',
-      })
-    ).toBe(1800);
-  });
-
-  it('keeps newer accounting movement amounts unchanged', () => {
-    expect(
-      normalizeAccountingMovementAmount({
-        amount: 1800,
-        createdAt: '2026-05-08T18:00:00.000Z',
-      })
-    ).toBe(1800);
   });
 
   it('falls back to updatedAt or createdAt for manual payment dates', () => {

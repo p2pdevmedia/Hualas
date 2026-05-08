@@ -2,10 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import {
-  isAccountingRole,
-  normalizeAccountingMovementAmount,
-} from '@/lib/accounting';
+import { isAccountingRole } from '@/lib/accounting';
 import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
 import MovementForm from '../../movement-form';
 
@@ -34,7 +31,7 @@ export default async function EditMovementPage({
         movement={{
           id: movement.id,
           date: movement.date.toISOString().split('T')[0],
-          amount: normalizeAccountingMovementAmount(movement),
+          amount: movement.amount,
           type: movement.type,
           category: movement.category,
           description: movement.description,

@@ -6,7 +6,6 @@ import { prisma } from '@/lib/prisma';
 import {
   getAccountingManualPaymentAmount,
   getAccountingPaymentDate,
-  normalizeAccountingMovementAmount,
   isAccountingRole,
 } from '@/lib/accounting';
 import {
@@ -186,10 +185,7 @@ export async function GET(request: Request) {
         ? `${p.child.name} ${p.child.lastName ?? ''}`.trim()
         : `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim(),
     })),
-    movements: movements.map((movement) => ({
-      ...movement,
-      amount: normalizeAccountingMovementAmount(movement),
-    })),
+    movements,
     entries,
   });
 }

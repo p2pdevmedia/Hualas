@@ -170,43 +170,4 @@ describe('accounting summary helpers', () => {
       })?.toISOString()
     ).toBe('2026-05-01T12:00:00.000Z');
   });
-
-  it('normalizes legacy movement amounts in summaries and export entries', () => {
-    const summary = summarizeAccounting({
-      movements: [
-        {
-          id: 'legacy-movement',
-          date: '2026-05-07T10:00:00.000Z',
-          createdAt: '2026-05-07T10:00:00.000Z',
-          amount: 18,
-          type: 'INCOME',
-          category: 'Cuotas',
-          description: 'Movimiento legacy',
-        },
-      ],
-      manualPayments: [],
-      mpPayments: [],
-    });
-
-    expect(summary.movementIncome).toBe(1800);
-    expect(summary.totalIncome).toBe(1800);
-
-    expect(
-      buildAccountingReportEntries({
-        movements: [
-          {
-            id: 'legacy-movement',
-            date: '2026-05-07T10:00:00.000Z',
-            createdAt: '2026-05-07T10:00:00.000Z',
-            amount: 18,
-            type: 'INCOME',
-            category: 'Cuotas',
-            description: 'Movimiento legacy',
-          },
-        ],
-        manualPayments: [],
-        mpPayments: [],
-      })[0].amount
-    ).toBe(1800);
-  });
 });
