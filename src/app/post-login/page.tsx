@@ -1,11 +1,9 @@
 import { getServerSession } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getPostLoginRedirectUrl } from '@/lib/post-login-redirect';
 
-export async function GET() {
+export default async function PostLoginPage() {
   const session = await getServerSession(authOptions);
-  const redirectUrl = await getPostLoginRedirectUrl(session);
-
-  return NextResponse.json({ redirectUrl }, { status: session ? 200 : 401 });
+  redirect(await getPostLoginRedirectUrl(session));
 }

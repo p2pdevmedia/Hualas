@@ -123,7 +123,7 @@ export default function LoginPage() {
 
           <Button
             className="w-full flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-muted"
-            onClick={() => signIn('google', { callbackUrl: '/' })}
+            onClick={() => signIn('google', { callbackUrl: '/post-login' })}
           >
             <Image src="/google.svg" alt="Google logo" width={18} height={18} />
             {t.signInWithGoogle}
