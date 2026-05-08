@@ -5,20 +5,20 @@ import {
 } from '../accounting';
 
 describe('accounting helpers', () => {
-  it('normalizes legacy manual payment amounts stored in pesos', () => {
+  it('returns the raw manual payment amount when it is present', () => {
     expect(
       getAccountingManualPaymentAmount({
         amount: 18,
         order: { total: 18 },
       })
-    ).toBe(1800);
+    ).toBe(18);
   });
 
   it('falls back to order total when the payment amount is zero', () => {
     expect(
       getAccountingManualPaymentAmount({
         amount: 0,
-        order: { total: 9 },
+        order: { total: 900 },
       })
     ).toBe(900);
   });

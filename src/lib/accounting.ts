@@ -73,16 +73,7 @@ export function getAccountingManualPaymentAmount(
 ): number {
   if (!payment) return 0;
 
-  const rawAmount =
-    payment.amount !== 0 ? payment.amount : (payment.order?.total ?? 0);
-
-  // Legacy manual payments may have been stored in pesos instead of cents.
-  // If amount matches order total exactly, treat it as pesos and normalize.
-  if (payment.order?.total != null && rawAmount === payment.order.total) {
-    return rawAmount * 100;
-  }
-
-  return rawAmount;
+  return payment.amount !== 0 ? payment.amount : (payment.order?.total ?? 0);
 }
 
 export function formatPersonName(
