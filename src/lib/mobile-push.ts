@@ -1,5 +1,5 @@
 import { connect, type ClientHttp2Session } from 'node:http2';
-import { createPrivateKey, createSign, type BinaryLike } from 'node:crypto';
+import { createPrivateKey, createSign } from 'node:crypto';
 import type { NotificationType } from '@prisma/client';
 
 export type MobilePushDevice = {
@@ -106,7 +106,9 @@ function getJwt(config: ApnsConfig): string {
   return token;
 }
 
-function base64Url(value: string | BinaryLike): string {
+function base64Url(value: string): string;
+function base64Url(value: Uint8Array): string;
+function base64Url(value: string | Uint8Array): string {
   return Buffer.from(value).toString('base64url');
 }
 
