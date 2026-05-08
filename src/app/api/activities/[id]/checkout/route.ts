@@ -20,6 +20,7 @@ import {
   checkChildProfile,
 } from '@/lib/participant-profile-check';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { centsToPesos } from '@/lib/accounting';
 
 type CheckoutItem = {
   activityId: string;
@@ -194,7 +195,8 @@ export async function GET(
     }
   }
 
-  const unitPrice = Number(activity.price);
+  const unitPriceCents = Number(activity.price);
+  const unitPrice = centsToPesos(unitPriceCents);
 
   const participant = normalizeSocialFeeParticipant({
     userId: (session.user as any).id,
@@ -205,7 +207,7 @@ export async function GET(
   const socialFeeAmount = shouldChargeSocialFee
     ? await getSocialFeeAmount()
     : 0;
-  if (!unitPrice || unitPrice <= 0) {
+  if (!unitPriceCents || unitPriceCents <= 0) {
     return NextResponse.json(
       { error: 'El precio de la actividad no es válido.' },
       { status: 400 }
@@ -252,20 +254,21 @@ export async function GET(
         title: 'Cuota social mensual',
         description: 'Cuota social mensual, individual y obligatoria.',
         quantity: 1,
-        unit_price: socialFeeAmount,
+        unit_price: centsToPesos(socialFeeAmount),
         currency_id: 'ARS',
         category_id: 'services',
       });
     }
 
-    const mpFeeAmount = Math.round((unitPrice + socialFeeAmount) * 0.1);
+    const mpFeeAmount = Math.round((unitPriceCents + socialFeeAmount) * 0.1);
+    const mpFeePrice = centsToPesos(mpFeeAmount);
     if (mpFeeAmount > 0) {
       items.push({
         id: 'mp-fee',
         title: 'Cargos de servicios externos Mercado Libre',
         description: 'Cargos de servicios externos Mercado Libre',
         quantity: 1,
-        unit_price: mpFeeAmount,
+        unit_price: mpFeePrice,
         currency_id: 'ARS',
         category_id: 'services',
       });

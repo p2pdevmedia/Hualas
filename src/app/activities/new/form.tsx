@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SPORT_ICONS } from '@/lib/sport-icons';
+import { pesosToCents } from '@/lib/accounting';
 import ProfessorPicker from '../professor-picker';
 
 type ProfessorOption = {
@@ -267,7 +268,7 @@ export default function CreateActivityForm({
           endDate,
           activityType,
           description: description || undefined,
-          price: Number(price),
+          price: pesosToCents(Number(price)),
           professorIds,
           groups: groups.map((group) => ({
             tempId: group.tempId,
@@ -373,11 +374,12 @@ export default function CreateActivityForm({
 
       <input
         type="number"
-        placeholder="Precio"
+        placeholder="Precio en pesos"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
         className={inputClass}
         min={0}
+        step="0.01"
         required
       />
 

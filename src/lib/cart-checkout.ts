@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { centsToPesos } from '@/lib/accounting';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import {
@@ -551,7 +552,7 @@ export function toMercadoPagoItems(quote: CartQuote) {
     id: line.id,
     title: line.name,
     quantity: 1,
-    unit_price: line.amount,
+    unit_price: centsToPesos(line.amount),
     currency_id: 'ARS' as const,
     category_id: 'services' as const,
   }));
@@ -560,7 +561,7 @@ export function toMercadoPagoItems(quote: CartQuote) {
     id: `social-fee:${line.participant.userId}:${line.participant.childId ?? 'self'}`,
     title: line.label,
     quantity: 1,
-    unit_price: line.amount,
+    unit_price: centsToPesos(line.amount),
     currency_id: 'ARS' as const,
     category_id: 'services' as const,
   }));
@@ -569,7 +570,7 @@ export function toMercadoPagoItems(quote: CartQuote) {
     id: `discount:${index}`,
     title: line.label,
     quantity: 1,
-    unit_price: -line.amount,
+    unit_price: -centsToPesos(line.amount),
     currency_id: 'ARS' as const,
     category_id: 'services' as const,
   }));
@@ -578,7 +579,7 @@ export function toMercadoPagoItems(quote: CartQuote) {
     id: `mp-fee:${index}`,
     title: line.label,
     quantity: 1,
-    unit_price: line.amount,
+    unit_price: centsToPesos(line.amount),
     currency_id: 'ARS' as const,
     category_id: 'services' as const,
   }));

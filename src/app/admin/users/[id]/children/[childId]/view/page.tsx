@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ChildInfoSection from '@/components/child-info-section';
+import { formatAmount } from '@/lib/accounting';
 
 export default async function ViewChildPage({
   params,
@@ -320,8 +321,8 @@ export default async function ViewChildPage({
               <li key={ap.id} className="py-2 text-sm">
                 <span className="font-medium">{ap.activity.name}</span>
                 <span className="text-muted-foreground text-xs block mt-0.5">
-                  {ap.activity.date.toLocaleDateString('es-AR')} · $
-                  {ap.activity.price}
+                  {ap.activity.date.toLocaleDateString('es-AR')} ·{' '}
+                  {formatAmount(ap.activity.price)}
                 </span>
               </li>
             ))}

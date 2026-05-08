@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import DeleteActivityButton from './delete-activity-button';
+import { formatAmount } from '@/lib/accounting';
 
 type ActivityItem = {
   id: string;
@@ -45,7 +46,7 @@ function ActivitiesList({ activities }: { activities: ActivityItem[] }) {
             <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
               <span>{formatDateRange(activity.date, activity.endDate)}</span>
               <span>·</span>
-              <span>${activity.price}</span>
+              <span>{formatAmount(activity.price)}</span>
               <span>·</span>
               <span>
                 {activity.capacity

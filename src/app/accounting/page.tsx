@@ -155,7 +155,7 @@ export default async function AccountingDashboardPage({
       0
     );
   const totalMp = monthPayments.reduce(
-    (sum, payment) => sum + payment.activity.price * 100,
+    (sum, payment) => sum + payment.activity.price,
     0
   );
   const totalMovementIncome = monthMovements
@@ -438,7 +438,7 @@ export default async function AccountingDashboardPage({
                       </p>
                     </div>
                     <p className="font-semibold">
-                      {formatAmount(payment.activity.price * 100)}
+                      {formatAmount(payment.activity.price)}
                     </p>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">

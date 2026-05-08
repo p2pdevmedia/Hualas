@@ -43,7 +43,11 @@ type QuoteResponse = {
 };
 
 function formatMoney(amount: number) {
-  return `$${Number(amount).toLocaleString('es-AR')}`;
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(amount / 100);
 }
 
 export default function ActivitiesCartPage() {

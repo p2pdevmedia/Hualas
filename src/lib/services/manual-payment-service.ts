@@ -157,30 +157,37 @@ function buildManualPaymentUploadPath(paymentId: string, fileName: string) {
   return `manual-payments/${dateSegment}/${paymentId}/${sanitizeFileName(fileName)}`;
 }
 
-function mapPaymentToReview(payment: {
-  id: string;
-  orderId: string;
-  status: PaymentStatus;
-  amount: number;
-  currency: string;
-  paidAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  payerName: string | null;
-  payerEmail: string | null;
-  receiptUrl: string | null;
-  rawData: Prisma.JsonValue | null;
-  order: {
-    responsibleUserId: string | null;
-    responsibleName: string;
-    responsibleEmail: string;
-    items: Array<{
-      billableConcept: { code: string };
-      activity: { id: string; name: string; description: string | null } | null;
-      description: string;
-    }>;
-  };
-}, childNameById: Map<string, string>): ManualPaymentSummary {
+function mapPaymentToReview(
+  payment: {
+    id: string;
+    orderId: string;
+    status: PaymentStatus;
+    amount: number;
+    currency: string;
+    paidAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    payerName: string | null;
+    payerEmail: string | null;
+    receiptUrl: string | null;
+    rawData: Prisma.JsonValue | null;
+    order: {
+      responsibleUserId: string | null;
+      responsibleName: string;
+      responsibleEmail: string;
+      items: Array<{
+        billableConcept: { code: string };
+        activity: {
+          id: string;
+          name: string;
+          description: string | null;
+        } | null;
+        description: string;
+      }>;
+    };
+  },
+  childNameById: Map<string, string>
+): ManualPaymentSummary {
   const rawData = getManualPaymentRawData(payment.rawData);
   const reviews = getManualPaymentReviews(payment.rawData);
   const validatedItems = rawData.validatedItems ?? [];
@@ -193,9 +200,7 @@ function mapPaymentToReview(payment: {
       const targetId =
         source?.target && source.target !== 'self' ? source.target : null;
       const participantName = targetId
-        ? childNameById.get(targetId) ??
-          source?.targetLabel ??
-          'Menor'
+        ? (childNameById.get(targetId) ?? source?.targetLabel ?? 'Menor')
         : 'Titular';
 
       return {
@@ -355,7 +360,9 @@ export async function listManualPayments({
 
   return {
     total: countRows[0]?.count ?? 0,
-    items: payments.map((payment) => mapPaymentToReview(payment, childNameById)),
+    items: payments.map((payment) =>
+      mapPaymentToReview(payment, childNameById)
+    ),
   };
 }
 
@@ -575,7 +582,7 @@ export async function createManualPaymentCheckout(input: {
           orderId: order.id,
           provider: 'MANUAL_TRANSFER',
           providerPaymentId: null,
-          amount: input.quote.totalAmount * 100,
+          amount: input.quote.totalAmount,
           currency: 'ARS',
           status: 'PENDING',
           payerName:

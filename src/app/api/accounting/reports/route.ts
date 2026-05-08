@@ -130,7 +130,7 @@ export async function GET(request: Request) {
   const reportMpPayments = mpPayments.map((payment) => ({
     id: payment.id,
     receiptDate: payment.receiptDate,
-    amount: payment.activity.price * 100,
+    amount: payment.activity.price,
     participantName: payment.child
       ? `${payment.child.name} ${payment.child.lastName ?? ''}`.trim()
       : `${payment.user.name ?? ''} ${payment.user.lastName ?? ''}`.trim(),
@@ -181,7 +181,7 @@ export async function GET(request: Request) {
       receiptDate: p.receiptDate,
       receipt: p.receipt,
       activityName: p.activity.name,
-      amount: p.activity.price * 100,
+      amount: p.activity.price,
       participantName: p.child
         ? `${p.child.name} ${p.child.lastName ?? ''}`.trim()
         : `${p.user.name ?? ''} ${p.user.lastName ?? ''}`.trim(),

@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { MessageCircle, Phone } from 'lucide-react';
+import { formatAmount } from '@/lib/accounting';
 
 interface ActivityPageProps {
   params: { id: string };
@@ -463,7 +464,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                           Precio
                         </p>
                         <p className="mt-1 text-lg font-semibold">
-                          ${activity.price}
+                          {formatAmount(activity.price)}
                         </p>
                       </div>
                       <div>
