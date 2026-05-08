@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
 import Link from 'next/link';
+import DayParticipantContactCard from './day-participant-contact-card';
 
 export default async function DayGroupInfoPage({
   params,
@@ -14,7 +15,8 @@ export default async function DayGroupInfoPage({
   const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
   if (block) return block;
 
-  const isProfessor = session!.user.role === 'PROFESSOR';
+  const activeRole = session!.user.activeRole ?? session!.user.role;
+  const isProfessor = activeRole === 'PROFESSOR';
 
   const day = await prisma.activityDay.findUnique({
     where: { id: params.dayId },
@@ -44,18 +46,35 @@ export default async function DayGroupInfoPage({
     where: { activityId: params.id },
     include: {
       user: {
-        select: { name: true, lastName: true, email: true, phone: true },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
       },
       child: {
         select: {
           name: true,
           lastName: true,
           user: {
-            select: { name: true, lastName: true, email: true, phone: true },
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            },
           },
         },
       },
       groupMembership: { select: { activityGroupId: true } },
+      reports: {
+        where: { activityDayId: params.dayId },
+        select: { body: true },
+        take: 1,
+      },
     },
     orderBy: { id: 'asc' },
   });
@@ -127,40 +146,21 @@ export default async function DayGroupInfoPage({
               `${contact.name ?? ''}${contact.lastName ? ` ${contact.lastName}` : ''}`.trim();
 
             return (
-              <div
+              <DayParticipantContactCard
                 key={p.id}
-                className="rounded-xl border bg-card px-5 py-4 space-y-2"
-              >
-                <p className="font-semibold text-sm">{displayName}</p>
-                {isChild && contactName && (
-                  <p className="text-xs text-muted-foreground">
-                    Responsable: {contactName}
-                  </p>
-                )}
-                <div className="flex flex-col gap-1">
-                  {contact.email && (
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="text-xs text-link hover:underline underline-offset-4"
-                    >
-                      {contact.email}
-                    </a>
-                  )}
-                  {contact.phone && (
-                    <a
-                      href={`tel:${contact.phone}`}
-                      className="text-xs text-link hover:underline underline-offset-4"
-                    >
-                      {contact.phone}
-                    </a>
-                  )}
-                  {!contact.email && !contact.phone && (
-                    <p className="text-xs text-muted-foreground italic">
-                      Sin datos de contacto
-                    </p>
-                  )}
-                </div>
-              </div>
+                activityId={day.activity.id}
+                dayId={day.id}
+                participant={{
+                  id: p.id,
+                  displayName,
+                  isChild,
+                  contactName,
+                  contactUserId: contact.id,
+                  email: contact.email,
+                  phone: contact.phone,
+                  existingReport: p.reports[0]?.body ?? null,
+                }}
+              />
             );
           })}
         </div>

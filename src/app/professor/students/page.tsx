@@ -103,6 +103,27 @@ export default async function ProfessorStudentsPage() {
       activityParticipant: {
         include: {
           activity: { select: { name: true } },
+          reports: {
+            orderBy: { activityDay: { date: 'desc' } },
+            select: {
+              id: true,
+              body: true,
+              createdAt: true,
+              updatedAt: true,
+              activityDay: {
+                select: {
+                  date: true,
+                  schedule: true,
+                  cancelled: true,
+                  activityGroupId: true,
+                  activityGroup: { select: { name: true } },
+                },
+              },
+              createdBy: {
+                select: { name: true, lastName: true, email: true },
+              },
+            },
+          },
           attendances: {
             orderBy: { activityDay: { date: 'desc' } },
             select: {
@@ -255,23 +276,56 @@ export default async function ProfessorStudentsPage() {
         planificacion: attendance.activityDay.planificacion,
         devolucion: attendance.activityDay.devolucion,
       })),
-      reports: participant.attendances
-        .filter(
-          (attendance) =>
-            attendance.activityDay.activityGroupId === gm.activityGroupId &&
-            Boolean(
-              attendance.activityDay.planificacion ||
-              attendance.activityDay.devolucion
-            )
-        )
-        .map((attendance) => ({
-          date: attendance.activityDay.date.toISOString(),
-          schedule: attendance.activityDay.schedule,
-          cancelled: attendance.activityDay.cancelled,
-          groupName: attendance.activityDay.activityGroup?.name ?? null,
-          planificacion: attendance.activityDay.planificacion,
-          devolucion: attendance.activityDay.devolucion,
-        })),
+      reports: [
+        ...participant.reports
+          .filter(
+            (report) =>
+              !report.activityDay.activityGroupId ||
+              report.activityDay.activityGroupId === gm.activityGroupId
+          )
+          .map((report) => ({
+            id: report.id,
+            type: 'participant' as const,
+            date: report.activityDay.date.toISOString(),
+            schedule: report.activityDay.schedule,
+            cancelled: report.activityDay.cancelled,
+            groupName: report.activityDay.activityGroup?.name ?? null,
+            body: report.body,
+            createdAt: report.createdAt.toISOString(),
+            updatedAt: report.updatedAt.toISOString(),
+            author:
+              [report.createdBy.name, report.createdBy.lastName]
+                .filter(Boolean)
+                .join(' ') || report.createdBy.email,
+            planificacion: null,
+            devolucion: null,
+          })),
+        ...participant.attendances
+          .filter(
+            (attendance) =>
+              (!attendance.activityDay.activityGroupId ||
+                attendance.activityDay.activityGroupId ===
+                  gm.activityGroupId) &&
+              Boolean(
+                attendance.activityDay.planificacion ||
+                attendance.activityDay.devolucion
+              )
+          )
+          .map((attendance) => ({
+            id: `${participant.id}-${attendance.activityDay.date.toISOString()}-${attendance.activityDay.schedule}`,
+            type: 'day' as const,
+            date: attendance.activityDay.date.toISOString(),
+            schedule: attendance.activityDay.schedule,
+            cancelled: attendance.activityDay.cancelled,
+            groupName: attendance.activityDay.activityGroup?.name ?? null,
+            body: null,
+            createdAt: null,
+            updatedAt: null,
+            author: null,
+            planificacion: attendance.activityDay.planificacion,
+            devolucion: attendance.activityDay.devolucion,
+          })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     };
   }
 
