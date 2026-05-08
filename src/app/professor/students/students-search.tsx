@@ -66,6 +66,14 @@ export type ProfessorGroupEntry = {
     cancelled: boolean;
     repeatsWeekly: boolean;
   }[];
+  notes: {
+    id: string;
+    date: string;
+    schedule: string;
+    cancelled: boolean;
+    planificacion: string | null;
+    observacion: string | null;
+  }[];
   participants: {
     id: string;
     type: 'child' | 'adult';
@@ -224,6 +232,15 @@ function formatHistoryDate(date: string) {
   });
 }
 
+function formatSessionDate(date: string) {
+  return new Date(date).toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 function WhatsAppLineIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -273,6 +290,7 @@ export default function StudentsSearch({
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
   const [professorsExpanded, setProfessorsExpanded] = useState(false);
   const [schedulesExpanded, setSchedulesExpanded] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
   const [historyStudent, setHistoryStudent] = useState<StudentEntry | null>(
     null
   );
@@ -293,6 +311,7 @@ export default function StudentsSearch({
     setParticipantsExpanded(false);
     setProfessorsExpanded(false);
     setSchedulesExpanded(false);
+    setNotesExpanded(false);
   }, [selectedGroupId]);
 
   return (
@@ -855,6 +874,99 @@ export default function StudentsSearch({
                               <p className="text-muted-foreground">
                                 {day.schedule}
                               </p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border bg-background p-4">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() => setNotesExpanded((expanded) => !expanded)}
+                      aria-expanded={notesExpanded}
+                      aria-controls="group-notes-list"
+                    >
+                      <span className="font-medium">
+                        Planificaciones y observaciones
+                      </span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {selectedGroup.notes.length} sesión
+                        {selectedGroup.notes.length === 1 ? '' : 'es'}
+                        <svg
+                          className={`h-4 w-4 transition-transform ${
+                            notesExpanded ? 'rotate-180' : ''
+                          }`}
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+                    <div
+                      id="group-notes-list"
+                      className={`${notesExpanded ? 'block' : 'hidden'}`}
+                    >
+                      {selectedGroup.notes.length === 0 ? (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Todavía no hay planificaciones ni observaciones
+                          cargadas para las sesiones de este grupo.
+                        </p>
+                      ) : (
+                        <ul className="mt-3 space-y-3">
+                          {selectedGroup.notes.map((note) => (
+                            <li
+                              key={note.id}
+                              className="rounded-lg bg-muted/60 p-3 text-sm"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                  <p className="font-medium capitalize">
+                                    {formatSessionDate(note.date)}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    {note.schedule}
+                                  </p>
+                                </div>
+                                {note.cancelled && (
+                                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                    Cancelado
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-3 space-y-3">
+                                {note.planificacion && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Planificación
+                                    </p>
+                                    <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {note.planificacion}
+                                    </p>
+                                  </div>
+                                )}
+                                {note.observacion && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Observación
+                                    </p>
+                                    <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {note.observacion}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                             </li>
                           ))}
                         </ul>
