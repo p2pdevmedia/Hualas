@@ -178,6 +178,8 @@ export default async function ProfessorStudentsPage() {
           date: true,
           schedule: true,
           cancelled: true,
+          planificacion: true,
+          devolucion: true,
           professors: {
             select: {
               userId: true,
@@ -548,6 +550,16 @@ export default async function ProfessorStudentsPage() {
         cancelled: day.cancelled,
         repeatsWeekly: day.repeatsWeekly,
       })),
+      notes: group.days
+        .filter((day) => Boolean(day.planificacion || day.devolucion))
+        .map((day) => ({
+          id: day.id,
+          date: day.date.toISOString(),
+          schedule: day.schedule,
+          cancelled: day.cancelled,
+          planificacion: day.planificacion,
+          observacion: day.devolucion,
+        })),
       participants: group.members
         .map((member) => {
           const participant = member.activityParticipant;
