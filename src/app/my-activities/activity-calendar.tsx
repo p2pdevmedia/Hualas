@@ -458,10 +458,11 @@ export default function ActivityCalendar({
   }
 
   const selectedActivities = selectedKey ? (dayMap.get(selectedKey) ?? []) : [];
+  const isProfessorAgenda = variant === 'professor-agenda';
+  const isMemberAgenda = variant === 'member-agenda';
   const shouldLinkToSessionPage =
-    variant === 'professor-agenda' || enableSessionDetailLinks || !!onEdit;
-  const canOpenDetailModal =
-    variant === 'member-agenda' || variant === 'professor-agenda';
+    isProfessorAgenda || enableSessionDetailLinks || !!onEdit;
+  const shouldShowDetailButton = isMemberAgenda || isProfessorAgenda;
 
   return (
     <div className="space-y-3">
@@ -571,7 +572,6 @@ export default function ActivityCalendar({
                       <div className="space-y-3">
                         {visibleActivities.map((day) => {
                           const detailHref = `/activities/${day.activityId}/days/${day.id}`;
-                          const isMemberAgenda = variant === 'member-agenda';
 
                           return (
                             <div
@@ -584,15 +584,8 @@ export default function ActivityCalendar({
                                   featured={isMainDay}
                                 />
                                 <div className="flex flex-wrap items-center gap-2">
-                                  {canOpenDetailModal ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => setDetailDay(day)}
-                                      className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                                    >
-                                      {sessionDetailLabel}
-                                    </button>
-                                  ) : (
+                                  {(shouldLinkToSessionPage ||
+                                    !shouldShowDetailButton) && (
                                     <Link
                                       href={detailHref}
                                       prefetch={true}
@@ -600,6 +593,15 @@ export default function ActivityCalendar({
                                     >
                                       {sessionDetailLabel}
                                     </Link>
+                                  )}
+                                  {shouldShowDetailButton && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDetailDay(day)}
+                                      className="inline-flex text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    >
+                                      Ver detalle
+                                    </button>
                                   )}
                                 </div>
                                 {day.attendanceOptions &&
@@ -860,15 +862,7 @@ export default function ActivityCalendar({
                   </div>
                   {(variant !== 'month' || shouldLinkToSessionPage) && (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {variant === 'member-agenda' ? (
-                        <button
-                          type="button"
-                          onClick={() => setDetailDay(d)}
-                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                        >
-                          Ver detalle
-                        </button>
-                      ) : (
+                      {(shouldLinkToSessionPage || !shouldShowDetailButton) && (
                         <Link
                           href={`/activities/${d.activityId}/days/${d.id}`}
                           prefetch={true}
@@ -876,6 +870,15 @@ export default function ActivityCalendar({
                         >
                           {sessionDetailLabel}
                         </Link>
+                      )}
+                      {shouldShowDetailButton && (
+                        <button
+                          type="button"
+                          onClick={() => setDetailDay(d)}
+                          className="shrink-0 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          Ver detalle
+                        </button>
                       )}
                       {d.attendanceOptions &&
                         d.attendanceOptions.length > 0 &&
@@ -933,8 +936,12 @@ export default function ActivityCalendar({
           role="dialog"
           aria-modal="true"
           aria-labelledby="activity-day-detail-title"
+          onClick={() => setDetailDay(null)}
         >
-          <div className="w-full max-w-md rounded-2xl bg-background p-5 shadow-xl">
+          <div
+            className="w-full max-w-md rounded-2xl bg-background p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Detalle de la sesión
