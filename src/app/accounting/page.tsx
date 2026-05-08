@@ -110,6 +110,7 @@ export default async function AccountingDashboardPage({
         id: true,
         amount: true,
         payerName: true,
+        receiptUrl: true,
         order: {
           select: {
             responsibleUserId: true,
