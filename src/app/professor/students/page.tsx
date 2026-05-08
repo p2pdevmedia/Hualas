@@ -45,18 +45,22 @@ export default async function ProfessorStudentsPage() {
   if (!session) redirect('/login');
 
   const activeRole = session.user.activeRole ?? session.user.role;
-  if (activeRole !== 'PROFESSOR') redirect('/my-activities');
+  const isProfessor = activeRole === 'PROFESSOR';
+  const isAdmin = activeRole === 'ADMIN' || activeRole === 'SUPER_ADMIN';
+  if (!isProfessor && !isAdmin) redirect('/my-activities');
 
   const professorId = session.user.id;
 
-  const professorActivities = await prisma.activityProfessor.findMany({
-    where: { userId: professorId },
-    select: { activityId: true },
-  });
+  const professorActivities = isProfessor
+    ? await prisma.activityProfessor.findMany({
+        where: { userId: professorId },
+        select: { activityId: true },
+      })
+    : [];
 
   const activityIds = professorActivities.map((a) => a.activityId);
 
-  if (activityIds.length === 0) {
+  if (isProfessor && activityIds.length === 0) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Mis alumnos</h1>
@@ -67,19 +71,28 @@ export default async function ProfessorStudentsPage() {
     );
   }
 
-  const assignedGroupDays = await prisma.activityDay.findMany({
-    where: {
-      activityId: { in: activityIds },
-      activityGroupId: { not: null },
-      professors: { some: { userId: professorId } },
-    },
-    select: { activityGroupId: true },
-    distinct: ['activityGroupId'],
-  });
-
-  const assignedGroupIds = assignedGroupDays
-    .map((day) => day.activityGroupId)
-    .filter((groupId): groupId is string => Boolean(groupId));
+  const assignedGroupIds = isAdmin
+    ? await prisma.activityGroupMember
+        .findMany({
+          select: { activityGroupId: true },
+          distinct: ['activityGroupId'],
+        })
+        .then((rows) => rows.map((row) => row.activityGroupId))
+    : await prisma.activityDay
+        .findMany({
+          where: {
+            activityId: { in: activityIds },
+            activityGroupId: { not: null },
+            professors: { some: { userId: professorId } },
+          },
+          select: { activityGroupId: true },
+          distinct: ['activityGroupId'],
+        })
+        .then((days) =>
+          days
+            .map((day) => day.activityGroupId)
+            .filter((groupId): groupId is string => Boolean(groupId))
+        );
 
   const groupMembers = await prisma.activityGroupMember.findMany({
     where: {
@@ -100,6 +113,9 @@ export default async function ProfessorStudentsPage() {
                   date: true,
                   schedule: true,
                   cancelled: true,
+                  planificacion: true,
+                  devolucion: true,
+                  activityGroupId: true,
                   activityGroup: { select: { name: true } },
                 },
               },
@@ -236,7 +252,26 @@ export default async function ProfessorStudentsPage() {
         confirmedAt: attendance.confirmedAt?.toISOString() ?? null,
         cancelled: attendance.activityDay.cancelled,
         groupName: attendance.activityDay.activityGroup?.name ?? null,
+        planificacion: attendance.activityDay.planificacion,
+        devolucion: attendance.activityDay.devolucion,
       })),
+      reports: participant.attendances
+        .filter(
+          (attendance) =>
+            attendance.activityDay.activityGroupId === gm.activityGroupId &&
+            Boolean(
+              attendance.activityDay.planificacion ||
+              attendance.activityDay.devolucion
+            )
+        )
+        .map((attendance) => ({
+          date: attendance.activityDay.date.toISOString(),
+          schedule: attendance.activityDay.schedule,
+          cancelled: attendance.activityDay.cancelled,
+          groupName: attendance.activityDay.activityGroup?.name ?? null,
+          planificacion: attendance.activityDay.planificacion,
+          devolucion: attendance.activityDay.devolucion,
+        })),
     };
   }
 

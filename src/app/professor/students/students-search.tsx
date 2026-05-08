@@ -24,6 +24,16 @@ type StudentHistoryEntry = {
     confirmedAt: string | null;
     cancelled: boolean;
     groupName: string | null;
+    planificacion: string | null;
+    devolucion: string | null;
+  }[];
+  reports: {
+    date: string;
+    schedule: string;
+    cancelled: boolean;
+    groupName: string | null;
+    planificacion: string | null;
+    devolucion: string | null;
   }[];
 };
 
@@ -259,6 +269,9 @@ export default function StudentsSearch({
   const [schedulesExpanded, setSchedulesExpanded] = useState(false);
   const [historyStudent, setHistoryStudent] = useState<StudentEntry | null>(
     null
+  );
+  const [historyTab, setHistoryTab] = useState<'attendances' | 'reports'>(
+    'attendances'
   );
 
   const visible = useMemo(() => {
@@ -509,7 +522,10 @@ export default function StudentsSearch({
                             </Link>
                             <button
                               type="button"
-                              onClick={() => setHistoryStudent(student)}
+                              onClick={() => {
+                                setHistoryStudent(student);
+                                setHistoryTab('attendances');
+                              }}
                               className="inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                             >
                               <History className="h-4 w-4" />
@@ -868,8 +884,8 @@ export default function StudentsSearch({
                   {getStudentFullName(historyStudent)}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Actividades, grupos y asistencias registradas para este
-                  participante.
+                  Actividades, grupos, asistencias y reportes registrados para
+                  este participante.
                 </p>
               </div>
               <button
@@ -883,11 +899,44 @@ export default function StudentsSearch({
             </div>
 
             <div className="mt-5 space-y-4">
+              <div
+                className="flex flex-wrap gap-2 rounded-xl border bg-muted/30 p-1"
+                role="tablist"
+                aria-label="Secciones del historial"
+              >
+                <button
+                  type="button"
+                  onClick={() => setHistoryTab('attendances')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    historyTab === 'attendances'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
+                  }`}
+                  role="tab"
+                  aria-selected={historyTab === 'attendances'}
+                >
+                  Asistencias
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryTab('reports')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    historyTab === 'reports'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
+                  }`}
+                  role="tab"
+                  aria-selected={historyTab === 'reports'}
+                >
+                  Reportes
+                </button>
+              </div>
+
               {historyStudent.history.length === 0 ? (
                 <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
                   No hay historial cargado para este participante.
                 </p>
-              ) : (
+              ) : historyTab === 'attendances' ? (
                 historyStudent.history.map((entry) => (
                   <section
                     key={entry.participantId}
@@ -943,6 +992,87 @@ export default function StudentsSearch({
                                 {formatHistoryDate(attendance.confirmedAt)}
                               </p>
                             )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))
+              ) : historyStudent.history.every(
+                  (entry) => entry.reports.length === 0
+                ) ? (
+                <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
+                  No hay reportes cargados para este participante.
+                </p>
+              ) : (
+                historyStudent.history.map((entry) => (
+                  <section
+                    key={`${entry.participantId}-reports`}
+                    className="rounded-xl border bg-card p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-medium">{entry.activityName}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Grupo: {entry.groupName}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                        {entry.reports.length} reporte
+                        {entry.reports.length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+
+                    {entry.reports.length === 0 ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        Sin reportes registrados en esta actividad.
+                      </p>
+                    ) : (
+                      <ul className="mt-3 space-y-3">
+                        {entry.reports.map((report) => (
+                          <li
+                            key={`${entry.participantId}-report-${report.date}-${report.schedule}`}
+                            className="rounded-lg bg-muted/60 p-3 text-sm"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium capitalize">
+                                {formatHistoryDate(report.date)}
+                              </span>
+                              {report.cancelled && (
+                                <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                  Cancelado
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-muted-foreground">
+                              {report.schedule}
+                              {report.groupName &&
+                              report.groupName !== entry.groupName
+                                ? ` · ${report.groupName}`
+                                : ''}
+                            </p>
+                            <div className="mt-3 space-y-3">
+                              {report.planificacion && (
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Planificación
+                                  </p>
+                                  <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                    {report.planificacion}
+                                  </p>
+                                </div>
+                              )}
+                              {report.devolucion && (
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Devolución
+                                  </p>
+                                  <p className="mt-1 whitespace-pre-wrap text-foreground">
+                                    {report.devolucion}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
