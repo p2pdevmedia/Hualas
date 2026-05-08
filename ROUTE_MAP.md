@@ -107,9 +107,9 @@ Agents should check this before searching the codebase.
 - `/accounting/debt-by-family` → Family debt status dashboard
   - File: `src/app/accounting/debt-by-family/page.tsx`
 
-- `/accounting/movements` → Manual movements list
+- `/accounting/movements` → Unified accounting history with pagination and filters
   - File: `src/app/accounting/movements/page.tsx`
-  - Related component: `src/app/accounting/movements/movements-table.tsx`
+  - Includes manual movements, approved manual payments, and Mercado Pago payments
 
 - `/accounting/movements/new` → Create movement
   - File: `src/app/accounting/movements/new/page.tsx`

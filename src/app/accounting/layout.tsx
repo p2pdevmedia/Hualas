@@ -9,8 +9,6 @@ const links = [
   { href: '/accounting/social-fee', label: 'Cuota social' },
   { href: '/accounting/debt-by-family', label: 'Deuda familiar' },
   { href: '/accounting/movements', label: 'Movimientos' },
-  { href: '/accounting/payments', label: 'Pagos MP' },
-  { href: '/accounting/manual-payments', label: 'Pagos manuales' },
   { href: '/accounting/professors', label: 'Profesores' },
   { href: '/accounting/reports', label: 'Reportes' },
 ] as const;

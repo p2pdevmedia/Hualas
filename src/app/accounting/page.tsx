@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import {
@@ -35,12 +34,15 @@ function endOfMonth(date: Date) {
 type RecentAccountingEntry = {
   id: string;
   date: Date;
-  origin: 'MOVEMENT' | 'MANUAL_PAYMENT';
+  origin: 'MOVEMENT' | 'MANUAL_PAYMENT' | 'MP_PAYMENT';
   type: 'INCOME' | 'EXPENSE';
   category: string;
   description: string;
   amount: number;
-  receiptUrl: string | null;
+  receiptLabel: string | null;
+  receiptHref: string | null;
+  actionLabel: string;
+  actionHref: string;
   personHref?: string | null;
 };
 
@@ -180,9 +182,12 @@ export default async function AccountingDashboardPage({
       category: movement.category,
       description: movement.description,
       amount: movement.amount,
-      receiptUrl: movement.receiptImage
+      receiptLabel: movement.receiptImage ? 'Ver' : null,
+      receiptHref: movement.receiptImage
         ? buildAccountingMovementReceiptUrl(movement.id)
         : null,
+      actionLabel: 'Editar',
+      actionHref: `/accounting/movements/${movement.id}/edit`,
     })
   );
   const recentManualPaymentEntries = approvedManualPayments.reduce<
@@ -200,7 +205,12 @@ export default async function AccountingDashboardPage({
       description:
         payment.payerName ?? payment.order.responsibleName ?? 'Pago manual',
       amount: getAccountingManualPaymentAmount(payment),
-      receiptUrl: buildManualPaymentReceiptUrl(payment.id),
+      receiptLabel: payment.receiptUrl ? 'Ver' : null,
+      receiptHref: payment.receiptUrl
+        ? buildManualPaymentReceiptUrl(payment.id)
+        : null,
+      actionLabel: 'Revisar',
+      actionHref: '/accounting/manual-payments?status=PENDING',
       personHref: payment.order.responsibleUserId
         ? getAccountingUserProfileHref(payment.order.responsibleUserId)
         : null,
@@ -208,10 +218,31 @@ export default async function AccountingDashboardPage({
 
     return entries;
   }, []);
+  const recentMpPaymentEntries: RecentAccountingEntry[] = monthPayments.map(
+    (payment) => ({
+      id: payment.id,
+      date: payment.receiptDate ?? new Date(0),
+      origin: 'MP_PAYMENT',
+      type: 'INCOME',
+      category: 'Mercado Pago',
+      description: `${payment.activity.name} · ${formatPersonName(
+        payment.child ?? payment.user
+      )}`,
+      amount: payment.activity.price,
+      receiptLabel: payment.receipt ? 'Con recibo' : null,
+      receiptHref: null,
+      actionLabel: 'Ver',
+      actionHref: '/accounting/payments',
+      personHref: payment.child
+        ? getAccountingChildProfileHref(payment.user.id, payment.child.id)
+        : getAccountingUserProfileHref(payment.user.id),
+    })
+  );
   const searchTerm = searchParams?.q?.trim() ?? '';
   const recentAccountingEntries: RecentAccountingEntry[] = [
     ...recentMovementEntries,
     ...recentManualPaymentEntries,
+    ...recentMpPaymentEntries,
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .filter((entry) =>
@@ -223,18 +254,6 @@ export default async function AccountingDashboardPage({
         : true
     )
     .slice(0, 10);
-  const recentPayments = monthPayments
-    .filter((payment) =>
-      searchTerm
-        ? matchesAccountingSearch(searchTerm, [
-            payment.activity.name,
-            formatPersonName(payment.child ?? payment.user),
-            '',
-          ])
-        : true
-    )
-    .slice(0, 5);
-
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -293,22 +312,41 @@ export default async function AccountingDashboardPage({
             className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </form>
-        <article className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
+        <article
+          id="movimientos"
+          className="rounded-2xl border bg-card p-5 shadow-sm xl:col-span-2"
+        >
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold tracking-tight">
-                Últimos movimientos
+                Movimientos
               </h2>
               <p className="text-sm text-muted-foreground">
-                Movimientos y pagos manuales aprobados más recientes.
+                Movimientos manuales, pagos manuales aprobados y pagos MP en una
+                sola vista.
               </p>
             </div>
-            <Button asChild variant="outline">
-              <Link href="/accounting/movements" prefetch={true}>
-                Ver todos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href="/accounting/movements/new" prefetch={true}>
+                  Nuevo movimiento
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link
+                  href="/accounting/manual-payments?status=PENDING"
+                  prefetch={true}
+                >
+                  Revisar pagos manuales
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/accounting/movements" prefetch={true}>
+                  Ver movimientos
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -322,13 +360,14 @@ export default async function AccountingDashboardPage({
                   <th className="py-2 pr-4 font-medium">Descripción</th>
                   <th className="py-2 pr-4 font-medium">Monto</th>
                   <th className="py-2 pr-4 font-medium">Recibo</th>
+                  <th className="py-2 pr-4 font-medium">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {recentAccountingEntries.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="py-10 text-center text-muted-foreground"
                     >
                       No hay movimientos cargados.
@@ -342,8 +381,10 @@ export default async function AccountingDashboardPage({
                       </td>
                       <td className="py-3 pr-4">
                         {entry.origin === 'MOVEMENT'
-                          ? 'Movimiento'
-                          : 'Pago manual'}
+                          ? 'Movimiento manual'
+                          : entry.origin === 'MANUAL_PAYMENT'
+                            ? 'Pago manual'
+                            : 'Mercado Pago'}
                       </td>
                       <td className="py-3 pr-4">
                         <span
@@ -365,93 +406,36 @@ export default async function AccountingDashboardPage({
                         {formatAmount(entry.amount)}
                       </td>
                       <td className="py-3 pr-4">
-                        {entry.receiptUrl ? (
+                        {entry.receiptHref ? (
                           <a
-                            href={entry.receiptUrl}
+                            href={entry.receiptHref}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-link hover:underline"
                           >
                             <ReceiptText className="h-4 w-4" />
-                            Ver
+                            {entry.receiptLabel ?? 'Ver'}
                           </a>
+                        ) : entry.receiptLabel ? (
+                          <span className="text-muted-foreground">
+                            {entry.receiptLabel}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <Button asChild variant="outline" className="px-3 py-2">
+                          <Link href={entry.actionHref} prefetch={true}>
+                            {entry.actionLabel}
+                          </Link>
+                        </Button>
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-          </div>
-        </article>
-
-        <article className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">
-                Pagos MP recientes
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Últimos 5 pagos con comprobante.
-              </p>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="/accounting/payments" prefetch={true}>
-                Ver todos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="space-y-3">
-            {recentPayments.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No hay pagos para mostrar.
-              </p>
-            ) : (
-              recentPayments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="rounded-xl border bg-muted/20 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        <PersonLink
-                          href={
-                            payment.child
-                              ? getAccountingChildProfileHref(
-                                  payment.user.id,
-                                  payment.child.id
-                                )
-                              : getAccountingUserProfileHref(payment.user.id)
-                          }
-                          className="text-link hover:underline"
-                        >
-                          {formatPersonName(payment.child ?? payment.user)}
-                        </PersonLink>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {payment.activity.name}
-                      </p>
-                    </div>
-                    <p className="font-semibold">
-                      {formatAmount(payment.activity.price)}
-                    </p>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span>
-                      {payment.receiptDate
-                        ? formatAccountingDate(payment.receiptDate)
-                        : 'Sin fecha'}
-                    </span>
-                    <span>{payment.receipt ? 'Con recibo' : 'Sin recibo'}</span>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </article>
       </section>
