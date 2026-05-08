@@ -458,156 +458,164 @@ export async function createManualPaymentCheckout(input: {
         email: input.user.email?.trim() || 'sin-email@hualas.local',
         phone: null,
       });
-    const payment = await prisma.$transaction(async (tx) => {
-      const now = new Date();
-      const period = currentPeriod();
-      const subtotal =
-        input.quote.totalActivityAmount + input.quote.totalSocialFeeAmount;
-      const order = await tx.order.create({
-        data: {
-          familyGroupId: familyGroup.id,
-          responsibleUserId: input.user.id,
-          responsibleName:
-            input.user.name?.trim() ||
-            `${input.user.name ?? ''} ${input.user.lastName ?? ''}`.trim() ||
-            input.user.email?.trim() ||
-            'Sin nombre',
-          responsibleEmail:
-            input.user.email?.trim() || 'sin-email@hualas.local',
-          periodMonth: period.month,
-          periodYear: period.year,
-          status: 'PENDING_PAYMENT',
-          subtotal,
-          discountTotal: input.quote.totalDiscountAmount,
-          surchargeTotal: 0,
-          total: input.quote.totalAmount,
-        },
-      });
-
-      for (const [index, item] of input.quote.activityLines.entries()) {
-        const source = input.quote.validatedItems[index];
-        const isChildTarget = source?.target && source.target !== 'self';
-        await tx.orderItem.create({
+    const payment = await prisma.$transaction(
+      async (tx) => {
+        const now = new Date();
+        const period = currentPeriod();
+        const subtotal =
+          input.quote.totalActivityAmount + input.quote.totalSocialFeeAmount;
+        const order = await tx.order.create({
           data: {
-            orderId: order.id,
-            // null for child registrations — PostgreSQL treats NULL != NULL in
-            // unique constraints, so multiple child items never conflict.
-            memberId: isChildTarget ? null : input.user.id,
-            activityId: item.id,
-            billableConceptId: activityFeeConceptId,
-            description: item.name,
-            quantity: 1,
-            unitPrice: item.amount,
-            total: item.amount,
+            familyGroupId: familyGroup.id,
+            responsibleUserId: input.user.id,
+            responsibleName:
+              input.user.name?.trim() ||
+              `${input.user.name ?? ''} ${input.user.lastName ?? ''}`.trim() ||
+              input.user.email?.trim() ||
+              'Sin nombre',
+            responsibleEmail:
+              input.user.email?.trim() || 'sin-email@hualas.local',
             periodMonth: period.month,
             periodYear: period.year,
+            status: 'PENDING_PAYMENT',
+            subtotal,
+            discountTotal: input.quote.totalDiscountAmount,
+            surchargeTotal: 0,
+            total: input.quote.totalAmount,
           },
         });
 
-        const participantKey = getActivityParticipantKey(
-          item.id,
-          input.user.id,
-          source?.target && source.target !== 'self' ? source.target : null
-        );
-
-        const participant = await tx.activityParticipant.upsert({
-          where: { participantKey },
-          create: {
-            activityId: item.id,
-            userId: input.user.id,
-            childId:
-              source?.target && source.target !== 'self' ? source.target : null,
-            participantKey,
-          },
-          update: {},
-          select: { id: true },
-        });
-
-        if (source?.groupId) {
-          await tx.activityGroupMember.upsert({
-            where: { activityParticipantId: participant.id },
-            create: {
-              activityGroupId: source.groupId,
-              activityParticipantId: participant.id,
+        for (const [index, item] of input.quote.activityLines.entries()) {
+          const source = input.quote.validatedItems[index];
+          const isChildTarget = source?.target && source.target !== 'self';
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              // null for child registrations — PostgreSQL treats NULL != NULL in
+              // unique constraints, so multiple child items never conflict.
+              memberId: isChildTarget ? null : input.user.id,
+              activityId: item.id,
+              billableConceptId: activityFeeConceptId,
+              description: item.name,
+              quantity: 1,
+              unitPrice: item.amount,
+              total: item.amount,
+              periodMonth: period.month,
+              periodYear: period.year,
             },
-            update: { activityGroupId: source.groupId },
+          });
+
+          const participantKey = getActivityParticipantKey(
+            item.id,
+            input.user.id,
+            source?.target && source.target !== 'self' ? source.target : null
+          );
+
+          const participant = await tx.activityParticipant.upsert({
+            where: { participantKey },
+            create: {
+              activityId: item.id,
+              userId: input.user.id,
+              childId:
+                source?.target && source.target !== 'self'
+                  ? source.target
+                  : null,
+              participantKey,
+            },
+            update: {},
+            select: { id: true },
+          });
+
+          if (source?.groupId) {
+            await tx.activityGroupMember.upsert({
+              where: { activityParticipantId: participant.id },
+              create: {
+                activityGroupId: source.groupId,
+                activityParticipantId: participant.id,
+              },
+              update: { activityGroupId: source.groupId },
+            });
+          }
+        }
+
+        if (input.quote.totalDiscountAmount > 0) {
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              memberId: input.user.id,
+              billableConceptId: discountConceptId,
+              description: 'Descuento familiar',
+              quantity: 1,
+              unitPrice: -input.quote.totalDiscountAmount,
+              total: -input.quote.totalDiscountAmount,
+              periodMonth: period.month,
+              periodYear: period.year,
+            },
           });
         }
-      }
 
-      if (input.quote.totalDiscountAmount > 0) {
-        await tx.orderItem.create({
+        if (input.quote.socialFeeLines.length > 0) {
+          const totalSocialFee = input.quote.socialFeeLines.reduce(
+            (sum, line) => sum + line.amount,
+            0
+          );
+          const socialFeeDescription =
+            input.quote.socialFeeLines.length === 1
+              ? input.quote.socialFeeLines[0].label
+              : `Cuota social (${input.quote.socialFeeLines.length} participantes)`;
+
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              memberId: input.user.id,
+              billableConceptId: socialFeeConceptId,
+              description: socialFeeDescription,
+              quantity: input.quote.socialFeeLines.length,
+              unitPrice: input.quote.socialFeeAmount,
+              total: totalSocialFee,
+              periodMonth: period.month,
+              periodYear: period.year,
+            },
+          });
+        }
+
+        const payment = await tx.payment.create({
           data: {
+            id: paymentId,
             orderId: order.id,
-            memberId: input.user.id,
-            billableConceptId: discountConceptId,
-            description: 'Descuento familiar',
-            quantity: 1,
-            unitPrice: -input.quote.totalDiscountAmount,
-            total: -input.quote.totalDiscountAmount,
-            periodMonth: period.month,
-            periodYear: period.year,
+            provider: 'MANUAL_TRANSFER',
+            providerPaymentId: null,
+            amount: input.quote.totalAmount,
+            currency: 'ARS',
+            status: 'PENDING',
+            payerName:
+              input.user.name?.trim() ||
+              `${input.user.name ?? ''} ${input.user.lastName ?? ''}`.trim() ||
+              input.user.email?.trim() ||
+              'Sin nombre',
+            payerEmail: input.user.email?.trim() || null,
+            receiptUrl: uploadedFile.url,
+            rawData: createManualPaymentRawData({
+              uploadedBy: input.user.email?.trim() || 'unknown',
+              uploadedAt: now,
+              proofFileName: input.proofFile.name || 'proof',
+              proofContentType:
+                input.proofFile.type || 'application/octet-stream',
+              socialFeeAmount: input.quote.socialFeeAmount,
+              familyDiscountAmount: input.quote.totalDiscountAmount,
+              socialFeeParticipants: input.quote.socialFeeParticipants,
+              validatedItems: input.quote.validatedItems,
+            }),
           },
         });
+
+        return payment;
+      },
+      {
+        maxWait: 10_000,
+        timeout: 30_000,
       }
-
-      if (input.quote.socialFeeLines.length > 0) {
-        const totalSocialFee = input.quote.socialFeeLines.reduce(
-          (sum, line) => sum + line.amount,
-          0
-        );
-        const socialFeeDescription =
-          input.quote.socialFeeLines.length === 1
-            ? input.quote.socialFeeLines[0].label
-            : `Cuota social (${input.quote.socialFeeLines.length} participantes)`;
-
-        await tx.orderItem.create({
-          data: {
-            orderId: order.id,
-            memberId: input.user.id,
-            billableConceptId: socialFeeConceptId,
-            description: socialFeeDescription,
-            quantity: input.quote.socialFeeLines.length,
-            unitPrice: input.quote.socialFeeAmount,
-            total: totalSocialFee,
-            periodMonth: period.month,
-            periodYear: period.year,
-          },
-        });
-      }
-
-      const payment = await tx.payment.create({
-        data: {
-          id: paymentId,
-          orderId: order.id,
-          provider: 'MANUAL_TRANSFER',
-          providerPaymentId: null,
-          amount: input.quote.totalAmount,
-          currency: 'ARS',
-          status: 'PENDING',
-          payerName:
-            input.user.name?.trim() ||
-            `${input.user.name ?? ''} ${input.user.lastName ?? ''}`.trim() ||
-            input.user.email?.trim() ||
-            'Sin nombre',
-          payerEmail: input.user.email?.trim() || null,
-          receiptUrl: uploadedFile.url,
-          rawData: createManualPaymentRawData({
-            uploadedBy: input.user.email?.trim() || 'unknown',
-            uploadedAt: now,
-            proofFileName: input.proofFile.name || 'proof',
-            proofContentType:
-              input.proofFile.type || 'application/octet-stream',
-            socialFeeAmount: input.quote.socialFeeAmount,
-            familyDiscountAmount: input.quote.totalDiscountAmount,
-            socialFeeParticipants: input.quote.socialFeeParticipants,
-            validatedItems: input.quote.validatedItems,
-          }),
-        },
-      });
-
-      return payment;
-    });
+    );
 
     return { payment };
   } catch (error) {
