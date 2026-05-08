@@ -38,6 +38,7 @@
 		A1B2C3D4E5F60718293A1029 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */; };
 		A1B2C3D4E5F60718293A1030 /* AuthenticatedAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2032 /* AuthenticatedAvatarView.swift */; };
 		A1B2C3D4E5F60718293A1031 /* MobileActivitiesCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2033 /* MobileActivitiesCacheStore.swift */; };
+		A1B2C3D4E5F60718293A1032 /* NewChatPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A2034 /* NewChatPickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +75,7 @@
 		A1B2C3D4E5F60718293A2031 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2032 /* AuthenticatedAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedAvatarView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A2033 /* MobileActivitiesCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileActivitiesCacheStore.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A2034 /* NewChatPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewChatPickerView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A3001 /* HualasMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = HualasMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -143,6 +145,7 @@
 				A1B2C3D4E5F60718293A2013 /* ActivitiesView.swift */,
 				A1B2C3D4E5F60718293A2014 /* PaymentsView.swift */,
 				A1B2C3D4E5F60718293A2015 /* NewsView.swift */,
+				A1B2C3D4E5F60718293A2034 /* NewChatPickerView.swift */,
 			);
 			path = Member;
 			sourceTree = "<group>";
@@ -256,6 +259,7 @@
 				A1B2C3D4E5F60718293A1023 /* ProfileEditView.swift in Sources */,
 				A1B2C3D4E5F60718293A1021 /* GroupDetailView.swift in Sources */,
 				A1B2C3D4E5F60718293A1030 /* AuthenticatedAvatarView.swift in Sources */,
+				A1B2C3D4E5F60718293A1032 /* NewChatPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -6,39 +6,37 @@ struct ProfileView: View {
   @State private var isLoading = false
 
   var body: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 16) {
-          header
+    ScrollView {
+      VStack(alignment: .leading, spacing: 16) {
+        header
 
-          quickActions
+        quickActions
 
-          if sessionStore.allowedRoles.count > 1 {
-            roleSwitcher
-          }
-
-          if sessionStore.currentRole == .professor {
-            professorSection
-          } else {
-            memberSection
-          }
-
-          Button(role: .destructive) {
-            Task { await sessionStore.logout() }
-          } label: {
-            Text("Cerrar sesión")
-              .frame(maxWidth: .infinity)
-              .padding()
-              .background(.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-          }
+        if sessionStore.allowedRoles.count > 1 {
+          roleSwitcher
         }
-        .padding()
+
+        if sessionStore.currentRole == .professor {
+          professorSection
+        } else {
+          memberSection
+        }
+
+        Button(role: .destructive) {
+          Task { await sessionStore.logout() }
+        } label: {
+          Text("Cerrar sesión")
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+        }
       }
-      .navigationTitle("Perfil")
-      .toolbar(.hidden, for: .navigationBar)
-      .task { await loadProfessorProfileIfNeeded() }
-      .refreshable { await loadProfessorProfileIfNeeded() }
+      .padding()
     }
+    .navigationTitle("Perfil")
+    .navigationBarTitleDisplayMode(.inline)
+    .task { await loadProfessorProfileIfNeeded() }
+    .refreshable { await loadProfessorProfileIfNeeded() }
   }
 
   private var header: some View {

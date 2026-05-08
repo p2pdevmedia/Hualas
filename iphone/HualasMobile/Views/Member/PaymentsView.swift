@@ -7,34 +7,32 @@ struct PaymentsView: View {
   @State private var role: MobileRole = .member
 
   var body: some View {
-    NavigationStack {
-      List {
-        if let profile {
-          Section("Datos bancarios") {
-            Text("Sueldo: \(currency(profile.monthlySalary))")
-            if let bankName = profile.bankName { Text(bankName) }
-            if let alias = profile.alias { Text("Alias: \(alias)") }
-            if let cbu = profile.cbu { Text("CBU: \(cbu)") }
-          }
+    List {
+      if let profile {
+        Section("Datos bancarios") {
+          Text("Sueldo: \(currency(profile.monthlySalary))")
+          if let bankName = profile.bankName { Text(bankName) }
+          if let alias = profile.alias { Text("Alias: \(alias)") }
+          if let cbu = profile.cbu { Text("CBU: \(cbu)") }
         }
+      }
 
-        Section("Pagos") {
-          ForEach(payments) { payment in
-            VStack(alignment: .leading, spacing: 4) {
-              Text(payment.title).font(.headline)
-              if let subtitle = payment.subtitle {
-                Text(subtitle).font(.footnote).foregroundStyle(.secondary)
-              }
-              Text(payment.amountLabel).font(.subheadline.bold())
+      Section("Pagos") {
+        ForEach(payments) { payment in
+          VStack(alignment: .leading, spacing: 4) {
+            Text(payment.title).font(.headline)
+            if let subtitle = payment.subtitle {
+              Text(subtitle).font(.footnote).foregroundStyle(.secondary)
             }
+            Text(payment.amountLabel).font(.subheadline.bold())
           }
         }
       }
-      .navigationTitle("Pagos")
-      .toolbar(.hidden, for: .navigationBar)
-      .task { await load() }
-      .refreshable { await load() }
     }
+    .navigationTitle("Pagos")
+    .navigationBarTitleDisplayMode(.inline)
+    .task { await load() }
+    .refreshable { await load() }
   }
 
   private func load() async {

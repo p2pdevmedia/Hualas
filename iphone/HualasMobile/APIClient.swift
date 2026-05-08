@@ -223,9 +223,8 @@ final class APIClient {
     token: String,
     month: Date = Date()
   ) async throws -> MobileActivitiesCalendarSummaryResponse {
-    let monthKey = APIClient.monthKey(for: month)
     return try await send(
-      path: "/api/mobile/activities?month=\(monthKey)&summary=1",
+      path: "/api/mobile/activities?summary=1",
       token: token
     )
   }
@@ -235,9 +234,8 @@ final class APIClient {
     month: Date = Date(),
     dayKey: String
   ) async throws -> MobileActivitiesDaySessionsResponse {
-    let monthKey = APIClient.monthKey(for: month)
     return try await send(
-      path: "/api/mobile/activities?month=\(monthKey)&day=\(dayKey)",
+      path: "/api/mobile/activities?day=\(dayKey)",
       token: token
     )
   }
@@ -410,6 +408,10 @@ final class APIClient {
 
   func conversations(token: String) async throws -> MobileConversationListResponse {
     try await send(path: "/api/mobile/messages", token: token)
+  }
+
+  func memberChatContacts(token: String) async throws -> MobileChatContactsResponse {
+    try await send(path: "/api/mobile/chat/contacts", token: token)
   }
 
   func conversationThread(

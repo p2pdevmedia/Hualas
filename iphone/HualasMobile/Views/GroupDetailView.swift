@@ -192,12 +192,26 @@ private struct ChatTarget: Identifiable {
   var id: String { userId }
 }
 
+private enum ChatPresentation: Identifiable {
+  case newChat
+  case conversation(ChatTarget)
+
+  var id: String {
+    switch self {
+    case .newChat:
+      return "new-chat"
+    case .conversation(let target):
+      return "conversation-\(target.id)"
+    }
+  }
+}
+
 struct GlobalChatView: View {
   @EnvironmentObject private var sessionStore: SessionStore
   @State private var conversations: [MobileConversationListResponse.Conversation] = []
   @State private var isLoading = false
   @State private var errorMessage: String?
-  @State private var selectedTarget: ChatTarget?
+  @State private var presentedSheet: ChatPresentation?
 
   var body: some View {
     NavigationStack {
@@ -209,11 +223,11 @@ struct GlobalChatView: View {
         ForEach(conversations) { conversation in
           if let peer = conversation.peer {
             Button {
-              selectedTarget = ChatTarget(
+              presentedSheet = .conversation(ChatTarget(
                 userId: peer.id,
                 title: conversation.title,
                 subtitle: conversation.subtitle
-              )
+              ))
             } label: {
               chatRow(conversation: conversation)
             }
@@ -229,12 +243,51 @@ struct GlobalChatView: View {
         }
       }
       .navigationTitle("Chat")
-      .sheet(item: $selectedTarget) { target in
-        ConversationView(
-          userId: target.userId,
-          title: target.title,
-          subtitle: target.subtitle
-        )
+      .toolbar(.hidden, for: .navigationBar)
+      .safeAreaInset(edge: .top, spacing: 0) {
+        if sessionStore.currentRole == .member {
+          HStack {
+            Text("Chat")
+              .font(.title3.bold())
+            Spacer()
+            Button {
+              presentedSheet = .newChat
+            } label: {
+              Image(systemName: "plus")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 38, height: 38)
+                .background(
+                  RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.accentColor)
+                )
+                .overlay(
+                  RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Nuevo chat")
+          }
+          .padding(.horizontal, 16)
+          .padding(.top, 4)
+          .padding(.bottom, 10)
+          .background(.thinMaterial)
+        }
+      }
+      .sheet(item: $presentedSheet) { sheet in
+        switch sheet {
+        case .newChat:
+          NavigationStack {
+            NewChatPickerView()
+          }
+        case .conversation(let target):
+          ConversationView(
+            userId: target.userId,
+            title: target.title,
+            subtitle: target.subtitle
+          )
+        }
       }
       .task {
         await load()

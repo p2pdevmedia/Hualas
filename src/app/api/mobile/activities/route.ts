@@ -3,25 +3,15 @@ import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 
-function parseMonthRange(value: string | null) {
-  const now = new Date();
-  const fallbackYear = now.getFullYear();
-  const fallbackMonth = now.getMonth();
-
-  const match = value?.match(/^(\d{4})-(\d{2})$/);
-  const year = match ? Number(match[1]) : fallbackYear;
-  const monthIndex = match ? Number(match[2]) - 1 : fallbackMonth;
-
-  const start = new Date(year, monthIndex, 1);
+function parseUpcomingRange() {
+  const start = new Date();
   start.setHours(0, 0, 0, 0);
-  const end = new Date(year, monthIndex + 1, 1);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 30);
   end.setHours(0, 0, 0, 0);
 
-  const monthLabel = new Intl.DateTimeFormat('es-AR', {
-    month: 'long',
-    year: 'numeric',
-  }).format(start);
-
+  const monthLabel = 'Próximos 30 días';
   const monthKey = `${String(start.getFullYear())}-${String(
     start.getMonth() + 1
   ).padStart(2, '0')}`;
@@ -109,9 +99,7 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url);
-  const { start, end, monthKey, monthLabel } = parseMonthRange(
-    url.searchParams.get('month')
-  );
+  const { start, end, monthKey, monthLabel } = parseUpcomingRange();
   const requestedDay = parseDayRange(url.searchParams.get('day'));
   const summaryMode =
     url.searchParams.get('summary') === '1' ||
@@ -125,7 +113,9 @@ export async function GET(req: Request) {
       }),
       prisma.activityDay.findMany({
         where: {
-          date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
+          date: requestedDay
+            ? { gte: requestedDay.start, lt: requestedDay.end }
+            : { gte: start, lt: end },
           professors: { some: { userId: session.userId } },
         },
         select: {
@@ -150,7 +140,9 @@ export async function GET(req: Request) {
     const assignedDays = assignedActivityIds.size
       ? await prisma.activityDay.findMany({
           where: {
-            date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
+            date: requestedDay
+              ? { gte: requestedDay.start, lt: requestedDay.end }
+              : { gte: start, lt: end },
             activityId: { in: [...assignedActivityIds] },
           },
           select: {
@@ -228,13 +220,8 @@ export async function GET(req: Request) {
     select: {
       activityId: true,
       childId: true,
-      child: { select: { name: true, lastName: true } },
-      user: { select: { name: true, lastName: true } },
       groupMembership: {
-        select: {
-          activityGroupId: true,
-          activityGroup: { select: { name: true } },
-        },
+        select: { activityGroupId: true },
       },
     },
   });
@@ -264,7 +251,9 @@ export async function GET(req: Request) {
   const days = activityIds.length
     ? await prisma.activityDay.findMany({
         where: {
-          date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
+          date: requestedDay
+            ? { gte: requestedDay.start, lt: requestedDay.end }
+            : { gte: start, lt: end },
           activityId: { in: activityIds },
         },
         select: {
@@ -310,13 +299,7 @@ export async function GET(req: Request) {
       return participantGroupId === day.activityGroupId;
     });
 
-    const participantLabels = [
-      ...new Set(
-        visibleParticipants.map((participant) =>
-          formatParticipationLabel(participant)
-        )
-      ),
-    ];
+    const audienceLabel = formatAudienceLabel(visibleParticipants);
 
     return {
       id: day.id,
@@ -328,7 +311,7 @@ export async function GET(req: Request) {
       groupName: day.activityGroup?.name ?? null,
       activityGroupId: day.activityGroupId,
       cancelled: day.cancelled,
-      participantLabels,
+      audienceLabel,
     };
   });
 
@@ -350,27 +333,33 @@ export async function GET(req: Request) {
   });
 }
 
-function formatParticipationLabel(participation: {
-  child?: { name?: string | null; lastName?: string | null } | null;
-  user?: { name?: string | null; lastName?: string | null } | null;
-}) {
-  if (participation.child) {
-    return (
-      [participation.child.name, participation.child.lastName]
-        .filter(Boolean)
-        .join(' ')
-        .trim() || 'Sin nombre'
-    );
+function formatAudienceLabel(
+  participations: Array<{
+    childId: string | null;
+  }>
+) {
+  const childCount = participations.filter((participation) => participation.childId !== null).length;
+  const hasSelf = participations.some((participation) => participation.childId === null);
+
+  if (hasSelf && childCount === 0) {
+    return 'Para vos';
   }
 
-  if (participation.user) {
-    return (
-      [participation.user.name, participation.user.lastName]
-        .filter(Boolean)
-        .join(' ')
-        .trim() || 'Yo'
-    );
+  if (!hasSelf && childCount === 1) {
+    return 'Para tu hijo/a';
   }
 
-  return 'Yo';
+  if (!hasSelf && childCount > 1) {
+    return `Para tus ${childCount} hijos/as`;
+  }
+
+  if (hasSelf && childCount === 1) {
+    return 'Para vos y tu hijo/a';
+  }
+
+  if (hasSelf && childCount > 1) {
+    return `Para vos y tus ${childCount} hijos/as`;
+  }
+
+  return null;
 }

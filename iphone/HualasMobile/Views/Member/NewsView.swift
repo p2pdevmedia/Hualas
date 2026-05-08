@@ -5,23 +5,21 @@ struct NewsView: View {
   @State private var news: [MobileNewsResponse.NewsItem] = []
 
   var body: some View {
-    NavigationStack {
-      List(news) { item in
-        VStack(alignment: .leading, spacing: 6) {
-          Text(item.title).font(.headline)
-          if let activityName = item.activityName {
-            Text(activityName).font(.footnote).foregroundStyle(.secondary)
-          }
-          Text(item.body)
-            .font(.subheadline)
+    List(news) { item in
+      VStack(alignment: .leading, spacing: 6) {
+        Text(item.title).font(.headline)
+        if let activityName = item.activityName {
+          Text(activityName).font(.footnote).foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        Text(item.body)
+          .font(.subheadline)
       }
-      .navigationTitle("Noticias")
-      .toolbar(.hidden, for: .navigationBar)
-      .task { await load() }
-      .refreshable { await load() }
+      .padding(.vertical, 4)
     }
+    .navigationTitle("Noticias")
+    .navigationBarTitleDisplayMode(.inline)
+    .task { await load() }
+    .refreshable { await load() }
   }
 
   private func load() async {

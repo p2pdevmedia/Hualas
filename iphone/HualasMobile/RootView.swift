@@ -91,6 +91,7 @@ struct MemberShellView: View {
 
 struct MoreTabView: View {
   @EnvironmentObject private var sessionStore: SessionStore
+  @EnvironmentObject private var notificationsStore: MobileNotificationsStore
 
   var body: some View {
     NavigationStack {
@@ -106,6 +107,16 @@ struct MoreTabView: View {
             PaymentsView()
           } label: {
             Label("Pagos", systemImage: "creditcard")
+          }
+
+          NavigationLink {
+            GlobalChatView()
+          } label: {
+            menuRow(
+              title: "Chat",
+              systemImage: "bubble.left.and.bubble.right",
+              badgeCount: notificationsStore.chatUnreadCount
+            )
           }
 
           NavigationLink {
@@ -135,6 +146,33 @@ struct MoreTabView: View {
       .toolbar(.hidden, for: .navigationBar)
     }
   }
+
+  private func menuRow(
+    title: String,
+    systemImage: String,
+    badgeCount: Int = 0
+  ) -> some View {
+    HStack(spacing: 12) {
+      Image(systemName: systemImage)
+        .font(.system(size: 17, weight: .semibold))
+        .foregroundStyle(Color.accentColor)
+        .frame(width: 24)
+
+      Text(title)
+        .foregroundStyle(.primary)
+
+      Spacer(minLength: 12)
+
+      if badgeCount > 0 {
+        Text(badgeCount > 9 ? "9+" : "\(badgeCount)")
+          .font(.caption2.weight(.bold))
+          .foregroundStyle(.white)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 3)
+          .background(Color.red, in: Capsule())
+      }
+    }
+  }
 }
 
 struct ProfessorShellView: View {
@@ -149,8 +187,10 @@ struct ProfessorShellView: View {
         .tabItem { Label("Grupos", systemImage: "rectangle.grid.2x2") }
       AttendanceView()
         .tabItem { Label("Asistencia", systemImage: "checklist") }
-      ProfileView()
-        .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+      NavigationStack {
+        ProfileView()
+      }
+      .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
     }
     .safeAreaInset(edge: .top, spacing: 0) {
       HStack {

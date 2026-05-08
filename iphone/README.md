@@ -34,6 +34,7 @@ The app expects these endpoints:
 - `GET /api/mobile/activities?month=YYYY-MM&day=YYYY-MM-DD`
 - `GET /api/mobile/payments`
 - `GET /api/mobile/news`
+- `GET /api/mobile/chat/contacts`
 - `GET /api/mobile/family-groups/current/members`
 - `POST /api/mobile/family-groups/current/members`
 - `DELETE /api/mobile/family-groups/current/members`
@@ -48,6 +49,7 @@ The app expects these endpoints:
 - `PATCH /api/mobile/professor/attendance/[dayId]`
 
 The iPhone app caches the activities calendar summary, the sessions for each day, and the detail for each session locally. Pull-to-refresh forces a fresh fetch.
+The chat screen also exposes a member-only "Nuevo chat" picker that lists tutors, professors linked to family participants, and club admin/accounting contacts.
 
 ## Xcode setup
 

@@ -37,6 +37,7 @@ type RawProfessor = {
     phone: string | null;
     profilePhoto: string | null;
     updatedAt: Date;
+    isActive: boolean;
   };
 };
 
@@ -188,6 +189,7 @@ export async function getParentChatContext(
             phone: true,
             profilePhoto: true,
             updatedAt: true,
+            isActive: true,
           },
         },
       },
@@ -278,6 +280,10 @@ export async function getParentChatContext(
   }
 
   for (const professor of professors as RawProfessor[]) {
+    if (!professor.user.isActive) {
+      continue;
+    }
+
     const activity = activitiesById.get(professor.activityId);
     if (!activity) continue;
 

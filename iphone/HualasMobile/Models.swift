@@ -561,6 +561,7 @@ struct MobileActivitiesCalendarSession: Codable, Identifiable {
   let activityGroupId: String?
   let cancelled: Bool
   let participantLabels: [String]?
+  let audienceLabel: String?
 }
 
 struct MobileActivitiesCalendarResponse: Codable {
@@ -814,6 +815,24 @@ struct MobileConversationThreadResponse: Codable {
   let conversationId: String?
   let peer: Peer?
   var messages: [Message]
+}
+
+struct MobileChatContactsResponse: Codable {
+  struct Contact: Codable, Identifiable {
+    let userId: String
+    let label: String
+    let subtitle: String
+    let detailLine: String?
+    let profilePhoto: String?
+    let updatedAt: String
+    let activityNames: [String]
+
+    var id: String { userId }
+  }
+
+  let familyContacts: [Contact]
+  let professorContacts: [Contact]
+  let staffContacts: [Contact]
 }
 
 struct MobileAttendanceListResponse: Codable {

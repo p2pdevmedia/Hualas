@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { isAccountingRole } from '@/lib/accounting';
+import { getMobileMemberChatContacts } from '@/lib/chat/mobile-member-chat-context';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { formatFullName } from '@/lib/mobile-format';
 import { prisma } from '@/lib/prisma';
@@ -43,13 +45,35 @@ async function sharedActivityBetweenUsers(senderId: string, recipientId: string)
   return false;
 }
 
-async function canMessageUser(senderId: string, recipientId: string) {
+async function canMessageUser(input: {
+  senderId: string;
+  senderRole: string;
+  appRole: string;
+}, recipientId: string) {
+  const { senderId, senderRole, appRole } = input;
   if (senderId === recipientId) return false;
   const recipient = await prisma.user.findUnique({
     where: { id: recipientId },
     select: { id: true, isActive: true, role: true },
   });
   if (!recipient || !recipient.isActive) return false;
+
+  if (isAccountingRole(recipient.role)) {
+    return true;
+  }
+
+  if (isAccountingRole(senderRole)) {
+    return true;
+  }
+
+  if (appRole === 'MEMBER') {
+    const contacts = await getMobileMemberChatContacts(senderId);
+    const allowedRecipientIds = new Set(contacts.allowedRecipientIds);
+    if (allowedRecipientIds.has(recipientId)) {
+      return true;
+    }
+  }
+
   return sharedActivityBetweenUsers(senderId, recipientId);
 }
 
@@ -63,7 +87,14 @@ export async function GET(
   }
 
   const otherUserId = params.userId;
-  const allowed = await canMessageUser(session.userId, otherUserId);
+  const allowed = await canMessageUser(
+    {
+      senderId: session.userId,
+      senderRole: session.user.role,
+      appRole: session.appRole,
+    },
+    otherUserId
+  );
   if (!allowed) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -186,7 +217,14 @@ export async function POST(
   }
 
   const otherUserId = params.userId;
-  const allowed = await canMessageUser(session.userId, otherUserId);
+  const allowed = await canMessageUser(
+    {
+      senderId: session.userId,
+      senderRole: session.user.role,
+      appRole: session.appRole,
+    },
+    otherUserId
+  );
   if (!allowed) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
