@@ -24,12 +24,9 @@ type StudentHistoryEntry = {
     confirmedAt: string | null;
     cancelled: boolean;
     groupName: string | null;
-    planificacion: string | null;
-    devolucion: string | null;
   }[];
   reports: {
     id: string;
-    type: 'participant' | 'day';
     date: string;
     schedule: string;
     cancelled: boolean;
@@ -38,8 +35,6 @@ type StudentHistoryEntry = {
     createdAt: string | null;
     updatedAt: string | null;
     author: string | null;
-    planificacion: string | null;
-    devolucion: string | null;
   }[];
 };
 
@@ -1188,26 +1183,6 @@ export default function StudentsSearch({
                                       </p>
                                       <p className="mt-1 whitespace-pre-wrap text-foreground">
                                         {report.body}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {report.planificacion && (
-                                    <div>
-                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Planificación
-                                      </p>
-                                      <p className="mt-1 whitespace-pre-wrap text-foreground">
-                                        {report.planificacion}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {report.devolucion && (
-                                    <div>
-                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Devolución
-                                      </p>
-                                      <p className="mt-1 whitespace-pre-wrap text-foreground">
-                                        {report.devolucion}
                                       </p>
                                     </div>
                                   )}

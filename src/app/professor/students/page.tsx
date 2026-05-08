@@ -134,8 +134,6 @@ export default async function ProfessorStudentsPage() {
                   date: true,
                   schedule: true,
                   cancelled: true,
-                  planificacion: true,
-                  devolucion: true,
                   activityGroupId: true,
                   activityGroup: { select: { name: true } },
                 },
@@ -275,8 +273,6 @@ export default async function ProfessorStudentsPage() {
         confirmedAt: attendance.confirmedAt?.toISOString() ?? null,
         cancelled: attendance.activityDay.cancelled,
         groupName: attendance.activityDay.activityGroup?.name ?? null,
-        planificacion: attendance.activityDay.planificacion,
-        devolucion: attendance.activityDay.devolucion,
       })),
       reports: [
         ...participant.reports
@@ -299,33 +295,6 @@ export default async function ProfessorStudentsPage() {
               [report.createdBy.name, report.createdBy.lastName]
                 .filter(Boolean)
                 .join(' ') || report.createdBy.email,
-            planificacion: null,
-            devolucion: null,
-          })),
-        ...participant.attendances
-          .filter(
-            (attendance) =>
-              (!attendance.activityDay.activityGroupId ||
-                attendance.activityDay.activityGroupId ===
-                  gm.activityGroupId) &&
-              Boolean(
-                attendance.activityDay.planificacion ||
-                attendance.activityDay.devolucion
-              )
-          )
-          .map((attendance) => ({
-            id: `${participant.id}-${attendance.activityDay.date.toISOString()}-${attendance.activityDay.schedule}`,
-            type: 'day' as const,
-            date: attendance.activityDay.date.toISOString(),
-            schedule: attendance.activityDay.schedule,
-            cancelled: attendance.activityDay.cancelled,
-            groupName: attendance.activityDay.activityGroup?.name ?? null,
-            body: null,
-            createdAt: null,
-            updatedAt: null,
-            author: null,
-            planificacion: attendance.activityDay.planificacion,
-            devolucion: attendance.activityDay.devolucion,
           })),
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     };
