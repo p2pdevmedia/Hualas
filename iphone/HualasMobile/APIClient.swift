@@ -283,14 +283,14 @@ final class APIClient {
     let limitValue = min(max(limit, 1), 50)
     let unreadQuery = unreadOnly ? "&unread=1" : ""
     return try await send(
-      path: "/api/notifications?limit=\(limitValue)\(unreadQuery)",
+      path: "/api/mobile/notifications?limit=\(limitValue)\(unreadQuery)",
       token: token
     )
   }
 
   func markNotificationRead(token: String, id: String) async throws {
     let _: EmptyResponse = try await send(
-      path: "/api/notifications/\(id)",
+      path: "/api/mobile/notifications/\(id)",
       method: "PATCH",
       token: token,
       body: EmptyRequest()
@@ -299,7 +299,7 @@ final class APIClient {
 
   func markAllNotificationsRead(token: String) async throws {
     let _: EmptyResponse = try await send(
-      path: "/api/notifications",
+      path: "/api/mobile/notifications",
       method: "PATCH",
       token: token,
       body: EmptyRequest()
