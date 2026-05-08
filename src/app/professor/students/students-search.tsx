@@ -41,6 +41,10 @@ export type ProfessorGroupEntry = {
     name: string;
     age: number | null;
     responsibleName: string | null;
+    attendanceSummary: {
+      attended: number;
+      missed: number;
+    };
   }[];
 };
 
@@ -168,6 +172,7 @@ export default function StudentsSearch({
   const [query, setQuery] = useState('');
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
   const [professorsExpanded, setProfessorsExpanded] = useState(false);
+  const [schedulesExpanded, setSchedulesExpanded] = useState(false);
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -181,6 +186,7 @@ export default function StudentsSearch({
   useEffect(() => {
     setParticipantsExpanded(false);
     setProfessorsExpanded(false);
+    setSchedulesExpanded(false);
   }, [selectedGroupId]);
 
   return (
@@ -521,7 +527,22 @@ export default function StudentsSearch({
                                   </p>
                                 )}
                               </div>
-                              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span
+                                  className="inline-flex items-center rounded-md border bg-background px-2 py-0.5 font-semibold"
+                                  aria-label={`${participant.attendanceSummary.attended} sesiones asistidas y ${participant.attendanceSummary.missed} inasistencias`}
+                                  title="Asistió / no vino"
+                                >
+                                  <span className="text-emerald-600">
+                                    {participant.attendanceSummary.attended}
+                                  </span>
+                                  <span className="mx-1 text-muted-foreground">
+                                    /
+                                  </span>
+                                  <span className="text-destructive">
+                                    {participant.attendanceSummary.missed}
+                                  </span>
+                                </span>
                                 <span className="rounded-full bg-muted px-2 py-0.5">
                                   {participant.type === 'child'
                                     ? 'Alumno'
@@ -628,35 +649,71 @@ export default function StudentsSearch({
                   </div>
 
                   <div className="rounded-xl border bg-background p-4">
-                    <h3 className="font-medium">Días y horarios</h3>
-                    {selectedGroup.schedules.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Este grupo todavía no tiene días cargados.
-                      </p>
-                    ) : (
-                      <ul className="mt-3 space-y-2">
-                        {selectedGroup.schedules.map((day) => (
-                          <li
-                            key={day.id}
-                            className="rounded-lg bg-muted/60 p-3 text-sm"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="font-medium capitalize">
-                                {formatScheduleDay(day)}
-                              </span>
-                              {day.cancelled && (
-                                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                                  Cancelado
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() =>
+                        setSchedulesExpanded((expanded) => !expanded)
+                      }
+                      aria-expanded={schedulesExpanded}
+                      aria-controls="group-schedules-list"
+                    >
+                      <span className="font-medium">Días y horarios</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {selectedGroup.schedules.length} día
+                        {selectedGroup.schedules.length === 1 ? '' : 's'}
+                        <svg
+                          className={`h-4 w-4 transition-transform ${
+                            schedulesExpanded ? 'rotate-180' : ''
+                          }`}
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+                    <div
+                      id="group-schedules-list"
+                      className={`${schedulesExpanded ? 'block' : 'hidden'}`}
+                    >
+                      {selectedGroup.schedules.length === 0 ? (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Este grupo todavía no tiene días cargados.
+                        </p>
+                      ) : (
+                        <ul className="mt-3 space-y-2">
+                          {selectedGroup.schedules.map((day) => (
+                            <li
+                              key={day.id}
+                              className="rounded-lg bg-muted/60 p-3 text-sm"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-medium capitalize">
+                                  {formatScheduleDay(day)}
                                 </span>
-                              )}
-                            </div>
-                            <p className="text-muted-foreground">
-                              {day.schedule}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                                {day.cancelled && (
+                                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                    Cancelado
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-muted-foreground">
+                                {day.schedule}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </section>
               )}
