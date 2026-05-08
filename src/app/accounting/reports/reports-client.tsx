@@ -5,7 +5,11 @@ import { Download, FileDown, Loader2, RefreshCw } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
-import { formatAccountingDate, formatAmount } from '@/lib/accounting';
+import {
+  centsToPesos,
+  formatAccountingDate,
+  formatAmount,
+} from '@/lib/accounting';
 import { buildAccountingCategoryTotals } from '@/lib/accounting-summary';
 
 type ExportSource = 'movements' | 'manualPayments' | 'mpPayments';
@@ -392,6 +396,7 @@ export default function ReportsClient() {
 
   const downloadCsv = () => {
     if (!data || !canExport) return;
+    const formatCsvAmount = (value: number) => String(centsToPesos(value));
     const lines = [
       [
         'Origen',
@@ -409,7 +414,7 @@ export default function ReportsClient() {
           entry.date,
           entry.category,
           entry.description,
-          entry.amount,
+          formatCsvAmount(entry.amount),
           entry.reference ?? '',
         ]
           .map((field) => `"${String(field).replaceAll('"', '""')}"`)
