@@ -14,7 +14,23 @@ import ActivityCalendar, {
   type CalendarActivityDay,
 } from './activity-calendar';
 
-export default async function MyActivitiesPage() {
+type MyActivitiesPageProps = {
+  searchParams?: {
+    participant?: string | string[];
+  };
+};
+
+function formatParticipantName(
+  name: string | null | undefined,
+  lastName: string | null | undefined,
+  fallback: string
+) {
+  return [name, lastName].filter(Boolean).join(' ') || fallback;
+}
+
+export default async function MyActivitiesPage({
+  searchParams,
+}: MyActivitiesPageProps) {
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect('/login');
@@ -60,6 +76,31 @@ export default async function MyActivitiesPage() {
   if (!profileForCheck) {
     redirect('/login');
   }
+
+  const adultResponsibleLabel = formatParticipantName(
+    profileForCheck.name,
+    profileForCheck.lastName,
+    session.user.name ?? 'Yo'
+  );
+  const participantFilterOptions = [
+    { key: 'all', label: 'Todos' },
+    { key: 'self', label: adultResponsibleLabel },
+    ...familyChildren.map((child) => ({
+      key: `child:${child.id}`,
+      label: formatParticipantName(child.name, child.lastName, child.name),
+    })),
+  ];
+  const rawParticipantFilter = Array.isArray(searchParams?.participant)
+    ? searchParams?.participant[0]
+    : searchParams?.participant;
+  const selectedParticipantFilter =
+    !isProfessorView &&
+    rawParticipantFilter &&
+    participantFilterOptions.some(
+      (option) => option.key === rawParticipantFilter
+    )
+      ? rawParticipantFilter
+      : 'all';
 
   const missingProfileTargets = [
     {
@@ -137,9 +178,20 @@ export default async function MyActivitiesPage() {
     professorAssignments = [];
   }
 
+  const visibleParticipations =
+    selectedParticipantFilter === 'all'
+      ? participations
+      : participations.filter((participation) => {
+          if (selectedParticipantFilter === 'self') {
+            return participation.childId === null;
+          }
+
+          return participation.childId === selectedParticipantFilter.slice(6);
+        });
+
   const activityIds = [
     ...new Set([
-      ...participations.map((p) => p.activity.id),
+      ...visibleParticipations.map((p) => p.activity.id),
       ...professorAssignments.map((a) => a.activity.id),
     ]),
   ];
@@ -148,7 +200,7 @@ export default async function MyActivitiesPage() {
     string,
     { groupIds: Set<string>; hasUngroupedParticipant: boolean }
   >();
-  for (const participation of participations) {
+  for (const participation of visibleParticipations) {
     const current = participantScopeByActivity.get(
       participation.activity.id
     ) ?? {
@@ -230,7 +282,7 @@ export default async function MyActivitiesPage() {
           );
           const visibleParticipants = isProfessorView
             ? []
-            : participations.filter((participant) => {
+            : visibleParticipations.filter((participant) => {
                 if (participant.activity.id !== d.activity.id) return false;
                 const participantGroupId =
                   participant.groupMembership?.activityGroupId ?? null;
@@ -262,7 +314,7 @@ export default async function MyActivitiesPage() {
             attendanceOptions: visibleParticipants.map((participant) => {
               const label = participant.child
                 ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
-                : (session.user.name ?? 'Yo');
+                : adultResponsibleLabel;
 
               return {
                 participantId: participant.id,
@@ -287,11 +339,11 @@ export default async function MyActivitiesPage() {
     }
   >();
 
-  for (const p of participations) {
+  for (const p of visibleParticipations) {
     const key = p.activity.id;
     const label = p.child
       ? `${p.child.name}${p.child.lastName ? ` ${p.child.lastName}` : ''}`
-      : (session.user.name ?? 'Yo');
+      : adultResponsibleLabel;
     const entry = grouped.get(key);
     if (entry) {
       entry.labels.add(label);
@@ -354,6 +406,38 @@ export default async function MyActivitiesPage() {
             ? 'Actividades en las que estás asignado como profesor.'
             : 'Actividades en las que estás inscripto vos o alguien de tu familia.'}
         </p>
+        {!isProfessorView && participantFilterOptions.length > 1 && (
+          <div className="mt-4 rounded-xl border bg-card p-3 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Filtrar por participante
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {participantFilterOptions.map((option) => {
+                const isSelected = option.key === selectedParticipantFilter;
+                const href =
+                  option.key === 'all'
+                    ? '/my-activities'
+                    : `/my-activities?participant=${encodeURIComponent(option.key)}`;
+
+                return (
+                  <Link
+                    key={option.key}
+                    href={href}
+                    prefetch={true}
+                    aria-current={isSelected ? 'page' : undefined}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    {option.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {firstMissingProfileTarget && (
