@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
+import { formatAmount } from '@/lib/accounting';
 
 export default async function Home() {
   let activities: Awaited<
@@ -106,8 +107,8 @@ export default async function Home() {
                         {activity.capacity
                           ? `${Math.max(Number(activity.capacity) - Number(activity.participantCount), 0)} cupos disponibles`
                           : `${activity.participantCount} inscriptos`}
-                        {' · $'}
-                        {activity.price}
+                        {' · '}
+                        {formatAmount(activity.price)}
                       </div>
                     </div>
                   </div>

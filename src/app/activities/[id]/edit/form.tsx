@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SPORT_ICONS } from '@/lib/sport-icons';
+import { centsToPesos, pesosToCents } from '@/lib/accounting';
 import ProfessorPicker from '../../professor-picker';
 
 type ProfessorOption = {
@@ -106,7 +107,7 @@ export default function EditActivityForm({
     activity.activityType
   );
   const [description, setDescription] = useState(activity.description || '');
-  const [price, setPrice] = useState(String(activity.price));
+  const [price, setPrice] = useState(String(centsToPesos(activity.price)));
   const [professorIds, setProfessorIds] = useState<string[]>(
     activity.professorIds
   );
@@ -353,7 +354,7 @@ export default function EditActivityForm({
           endDate,
           activityType,
           description: description || undefined,
-          price: Number(price),
+          price: pesosToCents(Number(price)),
           professorIds,
           annualSchedules: normalizedSchedules,
           geoLocation:
@@ -468,11 +469,12 @@ export default function EditActivityForm({
         />
         <input
           type="number"
-          placeholder="Precio"
+          placeholder="Precio en pesos"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           className={inputClass}
           min={0}
+          step="0.01"
           required
         />
 

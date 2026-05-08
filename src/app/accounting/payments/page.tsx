@@ -247,7 +247,7 @@ export default async function PaymentsPage({
                     </PersonLink>
                   </td>
                   <td className="px-4 py-3">
-                    {formatAmount(payment.activity.price * 100)}
+                    {formatAmount(payment.activity.price)}
                   </td>
                   <td className="px-4 py-3">{payment.receipt ?? '-'}</td>
                   <td className="px-4 py-3">

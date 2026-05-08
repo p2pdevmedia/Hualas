@@ -10,6 +10,7 @@ import {
   MANUAL_PAYMENT_BANK_DETAILS,
   validateManualPaymentFile,
 } from '@/lib/manual-payment-ui';
+import { formatAmount } from '@/lib/accounting';
 
 type ManualPaymentFormProps = {
   endpoint: string;
@@ -25,14 +26,6 @@ type ManualPaymentFormProps = {
   activitySummary?: string;
   childId?: string | null;
 };
-
-function formatAmount(amount: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 const MANUAL_PAYMENT_BANK_COPY_TEXT = [
   'Transferencia bancaria manual',

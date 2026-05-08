@@ -8,6 +8,7 @@ import ChildInfoSection from '@/components/child-info-section';
 import ChildProfilePhotoUpload from './child-profile-photo-upload';
 import { gateActiveRole } from '@/lib/role-guards';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import { formatAmount } from '@/lib/accounting';
 
 export default async function ViewMyChildPage({
   params,
@@ -344,7 +345,7 @@ export default async function ViewMyChildPage({
                 <span className="font-medium">{ap.activity.name}</span>
                 <span className="text-muted-foreground text-xs block mt-0.5">
                   {ap.activity.date.toLocaleDateString('es-AR')} · $
-                  {ap.activity.price}
+                  {formatAmount(ap.activity.price)}
                 </span>
               </li>
             ))}
@@ -361,7 +362,7 @@ export default async function ViewMyChildPage({
                 <span className="font-medium">{ap.activity.name}</span>
                 <span className="text-muted-foreground text-xs block mt-0.5">
                   {ap.activity.date.toLocaleDateString('es-AR')} · $
-                  {ap.activity.price}
+                  {formatAmount(ap.activity.price)}
                 </span>
               </li>
             ))}

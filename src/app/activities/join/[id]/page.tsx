@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import JoinEnrollmentPanel from './join-enrollment-panel';
+import { formatAmount } from '@/lib/accounting';
 
 interface ActivityJoinPageProps {
   params: { id: string };
@@ -181,7 +182,7 @@ export default async function ActivityJoinPage({
                 Precio
               </p>
               <p className="font-heading text-lg font-semibold">
-                ${activityData.price}
+                {formatAmount(activityData.price)}
               </p>
             </div>
 

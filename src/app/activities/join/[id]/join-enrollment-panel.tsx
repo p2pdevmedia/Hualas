@@ -8,6 +8,7 @@ import { ACTIVITY_CART_STORAGE_KEY, ActivityCartItem } from '@/lib/cart';
 import RegisterButton from '@/components/register-button';
 import GroupScheduleCalendar from './group-schedule-calendar';
 import PersonPicker, { Avatar } from './person-picker';
+import { formatAmount } from '@/lib/accounting';
 
 type Group = {
   id: string;
@@ -598,7 +599,7 @@ export default function JoinEnrollmentPanel({
             Inscripción
           </p>
           <p className="font-heading text-2xl font-semibold">
-            ${activity.price}
+            {formatAmount(activity.price)}
           </p>
           {hasCapacity && (
             <p

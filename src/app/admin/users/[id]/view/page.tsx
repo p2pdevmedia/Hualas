@@ -551,8 +551,8 @@ export default async function ViewUserPage({
                 <span>
                   <span className="font-medium">{ap.activity.name}</span>
                   <span className="text-muted-foreground ml-2">
-                    {ap.activity.date.toLocaleDateString()} · $
-                    {ap.activity.price}
+                    {ap.activity.date.toLocaleDateString()} ·{' '}
+                    {formatAmount(ap.activity.price)}
                     {ap.child && ` · ${ap.child.name}`}
                   </span>
                 </span>
@@ -620,7 +620,7 @@ export default async function ViewUserPage({
                         </td>
                         <td className="px-4 py-3">{payment.receipt ?? '—'}</td>
                         <td className="px-4 py-3 text-right font-medium">
-                          {formatAmount(payment.activity.price * 100)}
+                          {formatAmount(payment.activity.price)}
                         </td>
                       </tr>
                     );

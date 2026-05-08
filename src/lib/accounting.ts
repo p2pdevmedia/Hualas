@@ -28,6 +28,16 @@ export const MOVEMENT_CATEGORIES = [
 
 export type MovementCategory = (typeof MOVEMENT_CATEGORIES)[number];
 
+export function pesosToCents(pesos: number): number {
+  if (!Number.isFinite(pesos)) return 0;
+  return Math.round(pesos * 100);
+}
+
+export function centsToPesos(centavos: number): number {
+  if (!Number.isFinite(centavos)) return 0;
+  return centavos / 100;
+}
+
 export function formatAmount(centavos: number): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',

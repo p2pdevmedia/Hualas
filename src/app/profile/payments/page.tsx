@@ -150,7 +150,7 @@ export default async function ProfilePaymentsPage() {
                       </td>
                       <td className="px-3 py-2">{payment.receipt ?? '-'}</td>
                       <td className="px-3 py-2 text-right font-medium">
-                        {formatCurrency(payment.activity.price)}
+                        {formatAmount(payment.activity.price)}
                       </td>
                     </tr>
                   );
