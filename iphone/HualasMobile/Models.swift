@@ -284,6 +284,50 @@ struct MobileAddFamilyGroupMemberRequest: Codable {
   let relationship: MobileFamilyRelationship
 }
 
+struct MobileDeleteFamilyGroupMemberRequest: Codable {
+  let memberId: String
+}
+
+struct MobileFamilyGroupResponse: Codable {
+  struct Person: Codable, Identifiable {
+    let id: String
+    let name: String?
+    let lastName: String?
+    let email: String
+
+    var fullName: String {
+      [name, lastName]
+        .compactMap { $0 }
+        .joined(separator: " ")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+  }
+
+  struct Member: Codable, Identifiable {
+    let id: String
+    let memberId: String
+    let name: String
+    let email: String
+    let relationship: String
+    let isPaymentResponsible: Bool
+
+    var fullName: String {
+      name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+  }
+
+  struct FamilyGroup: Codable, Identifiable {
+    let id: String
+    let name: String
+    let responsibleUserId: String?
+    let responsibleUser: Person?
+    let members: [Member]
+  }
+
+  let familyGroup: FamilyGroup
+  let isResponsible: Bool
+}
+
 struct MobilePickupNoticesResponse: Codable {
   struct Notice: Codable, Identifiable {
     let id: String
@@ -506,24 +550,45 @@ struct MobileActivityCheckoutResponse: Codable {
   let error: String?
 }
 
+struct MobileActivitiesCalendarSession: Codable, Identifiable {
+  let id: String
+  let date: String
+  let activityId: String
+  let activityName: String
+  let schedule: String
+  let geoLocation: String
+  let groupName: String?
+  let activityGroupId: String?
+  let cancelled: Bool
+  let participantLabels: [String]?
+}
+
 struct MobileActivitiesCalendarResponse: Codable {
-  struct Session: Codable, Identifiable {
+  let role: MobileRole
+  let month: String
+  let monthLabel: String
+  let sessions: [MobileActivitiesCalendarSession]
+}
+
+struct MobileActivitiesCalendarSummaryResponse: Codable {
+  struct Day: Codable, Identifiable {
     let id: String
     let date: String
-    let activityId: String
-    let activityName: String
-    let schedule: String
-    let geoLocation: String
-    let groupName: String?
-    let activityGroupId: String?
-    let cancelled: Bool
-    let participantLabels: [String]?
+    let sessionCount: Int
   }
 
   let role: MobileRole
   let month: String
   let monthLabel: String
-  let sessions: [Session]
+  let days: [Day]
+}
+
+struct MobileActivitiesDaySessionsResponse: Codable {
+  let role: MobileRole
+  let month: String
+  let monthLabel: String
+  let day: String
+  let sessions: [MobileActivitiesCalendarSession]
 }
 
 struct MobileActivitySessionDetailResponse: Codable, Identifiable {

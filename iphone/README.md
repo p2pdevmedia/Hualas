@@ -18,6 +18,7 @@ SwiftUI scaffold for the native iOS client that talks to the Next.js backend thr
   - Grupos
   - Alumnos
   - Asistencia
+  - Tutores
 
 ## Backend contract
 
@@ -29,8 +30,13 @@ The app expects these endpoints:
 - `GET /api/mobile/home`
 - `GET /api/mobile/children`
 - `GET /api/mobile/activities`
+- `GET /api/mobile/activities?month=YYYY-MM&summary=1`
+- `GET /api/mobile/activities?month=YYYY-MM&day=YYYY-MM-DD`
 - `GET /api/mobile/payments`
 - `GET /api/mobile/news`
+- `GET /api/mobile/family-groups/current/members`
+- `POST /api/mobile/family-groups/current/members`
+- `DELETE /api/mobile/family-groups/current/members`
 - `POST /api/mobile/devices`
 - `GET /api/mobile/notifications`
 - `PATCH /api/mobile/notifications`
@@ -40,6 +46,8 @@ The app expects these endpoints:
 - `GET /api/mobile/professor/attendance`
 - `GET /api/mobile/professor/attendance/[dayId]`
 - `PATCH /api/mobile/professor/attendance/[dayId]`
+
+The iPhone app caches the activities calendar summary, the sessions for each day, and the detail for each session locally. Pull-to-refresh forces a fresh fetch.
 
 ## Xcode setup
 

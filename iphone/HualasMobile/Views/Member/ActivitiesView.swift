@@ -6,10 +6,12 @@ struct ActivitiesView: View {
   private static let selectedDaySummaryScrollID = "selected-day-summary"
 
   @State private var displayedMonth = Date()
-  @State private var monthResponse: MobileActivitiesCalendarResponse?
+  @State private var monthSummary: MobileActivitiesCalendarSummaryResponse?
   @State private var selectedDayKey: String?
+  @State private var selectedDaySessions: [MobileActivitiesCalendarSession] = []
   @State private var selectedSessionDetail: MobileActivitySessionDetailResponse?
   @State private var isLoading = false
+  @State private var isLoadingDaySessions = false
   @State private var isLoadingDetail = false
   @State private var errorMessage: String?
 
@@ -27,9 +29,22 @@ struct ActivitiesView: View {
           VStack(alignment: .leading, spacing: 16) {
             calendarCard
 
-            if let selectedDayKey, let sessions = sessionsByDay[selectedDayKey], !sessions.isEmpty {
-              selectedDaySummary(for: selectedDayKey, sessions: sessions)
+            if let selectedDayKey, !selectedDaySessions.isEmpty {
+              selectedDaySummary(for: selectedDayKey, sessions: selectedDaySessions)
                 .id(Self.selectedDaySummaryScrollID)
+            } else if let selectedDayKey, isLoadingDaySessions {
+              infoCard {
+                HStack(spacing: 12) {
+                  ProgressView()
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text("Cargando sesiones...")
+                      .font(.headline)
+                    Text(selectedDayTitle(for: selectedDayKey))
+                      .font(.footnote)
+                      .foregroundStyle(.secondary)
+                  }
+                }
+              }
             } else {
               emptyState
             }
@@ -49,12 +64,19 @@ struct ActivitiesView: View {
           }
           .padding()
         }
-        .onChange(of: selectedDayKey) { newValue in
+        .onChange(of: selectedDayKey) { _, newValue in
           guard
-            let newValue,
-            let sessions = sessionsByDay[newValue],
-            !sessions.isEmpty
+            newValue != nil,
+            !selectedDaySessions.isEmpty
           else {
+            return
+          }
+          withAnimation(.easeInOut) {
+            proxy.scrollTo(Self.selectedDaySummaryScrollID, anchor: .top)
+          }
+        }
+        .onChange(of: selectedDaySessions.count) { _, _ in
+          guard selectedDayKey != nil, !selectedDaySessions.isEmpty else {
             return
           }
           withAnimation(.easeInOut) {
@@ -65,11 +87,11 @@ struct ActivitiesView: View {
       .navigationTitle("Mis actividades")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar(.hidden, for: .navigationBar)
-      .task(id: monthKey) {
+      .task(id: loadKey) {
         await loadMonth()
       }
       .refreshable {
-        await loadMonth()
+        await loadMonth(forceRefresh: true)
       }
       .sheet(item: $selectedSessionDetail) { detail in
         SessionDetailView(detail: detail)
@@ -78,16 +100,29 @@ struct ActivitiesView: View {
     }
   }
 
-  private var sessionsByDay: [String: [MobileActivitiesCalendarResponse.Session]] {
-    Dictionary(grouping: monthResponse?.sessions ?? [], by: \.date)
-  }
-
   private var monthKey: String {
     Self.monthKey(for: displayedMonth)
   }
 
   private var monthTitle: String {
-    monthResponse?.monthLabel ?? Self.monthTitleFormatter.string(from: displayedMonth)
+    if monthSummary?.month == monthKey {
+      return monthSummary?.monthLabel ?? Self.monthTitleFormatter.string(from: displayedMonth)
+    }
+
+    return Self.monthTitleFormatter.string(from: displayedMonth)
+  }
+
+  private var cacheScopeKey: String? {
+    guard let userId = sessionStore.me?.user.id,
+          let role = sessionStore.currentRole else {
+      return nil
+    }
+
+    return "\(userId)-\(role.rawValue)"
+  }
+
+  private var loadKey: String {
+    "\(monthKey)-\(cacheScopeKey ?? "loading")"
   }
 
   private var calendarCard: some View {
@@ -165,7 +200,7 @@ struct ActivitiesView: View {
       VStack(alignment: .leading, spacing: 6) {
         Text("Elegí un día con sesiones")
           .font(.headline)
-        Text("Los días con actividad se destacan en el calendario. Tocá uno para desplegar sus sesiones.")
+        Text("El calendario carga sólo los conteos. Tocá un día para descargar sus sesiones y ver el detalle.")
           .font(.footnote)
           .foregroundStyle(.secondary)
       }
@@ -174,7 +209,7 @@ struct ActivitiesView: View {
 
   private func selectedDaySummary(
     for dayKey: String,
-    sessions: [MobileActivitiesCalendarResponse.Session]
+    sessions: [MobileActivitiesCalendarSession]
   ) -> some View {
     infoCard {
       VStack(alignment: .leading, spacing: 10) {
@@ -198,6 +233,11 @@ struct ActivitiesView: View {
         Text("Tocá una sesión para ver el detalle completo.")
           .font(.footnote)
           .foregroundStyle(.secondary)
+
+        if isLoadingDetail {
+          ProgressView("Abriendo detalle...")
+            .font(.footnote)
+        }
 
         ForEach(sortedSessions(sessions)) { session in
           Button {
@@ -246,6 +286,7 @@ struct ActivitiesView: View {
             )
           }
           .buttonStyle(.plain)
+          .disabled(isLoadingDetail)
         }
       }
     }
@@ -253,10 +294,10 @@ struct ActivitiesView: View {
 
   private func dayCell(for date: Date) -> some View {
     let dayKey = Self.dayKey(for: date)
-    let sessions = sessionsByDay[dayKey] ?? []
+    let sessionCount = sessionCount(for: dayKey)
     let isSelected = selectedDayKey == dayKey
     let isToday = Self.calendar.isDateInToday(date)
-    let hasSessions = !sessions.isEmpty
+    let hasSessions = sessionCount > 0
 
     return Button {
       guard hasSessions else { return }
@@ -288,20 +329,20 @@ struct ActivitiesView: View {
 
         if hasSessions {
           HStack(spacing: 4) {
-            ForEach(0..<min(3, sessions.count), id: \.self) { index in
+            ForEach(0..<min(3, sessionCount), id: \.self) { index in
               Circle()
                 .fill(Color.accentColor.opacity(0.85 - Double(index) * 0.15))
                 .frame(width: 7, height: 7)
             }
 
-            if sessions.count > 3 {
-              Text("+\(sessions.count - 3)")
+            if sessionCount > 3 {
+              Text("+\(sessionCount - 3)")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             }
           }
 
-          Text("\(sessions.count) sesión\(sessions.count == 1 ? "" : "es")")
+          Text("\(sessionCount) sesión\(sessionCount == 1 ? "" : "es")")
             .font(.caption2.weight(.semibold))
             .foregroundStyle(isSelected ? .primary : .secondary)
             .lineLimit(1)
@@ -343,25 +384,46 @@ struct ActivitiesView: View {
     dayKey: String
   ) {
     selectedDayKey = dayKey
+    selectedDaySessions = []
+    selectedSessionDetail = nil
+    errorMessage = nil
+    isLoadingDaySessions = true
+    Task { await loadDaySessions(for: dayKey) }
   }
 
-  private func loadMonth() async {
-    guard let token = sessionStore.token else { return }
+  private func loadMonth(forceRefresh: Bool = false) async {
+    guard let token = sessionStore.token,
+          let cacheScopeKey else { return }
+
+    errorMessage = nil
+
+    if !forceRefresh,
+       let cachedSummary = await MobileActivitiesCacheStore.shared.calendarSummary(
+        scopeKey: cacheScopeKey,
+        monthKey: monthKey
+       ) {
+      monthSummary = cachedSummary
+      applyDefaultSelection(for: cachedSummary)
+      await loadDaySessions(for: selectedDayKey, forceRefresh: false)
+      return
+    }
 
     isLoading = true
-    errorMessage = nil
     defer { isLoading = false }
 
     do {
-      let response = try await APIClient.shared.activitiesCalendar(token: token, month: displayedMonth)
-      monthResponse = response
-
-      let availableDays = Set(response.sessions.map(\.date))
-      if let selectedDayKey, !availableDays.contains(selectedDayKey) {
-        self.selectedDayKey = response.sessions.first?.date
-      } else if selectedDayKey == nil {
-        self.selectedDayKey = response.sessions.first?.date
-      }
+      let response = try await APIClient.shared.activitiesCalendarSummary(
+        token: token,
+        month: displayedMonth
+      )
+      monthSummary = response
+      await MobileActivitiesCacheStore.shared.store(
+        calendarSummary: response,
+        scopeKey: cacheScopeKey,
+        monthKey: monthKey
+      )
+      applyDefaultSelection(for: response)
+      await loadDaySessions(for: selectedDayKey, forceRefresh: false)
     } catch {
       guard !error.isCancellationError else { return }
       errorMessage = error.localizedDescription
@@ -369,15 +431,78 @@ struct ActivitiesView: View {
     }
   }
 
-  private func loadSessionDetail(for session: MobileActivitiesCalendarResponse.Session) async {
-    guard let token = sessionStore.token else { return }
+  private func loadDaySessions(
+    for dayKey: String?,
+    forceRefresh: Bool = false
+  ) async {
+    guard let dayKey,
+          let token = sessionStore.token,
+          let cacheScopeKey else { return }
+
+    if !forceRefresh,
+       let cached = await MobileActivitiesCacheStore.shared.daySessions(
+        scopeKey: cacheScopeKey,
+        monthKey: monthKey,
+        dayKey: dayKey
+       ) {
+      guard selectedDayKey == dayKey else { return }
+      selectedDaySessions = cached.sessions
+      isLoadingDaySessions = false
+      return
+    }
+
+    isLoadingDaySessions = true
+    defer { isLoadingDaySessions = false }
+    guard selectedDayKey == dayKey || selectedDayKey == nil else { return }
+
+    do {
+      let response = try await APIClient.shared.activitiesForDay(
+        token: token,
+        month: displayedMonth,
+        dayKey: dayKey
+      )
+      await MobileActivitiesCacheStore.shared.store(
+        daySessions: response,
+        scopeKey: cacheScopeKey,
+        monthKey: monthKey,
+        dayKey: dayKey
+      )
+      guard selectedDayKey == dayKey else { return }
+      selectedDaySessions = response.sessions
+      if selectedDaySessions.isEmpty {
+        selectedDayKey = dayKey
+      }
+    } catch {
+      guard !error.isCancellationError else { return }
+      errorMessage = error.localizedDescription
+      print("[activities] load day sessions failed", error)
+    }
+  }
+
+  private func loadSessionDetail(for session: MobileActivitiesCalendarSession) async {
+    guard let token = sessionStore.token,
+          let cacheScopeKey else { return }
+
+    if let cached = await MobileActivitiesCacheStore.shared.sessionDetail(
+      scopeKey: cacheScopeKey,
+      dayId: session.id
+    ) {
+      selectedSessionDetail = cached
+      return
+    }
 
     isLoadingDetail = true
     defer { isLoadingDetail = false }
 
     do {
-      selectedSessionDetail = try await APIClient.shared.activitySessionDetail(
+      let response = try await APIClient.shared.activitySessionDetail(
         token: token,
+        dayId: session.id
+      )
+      selectedSessionDetail = response
+      await MobileActivitiesCacheStore.shared.store(
+        sessionDetail: response,
+        scopeKey: cacheScopeKey,
         dayId: session.id
       )
     } catch {
@@ -392,6 +517,18 @@ struct ActivitiesView: View {
       return
     }
     displayedMonth = newMonth
+  }
+
+  private func applyDefaultSelection(
+    for summary: MobileActivitiesCalendarSummaryResponse
+  ) {
+    let availableDays = Set(summary.days.map(\.date))
+    if let selectedDayKey, availableDays.contains(selectedDayKey) {
+      return
+    }
+
+    selectedDaySessions = []
+    selectedDayKey = summary.days.first(where: { $0.sessionCount > 0 })?.date ?? summary.days.first?.date
   }
 
   private var monthGridDays: [Date?] {
@@ -424,8 +561,8 @@ struct ActivitiesView: View {
   }
 
   private func sortedSessions(
-    _ sessions: [MobileActivitiesCalendarResponse.Session]
-  ) -> [MobileActivitiesCalendarResponse.Session] {
+    _ sessions: [MobileActivitiesCalendarSession]
+  ) -> [MobileActivitiesCalendarSession] {
     sessions.sorted {
       if $0.schedule == $1.schedule {
         return $0.activityName.localizedCaseInsensitiveCompare($1.activityName) == .orderedAscending
@@ -435,7 +572,7 @@ struct ActivitiesView: View {
   }
 
   private func participantSummary(
-    for session: MobileActivitiesCalendarResponse.Session
+    for session: MobileActivitiesCalendarSession
   ) -> String? {
     let labels = (session.participantLabels ?? [])
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -451,7 +588,7 @@ struct ActivitiesView: View {
 
   @ViewBuilder
   private func participantSummaryView(
-    for session: MobileActivitiesCalendarResponse.Session
+    for session: MobileActivitiesCalendarSession
   ) -> some View {
     if let participantSummary = participantSummary(for: session) {
       Text(verbatim: participantSummary)
@@ -508,6 +645,14 @@ struct ActivitiesView: View {
     let month = components.month ?? calendar.component(.month, from: date)
     let day = components.day ?? calendar.component(.day, from: date)
     return String(format: "%04d-%02d-%02d", year, month, day)
+  }
+
+  private func sessionCount(for dayKey: String) -> Int {
+    guard monthSummary?.month == monthKey else {
+      return 0
+    }
+
+    return monthSummary?.days.first(where: { $0.date == dayKey })?.sessionCount ?? 0
   }
 }
 
@@ -727,6 +872,23 @@ private struct SessionAttendanceView: View {
       participantId: participant.id,
       attendance: updatedAttendance
     )
+
+    if let cacheScopeKey {
+      await MobileActivitiesCacheStore.shared.store(
+        sessionDetail: detail,
+        scopeKey: cacheScopeKey,
+        dayId: detail.day.id
+      )
+    }
+  }
+
+  private var cacheScopeKey: String? {
+    guard let userId = sessionStore.me?.user.id,
+          let role = sessionStore.currentRole else {
+      return nil
+    }
+
+    return "\(userId)-\(role.rawValue)"
   }
 
   private func update(

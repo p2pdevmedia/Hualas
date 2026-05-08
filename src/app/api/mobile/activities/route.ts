@@ -39,6 +39,26 @@ function formatDateOnly(value: Date) {
   return toDateKey(value);
 }
 
+function parseDayRange(value: string | null) {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+
+  const start = new Date(year, monthIndex, day);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  end.setHours(0, 0, 0, 0);
+
+  return { start, end, dayKey: value };
+}
+
 function isVisibleForMember(
   day: { activityGroupId: string | null; activityId: string },
   scope:
@@ -53,6 +73,35 @@ function isVisibleForMember(
   return scope.groupIds.has(day.activityGroupId);
 }
 
+function buildDaySummary(days: Array<{ date: Date }>) {
+  const counts = new Map<string, number>();
+
+  for (const day of days) {
+    const key = formatDateOnly(day.date);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([date, sessionCount]) => ({
+      id: date,
+      date,
+      sessionCount,
+    }));
+}
+
+function sortByDateAndSchedule<T extends { date: Date; schedule: string }>(
+  left: T,
+  right: T
+) {
+  const diff = left.date.getTime() - right.date.getTime();
+  if (diff !== 0) {
+    return diff;
+  }
+
+  return left.schedule.localeCompare(right.schedule);
+}
+
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
   if (!session) {
@@ -63,6 +112,10 @@ export async function GET(req: Request) {
   const { start, end, monthKey, monthLabel } = parseMonthRange(
     url.searchParams.get('month')
   );
+  const requestedDay = parseDayRange(url.searchParams.get('day'));
+  const summaryMode =
+    url.searchParams.get('summary') === '1' ||
+    url.searchParams.get('summary') === 'true';
 
   if (session.appRole === 'PROFESSOR') {
     const [activityAssignments, directDays] = await Promise.all([
@@ -72,7 +125,7 @@ export async function GET(req: Request) {
       }),
       prisma.activityDay.findMany({
         where: {
-          date: { gte: start, lt: end },
+          date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
           professors: { some: { userId: session.userId } },
         },
         select: {
@@ -97,7 +150,7 @@ export async function GET(req: Request) {
     const assignedDays = assignedActivityIds.size
       ? await prisma.activityDay.findMany({
           where: {
-            date: { gte: start, lt: end },
+            date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
             activityId: { in: [...assignedActivityIds] },
           },
           select: {
@@ -117,24 +170,42 @@ export async function GET(req: Request) {
 
     const merged = new Map<string, (typeof directDays)[number]>();
     [...assignedDays, ...directDays].forEach((day) => merged.set(day.id, day));
+    const visibleDays = [...merged.values()].sort(sortByDateAndSchedule);
 
-    const sessions = [...merged.values()]
-      .sort((a, b) => {
-        const diff = a.date.getTime() - b.date.getTime();
-        if (diff !== 0) return diff;
-        return a.schedule.localeCompare(b.schedule);
-      })
-      .map((day) => ({
-        id: day.id,
-        date: formatDateOnly(day.date),
-        activityId: day.activity.id,
-        activityName: day.activity.name,
-        schedule: day.schedule,
-        geoLocation: day.geoLocation,
-        groupName: day.activityGroup?.name ?? null,
-        activityGroupId: day.activityGroupId,
-        cancelled: day.cancelled,
-      }));
+    if (summaryMode) {
+      return NextResponse.json({
+        role: 'PROFESSOR',
+        month: monthKey,
+        monthLabel,
+        days: buildDaySummary(visibleDays),
+      });
+    }
+
+    const selectedDays = requestedDay
+      ? visibleDays.filter((day) => formatDateOnly(day.date) === requestedDay.dayKey)
+      : visibleDays;
+
+    const sessions = selectedDays.map((day) => ({
+      id: day.id,
+      date: formatDateOnly(day.date),
+      activityId: day.activity.id,
+      activityName: day.activity.name,
+      schedule: day.schedule,
+      geoLocation: day.geoLocation,
+      groupName: day.activityGroup?.name ?? null,
+      activityGroupId: day.activityGroupId,
+      cancelled: day.cancelled,
+    }));
+
+    if (requestedDay) {
+      return NextResponse.json({
+        role: 'PROFESSOR',
+        month: monthKey,
+        monthLabel,
+        day: requestedDay.dayKey,
+        sessions,
+      });
+    }
 
     return NextResponse.json({
       role: 'PROFESSOR',
@@ -193,7 +264,7 @@ export async function GET(req: Request) {
   const days = activityIds.length
     ? await prisma.activityDay.findMany({
         where: {
-          date: { gte: start, lt: end },
+          date: requestedDay ? { gte: requestedDay.start, lt: requestedDay.end } : { gte: start, lt: end },
           activityId: { in: activityIds },
         },
         select: {
@@ -211,42 +282,65 @@ export async function GET(req: Request) {
       })
     : [];
 
-  const sessions = days
-    .filter((day) =>
-      isVisibleForMember(day, scopeByActivityId.get(day.activityId))
-    )
-    .map((day) => {
-      const visibleParticipants = participations.filter((participant) => {
-        if (participant.activityId !== day.activityId) return false;
+  const visibleDays = days.filter((day) =>
+    isVisibleForMember(day, scopeByActivityId.get(day.activityId))
+  );
 
-        if (day.activityGroupId === null) return true;
-
-        const participantGroupId =
-          participant.groupMembership?.activityGroupId ?? null;
-        return participantGroupId === day.activityGroupId;
-      });
-
-      const participantLabels = [
-        ...new Set(
-          visibleParticipants.map((participant) =>
-            formatParticipationLabel(participant)
-          )
-        ),
-      ];
-
-      return {
-        id: day.id,
-        date: formatDateOnly(day.date),
-        activityId: day.activity.id,
-        activityName: day.activity.name,
-        schedule: day.schedule,
-        geoLocation: day.geoLocation,
-        groupName: day.activityGroup?.name ?? null,
-        activityGroupId: day.activityGroupId,
-        cancelled: day.cancelled,
-        participantLabels,
-      };
+  if (summaryMode) {
+    return NextResponse.json({
+      role: 'MEMBER',
+      month: monthKey,
+      monthLabel,
+      days: buildDaySummary(visibleDays),
     });
+  }
+
+  const selectedDays = requestedDay
+    ? visibleDays.filter((day) => formatDateOnly(day.date) === requestedDay.dayKey)
+    : visibleDays;
+
+  const sessions = selectedDays.map((day) => {
+    const visibleParticipants = participations.filter((participant) => {
+      if (participant.activityId !== day.activityId) return false;
+
+      if (day.activityGroupId === null) return true;
+
+      const participantGroupId =
+        participant.groupMembership?.activityGroupId ?? null;
+      return participantGroupId === day.activityGroupId;
+    });
+
+    const participantLabels = [
+      ...new Set(
+        visibleParticipants.map((participant) =>
+          formatParticipationLabel(participant)
+        )
+      ),
+    ];
+
+    return {
+      id: day.id,
+      date: formatDateOnly(day.date),
+      activityId: day.activity.id,
+      activityName: day.activity.name,
+      schedule: day.schedule,
+      geoLocation: day.geoLocation,
+      groupName: day.activityGroup?.name ?? null,
+      activityGroupId: day.activityGroupId,
+      cancelled: day.cancelled,
+      participantLabels,
+    };
+  });
+
+  if (requestedDay) {
+    return NextResponse.json({
+      role: 'MEMBER',
+      month: monthKey,
+      monthLabel,
+      day: requestedDay.dayKey,
+      sessions,
+    });
+  }
 
   return NextResponse.json({
     role: 'MEMBER',

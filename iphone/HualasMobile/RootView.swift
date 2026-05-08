@@ -118,9 +118,9 @@ struct MoreTabView: View {
         if sessionStore.currentRole == .member {
           Section("Familia") {
             NavigationLink {
-              AddTutorView()
+              TutorsView()
             } label: {
-              Label("Agregar tutor", systemImage: "person.badge.plus")
+              Label("Tutores", systemImage: "person.2")
             }
 
             NavigationLink {

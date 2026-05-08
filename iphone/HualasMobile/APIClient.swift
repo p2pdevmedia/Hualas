@@ -203,6 +203,45 @@ final class APIClient {
     )
   }
 
+  func currentFamilyGroup(token: String) async throws -> MobileFamilyGroupResponse {
+    try await send(path: "/api/mobile/family-groups/current/members", token: token)
+  }
+
+  func removeFamilyGroupMember(
+    token: String,
+    memberId: String
+  ) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/family-groups/current/members",
+      method: "DELETE",
+      token: token,
+      body: MobileDeleteFamilyGroupMemberRequest(memberId: memberId)
+    )
+  }
+
+  func activitiesCalendarSummary(
+    token: String,
+    month: Date = Date()
+  ) async throws -> MobileActivitiesCalendarSummaryResponse {
+    let monthKey = APIClient.monthKey(for: month)
+    return try await send(
+      path: "/api/mobile/activities?month=\(monthKey)&summary=1",
+      token: token
+    )
+  }
+
+  func activitiesForDay(
+    token: String,
+    month: Date = Date(),
+    dayKey: String
+  ) async throws -> MobileActivitiesDaySessionsResponse {
+    let monthKey = APIClient.monthKey(for: month)
+    return try await send(
+      path: "/api/mobile/activities?month=\(monthKey)&day=\(dayKey)",
+      token: token
+    )
+  }
+
   func activitiesCalendar(
     token: String,
     month: Date = Date()

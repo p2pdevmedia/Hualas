@@ -31,8 +31,23 @@ export async function GET(req: Request) {
   const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
     session.userId
   );
+  const now = new Date();
   const children = await prisma.child.findMany({
-    where: { userId: { in: accessibleChildOwnerIds } },
+    where: {
+      userId: { in: accessibleChildOwnerIds },
+      activityParticipants: {
+        some: {
+          activity: {
+            days: {
+              some: {
+                date: { gt: now },
+                cancelled: false,
+              },
+            },
+          },
+        },
+      },
+    },
     select: {
       id: true,
       name: true,
@@ -55,9 +70,8 @@ export async function GET(req: Request) {
   const activityDays = childIds.length
     ? await prisma.activityDay.findMany({
         where: {
-          date: {
-            gt: new Date(),
-          },
+          date: { gt: now },
+          cancelled: false,
           activity: {
             participants: {
               some: {

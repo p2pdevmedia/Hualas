@@ -1,7 +1,361 @@
 import SwiftUI
 
-struct AddTutorView: View {
+struct TutorsView: View {
   @EnvironmentObject private var sessionStore: SessionStore
+
+  @State private var familyGroupResponse: MobileFamilyGroupResponse?
+  @State private var isLoading = false
+  @State private var errorMessage: String?
+  @State private var showingAddTutor = false
+  @State private var pendingRemoval: MobileFamilyGroupResponse.Member?
+  @State private var deletingMemberId: String?
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 16) {
+        infoCard {
+          VStack(alignment: .leading, spacing: 12) {
+            Text("Tutores")
+              .font(.headline)
+
+            Text("Revisá quiénes forman parte del grupo familiar, eliminá integrantes si hace falta y agregá nuevos tutores desde acá.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+
+            if canManage {
+              Button {
+                showingAddTutor = true
+              } label: {
+                Label("Agregar tutor", systemImage: "person.badge.plus")
+                  .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(.borderedProminent)
+            } else {
+              Text("Solo el responsable principal puede agregar o eliminar tutores.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+          }
+        }
+
+        if isLoading && familyGroupResponse == nil {
+          ProgressView("Cargando tutores...")
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 12)
+        } else if let familyGroupResponse {
+          if let responsibleUser = familyGroupResponse.familyGroup.responsibleUser {
+            infoCard {
+              VStack(alignment: .leading, spacing: 10) {
+                Text("Responsable principal")
+                  .font(.headline)
+
+                personRow(
+                  initials: initials(
+                    name: responsibleUser.name,
+                    lastName: responsibleUser.lastName,
+                    email: responsibleUser.email
+                  ),
+                  title: responsibleUser.fullName.isEmpty ? responsibleUser.email : responsibleUser.fullName,
+                  subtitle: responsibleUser.email,
+                  badge: "Responsable"
+                )
+              }
+            }
+          }
+
+          infoCard {
+            VStack(alignment: .leading, spacing: 12) {
+              HStack {
+                Text("Integrantes")
+                  .font(.headline)
+                Spacer()
+                Text("\(familyGroupResponse.familyGroup.members.count)")
+                  .font(.footnote.weight(.semibold))
+                  .foregroundStyle(.secondary)
+              }
+
+              if familyGroupResponse.familyGroup.members.isEmpty {
+                Text("Todavía no hay tutores adicionales.")
+                  .font(.footnote)
+                  .foregroundStyle(.secondary)
+              } else {
+                VStack(spacing: 10) {
+                  ForEach(familyGroupResponse.familyGroup.members) { member in
+                    memberRow(member)
+                  }
+                }
+              }
+            }
+          }
+        } else if let errorMessage {
+          infoCard {
+            VStack(alignment: .leading, spacing: 6) {
+              Text("No se pudo cargar el grupo familiar")
+                .font(.headline)
+              Text(errorMessage)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+          }
+        } else {
+          infoCard {
+            VStack(alignment: .leading, spacing: 6) {
+              Text("Todavía no hay datos de tutores")
+                .font(.headline)
+              Text("Deslizá para actualizar cuando tengas conexión.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+          }
+        }
+
+        if let errorMessage, familyGroupResponse != nil {
+          Text(errorMessage)
+            .font(.footnote)
+            .foregroundStyle(.red)
+            .padding(.horizontal, 4)
+        }
+      }
+      .padding()
+    }
+    .navigationTitle("Tutores")
+    .navigationBarTitleDisplayMode(.inline)
+    .task {
+      await load()
+    }
+    .refreshable {
+      await load()
+    }
+    .sheet(isPresented: $showingAddTutor) {
+      NavigationStack {
+        AddTutorFormView {
+          Task { await load() }
+        }
+      }
+    }
+    .confirmationDialog(
+      "Eliminar tutor",
+      isPresented: Binding(
+        get: { pendingRemoval != nil },
+        set: { isPresented in
+          if !isPresented {
+            pendingRemoval = nil
+          }
+        }
+      ),
+      titleVisibility: .visible
+    ) {
+      if let pendingRemoval {
+        Button("Eliminar", role: .destructive) {
+          Task { await remove(member: pendingRemoval) }
+        }
+      }
+
+      Button("Cancelar", role: .cancel) {
+        pendingRemoval = nil
+      }
+    } message: {
+      Text(
+        "Vas a eliminar a \(pendingRemoval?.fullName ?? "este tutor") del grupo familiar."
+      )
+    }
+  }
+
+  private var canManage: Bool {
+    familyGroupResponse?.isResponsible == true
+  }
+
+  private func load() async {
+    guard let token = sessionStore.token else {
+      errorMessage = "No hay sesión activa."
+      return
+    }
+
+    isLoading = true
+    errorMessage = nil
+    defer { isLoading = false }
+
+    do {
+      familyGroupResponse = try await APIClient.shared.currentFamilyGroup(token: token)
+    } catch {
+      guard !error.isCancellationError else { return }
+      errorMessage = error.localizedDescription
+      print("[family] load tutors failed", error)
+    }
+  }
+
+  private func remove(member: MobileFamilyGroupResponse.Member) async {
+    guard let token = sessionStore.token else {
+      errorMessage = "No hay sesión activa."
+      return
+    }
+
+    deletingMemberId = member.memberId
+    errorMessage = nil
+    defer { deletingMemberId = nil }
+
+    do {
+      try await APIClient.shared.removeFamilyGroupMember(
+        token: token,
+        memberId: member.memberId
+      )
+      pendingRemoval = nil
+      await load()
+    } catch {
+      guard !error.isCancellationError else { return }
+      errorMessage = error.localizedDescription
+      pendingRemoval = nil
+      print("[family] remove tutor failed", error)
+    }
+  }
+
+  private func memberRow(_ member: MobileFamilyGroupResponse.Member) -> some View {
+    HStack(spacing: 12) {
+      ZStack {
+        Circle()
+          .fill(Color.accentColor.opacity(0.14))
+
+        Text(initials(name: member.name, lastName: nil, email: member.email))
+          .font(.caption.weight(.bold))
+          .foregroundStyle(Color.accentColor)
+      }
+      .frame(width: 42, height: 42)
+
+      VStack(alignment: .leading, spacing: 4) {
+        Text(member.fullName.isEmpty ? member.email : member.fullName)
+          .font(.headline)
+          .lineLimit(1)
+
+        Text(member.email)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+
+        Text(relationshipLabel(for: member.relationship))
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(Color.accentColor)
+      }
+
+      Spacer(minLength: 8)
+
+      if canManage {
+        Button {
+          pendingRemoval = member
+        } label: {
+          if deletingMemberId == member.memberId {
+            ProgressView()
+              .frame(width: 18, height: 18)
+          } else {
+            Image(systemName: "trash")
+              .font(.system(size: 15, weight: .semibold))
+          }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.red)
+        .disabled(deletingMemberId != nil)
+        .opacity(deletingMemberId == member.memberId ? 0.55 : 1)
+        .accessibilityLabel("Eliminar tutor")
+      }
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .fill(Color.secondary.opacity(0.06))
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+    )
+  }
+
+  private func personRow(
+    initials: String,
+    title: String,
+    subtitle: String,
+    badge: String
+  ) -> some View {
+    HStack(spacing: 12) {
+      ZStack {
+        Circle()
+          .fill(Color.accentColor.opacity(0.14))
+
+        Text(initials)
+          .font(.caption.weight(.bold))
+          .foregroundStyle(Color.accentColor)
+      }
+      .frame(width: 42, height: 42)
+
+      VStack(alignment: .leading, spacing: 4) {
+        Text(title)
+          .font(.headline)
+          .lineLimit(1)
+
+        Text(subtitle)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+
+        Text(badge)
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(Color.accentColor)
+      }
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .fill(Color.secondary.opacity(0.06))
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+    )
+  }
+
+  private func initials(name: String?, lastName: String?, email: String) -> String {
+    let first = name?.trimmingCharacters(in: .whitespacesAndNewlines).first.map(String.init) ?? ""
+    let last = lastName?.trimmingCharacters(in: .whitespacesAndNewlines).first.map(String.init) ?? ""
+    let combined = "\(first)\(last)"
+    if !combined.isEmpty {
+      return combined.uppercased()
+    }
+
+    guard let firstEmailCharacter = email.first else {
+      return "?"
+    }
+
+    return String(firstEmailCharacter).uppercased()
+  }
+
+  private func relationshipLabel(for relationship: String) -> String {
+    switch relationship {
+    case "PARENT":
+      return "Madre / Padre"
+    case "RESPONSIBLE":
+      return "Responsable"
+    case "OTHER":
+      return "Tutor/a"
+    case "CHILD":
+      return "Hijo/a"
+    default:
+      return relationship
+    }
+  }
+
+  private func infoCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    content()
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding()
+      .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+  }
+}
+
+struct AddTutorFormView: View {
+  @Environment(\.dismiss) private var dismiss
+  @EnvironmentObject private var sessionStore: SessionStore
+
+  let onSaved: () -> Void
 
   @State private var email = ""
   @State private var relationship: MobileFamilyRelationship = .parent
@@ -50,6 +404,13 @@ struct AddTutorView: View {
     }
     .navigationTitle("Agregar tutor")
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Cancelar") {
+          dismiss()
+        }
+      }
+    }
   }
 
   private func saveTutor() async {
@@ -77,10 +438,8 @@ struct AddTutorView: View {
         email: trimmedEmail,
         relationship: relationship
       )
-      email = ""
-      relationship = .parent
-      feedbackMessage = "Tutor agregado al grupo familiar."
-      feedbackIsError = false
+      onSaved()
+      dismiss()
     } catch {
       feedbackMessage = error.localizedDescription
       feedbackIsError = true
@@ -119,7 +478,7 @@ struct PickupNoticesView: View {
             .disabled(!canCreateNotice)
 
             if !canCreateNotice {
-              Text("Necesitás al menos un hijo y una actividad futura para crear un aviso.")
+              Text("Necesitás al menos un hijo con una actividad futura para crear un aviso.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             }
