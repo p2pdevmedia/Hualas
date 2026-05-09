@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import TutorsList from './tutors-list';
 import DeleteChildButton from './delete-child-button';
+import LeaveFamilyGroupButton from './leave-family-group-button';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
@@ -61,6 +62,19 @@ export default async function ChildrenPage() {
 
   const familyMembers = activeFamilyGroup?.members ?? [];
   const isResponsible = activeFamilyGroup?.responsibleUserId === userId;
+  const otherFamilyGroups = familyGroups.filter(
+    (group) => group.id !== activeFamilyGroup?.id
+  );
+  const assignedFamilyGroupByChildOwner = new Map(
+    familyGroups
+      .filter(
+        (group) =>
+          group.responsibleUserId &&
+          group.responsibleUserId !== userId &&
+          group.members.some((member) => member.memberId === userId)
+      )
+      .map((group) => [group.responsibleUserId, group])
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -76,22 +90,28 @@ export default async function ChildrenPage() {
         )}
       </div>
 
-      {familyGroups.length > 1 && (
-        <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+      {otherFamilyGroups.length > 0 && (
+        <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
           <h2 className="text-sm font-semibold tracking-tight">
             Otros grupos familiares
           </h2>
-          <div className="flex flex-wrap gap-2 text-xs">
-            {familyGroups
-              .filter((group) => group.id !== activeFamilyGroup?.id)
-              .map((group) => (
-                <span
-                  key={group.id}
-                  className="rounded-full bg-muted px-3 py-1 text-muted-foreground"
-                >
-                  {group.name}
-                </span>
-              ))}
+          <div className="space-y-2">
+            {otherFamilyGroups.map((group) => (
+              <div
+                key={group.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2"
+              >
+                <span className="text-sm font-medium">{group.name}</span>
+                {group.responsibleUserId !== userId && (
+                  <LeaveFamilyGroupButton
+                    familyGroupId={group.id}
+                    groupName={group.name}
+                    label="Salir"
+                    className="flex-shrink-0"
+                  />
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -102,13 +122,19 @@ export default async function ChildrenPage() {
             <h2 className="text-lg font-semibold tracking-tight">
               Grupo familiar
             </h2>
-            {isResponsible && (
+            {isResponsible ? (
               <Link
                 href="/profile/children/add-tutor"
                 className="inline-flex h-8 items-center justify-center rounded-full border border-primary px-4 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
               >
                 + Agregar tutor
               </Link>
+            ) : (
+              <LeaveFamilyGroupButton
+                familyGroupId={activeFamilyGroup.id}
+                groupName={activeFamilyGroup.name}
+                className="flex-shrink-0"
+              />
             )}
           </div>
 
@@ -178,108 +204,133 @@ export default async function ChildrenPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {children.map((child) => (
-            <div
-              key={child.id}
-              className="rounded-xl border bg-card p-4 shadow-sm space-y-3"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 h-12 w-12 overflow-hidden rounded-full border bg-muted/30">
-                  {child.profilePhoto ? (
-                    <div className="relative h-full w-full">
-                      <Image
-                        src={`/api/children/${child.id}/photo`}
-                        alt={child.name}
-                        fill
-                        unoptimized
-                        className="object-cover"
-                        sizes="48px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <span className="text-sm font-bold text-muted-foreground">
-                        {`${child.name[0]}${child.lastName?.[0] ?? ''}`.trim()}
+          {children.map((child) => {
+            const assignedFamilyGroup =
+              child.userId === userId
+                ? null
+                : assignedFamilyGroupByChildOwner.get(child.userId);
+
+            return (
+              <div
+                key={child.id}
+                className="rounded-xl border bg-card p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 h-12 w-12 overflow-hidden rounded-full border bg-muted/30">
+                    {child.profilePhoto ? (
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={`/api/children/${child.id}/photo`}
+                          alt={child.name}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <span className="text-sm font-bold text-muted-foreground">
+                          {`${child.name[0]}${child.lastName?.[0] ?? ''}`.trim()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <h2 className="font-semibold truncate">
+                      {child.name} {child.lastName}
+                    </h2>
+                    {child.birthDate && (
+                      <p className="text-xs text-muted-foreground">
+                        {(() => {
+                          const today = new Date();
+                          const birth = new Date(child.birthDate);
+                          let age = today.getFullYear() - birth.getFullYear();
+                          const m = today.getMonth() - birth.getMonth();
+                          if (
+                            m < 0 ||
+                            (m === 0 && today.getDate() < birth.getDate())
+                          )
+                            age--;
+                          return age;
+                        })()}{' '}
+                        años
+                      </p>
+                    )}
+                    {child.userId !== userId && (
+                      <p className="text-xs text-muted-foreground">
+                        Grupo familiar
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
+                  {child.bloodGroup && (
+                    <p className="text-muted-foreground">
+                      <span className="font-medium">Grupo sanguíneo:</span>{' '}
+                      {child.bloodGroup}
+                    </p>
+                  )}
+                  {child.allergies && (
+                    <p className="text-muted-foreground">
+                      <span className="font-medium">Alergias:</span>{' '}
+                      {child.allergies.substring(0, 50)}
+                      {child.allergies.length > 50 ? '...' : ''}
+                    </p>
+                  )}
+                  {child.primaryDoctor && (
+                    <p className="text-muted-foreground">
+                      <span className="font-medium">Médico:</span>{' '}
+                      {child.primaryDoctor}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Link
+                    href={`/profile/children/${child.id}`}
+                    className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-border px-3 text-xs font-medium hover:bg-muted transition-colors"
+                  >
+                    Ver
+                  </Link>
+                  <Link
+                    href={`/profile/children/${child.id}/edit?returnTo=/profile/children`}
+                    className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-primary px-3 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    Editar
+                  </Link>
+                </div>
+                {child.userId === userId &&
+                  child._count.activityParticipants === 0 && (
+                    <DeleteChildButton
+                      childId={child.id}
+                      childName={[child.name, child.lastName]
+                        .filter(Boolean)
+                        .join(' ')}
+                    />
+                  )}
+                {assignedFamilyGroup && (
+                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Este hijo/a aparece porque sos tutor/a en{' '}
+                      <span className="font-medium text-foreground">
+                        {assignedFamilyGroup.name}
                       </span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <h2 className="font-semibold truncate">
-                    {child.name} {child.lastName}
-                  </h2>
-                  {child.birthDate && (
-                    <p className="text-xs text-muted-foreground">
-                      {(() => {
-                        const today = new Date();
-                        const birth = new Date(child.birthDate);
-                        let age = today.getFullYear() - birth.getFullYear();
-                        const m = today.getMonth() - birth.getMonth();
-                        if (
-                          m < 0 ||
-                          (m === 0 && today.getDate() < birth.getDate())
-                        )
-                          age--;
-                        return age;
-                      })()}{' '}
-                      años
+                      . Si salís del grupo, dejarás de ver todos los hijos de
+                      esa familia.
                     </p>
-                  )}
-                  {child.userId !== userId && (
-                    <p className="text-xs text-muted-foreground">
-                      Grupo familiar
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
-                {child.bloodGroup && (
-                  <p className="text-muted-foreground">
-                    <span className="font-medium">Grupo sanguíneo:</span>{' '}
-                    {child.bloodGroup}
-                  </p>
-                )}
-                {child.allergies && (
-                  <p className="text-muted-foreground">
-                    <span className="font-medium">Alergias:</span>{' '}
-                    {child.allergies.substring(0, 50)}
-                    {child.allergies.length > 50 ? '...' : ''}
-                  </p>
-                )}
-                {child.primaryDoctor && (
-                  <p className="text-muted-foreground">
-                    <span className="font-medium">Médico:</span>{' '}
-                    {child.primaryDoctor}
-                  </p>
+                    <LeaveFamilyGroupButton
+                      familyGroupId={assignedFamilyGroup.id}
+                      groupName={assignedFamilyGroup.name}
+                      label="Quitar de mi perfil"
+                      confirmLabel="Sí, quitar"
+                    />
+                  </div>
                 )}
               </div>
-
-              <div className="flex gap-2 pt-2">
-                <Link
-                  href={`/profile/children/${child.id}`}
-                  className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-border px-3 text-xs font-medium hover:bg-muted transition-colors"
-                >
-                  Ver
-                </Link>
-                <Link
-                  href={`/profile/children/${child.id}/edit?returnTo=/profile/children`}
-                  className="flex-1 inline-flex h-8 items-center justify-center rounded-full border border-primary px-3 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
-                >
-                  Editar
-                </Link>
-              </div>
-              {child.userId === userId &&
-                child._count.activityParticipants === 0 && (
-                  <DeleteChildButton
-                    childId={child.id}
-                    childName={[child.name, child.lastName]
-                      .filter(Boolean)
-                      .join(' ')}
-                  />
-                )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

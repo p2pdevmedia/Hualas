@@ -15,29 +15,59 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const familyGroup = await familyGroupService.getFamilyGroupByResponsible(
-    session.user.id
-  );
-  if (!familyGroup || familyGroup.id !== params.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  const schema = z.object({ memberId: z.string() });
+  const schema = z
+    .object({
+      memberId: z.string().optional(),
+      leaveSelf: z.boolean().optional(),
+    })
+    .refine((data) => data.leaveSelf || data.memberId, {
+      message: 'Datos inválidos.',
+    });
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos.' }, { status: 400 });
   }
 
-  if (parsed.data.memberId === familyGroup.responsibleUserId) {
+  const group = await prisma.familyGroup.findUnique({
+    where: { id: params.id },
+    select: {
+      id: true,
+      responsibleUserId: true,
+      members: {
+        where: { memberId: session.user.id },
+        select: { memberId: true },
+      },
+    },
+  });
+
+  if (!group) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const isResponsible = group.responsibleUserId === session.user.id;
+  const isMember = group.members.length > 0;
+  const targetMemberId = parsed.data.leaveSelf
+    ? session.user.id
+    : parsed.data.memberId;
+
+  if (!targetMemberId) {
+    return NextResponse.json({ error: 'Datos inválidos.' }, { status: 400 });
+  }
+
+  if (targetMemberId === group.responsibleUserId) {
     return NextResponse.json(
       { error: 'No podés eliminar al responsable principal.' },
       { status: 400 }
     );
   }
 
+  if (!isResponsible && !(parsed.data.leaveSelf && isMember)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   await familyGroupService.removeMemberFromFamilyGroup(
     params.id,
-    parsed.data.memberId
+    targetMemberId
   );
 
   return NextResponse.json({ ok: true });
