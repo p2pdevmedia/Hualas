@@ -23,7 +23,10 @@ jest.mock('@/lib/family-access', () => ({
 import type { Session } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
-import { getPostLoginRedirectUrl } from '../post-login-redirect';
+import {
+  getPostLoginRedirectUrl,
+  shouldUseMyActivitiesAsHome,
+} from '../post-login-redirect';
 
 const mockPrisma = prisma as unknown as {
   activityParticipant: { count: jest.Mock };
@@ -86,6 +89,32 @@ describe('getPostLoginRedirectUrl', () => {
         ],
       },
     });
+  });
+
+  it('envía siempre al profesor a Mis actividades aunque no tenga actividades asignadas', async () => {
+    await expect(
+      getPostLoginRedirectUrl(
+        buildSession({
+          role: 'PROFESSOR',
+          activeRole: 'PROFESSOR',
+          roles: ['MEMBER', 'PROFESSOR'],
+        })
+      )
+    ).resolves.toBe('/my-activities');
+
+    expect(mockGetAccessibleChildOwnerIds).not.toHaveBeenCalled();
+    expect(mockPrisma.activityParticipant.count).not.toHaveBeenCalled();
+    expect(mockPrisma.activityProfessor.count).not.toHaveBeenCalled();
+    expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('detecta Mis actividades como home principal cuando un hijo accesible tiene inscripciones', async () => {
+    mockGetAccessibleChildOwnerIds.mockResolvedValue(['user_1', 'parent_2']);
+    mockPrisma.activityParticipant.count.mockResolvedValue(1);
+
+    await expect(shouldUseMyActivitiesAsHome(buildSession())).resolves.toBe(
+      true
+    );
   });
 
   it('mantiene el onboarding actual si no tiene actividades y el perfil está incompleto', async () => {
