@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import NotificationsInbox from './notifications-inbox';
+import { filterNotificationsForActiveRole } from '@/lib/notifications/visibility';
+import type { Role } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +14,11 @@ export default async function NotificationsPage() {
     redirect('/login?callbackUrl=/notifications');
   }
 
-  const userId = (session.user as { id: string }).id;
+  const sessionUser = session.user as { id: string; activeRole?: Role | null };
+  const userId = sessionUser.id;
+  const activeRole = sessionUser.activeRole ?? null;
 
-  const [notifications, unreadCount] = await Promise.all([
+  const [notificationRows, unreadRows] = await Promise.all([
     prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -28,8 +32,20 @@ export default async function NotificationsPage() {
         createdAt: true,
       },
     }),
-    prisma.notification.count({ where: { userId, readAt: null } }),
+    prisma.notification.findMany({
+      where: { userId, readAt: null },
+      select: { type: true, url: true },
+    }),
   ]);
+
+  const notifications = filterNotificationsForActiveRole(
+    notificationRows,
+    activeRole
+  );
+  const unreadCount = filterNotificationsForActiveRole(
+    unreadRows,
+    activeRole
+  ).length;
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
