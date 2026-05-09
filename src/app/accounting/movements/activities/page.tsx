@@ -138,21 +138,25 @@ async function getActivitySummary(activityId: string) {
 }
 
 async function getActivityOptions(q: string) {
-  if (!q) return [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
-  const condition = buildAccountingSimilarityCondition(q, [
-    Prisma.sql`a."name"`,
-    Prisma.sql`a."description"`,
-  ]);
+  const searchCondition = q
+    ? buildAccountingSimilarityCondition(q, [
+        Prisma.sql`a."name"`,
+        Prisma.sql`a."description"`,
+      ])
+    : Prisma.sql`TRUE`;
 
   return prisma.$queryRaw<
     Array<{ id: string; name: string; date: Date; endDate: Date }>
   >`
     SELECT a."id", a."name", a."date", a."endDate"
     FROM "Activity" a
-    WHERE ${condition}
-    ORDER BY a."date" DESC, a."name" ASC
-    LIMIT 20
+    WHERE a."endDate" >= ${todayStart}
+      AND ${searchCondition}
+    ORDER BY a."date" ASC, a."name" ASC
+    LIMIT 50
   `;
 }
 
@@ -206,8 +210,8 @@ export default async function ActivityMovementsPage({
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link href="/activities" prefetch={true}>
-            Ver actividades
+          <Link href="/accounting/movements/activities" prefetch={true}>
+            Ver actividades vigentes
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -243,45 +247,45 @@ export default async function ActivityMovementsPage({
         <section className="rounded-2xl border bg-card p-4 shadow-sm">
           <h3 className="text-lg font-semibold">Elegí una actividad</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Esta pantalla ya no muestra todas las actividades juntas. Usá el
-            buscador y seleccioná una actividad para abrir su caja.
+            Seleccioná una actividad vigente para abrir su caja. Si necesitás
+            acotar la lista, usá el buscador por nombre o descripción.
           </p>
 
-          {q ? (
-            <div className="mt-4 divide-y rounded-xl border">
-              {activityOptions.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">
-                  No hay actividades con ese criterio de búsqueda.
-                </p>
-              ) : (
-                activityOptions.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium">{activity.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatActivityPeriod(activity.date, activity.endDate)}
-                      </p>
-                    </div>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="self-start sm:self-auto"
-                    >
-                      <Link
-                        href={`/accounting/movements/activities?activityId=${activity.id}`}
-                        prefetch={true}
-                      >
-                        Ver caja
-                      </Link>
-                    </Button>
+          <div className="mt-4 divide-y rounded-xl border">
+            {activityOptions.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                {q
+                  ? 'No hay actividades vigentes con ese criterio de búsqueda.'
+                  : 'No hay actividades vigentes para seleccionar.'}
+              </p>
+            ) : (
+              activityOptions.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium">{activity.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatActivityPeriod(activity.date, activity.endDate)}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
-          ) : null}
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="self-start sm:self-auto"
+                  >
+                    <Link
+                      href={`/accounting/movements/activities?activityId=${activity.id}`}
+                      prefetch={true}
+                    >
+                      Seleccionar
+                    </Link>
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </section>
       )}
 
