@@ -7,6 +7,7 @@ import { gateAccounting } from '@/lib/role-guards';
 const links = [
   { href: '/accounting', label: 'Resumen' },
   { href: '/accounting/social-fee', label: 'Cuota social' },
+  { href: '/accounting/movements/activities', label: 'Actividades' },
   { href: '/accounting/debt-by-family', label: 'Deuda familiar' },
   { href: '/accounting/movements', label: 'Movimientos' },
   { href: '/accounting/professors', label: 'Profesores' },
