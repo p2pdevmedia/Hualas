@@ -4,6 +4,30 @@ import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { checkUserProfile } from '@/lib/participant-profile-check';
 import { prisma } from '@/lib/prisma';
 
+export async function shouldUseMyActivitiesAsHome(session: Session | null) {
+  if (!session) {
+    return false;
+  }
+
+  if (session.user.role === 'PROFESSOR') {
+    return true;
+  }
+
+  if (session.user.role !== 'MEMBER') {
+    return false;
+  }
+
+  const userId = session.user.id;
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
+  const participantCount = await prisma.activityParticipant.count({
+    where: {
+      OR: [{ userId }, { child: { userId: { in: accessibleChildOwnerIds } } }],
+    },
+  });
+
+  return participantCount > 0;
+}
+
 export async function getPostLoginRedirectUrl(session: Session | null) {
   if (!session) {
     return '/login';
@@ -13,26 +37,11 @@ export async function getPostLoginRedirectUrl(session: Session | null) {
     return '/accounting';
   }
 
-  const userId = session.user.id;
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
-
-  const [participantCount, professorCount] = await Promise.all([
-    prisma.activityParticipant.count({
-      where: {
-        OR: [
-          { userId },
-          { child: { userId: { in: accessibleChildOwnerIds } } },
-        ],
-      },
-    }),
-    prisma.activityProfessor.count({ where: { userId } }),
-  ]);
-
-  const hasActivities = participantCount > 0 || professorCount > 0;
-  if (hasActivities) {
+  if (await shouldUseMyActivitiesAsHome(session)) {
     return '/my-activities';
   }
 
+  const userId = session.user.id;
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
