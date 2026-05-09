@@ -76,6 +76,10 @@ function formatDayTitle(date: Date, todayKey: string): string {
   return weekday;
 }
 
+function formatDistinctSchedules(days: CalendarActivityDay[]): string {
+  return Array.from(new Set(days.map((day) => day.schedule))).join(' / ');
+}
+
 function getGoogleMapsHref(day: CalendarActivityDay): string {
   const query =
     day.latitude != null && day.longitude != null
@@ -531,6 +535,9 @@ export default function ActivityCalendar({
                 const isMainDay = key === activeCompactKey;
                 const title = formatDayTitle(date, todayKey);
                 const hasActivities = activities.length > 0;
+                const scheduleLabel = hasActivities
+                  ? formatDistinctSchedules(activities)
+                  : '';
                 const isExpanded = expandedCompactKeys.has(key);
                 const compactActivityLimit = isMainDay ? 3 : 2;
                 const visibleActivities = isExpanded
@@ -568,7 +575,12 @@ export default function ActivityCalendar({
                         <p
                           className={`${isMainDay ? 'text-base' : 'text-sm'} font-bold text-foreground`}
                         >
-                          {title}
+                          <span>{title}</span>
+                          {scheduleLabel && (
+                            <span className="ml-1 whitespace-nowrap">
+                              · {scheduleLabel}
+                            </span>
+                          )}
                         </p>
                         <p className="text-xs font-medium text-muted-foreground">
                           {date.toLocaleDateString('es-AR', {
