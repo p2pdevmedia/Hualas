@@ -10,7 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { MessageCircle, Phone } from 'lucide-react';
+import { ChevronDown, MessageCircle, Phone } from 'lucide-react';
 import { formatAmount } from '@/lib/accounting';
 
 interface ActivityPageProps {
@@ -337,6 +337,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       ? null
       : activityGroups.reduce((sum: number, g: any) => sum + g.capacity, 0);
   const hasCapacity = capacity != null;
+  const availableSpots = hasCapacity
+    ? Math.max((capacity ?? 0) - enrolledCount, 0)
+    : null;
+  const availabilityLabel = hasCapacity
+    ? `${availableSpots} ${availableSpots === 1 ? 'lugar disponible' : 'lugares disponibles'}`
+    : 'Cupos ilimitados';
   const canManageDays = isAdmin;
 
   let registrations: Array<{
@@ -442,9 +448,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           {/* Columna izquierda */}
           <div className="space-y-6">
             <div>
-              <h1 className="font-heading text-3xl sm:text-4xl font-semibold leading-tight">
-                {activity.name}
-              </h1>
+              <div className="flex flex-wrap items-start gap-3">
+                <h1 className="font-heading text-3xl sm:text-4xl font-semibold leading-tight">
+                  {activity.name}
+                </h1>
+                <div className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 font-heading text-sm font-semibold text-primary shadow-sm">
+                  {formatAmount(activity.price)}
+                </div>
+              </div>
+              {activity.date && (
+                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground font-body">
+                  {activityDateRange}
+                </p>
+              )}
               {activity.description && (
                 <p className="mt-4 text-sm text-muted-foreground leading-relaxed font-body">
                   {activity.description}
@@ -452,104 +468,74 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               )}
             </div>
 
-            {/* Grid de detalles 2×2 */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  label: 'Precio, cupo e inscriptos',
-                  value: (
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Precio
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {formatAmount(activity.price)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Cupo
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {hasCapacity ? `${capacity} lugares` : 'Ilimitado'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Inscriptos
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {enrolledCount} personas
-                        </p>
-                      </div>
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+              {activityProfessors.length > 0 && (
+                <details className="group rounded-lg border bg-card">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
+                        Profesores
+                      </p>
+                      <p className="font-heading text-lg font-semibold">
+                        Ver profesores asignados
+                      </p>
                     </div>
-                  ),
-                },
-                activityProfessors.length > 0 && {
-                  label: 'Profesores',
-                  value: (
-                    <div className="space-y-2">
-                      {professorLabels.map((professor) => (
-                        <div
-                          key={professor.id}
-                          className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2"
+                    <ChevronDown
+                      className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                      aria-hidden="true"
+                    />
+                  </summary>
+                  <div className="space-y-2 border-t px-4 pb-4 pt-3">
+                    {professorLabels.map((professor) => (
+                      <div
+                        key={professor.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2"
+                      >
+                        <Link
+                          href={`/professors/${professor.id}`}
+                          prefetch={true}
+                          className="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
                         >
+                          {professor.label}
+                        </Link>
+                        <div className="flex shrink-0 items-center gap-2">
                           <Link
-                            href={`/professors/${professor.id}`}
+                            href={`/chat?with=${professor.id}`}
                             prefetch={true}
-                            className="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+                            title={`Iniciar chat con ${professor.label}`}
+                            aria-label={`Iniciar chat con ${professor.label}`}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
                           >
-                            {professor.label}
+                            <MessageCircle
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
                           </Link>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <Link
-                              href={`/chat?with=${professor.id}`}
-                              prefetch={true}
-                              title={`Iniciar chat con ${professor.label}`}
-                              aria-label={`Iniciar chat con ${professor.label}`}
+                          {professor.phone && (
+                            <a
+                              href={`tel:${professor.phone}`}
+                              title={`Llamar a ${professor.label}`}
+                              aria-label={`Llamar a ${professor.label}`}
                               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
                             >
-                              <MessageCircle
-                                className="h-4 w-4"
-                                aria-hidden="true"
-                              />
-                            </Link>
-                            {professor.phone && (
-                              <a
-                                href={`tel:${professor.phone}`}
-                                title={`Llamar a ${professor.label}`}
-                                aria-label={`Llamar a ${professor.label}`}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary transition-colors hover:bg-primary/10"
-                              >
-                                <Phone className="h-4 w-4" aria-hidden="true" />
-                              </a>
-                            )}
-                          </div>
+                              <Phone className="h-4 w-4" aria-hidden="true" />
+                            </a>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  ),
-                },
-                activity.date && {
-                  label: 'Período',
-                  value: activityDateRange,
-                },
-              ]
-                .filter(Boolean)
-                .map((item: any) => (
-                  <div
-                    key={item.label}
-                    className="rounded-lg border bg-card p-4"
-                  >
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
-                      {item.label}
-                    </p>
-                    <div className="font-heading text-lg font-semibold">
-                      {item.value}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </details>
+              )}
+
+              <div className="rounded-lg border bg-card p-4 md:min-w-56">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-body mb-1">
+                  Disponibilidad
+                </p>
+                <p className="font-heading text-lg font-semibold">
+                  {availabilityLabel}
+                </p>
+              </div>
             </div>
 
             {isAdmin && (
