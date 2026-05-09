@@ -224,6 +224,9 @@ export default function ActivityCalendar({
     variant === 'month'
   );
   const [activeCompactKey, setActiveCompactKey] = useState(todayKey);
+  const [expandedCompactKeys, setExpandedCompactKeys] = useState<Set<string>>(
+    () => new Set()
+  );
   const [attendanceOverrides, setAttendanceOverrides] = useState<
     Record<string, AttendanceStatus>
   >({});
@@ -312,6 +315,14 @@ export default function ActivityCalendar({
     const nextKey = selectedKey === key ? null : key;
     setSelectedKey(nextKey);
     onDaySelect?.(nextKey ? (dayMap.get(nextKey)?.[0]?.id ?? null) : null);
+  }
+
+  function expandCompactDay(key: string) {
+    setExpandedCompactKeys((current) => {
+      const next = new Set(current);
+      next.add(key);
+      return next;
+    });
   }
 
   function setCompactCardRef(key: string, node: HTMLElement | null) {
@@ -520,10 +531,14 @@ export default function ActivityCalendar({
                 const isMainDay = key === activeCompactKey;
                 const title = formatDayTitle(date, todayKey);
                 const hasActivities = activities.length > 0;
-                const visibleActivities = activities.slice(
-                  0,
-                  isMainDay ? 3 : 2
-                );
+                const isExpanded = expandedCompactKeys.has(key);
+                const compactActivityLimit = isMainDay ? 3 : 2;
+                const visibleActivities = isExpanded
+                  ? activities
+                  : activities.slice(0, compactActivityLimit);
+                const hiddenActivityCount =
+                  activities.length - visibleActivities.length;
+
                 return (
                   <article
                     key={key}
@@ -654,11 +669,15 @@ export default function ActivityCalendar({
                             </div>
                           );
                         })}
-                        {activities.length > visibleActivities.length && (
-                          <p className="text-xs text-muted-foreground">
-                            +{activities.length - visibleActivities.length}{' '}
-                            actividad(es) más
-                          </p>
+                        {hiddenActivityCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => expandCompactDay(key)}
+                            aria-label={`Mostrar ${hiddenActivityCount} sesiones más de ${title}`}
+                            className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          >
+                            +{hiddenActivityCount}
+                          </button>
                         )}
                       </div>
                     )}
