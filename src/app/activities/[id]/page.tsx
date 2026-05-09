@@ -459,11 +459,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           {/* Columna izquierda */}
           <div className="space-y-6">
             <div>
-              <div className="flex flex-wrap items-start gap-3">
+              <div className="space-y-3">
                 <h1 className="font-heading text-3xl sm:text-4xl font-semibold leading-tight">
                   {activity.name}
                 </h1>
-                <div className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 font-heading text-sm font-semibold text-primary shadow-sm">
+                <div className="font-heading text-4xl font-semibold leading-none text-primary sm:text-5xl">
                   {formatAmount(activity.price)}
                 </div>
               </div>
