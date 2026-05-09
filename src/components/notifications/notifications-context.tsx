@@ -93,9 +93,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
             : n
         )
       );
-      setUnreadCount((c) => Math.max(0, c - 1));
-      if (target?.type === 'CHAT_MESSAGE_NEW' && !target.readAt) {
-        setChatUnreadCount((c) => Math.max(0, c - 1));
+      if (target && !target.readAt) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+        if (target.type === 'CHAT_MESSAGE_NEW') {
+          setChatUnreadCount((c) => Math.max(0, c - 1));
+        }
       }
       try {
         await fetch(`/api/notifications/${id}`, { method: 'PATCH' });

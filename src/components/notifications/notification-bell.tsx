@@ -65,6 +65,7 @@ export default function NotificationBell() {
         <NotificationPanel
           notifications={items}
           loading={loading}
+          unreadCount={unreadCount}
           onClose={() => setOpen(false)}
           onMarkAllRead={markAllRead}
           onItemRead={markRead}
