@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Newspaper,
   FileText,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { NotificationType } from '@prisma/client';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,8 @@ const ICONS: Record<NotificationType, typeof Bell> = {
   CHAT_MESSAGE_NEW: MessageSquare,
   NEWS_CREATED: Newspaper,
   PROFESSOR_INVOICE_CREATED: FileText,
+  PROFESSOR_ACTIVITY_ASSIGNED: CalendarPlus,
+  PROFESSOR_GROUP_ASSIGNED: ClipboardCheck,
 };
 
 function relativeTime(date: Date): string {

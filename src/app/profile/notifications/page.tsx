@@ -30,6 +30,8 @@ const TYPE_ROLES: Record<NotificationType, Role[]> = {
   CHAT_MESSAGE_NEW: ALL_ROLES,
   NEWS_CREATED: ALL_ROLES,
   PROFESSOR_INVOICE_CREATED: ['COUNTER', 'ADMIN', 'SUPER_ADMIN'],
+  PROFESSOR_ACTIVITY_ASSIGNED: ['PROFESSOR'],
+  PROFESSOR_GROUP_ASSIGNED: ['PROFESSOR'],
 };
 
 const TYPE_LABELS: Record<
@@ -91,6 +93,15 @@ const TYPE_LABELS: Record<
   PROFESSOR_INVOICE_CREATED: {
     title: 'Facturas de profesores',
     description: 'Cuando un profesor carga una nueva factura para contaduría.',
+  },
+  PROFESSOR_ACTIVITY_ASSIGNED: {
+    title: 'Asignación a actividad',
+    description:
+      'Cuando administración te asigna como profesor de una actividad.',
+  },
+  PROFESSOR_GROUP_ASSIGNED: {
+    title: 'Asignación a grupo',
+    description: 'Cuando administración te asigna a un grupo o jornada grupal.',
   },
 };
 

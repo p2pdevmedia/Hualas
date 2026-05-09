@@ -14,6 +14,8 @@ export const NOTIFICATION_TYPES = [
   'CHAT_MESSAGE_NEW',
   'NEWS_CREATED',
   'PROFESSOR_INVOICE_CREATED',
+  'PROFESSOR_ACTIVITY_ASSIGNED',
+  'PROFESSOR_GROUP_ASSIGNED',
 ] as const;
 
 export const notificationTypeSchema = z.enum(NOTIFICATION_TYPES);

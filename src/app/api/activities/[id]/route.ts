@@ -5,6 +5,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildAnnualActivityDays } from '@/lib/activities/annual-schedule';
 import { activityUpdateSchema } from '@/lib/validations/activity';
+import {
+  notifyProfessorActivityAssigned,
+  notifyProfessorGroupAssigned,
+} from '@/lib/notifications/notification-service';
 
 export async function PUT(
   req: Request,
@@ -45,6 +49,36 @@ export async function PUT(
   const activity = await prisma
     .$transaction(
       async (tx) => {
+        const [existingProfessors, existingGroupAssignments] =
+          await Promise.all([
+            tx.activityProfessor.findMany({
+              where: { activityId: params.id },
+              select: { userId: true },
+            }),
+            tx.activityDay.findMany({
+              where: {
+                activityId: params.id,
+                activityGroupId: { not: null },
+              },
+              select: {
+                activityGroupId: true,
+                professors: { select: { userId: true } },
+              },
+            }),
+          ]);
+        const existingProfessorIds = new Set(
+          existingProfessors.map((p) => p.userId)
+        );
+        const existingGroupProfessorKeys = new Set(
+          existingGroupAssignments.flatMap((day) =>
+            day.activityGroupId
+              ? day.professors.map(
+                  (professor) => `${day.activityGroupId}:${professor.userId}`
+                )
+              : []
+          )
+        );
+
         const updatedActivity = await tx.activity.update({
           where: { id: params.id },
           data: {
@@ -155,7 +189,39 @@ export async function PUT(
           });
         }
 
-        return { id: activityId };
+        const groupAssignments = new Map<string, Set<string>>();
+        const defaultAnnualProfessorIds = annualProfessorIds.length
+          ? annualProfessorIds
+          : professorIds;
+        if (data.activityType === 'ANNUAL') {
+          for (const schedule of data.annualSchedules) {
+            const groupId = schedule.groupId ?? undefined;
+            if (!groupId) continue;
+            const scheduleProfessorIds =
+              schedule.professorIds.length > 0
+                ? schedule.professorIds
+                : defaultAnnualProfessorIds;
+            if (scheduleProfessorIds.length === 0) continue;
+            const existing = groupAssignments.get(groupId) ?? new Set<string>();
+            for (const userId of scheduleProfessorIds) {
+              if (!existingGroupProfessorKeys.has(`${groupId}:${userId}`)) {
+                existing.add(userId);
+              }
+            }
+            if (existing.size > 0) groupAssignments.set(groupId, existing);
+          }
+        }
+
+        return {
+          id: activityId,
+          assignedProfessorIds: professorIds.filter(
+            (userId) => !existingProfessorIds.has(userId)
+          ),
+          groupAssignments: Array.from(groupAssignments, ([groupId, ids]) => ({
+            groupId,
+            professorIds: Array.from(ids),
+          })),
+        };
       },
       { timeout: 30000 }
     )
@@ -177,7 +243,24 @@ export async function PUT(
     );
   }
 
-  return NextResponse.json(activity);
+  notifyProfessorActivityAssigned(
+    activity.id,
+    activity.assignedProfessorIds
+  ).catch((err) =>
+    console.error('[notifications] notifyProfessorActivityAssigned failed', err)
+  );
+
+  for (const assignment of activity.groupAssignments) {
+    notifyProfessorGroupAssigned(
+      activity.id,
+      assignment.groupId,
+      assignment.professorIds
+    ).catch((err) =>
+      console.error('[notifications] notifyProfessorGroupAssigned failed', err)
+    );
+  }
+
+  return NextResponse.json({ id: activity.id });
 }
 
 export async function DELETE(
