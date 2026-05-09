@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildAnnualActivityDays } from '@/lib/activities/annual-schedule';
 import { activityCreateSchema } from '@/lib/validations/activity';
+import {
+  notifyProfessorActivityAssigned,
+  notifyProfessorGroupAssigned,
+} from '@/lib/notifications/notification-service';
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -153,9 +157,54 @@ export async function POST(req: Request) {
         }
       }
 
-      return { id: activityId };
+      const groupAssignments = new Map<string, Set<string>>();
+      const defaultAnnualProfessorIds = annualProfessorIds.length
+        ? annualProfessorIds
+        : professorIds;
+      if (data.activityType === 'ANNUAL') {
+        for (const schedule of data.annualSchedules) {
+          const groupTempId = schedule.groupTempId ?? undefined;
+          if (!groupTempId) continue;
+          const groupId = groupIdByTempId.get(groupTempId);
+          if (!groupId) continue;
+          const scheduleProfessorIds =
+            schedule.professorIds.length > 0
+              ? schedule.professorIds
+              : defaultAnnualProfessorIds;
+          if (scheduleProfessorIds.length === 0) continue;
+          const existing = groupAssignments.get(groupId) ?? new Set<string>();
+          for (const userId of scheduleProfessorIds) existing.add(userId);
+          groupAssignments.set(groupId, existing);
+        }
+      }
+
+      return {
+        id: activityId,
+        assignedProfessorIds: professorIds,
+        groupAssignments: Array.from(groupAssignments, ([groupId, ids]) => ({
+          groupId,
+          professorIds: Array.from(ids),
+        })),
+      };
     },
     { timeout: 30000 }
   );
-  return NextResponse.json(created);
+  notifyProfessorActivityAssigned(
+    created.id,
+    created.assignedProfessorIds
+  ).catch((err) =>
+    console.error('[notifications] notifyProfessorActivityAssigned failed', err)
+  );
+
+  for (const assignment of created.groupAssignments) {
+    notifyProfessorGroupAssigned(
+      created.id,
+      assignment.groupId,
+      assignment.professorIds
+    ).catch((err) =>
+      console.error('[notifications] notifyProfessorGroupAssigned failed', err)
+    );
+  }
+
+  return NextResponse.json({ id: created.id });
 }

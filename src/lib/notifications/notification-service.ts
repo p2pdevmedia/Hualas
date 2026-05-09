@@ -34,6 +34,69 @@ function formatAmount(cents: number): string {
   }).format(cents);
 }
 
+export async function notifyProfessorActivityAssigned(
+  activityId: string,
+  professorIds: string[]
+): Promise<void> {
+  try {
+    const recipients = [...new Set(professorIds)].filter(Boolean);
+    if (recipients.length === 0) return;
+
+    const activity = await prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { id: true, name: true, date: true },
+    });
+    if (!activity) return;
+
+    await dispatch({
+      type: 'PROFESSOR_ACTIVITY_ASSIGNED',
+      recipients,
+      title: `Te asignaron a ${activity.name}`,
+      body: `Ya figurás como profesor/a de esta actividad desde el ${formatDate(activity.date)}.`,
+      url: `/activities/${activity.id}`,
+      data: { activityId: activity.id } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyProfessorActivityAssigned', err);
+  }
+}
+
+export async function notifyProfessorGroupAssigned(
+  activityId: string,
+  groupId: string,
+  professorIds: string[]
+): Promise<void> {
+  try {
+    const recipients = [...new Set(professorIds)].filter(Boolean);
+    if (recipients.length === 0) return;
+
+    const group = await prisma.activityGroup.findFirst({
+      where: { id: groupId, activityId },
+      select: {
+        id: true,
+        name: true,
+        activityId: true,
+        activity: { select: { name: true } },
+      },
+    });
+    if (!group) return;
+
+    await dispatch({
+      type: 'PROFESSOR_GROUP_ASSIGNED',
+      recipients,
+      title: `Te asignaron al grupo ${group.name}`,
+      body: `Grupo de ${group.activity.name}. Revisá el calendario y los inscriptos asignados.`,
+      url: `/activities/${group.activityId}/groups/${group.id}`,
+      data: {
+        activityId: group.activityId,
+        groupId: group.id,
+      } as Prisma.JsonObject,
+    });
+  } catch (err) {
+    logFailure('notifyProfessorGroupAssigned', err);
+  }
+}
+
 export async function notifyActivityDayCreated(dayId: string): Promise<void> {
   try {
     const day = await prisma.activityDay.findUnique({

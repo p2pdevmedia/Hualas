@@ -3,7 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityDayUpdateSchema } from '@/lib/validations/activity';
-import { notifyActivityDayUpdated } from '@/lib/notifications/notification-service';
+import {
+  notifyActivityDayUpdated,
+  notifyProfessorGroupAssigned,
+} from '@/lib/notifications/notification-service';
 
 export async function PATCH(
   req: Request,
@@ -75,6 +78,8 @@ export async function PUT(
       date: true,
       schedule: true,
       geoLocation: true,
+      activityGroupId: true,
+      professors: { select: { userId: true } },
     },
   });
 
@@ -115,6 +120,12 @@ export async function PUT(
     );
   }
 
+  const previousProfessorIds = new Set(day.professors.map((p) => p.userId));
+  const shouldNotifyGroupAssignment = (userId: string) =>
+    Boolean(activityGroupId) &&
+    (activityGroupId !== day.activityGroupId ||
+      !previousProfessorIds.has(userId));
+
   const updatedDay = await prisma.activityDay.update({
     where: { id: day.id },
     data: {
@@ -152,6 +163,19 @@ export async function PUT(
   notifyActivityDayUpdated(updatedDay.id).catch((err) =>
     console.error('[notifications] notifyActivityDayUpdated failed', err)
   );
+
+  if (activityGroupId) {
+    const newlyAssignedProfessorIds = professorIds.filter(
+      shouldNotifyGroupAssignment
+    );
+    notifyProfessorGroupAssigned(
+      day.activityId,
+      activityGroupId,
+      newlyAssignedProfessorIds
+    ).catch((err) =>
+      console.error('[notifications] notifyProfessorGroupAssigned failed', err)
+    );
+  }
 
   return NextResponse.json(updatedDay);
 }
