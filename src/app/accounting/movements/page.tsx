@@ -17,6 +17,7 @@ import {
   buildManualPaymentReceiptUrl,
 } from '@/lib/blob-urls';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
+import MovementTabs from './movement-tabs';
 
 const PAGE_SIZE = 20;
 
@@ -208,9 +209,7 @@ export default async function MovementsPage({
   }
 
   const whereSql =
-    filters.length > 0
-      ? Prisma.join(filters, ' AND ')
-      : Prisma.sql`TRUE`;
+    filters.length > 0 ? Prisma.join(filters, ' AND ') : Prisma.sql`TRUE`;
 
   const [countRows, historyRows] = await Promise.all([
     prisma.$queryRaw<CountRow[]>`
@@ -272,6 +271,8 @@ export default async function MovementsPage({
 
   return (
     <div className="space-y-6">
+      <MovementTabs active="history" />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Movimientos</h2>
