@@ -184,6 +184,8 @@ struct MobileHomeResponse: Codable {
     let activityName: String?
     let author: String
     let createdAt: String?
+    var isRead: Bool
+    let readAt: String?
     let media: [Media]
   }
 
@@ -659,6 +661,8 @@ struct MobileNewsResponse: Codable {
     let activityName: String?
     let author: String
     let createdAt: String?
+    var isRead: Bool
+    let readAt: String?
     let media: [Media]
   }
 

@@ -62,7 +62,10 @@ Agents should check this before searching the codebase.
 
 - `/news` → Institutional news feed for members, professors, and admins
   - File: `src/app/news/page.tsx`
-  - Related component: `src/app/news/create-news-form.tsx`
+  - Related components:
+    - `src/app/news/create-news-form.tsx`
+    - `src/app/news/news-list.tsx`
+  - Read-state API: `POST /api/news/read`
 
 ### User
 

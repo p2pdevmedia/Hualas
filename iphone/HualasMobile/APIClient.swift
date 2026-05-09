@@ -312,6 +312,15 @@ final class APIClient {
     try await send(path: "/api/mobile/news", token: token)
   }
 
+  func markNewsRead(token: String, newsIds: [String]) async throws {
+    let _: EmptyResponse = try await send(
+      path: "/api/mobile/news/read",
+      method: "POST",
+      token: token,
+      body: MobileNewsReadRequest(newsIds: newsIds)
+    )
+  }
+
   func notifications(
     token: String,
     unreadOnly: Bool = false,
@@ -659,6 +668,10 @@ struct MobileSwitchRoleResponse: Codable {
   let ok: Bool
   let appRole: MobileRole
   let allowedRoles: [MobileRole]
+}
+
+struct MobileNewsReadRequest: Codable {
+  let newsIds: [String]
 }
 
 struct MobileAttendanceUpdateRequest: Codable {

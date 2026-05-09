@@ -278,6 +278,11 @@ async function loadRecentMobileNews(
       createdAt: true,
       activity: { select: { id: true, name: true } },
       createdBy: { select: { name: true, lastName: true } },
+      readReceipts: {
+        where: { userId },
+        select: { readAt: true },
+        take: 1,
+      },
       media: {
         orderBy: { createdAt: 'asc' },
         select: {
@@ -302,6 +307,10 @@ async function loadRecentMobileNews(
     activityName: item.activity?.name ?? null,
     author: formatFullName(item.createdBy),
     createdAt: formatMobileDate(item.createdAt),
+    isRead: item.readReceipts.length > 0,
+    readAt: item.readReceipts[0]
+      ? formatMobileDate(item.readReceipts[0].readAt)
+      : null,
     media: item.media.map((media) => ({
       id: media.id,
       url: media.url,

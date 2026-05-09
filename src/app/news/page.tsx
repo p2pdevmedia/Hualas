@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import type { Prisma, Role } from '@prisma/client';
@@ -6,12 +5,14 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getReadableActivityIds, isNewsAdminRole } from '@/lib/news-access';
 import CreateNewsForm from './create-news-form';
+import NewsList, { type NewsListItem } from './news-list';
 
 type NewsWithRelations = Prisma.NewsGetPayload<{
   include: {
     activity: { select: { name: true } };
     createdBy: { select: { name: true; lastName: true } };
     media: true;
+    readReceipts: { select: { readAt: true } };
   };
 }>;
 
@@ -21,7 +22,7 @@ type ActivityOption = {
 };
 
 type NewsPageData = {
-  news: NewsWithRelations[];
+  news: NewsListItem[];
   activities: ActivityOption[];
 };
 
@@ -72,6 +73,11 @@ async function loadNewsPageData({
         activity: { select: { name: true } },
         createdBy: { select: { name: true, lastName: true } },
         media: { orderBy: { createdAt: 'asc' } },
+        readReceipts: {
+          where: { userId },
+          select: { readAt: true },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -84,7 +90,26 @@ async function loadNewsPageData({
       : Promise.resolve([]),
   ]);
 
-  return { news, activities };
+  return {
+    news: news.map((item) => ({
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      scopeLabel:
+        item.scope === 'CLUB'
+          ? 'Para todo el club'
+          : (item.activity?.name ?? 'Actividad'),
+      createdAtLabel: formatDate(item.createdAt),
+      creatorLabel: creatorName(item),
+      isRead: item.readReceipts.length > 0,
+      media: item.media.map((media) => ({
+        id: media.id,
+        type: media.type,
+        fileName: media.fileName,
+      })),
+    })),
+    activities,
+  };
 }
 
 export default async function NewsPage() {
@@ -144,71 +169,7 @@ export default async function NewsPage() {
           </p>
         </div>
       ) : (
-        <section className="space-y-4" aria-label="Listado de noticias">
-          {news.map((item) => (
-            <article
-              id={item.id}
-              key={item.id}
-              className="scroll-mt-24 rounded-2xl border bg-card p-5 shadow-sm"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {item.scope === 'CLUB'
-                      ? 'Para todo el club'
-                      : (item.activity?.name ?? 'Actividad')}
-                  </span>
-                  <h2 className="text-2xl font-semibold tracking-tight">
-                    {item.title}
-                  </h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(item.createdAt)}
-                </p>
-              </div>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                Publicado por {creatorName(item)}
-              </p>
-
-              <div className="mt-4 whitespace-pre-wrap leading-7 text-foreground/90">
-                {item.body}
-              </div>
-
-              {item.media.length > 0 && (
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {item.media.map((media) => {
-                    const src = `/api/news/${media.id}/media`;
-                    return media.type === 'IMAGE' ? (
-                      <div
-                        key={media.id}
-                        className="relative aspect-video overflow-hidden rounded-xl border bg-muted"
-                      >
-                        <Image
-                          src={src}
-                          alt={media.fileName ?? item.title}
-                          fill
-                          unoptimized
-                          className="object-cover"
-                          sizes="(min-width: 768px) 50vw, 100vw"
-                        />
-                      </div>
-                    ) : (
-                      <video
-                        key={media.id}
-                        src={src}
-                        controls
-                        className="aspect-video w-full rounded-xl border bg-black"
-                      >
-                        Tu navegador no puede reproducir este video.
-                      </video>
-                    );
-                  })}
-                </div>
-              )}
-            </article>
-          ))}
-        </section>
+        <NewsList items={news} />
       )}
     </main>
   );
