@@ -1,18 +1,8 @@
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
-import { authOptions } from '@/lib/auth';
-import { shouldUseMyActivitiesAsHome } from '@/lib/post-login-redirect';
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-
-  if (await shouldUseMyActivitiesAsHome(session)) {
-    redirect('/my-activities');
-  }
-
   let activities: Awaited<
     ReturnType<typeof listActivitiesWithParticipantCount>
   > = [];
