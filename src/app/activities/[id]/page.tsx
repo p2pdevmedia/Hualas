@@ -134,6 +134,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     activityGroups,
     days,
     pickupNoticesByDay,
+    activityMedia,
   ] = await Promise.all([
     prisma.activityParticipant
       .findMany({
@@ -284,6 +285,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       })
       .catch((error) => {
         console.error('[activity-page] pickup notices query failed', error);
+        return [];
+      }),
+    prisma.activityMedia
+      .findMany({
+        where: { activityId: activity.id },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        select: { id: true, type: true, fileName: true },
+      })
+      .catch((error) => {
+        console.error('[activity-page] media query failed', error);
         return [];
       }),
   ]);
@@ -467,6 +478,49 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 </p>
               )}
             </div>
+
+            {activityMedia.length > 0 && (
+              <section className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
+                <div>
+                  <h2 className="font-heading text-xl font-semibold">
+                    Fotos y videos
+                  </h2>
+                  <p className="text-sm text-muted-foreground font-body">
+                    Mirá más imágenes y videos de la actividad antes de
+                    inscribirte.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {activityMedia.map((item) => {
+                    const mediaUrl = `/api/activities/${activity.id}/media/${item.id}`;
+                    return (
+                      <div
+                        key={item.id}
+                        className="overflow-hidden rounded-lg border bg-muted/30"
+                      >
+                        <div className="relative aspect-video">
+                          {item.type === 'IMAGE' ? (
+                            <Image
+                              src={mediaUrl}
+                              alt={item.fileName ?? activity.name}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            <video
+                              src={mediaUrl}
+                              controls
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
               {activityProfessors.length > 0 && (
