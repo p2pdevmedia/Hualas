@@ -114,6 +114,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/accounting/movements/page.tsx`
   - Includes manual movements, approved manual payments, and Mercado Pago payments
 
+- `/accounting/movements/activities` → Accounting activity movement summary
+  - File: `src/app/accounting/movements/activities/page.tsx`
+  - Summarizes registrations, activity participant payments, and collected totals per activity
+
 - `/accounting/movements/new` → Create movement
   - File: `src/app/accounting/movements/new/page.tsx`
   - Related form: `src/app/accounting/movements/movement-form.tsx`
