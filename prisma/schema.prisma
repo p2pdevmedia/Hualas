@@ -59,6 +59,7 @@ model User {
   pickupNoticeAcknowledgments PickupNoticeAcknowledgment[]
   notifications               Notification[]
   createdNews                 News[]                       @relation("NewsCreatedBy")
+  newsReadReceipts            NewsReadReceipt[]
   pushAlertSubscriptions      PushAlertSubscription[]
   mobileSessions              MobileSession[]
   mobileDeviceTokens          MobileDeviceToken[]
@@ -765,13 +766,27 @@ model News {
   activity    Activity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
   createdById String
   createdBy   User        @relation("NewsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  media       NewsMedia[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  media        NewsMedia[]
+  readReceipts NewsReadReceipt[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([scope, createdAt])
   @@index([activityId, createdAt])
   @@index([createdById, createdAt])
+}
+
+model NewsReadReceipt {
+  id     String   @id @default(cuid())
+  newsId String
+  news   News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt DateTime @default(now())
+
+  @@unique([newsId, userId])
+  @@index([userId, readAt])
+  @@index([newsId])
 }
 
 model NewsMedia {

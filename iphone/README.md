@@ -34,6 +34,7 @@ The app expects these endpoints:
 - `GET /api/mobile/activities?month=YYYY-MM&day=YYYY-MM-DD`
 - `GET /api/mobile/payments`
 - `GET /api/mobile/news`
+- `POST /api/mobile/news/read`
 - `GET /api/mobile/chat/contacts`
 - `GET /api/mobile/family-groups/current/members`
 - `POST /api/mobile/family-groups/current/members`
