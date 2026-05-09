@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma';
-import { Prisma, type NotificationType } from '@prisma/client';
+import { Prisma, type NotificationType, type Role } from '@prisma/client';
 import { resolvePreferences } from './preferences';
 import { sendPushAlert, PushAlertError } from '@/lib/pushalert';
 import {
   sendMobilePushNotifications,
   type MobilePushDevice,
 } from '@/lib/mobile-push';
+import { isNotificationVisibleForActiveRole } from './visibility';
 
 export type DispatchInput = {
   type: NotificationType;
@@ -27,6 +28,13 @@ export async function dispatch(input: DispatchInput): Promise<void> {
     const p = prefs.get(id) ?? { inApp: true, push: true };
     return p.inApp || p.push;
   });
+  if (candidates.length === 0) return;
+
+  candidates = await filterCandidatesForActiveRole(
+    candidates,
+    type,
+    url ?? null
+  );
   if (candidates.length === 0) return;
 
   if (type === 'CHAT_MESSAGE_NEW' && data) {
@@ -77,7 +85,7 @@ export async function dispatch(input: DispatchInput): Promise<void> {
   const pushUsers = candidates.filter((id) => prefs.get(id)?.push ?? true);
   if (pushUsers.length === 0) return;
 
-  const mobileDevices = await prisma.mobileDeviceToken.findMany({
+  let mobileDevices = await prisma.mobileDeviceToken.findMany({
     where: {
       userId: { in: pushUsers },
       revokedAt: null,
@@ -88,8 +96,14 @@ export async function dispatch(input: DispatchInput): Promise<void> {
       environment: true,
       bundleId: true,
       userId: true,
+      sessionId: true,
     },
   });
+  mobileDevices = await filterMobileDevicesForActiveRole(
+    mobileDevices,
+    type,
+    url ?? null
+  );
 
   if (mobileDevices.length > 0) {
     const mobileResults = await sendMobilePushNotifications(
@@ -137,6 +151,71 @@ export async function dispatch(input: DispatchInput): Promise<void> {
       status: err instanceof PushAlertError ? err.statusCode : undefined,
     });
   }
+}
+
+async function filterCandidatesForActiveRole(
+  userIds: string[],
+  type: NotificationType,
+  url: string | null
+): Promise<string[]> {
+  const requiredNotification = { type, url };
+  const hasRoleRequirement = !isNotificationVisibleForActiveRole(
+    requiredNotification,
+    null
+  );
+  if (!hasRoleRequirement) return userIds;
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds }, isActive: true },
+    select: { id: true, activeRole: true },
+  });
+  const activeRoles = new Map<string, Role>(
+    users.map((user) => [user.id, user.activeRole])
+  );
+
+  return userIds.filter((userId) =>
+    isNotificationVisibleForActiveRole(
+      requiredNotification,
+      activeRoles.get(userId) ?? null
+    )
+  );
+}
+
+async function filterMobileDevicesForActiveRole<
+  T extends { sessionId: string | null },
+>(devices: T[], type: NotificationType, url: string | null): Promise<T[]> {
+  const requiredNotification = { type, url };
+  const hasRoleRequirement = !isNotificationVisibleForActiveRole(
+    requiredNotification,
+    null
+  );
+  if (!hasRoleRequirement) return devices;
+
+  const sessionIds = devices
+    .map((device) => device.sessionId)
+    .filter((sessionId): sessionId is string => Boolean(sessionId));
+  if (sessionIds.length === 0) return [];
+
+  const sessions = await prisma.mobileSession.findMany({
+    where: {
+      id: { in: sessionIds },
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    select: { id: true, appRole: true },
+  });
+  const activeRoles = new Map<string, Role>(
+    sessions.map((session) => [session.id, session.appRole])
+  );
+
+  return devices.filter(
+    (device) =>
+      device.sessionId &&
+      isNotificationVisibleForActiveRole(
+        requiredNotification,
+        activeRoles.get(device.sessionId) ?? null
+      )
+  );
 }
 
 function normalizeMobileDevice(device: {

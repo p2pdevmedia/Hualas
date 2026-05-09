@@ -1,11 +1,22 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
+import type { Role } from '@prisma/client';
 
-export async function getNotificationUserIdFromRequest(req: Request) {
+export type NotificationRequestContext = {
+  userId: string;
+  activeRole: Role | null;
+};
+
+export async function getNotificationContextFromRequest(
+  req: Request
+): Promise<NotificationRequestContext | null> {
   const mobileSession = await getMobileSessionFromRequest(req);
   if (mobileSession) {
-    return mobileSession.userId;
+    return {
+      userId: mobileSession.userId,
+      activeRole: mobileSession.appRole,
+    };
   }
 
   const session = await getServerSession(authOptions);
@@ -13,5 +24,14 @@ export async function getNotificationUserIdFromRequest(req: Request) {
     return null;
   }
 
-  return (session.user as { id: string }).id;
+  const user = session.user as { id: string; activeRole?: Role | null };
+  return {
+    userId: user.id,
+    activeRole: user.activeRole ?? null,
+  };
+}
+
+export async function getNotificationUserIdFromRequest(req: Request) {
+  const context = await getNotificationContextFromRequest(req);
+  return context?.userId ?? null;
 }

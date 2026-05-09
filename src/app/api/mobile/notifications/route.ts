@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
+import { filterNotificationsForActiveRole } from '@/lib/notifications/visibility';
 
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
@@ -16,14 +17,13 @@ export async function GET(req: Request) {
     50
   );
 
-  const [notifications, unreadCount, chatUnreadCount] = await Promise.all([
+  const [notificationRows, unreadRows] = await Promise.all([
     prisma.notification.findMany({
       where: {
         userId: session.userId,
         ...(unreadOnly ? { readAt: null } : {}),
       },
       orderBy: { createdAt: 'desc' },
-      take: limit,
       select: {
         id: true,
         type: true,
@@ -34,17 +34,24 @@ export async function GET(req: Request) {
         createdAt: true,
       },
     }),
-    prisma.notification.count({
+    prisma.notification.findMany({
       where: { userId: session.userId, readAt: null },
-    }),
-    prisma.notification.count({
-      where: {
-        userId: session.userId,
-        readAt: null,
-        type: 'CHAT_MESSAGE_NEW',
-      },
+      select: { type: true, url: true },
     }),
   ]);
+
+  const notifications = filterNotificationsForActiveRole(
+    notificationRows,
+    session.appRole
+  ).slice(0, limit);
+  const visibleUnreadRows = filterNotificationsForActiveRole(
+    unreadRows,
+    session.appRole
+  );
+  const unreadCount = visibleUnreadRows.length;
+  const chatUnreadCount = visibleUnreadRows.filter(
+    (notification) => notification.type === 'CHAT_MESSAGE_NEW'
+  ).length;
 
   return NextResponse.json({
     notifications: notifications.map((notification) => ({
@@ -67,8 +74,21 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await prisma.notification.updateMany({
+  const unreadRows = await prisma.notification.findMany({
     where: { userId: session.userId, readAt: null },
+    select: { id: true, type: true, url: true },
+  });
+  const visibleIds = filterNotificationsForActiveRole(
+    unreadRows,
+    session.appRole
+  ).map((notification) => notification.id);
+
+  if (visibleIds.length === 0) {
+    return NextResponse.json({ updated: 0 });
+  }
+
+  const result = await prisma.notification.updateMany({
+    where: { userId: session.userId, id: { in: visibleIds }, readAt: null },
     data: { readAt: new Date() },
   });
 

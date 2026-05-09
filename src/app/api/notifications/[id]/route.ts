@@ -1,21 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getNotificationUserIdFromRequest } from '@/lib/notifications/notification-access';
+import { getNotificationContextFromRequest } from '@/lib/notifications/notification-access';
+import { isNotificationVisibleForActiveRole } from '@/lib/notifications/visibility';
 
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const userId = await getNotificationUserIdFromRequest(req);
-  if (!userId) {
+  const context = await getNotificationContextFromRequest(req);
+  if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const notification = await prisma.notification.findUnique({
     where: { id: params.id },
-    select: { userId: true, readAt: true },
+    select: { userId: true, type: true, url: true, readAt: true },
   });
-  if (!notification || notification.userId !== userId) {
+  if (
+    !notification ||
+    notification.userId !== context.userId ||
+    !isNotificationVisibleForActiveRole(notification, context.activeRole)
+  ) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   if (notification.readAt) {
