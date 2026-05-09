@@ -18,6 +18,7 @@ export type NotificationRow = {
 type Props = {
   notifications: NotificationRow[];
   loading: boolean;
+  unreadCount: number;
   onClose: () => void;
   onMarkAllRead: () => void;
   onItemRead: (id: string) => void;
@@ -26,12 +27,15 @@ type Props = {
 export default function NotificationPanel({
   notifications,
   loading,
+  unreadCount,
   onClose,
   onMarkAllRead,
   onItemRead,
 }: Props) {
   const router = useRouter();
-  const hasUnread = notifications.some((n) => !n.readAt);
+  const visibleUnreadCount = notifications.filter((n) => !n.readAt).length;
+  const hasUnread = unreadCount > 0;
+  const hiddenUnreadCount = Math.max(0, unreadCount - visibleUnreadCount);
 
   function handleItemClick(id: string, url: string | null) {
     onItemRead(id);
@@ -55,6 +59,13 @@ export default function NotificationPanel({
           </button>
         )}
       </div>
+      {hiddenUnreadCount > 0 && (
+        <div className="border-b border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          Tenés {hiddenUnreadCount} notificación
+          {hiddenUnreadCount === 1 ? '' : 'es'} sin leer fuera de esta vista.
+          Abrí el historial para revisarlas.
+        </div>
+      )}
       <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
         {loading ? (
           <div className="px-3 py-6 text-center text-sm text-gray-500">
@@ -80,7 +91,14 @@ export default function NotificationPanel({
           ))
         )}
       </div>
-      <div className="border-t border-gray-100 px-3 py-2 text-center">
+      <div className="grid gap-1 border-t border-gray-100 px-3 py-2 text-center">
+        <Link
+          href="/notifications"
+          onClick={onClose}
+          className="text-xs font-medium text-blue-700 hover:underline"
+        >
+          Ver todas las notificaciones
+        </Link>
         <Link
           href="/profile/notifications"
           onClick={onClose}

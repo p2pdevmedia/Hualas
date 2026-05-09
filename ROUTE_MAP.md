@@ -279,6 +279,21 @@ Agents should check this before searching the codebase.
 - `POST /api/mobile/devices` → register or update the current iPhone APNs token
   - File: `src/app/api/mobile/devices/route.ts`
 
+### Notifications
+
+- `/notifications` → full in-app notification inbox for logged-in users
+  - File: `src/app/notifications/page.tsx`
+  - Related component: `src/app/notifications/notifications-inbox.tsx`
+
+- `GET /api/notifications` → list current user's in-app notifications and unread counts
+  - File: `src/app/api/notifications/route.ts`
+
+- `PATCH /api/notifications` → mark all current user's notifications as read
+  - File: `src/app/api/notifications/route.ts`
+
+- `PATCH /api/notifications/[id]` → mark a single current-user notification as read
+  - File: `src/app/api/notifications/[id]/route.ts`
+
 ### Mobile notifications
 
 - `GET /api/mobile/notifications` → list the current user's in-app notifications and unread counts
