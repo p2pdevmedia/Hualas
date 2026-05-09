@@ -9,7 +9,7 @@ import {
   formatPersonName,
 } from '@/lib/accounting';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
 import MovementTabs from '../movement-tabs';
 
@@ -33,6 +33,13 @@ type ActivitySummaryRow = {
   sessionPaymentCount: number;
   totalCollected: number;
   lastPaidAt: Date | null;
+};
+
+type ActivityOption = {
+  id: string;
+  name: string;
+  date: Date;
+  endDate: Date;
 };
 
 type ActivityPayment = Prisma.ActivityParticipantPaymentGetPayload<{
@@ -145,15 +152,23 @@ async function getActivityOptions(q: string) {
     Prisma.sql`a."description"`,
   ]);
 
-  return prisma.$queryRaw<
-    Array<{ id: string; name: string; date: Date; endDate: Date }>
-  >`
+  return prisma.$queryRaw<ActivityOption[]>`
     SELECT a."id", a."name", a."date", a."endDate"
     FROM "Activity" a
     WHERE ${condition}
     ORDER BY a."date" DESC, a."name" ASC
     LIMIT 20
   `;
+}
+
+async function getActiveActivityOptions() {
+  const now = new Date();
+
+  return prisma.activity.findMany({
+    where: { endDate: { gte: now } },
+    orderBy: [{ date: 'asc' }, { name: 'asc' }],
+    select: { id: true, name: true, date: true, endDate: true },
+  });
 }
 
 export default async function ActivityMovementsPage({
@@ -166,10 +181,21 @@ export default async function ActivityMovementsPage({
 
   const q = searchParams?.q?.trim() ?? '';
   const selectedActivityId = searchParams?.activityId?.trim() ?? '';
-  const [activityOptions, selectedActivity] = await Promise.all([
-    selectedActivityId ? Promise.resolve([]) : getActivityOptions(q),
-    selectedActivityId ? getActivitySummary(selectedActivityId) : null,
-  ]);
+  const [activityOptions, activeActivityOptions, selectedActivity] =
+    await Promise.all([
+      selectedActivityId ? Promise.resolve([]) : getActivityOptions(q),
+      getActiveActivityOptions(),
+      selectedActivityId ? getActivitySummary(selectedActivityId) : null,
+    ]);
+
+  const autocompleteActivityOptions = Array.from(
+    new Map(
+      [...activityOptions, ...activeActivityOptions].map((activity) => [
+        activity.name,
+        activity,
+      ])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   const payments = selectedActivity
     ? await prisma.activityParticipantPayment.findMany({
@@ -205,12 +231,43 @@ export default async function ActivityMovementsPage({
             registrados y recaudación acumulada.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/activities" prefetch={true}>
+        <details className="group relative self-start sm:self-auto">
+          <summary className="inline-flex cursor-pointer list-none items-center justify-center rounded-full border-[1.5px] border-primary px-5 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5 focus:outline-none [&::-webkit-details-marker]:hidden">
             Ver actividades
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+            <ChevronDown className="ml-2 h-4 w-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="absolute left-0 z-20 mt-2 w-80 overflow-hidden rounded-2xl border bg-card shadow-lg sm:left-auto sm:right-0 sm:w-96">
+            <div className="border-b px-4 py-3">
+              <p className="text-sm font-semibold">Actividades vigentes</p>
+              <p className="text-xs text-muted-foreground">
+                Abrí la caja de una actividad sin salir de contaduría.
+              </p>
+            </div>
+            {activeActivityOptions.length === 0 ? (
+              <p className="px-4 py-4 text-sm text-muted-foreground">
+                No hay actividades vigentes para mostrar.
+              </p>
+            ) : (
+              <div className="max-h-80 overflow-y-auto py-2">
+                {activeActivityOptions.map((activity) => (
+                  <Link
+                    key={activity.id}
+                    href={`/accounting/movements/activities?activityId=${activity.id}`}
+                    prefetch={true}
+                    className="block px-4 py-3 text-sm transition-colors hover:bg-muted"
+                  >
+                    <span className="block font-medium text-foreground">
+                      {activity.name}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {formatActivityPeriod(activity.date, activity.endDate)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </details>
       </div>
 
       <form className="rounded-2xl border bg-card p-4 shadow-sm">
@@ -221,9 +278,16 @@ export default async function ActivityMovementsPage({
               type="text"
               name="q"
               defaultValue={q}
+              list="accounting-activity-options"
+              autoComplete="off"
               placeholder="Nombre o descripción"
               className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
+            <datalist id="accounting-activity-options">
+              {autocompleteActivityOptions.map((activity) => (
+                <option key={activity.id} value={activity.name} />
+              ))}
+            </datalist>
           </label>
           <div className="flex flex-wrap gap-2">
             <Button type="submit">
