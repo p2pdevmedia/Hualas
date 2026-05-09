@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { gateAdmin } from '@/lib/role-guards';
 import EditActivityForm from './form';
 import ActivityImageUpload from '../../activity-image-upload';
+import ActivityMediaManager from '../../activity-media-manager';
 
 interface EditActivityPageProps {
   params: { id: string };
@@ -29,6 +30,7 @@ export default async function EditActivityPage({
     existingDayCount,
     firstAnnualDay,
     annualCalendarSample,
+    activityMedia,
   ] = await Promise.all([
     prisma.user.findMany({
       where: {
@@ -97,6 +99,16 @@ export default async function EditActivityPage({
         },
       },
     }),
+    prisma.activityMedia.findMany({
+      where: { activityId: params.id },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        type: true,
+        fileName: true,
+        sortOrder: true,
+      },
+    }),
   ]);
 
   const initialAnnualSchedules =
@@ -148,10 +160,20 @@ export default async function EditActivityPage({
         existingDayCount={existingDayCount}
       />
       <div className="mt-8 border-t pt-8">
-        <h2 className="mb-4 text-xl font-semibold">Imagen de la actividad</h2>
+        <h2 className="mb-4 text-xl font-semibold">Imagen de portada</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Esta imagen se usa como portada principal de la actividad.
+        </p>
         <ActivityImageUpload
           activityId={params.id}
           currentImageUrl={activity.image ?? undefined}
+        />
+      </div>
+      <div className="mt-8 border-t pt-8">
+        <h2 className="mb-4 text-xl font-semibold">Fotos y videos</h2>
+        <ActivityMediaManager
+          activityId={params.id}
+          initialMedia={activityMedia}
         />
       </div>
     </main>

@@ -43,6 +43,10 @@ export default async function ActivityJoinPage({
         price: true,
         createdAt: true,
         _count: { select: { participants: true } },
+        media: {
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+          select: { id: true, type: true, fileName: true },
+        },
         groups: {
           select: {
             id: true,
@@ -175,6 +179,48 @@ export default async function ActivityJoinPage({
               )}
             </div>
           </div>
+
+          {activityData.media.length > 0 && (
+            <section className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
+              <div>
+                <h2 className="font-heading text-xl font-semibold">
+                  Fotos y videos
+                </h2>
+                <p className="text-sm text-muted-foreground font-body">
+                  Conocé la actividad con más fotos y videos antes de anotarte.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {activityData.media.map((item) => {
+                  const mediaUrl = `/api/activities/${activityData.id}/media/${item.id}`;
+                  return (
+                    <div
+                      key={item.id}
+                      className="overflow-hidden rounded-lg border bg-muted/30"
+                    >
+                      <div className="relative aspect-video">
+                        {item.type === 'IMAGE' ? (
+                          <Image
+                            src={mediaUrl}
+                            alt={item.fileName ?? activityData.name}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                          />
+                        ) : (
+                          <video
+                            src={mediaUrl}
+                            controls
+                            className="h-full w-full object-cover"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <div className="rounded-lg border bg-card p-4">
