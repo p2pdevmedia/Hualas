@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { CalendarDays, MessageCircle, Phone } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
+import {
+  buildProfessorSessionOfflineHrefs,
+  warmOfflineRoutes,
+} from '@/lib/offline/professor-routes';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
 
@@ -278,6 +282,13 @@ export default function ActivityCalendar({
     },
     []
   );
+
+  useEffect(() => {
+    if (variant !== 'professor-agenda') return;
+
+    const hrefs = buildProfessorSessionOfflineHrefs(activityDays);
+    void warmOfflineRoutes(hrefs);
+  }, [activityDays, variant]);
 
   const dayMap = useMemo(() => {
     const map = new Map<string, CalendarActivityDay[]>();

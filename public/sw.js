@@ -2,6 +2,7 @@
 
 const CACHE_VERSION = 'hualas-v2';
 const OFFLINE_URL = '/offline.html';
+const PAGE_CACHE_PREFIX = '/__hualas_page_cache__';
 
 // Static assets that are safe to cache indefinitely (content-addressed by Next.js)
 const STATIC_PATTERNS = [
@@ -22,6 +23,28 @@ function isNavigation(request) {
 
 function isApiRequest(url) {
   return new URL(url).pathname.startsWith('/api/');
+}
+
+function isPageCacheRequest(url) {
+  return new URL(url).pathname.startsWith(PAGE_CACHE_PREFIX);
+}
+
+function pageCacheRequest(request) {
+  const url = new URL(request.url);
+  return new Request(
+    `${self.location.origin}${PAGE_CACHE_PREFIX}${url.pathname}${url.search}`
+  );
+}
+
+function isHtmlResponse(response) {
+  return response.headers.get('content-type')?.includes('text/html');
+}
+
+async function putCacheResponse(cache, request, response) {
+  cache.put(request, response.clone());
+  if (isHtmlResponse(response)) {
+    cache.put(pageCacheRequest(request), response.clone());
+  }
 }
 
 // ── Install ──────────────────────────────────────────────────────────────────
@@ -62,6 +85,8 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests (analytics, CDN scripts, etc.)
   if (!url.startsWith(self.location.origin)) return;
 
+  if (isPageCacheRequest(url)) return;
+
   // API requests: network-only, no caching
   if (isApiRequest(url)) return;
 
@@ -88,7 +113,7 @@ async function cacheFirst(request) {
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_VERSION);
-      cache.put(request, response.clone());
+      await putCacheResponse(cache, request, response);
     }
     return response;
   } catch {
@@ -101,10 +126,12 @@ async function networkFirstWithOfflineFallback(request) {
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_VERSION);
-      cache.put(request, response.clone());
+      await putCacheResponse(cache, request, response);
     }
     return response;
   } catch {
+    const cachedPage = await caches.match(pageCacheRequest(request));
+    if (cachedPage) return cachedPage;
     const cached = await caches.match(request);
     if (cached) return cached;
     const offline = await caches.match(OFFLINE_URL);
@@ -117,10 +144,12 @@ async function networkFirst(request) {
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_VERSION);
-      cache.put(request, response.clone());
+      await putCacheResponse(cache, request, response);
     }
     return response;
   } catch {
+    const cachedPage = await caches.match(pageCacheRequest(request));
+    if (cachedPage) return cachedPage;
     const cached = await caches.match(request);
     return cached ?? new Response('', { status: 503 });
   }
