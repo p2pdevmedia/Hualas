@@ -22,6 +22,7 @@ import {
   buildManualPaymentReceiptUrl,
 } from '@/lib/blob-urls';
 import { matchesAccountingSearch } from '@/lib/accounting-search';
+import MonthCloseButton from './month-close-button';
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -66,6 +67,7 @@ export default async function AccountingDashboardPage({
     verifiedManualPaymentsCount,
     pendingManualPaymentsCount,
     monthProfessorPayments,
+    currentMonthClose,
   ] = await Promise.all([
     prisma.accountingMovement.findMany({
       where: {
@@ -141,6 +143,14 @@ export default async function AccountingDashboardPage({
         paidAt: {
           gte: monthStart,
           lte: monthEnd,
+        },
+      },
+    }),
+    prisma.accountingMonthClose.findUnique({
+      where: {
+        periodYear_periodMonth: {
+          periodYear: now.getFullYear(),
+          periodMonth: now.getMonth() + 1,
         },
       },
     }),
@@ -302,6 +312,26 @@ export default async function AccountingDashboardPage({
           </article>
         ))}
       </section>
+
+      <MonthCloseButton
+        month={now.getMonth() + 1}
+        year={now.getFullYear()}
+        initialClose={
+          currentMonthClose
+            ? {
+                id: currentMonthClose.id,
+                periodMonth: currentMonthClose.periodMonth,
+                periodYear: currentMonthClose.periodYear,
+                totalIncome: currentMonthClose.totalIncome,
+                totalExpense: currentMonthClose.totalExpense,
+                netBalance: currentMonthClose.netBalance,
+                positiveBalance: currentMonthClose.positiveBalance,
+                updatedAt: currentMonthClose.updatedAt,
+                activitySnapshot: currentMonthClose.activitySnapshot as any,
+              }
+            : null
+        }
+      />
 
       <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <form className="xl:col-span-2 rounded-2xl border bg-card p-4 shadow-sm">

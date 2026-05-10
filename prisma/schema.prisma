@@ -49,6 +49,7 @@ model User {
   activityDayProfessors       ActivityDayProfessor[]
   children                    Child[]
   accountingMovements         AccountingMovement[]
+  accountingMonthClosings     AccountingMonthClose[]
   responsibleFamilyGroups     FamilyGroup[]                @relation("FamilyGroupResponsible")
   familyMemberships           FamilyGroupMember[]          @relation("FamilyGroupMemberUser")
   ordersAsResponsible         Order[]                      @relation("OrderResponsible")
@@ -460,6 +461,27 @@ model AccountingMovement {
   updatedAt     DateTime     @updatedAt
 
   @@index([date])
+  @@index([createdById])
+}
+
+model AccountingMonthClose {
+  id               String   @id @default(cuid())
+  periodMonth      Int
+  periodYear       Int
+  periodStart      DateTime
+  periodEnd        DateTime
+  totalIncome      Int
+  totalExpense     Int
+  netBalance       Int
+  positiveBalance  Int
+  activitySnapshot Json
+  createdById      String
+  createdBy        User     @relation(fields: [createdById], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([periodYear, periodMonth])
+  @@index([periodStart, periodEnd])
   @@index([createdById])
 }
 

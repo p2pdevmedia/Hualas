@@ -364,6 +364,12 @@ Agents should check this before searching the codebase.
 - `GET /api/accounting/reports` → aggregated report data
   - File: `src/app/api/accounting/reports/route.ts`
 
+- `GET /api/accounting/month-close` → fetch latest saved month-end accounting close
+  - File: `src/app/api/accounting/month-close/route.ts`
+
+- `POST /api/accounting/month-close` → save/update month-end balances and activity payment snapshot
+  - File: `src/app/api/accounting/month-close/route.ts`
+
 ### Professor Payments
 
 - `GET /api/professors/[id]/profile` → get professor banking/salary profile
