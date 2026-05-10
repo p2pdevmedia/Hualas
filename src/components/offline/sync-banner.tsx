@@ -20,6 +20,10 @@ export default function SyncBanner() {
   }, []);
 
   const sync = useCallback(async () => {
+    const pending = await countPendingMutations();
+    setPendingCount(pending);
+    if (pending === 0) return;
+
     setSyncing(true);
     try {
       const { ok } = await flushPendingMutations();
@@ -37,8 +41,10 @@ export default function SyncBanner() {
 
   useEffect(() => {
     setMounted(true);
-    setIsOnline(navigator.onLine);
-    void refreshCount();
+    const online = navigator.onLine;
+    setIsOnline(online);
+    if (online) void sync();
+    else void refreshCount();
 
     const onOnline = () => {
       setIsOnline(true);

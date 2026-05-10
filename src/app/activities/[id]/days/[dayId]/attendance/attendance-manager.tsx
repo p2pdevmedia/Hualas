@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { enqueueMutation } from '@/lib/offline/pending-mutations';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
 
@@ -54,26 +54,16 @@ export default function AttendanceManager({
     setSavingId(participantId);
     setError('');
 
-    if (!navigator.onLine) {
-      await enqueueMutation({
+    try {
+      const result = await saveOrQueueProfessorMutation({
         url: `/api/activity-days/${dayId}/attendance`,
         method: 'PATCH',
         body: { participantId, status },
+        dedupeKey: `attendance:${dayId}:${participantId}`,
       });
-      setPendingIds((prev) => new Set([...prev, participantId]));
-      setSavingId(null);
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/activity-days/${dayId}/attendance`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId, status }),
-      });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo actualizar');
+      if (result.savedLocally) {
+        setPendingIds((prev) => new Set([...prev, participantId]));
+        return;
       }
       setPendingIds((prev) => {
         const next = new Set(prev);
@@ -81,17 +71,8 @@ export default function AttendanceManager({
         return next;
       });
     } catch (err) {
-      if (!navigator.onLine) {
-        await enqueueMutation({
-          url: `/api/activity-days/${dayId}/attendance`,
-          method: 'PATCH',
-          body: { participantId, status },
-        });
-        setPendingIds((prev) => new Set([...prev, participantId]));
-      } else {
-        setList(previous);
-        setError(err instanceof Error ? err.message : 'No se pudo actualizar');
-      }
+      setList(previous);
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar');
     } finally {
       setSavingId(null);
     }

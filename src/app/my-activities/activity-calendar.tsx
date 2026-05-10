@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CalendarDays, MessageCircle, Phone } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { enqueueMutation } from '@/lib/offline/pending-mutations';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 type AttendanceStatus = 'PENDING' | 'GOING' | 'NOT_GOING';
 
@@ -398,44 +398,20 @@ export default function ActivityCalendar({
     setSavingAttendanceKey(overrideKey);
     setAttendanceError('');
 
-    if (!navigator.onLine) {
-      await enqueueMutation({
+    try {
+      await saveOrQueueProfessorMutation({
         url: `/api/activity-days/${dayId}/attendance`,
         method: 'PATCH',
         body: { participantId, status },
+        dedupeKey: `attendance:${dayId}:${participantId}`,
       });
-      setSavingAttendanceKey(null);
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/activity-days/${dayId}/attendance`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId, status }),
-      });
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(
-          payload?.error || 'No se pudo actualizar la asistencia'
-        );
-      }
     } catch (err) {
-      if (!navigator.onLine) {
-        await enqueueMutation({
-          url: `/api/activity-days/${dayId}/attendance`,
-          method: 'PATCH',
-          body: { participantId, status },
-        });
-      } else {
-        setAttendanceOverrides(previous);
-        setAttendanceError(
-          err instanceof Error
-            ? err.message
-            : 'No se pudo actualizar la asistencia'
-        );
-      }
+      setAttendanceOverrides(previous);
+      setAttendanceError(
+        err instanceof Error
+          ? err.message
+          : 'No se pudo actualizar la asistencia'
+      );
     } finally {
       setSavingAttendanceKey(null);
     }

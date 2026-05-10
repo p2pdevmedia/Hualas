@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 interface DescriptionFormProps {
   dayId: string;
@@ -14,23 +15,30 @@ export default function DescriptionForm({
   const [value, setValue] = useState(initialDescription ?? '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedLocally, setSavedLocally] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const onSynced = () => setSavedLocally(false);
+    window.addEventListener('hualas-mutations-synced', onSynced);
+    return () =>
+      window.removeEventListener('hualas-mutations-synced', onSynced);
+  }, []);
 
   async function handleSave() {
     setSaving(true);
     setSaved(false);
+    setSavedLocally(false);
     setError('');
     try {
-      const res = await fetch(`/api/activity-days/${dayId}`, {
+      const result = await saveOrQueueProfessorMutation({
+        url: `/api/activity-days/${dayId}`,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: value }),
+        body: { description: value },
+        dedupeKey: `activity-day:${dayId}:description`,
       });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo guardar');
-      }
-      setSaved(true);
+      if (result.savedLocally) setSavedLocally(true);
+      else setSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
@@ -48,6 +56,7 @@ export default function DescriptionForm({
         onChange={(e) => {
           setValue(e.target.value);
           setSaved(false);
+          setSavedLocally(false);
         }}
       />
       <div className="flex items-center gap-3">
@@ -62,6 +71,11 @@ export default function DescriptionForm({
         {saved && (
           <span className="text-sm text-green-600 dark:text-green-400">
             Guardado
+          </span>
+        )}
+        {savedLocally && (
+          <span className="text-sm text-amber-600 dark:text-amber-400">
+            Guardado localmente · se enviará al reconectar
           </span>
         )}
         {error && <span className="text-sm text-destructive">{error}</span>}

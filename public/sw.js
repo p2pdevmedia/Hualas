@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_VERSION = 'hualas-v1';
+const CACHE_VERSION = 'hualas-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets that are safe to cache indefinitely (content-addressed by Next.js)
@@ -76,6 +76,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirstWithOfflineFallback(request));
     return;
   }
+
+  // Next.js route/data prefetches: keep them available for client navigation
+  event.respondWith(networkFirst(request));
 });
 
 async function cacheFirst(request) {
@@ -106,6 +109,20 @@ async function networkFirstWithOfflineFallback(request) {
     if (cached) return cached;
     const offline = await caches.match(OFFLINE_URL);
     return offline ?? new Response('Sin conexión', { status: 503 });
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    return cached ?? new Response('', { status: 503 });
   }
 }
 
