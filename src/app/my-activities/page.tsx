@@ -372,6 +372,8 @@ export default async function MyActivitiesPage({
     activity: entry.activity,
     labels: Array.from(entry.labels),
   }));
+  const isSelfParticipantAgenda =
+    !isProfessorView && selectedParticipantFilter === 'self';
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -466,6 +468,11 @@ export default async function MyActivitiesPage({
         activityDays={calendarDays}
         variant={isProfessorView ? 'professor-agenda' : 'member-agenda'}
         sessionDetailLabel={isProfessorView ? 'Ver sesión' : 'Ver detalle'}
+        compactDayRange={
+          isSelfParticipantAgenda ? { pastDays: 1, futureDays: 3 } : undefined
+        }
+        compactCalendarSize={isSelfParticipantAgenda ? 'large' : 'normal'}
+        compactInitialScroll={isSelfParticipantAgenda ? 'start' : 'today'}
       />
     </main>
   );
