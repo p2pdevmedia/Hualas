@@ -4,11 +4,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, SmilePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const POLL_THREAD_MS = 3000;
 const POLL_HISTORY_MS = 8000;
+
+const CHAT_EMOJIS = [
+  '😀',
+  '😄',
+  '😂',
+  '😊',
+  '😍',
+  '😎',
+  '🥳',
+  '👍',
+  '👏',
+  '🙌',
+  '💪',
+  '🙏',
+  '❤️',
+  '💙',
+  '🔥',
+  '✨',
+  '⛰️',
+  '🏔️',
+  '🥾',
+  '🌲',
+  '☀️',
+  '🌧️',
+  '❄️',
+  '✅',
+];
 
 type User = {
   id: string;
@@ -242,9 +269,11 @@ export default function ChatClient() {
   const [professorContext, setProfessorContext] =
     useState<ProfessorChatContext | null>(null);
   const [input, setInput] = useState('');
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groupSendStatus, setGroupSendStatus] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -318,6 +347,7 @@ export default function ChatClient() {
     if (recipient) {
       setSelectedGroup(null);
       setGroupSendStatus('');
+      setEmojiPickerOpen(false);
     }
   }, [recipient]);
 
@@ -513,6 +543,7 @@ export default function ChatClient() {
     setRecipient(userId);
     setMessages([]);
     setInput('');
+    setEmojiPickerOpen(false);
     setGroupSendStatus('');
     setNewChatOpen(false);
   };
@@ -521,15 +552,33 @@ export default function ChatClient() {
     setRecipient('');
     setMessages([]);
     setInput('');
+    setEmojiPickerOpen(false);
     setGroupSendStatus('');
     setSelectedGroup({ activityId, groupId });
     setNewChatOpen(false);
+  };
+
+  const insertEmoji = (emoji: string) => {
+    const inputElement = inputRef.current;
+    const selectionStart = inputElement?.selectionStart ?? input.length;
+    const selectionEnd = inputElement?.selectionEnd ?? input.length;
+    const nextInput = `${input.slice(0, selectionStart)}${emoji}${input.slice(
+      selectionEnd
+    )}`;
+
+    setInput(nextInput);
+    window.requestAnimationFrame(() => {
+      inputElement?.focus();
+      const cursorPosition = selectionStart + emoji.length;
+      inputElement?.setSelectionRange(cursorPosition, cursorPosition);
+    });
   };
 
   const sendMessage = async () => {
     if (!recipient || !session || !input.trim()) return;
     const content = input.trim();
     setInput('');
+    setEmojiPickerOpen(false);
     try {
       const res = await fetch(`/api/messages/${recipient}`, {
         method: 'POST',
@@ -552,6 +601,7 @@ export default function ChatClient() {
     if (!selectedGroup || !session || !input.trim()) return;
     const content = input.trim();
     setInput('');
+    setEmojiPickerOpen(false);
     setGroupSendStatus('');
 
     try {
@@ -684,6 +734,7 @@ export default function ChatClient() {
                   onClick={() => {
                     setSelectedGroup(null);
                     setInput('');
+                    setEmojiPickerOpen(false);
                     setGroupSendStatus('');
                   }}
                   className="rounded-md p-1 hover:bg-muted md:hidden"
@@ -732,8 +783,36 @@ export default function ChatClient() {
               </div>
 
               <div className="border-t p-3">
-                <div className="flex items-center gap-2">
+                <div className="relative flex items-center gap-2">
+                  {emojiPickerOpen && (
+                    <div className="absolute bottom-12 left-0 z-10 grid w-64 grid-cols-8 gap-1 rounded-2xl border bg-card p-2 shadow-xl">
+                      {CHAT_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => insertEmoji(emoji)}
+                          className="rounded-lg p-1.5 text-xl transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                          aria-label={`Agregar emoji ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEmojiPickerOpen((open) => !open)}
+                    className={cn(
+                      'rounded-full border p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                      emojiPickerOpen && 'bg-muted text-foreground'
+                    )}
+                    aria-label="Agregar emoji"
+                    aria-expanded={emojiPickerOpen}
+                  >
+                    <SmilePlus className="h-4 w-4" />
+                  </button>
                   <input
+                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Escribir mensaje al grupo..."
@@ -760,7 +839,10 @@ export default function ChatClient() {
             <>
               <div className="flex items-center gap-3 border-b px-4 py-3">
                 <button
-                  onClick={() => setRecipient('')}
+                  onClick={() => {
+                    setRecipient('');
+                    setEmojiPickerOpen(false);
+                  }}
                   className="rounded-md p-1 hover:bg-muted md:hidden"
                   aria-label="Volver"
                 >
@@ -810,8 +892,36 @@ export default function ChatClient() {
               </div>
 
               <div className="border-t p-3">
-                <div className="flex items-center gap-2">
+                <div className="relative flex items-center gap-2">
+                  {emojiPickerOpen && (
+                    <div className="absolute bottom-12 left-0 z-10 grid w-64 grid-cols-8 gap-1 rounded-2xl border bg-card p-2 shadow-xl">
+                      {CHAT_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => insertEmoji(emoji)}
+                          className="rounded-lg p-1.5 text-xl transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                          aria-label={`Agregar emoji ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEmojiPickerOpen((open) => !open)}
+                    className={cn(
+                      'rounded-full border p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                      emojiPickerOpen && 'bg-muted text-foreground'
+                    )}
+                    aria-label="Agregar emoji"
+                    aria-expanded={emojiPickerOpen}
+                  >
+                    <SmilePlus className="h-4 w-4" />
+                  </button>
                   <input
+                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Escribir mensaje..."
