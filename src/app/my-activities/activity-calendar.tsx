@@ -54,9 +54,18 @@ const MONTHS = [
   'Noviembre',
   'Diciembre',
 ];
-const COMPACT_DAY_OFFSETS = Array.from({ length: 15 }, (_, index) => index - 7);
-
 type CalendarVariant = 'month' | 'professor-agenda' | 'member-agenda';
+type CompactCalendarSize = 'normal' | 'large';
+
+type CompactDayRange = {
+  pastDays: number;
+  futureDays: number;
+};
+
+const DEFAULT_COMPACT_DAY_RANGE: CompactDayRange = {
+  pastDays: 7,
+  futureDays: 7,
+};
 
 function toLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -210,6 +219,9 @@ export default function ActivityCalendar({
   variant = 'month',
   enableSessionDetailLinks = false,
   sessionDetailLabel = 'Ver detalle',
+  compactDayRange = DEFAULT_COMPACT_DAY_RANGE,
+  compactCalendarSize = 'normal',
+  compactInitialScroll = 'today',
 }: {
   activityDays: CalendarActivityDay[];
   onDaySelect?: (dayId: string | null) => void;
@@ -217,6 +229,9 @@ export default function ActivityCalendar({
   variant?: CalendarVariant;
   enableSessionDetailLinks?: boolean;
   sessionDetailLabel?: string;
+  compactDayRange?: CompactDayRange;
+  compactCalendarSize?: CompactCalendarSize;
+  compactInitialScroll?: 'today' | 'start';
 }) {
   const today = useMemo(() => new Date(), []);
   const todayKey = toLocalDateKey(today);
@@ -247,11 +262,17 @@ export default function ActivityCalendar({
   useEffect(() => {
     if (variant === 'month' || showMonthCalendar) return;
 
+    if (compactInitialScroll === 'start') {
+      compactScrollerRef.current?.scrollTo({ left: 0 });
+      setActiveCompactKey(todayKey);
+      return;
+    }
+
     todayCardRef.current?.scrollIntoView({
       block: 'nearest',
       inline: 'center',
     });
-  }, [showMonthCalendar, variant]);
+  }, [compactInitialScroll, showMonthCalendar, todayKey, variant]);
 
   useEffect(
     () => () => {
@@ -271,15 +292,18 @@ export default function ActivityCalendar({
     return map;
   }, [activityDays]);
 
-  const compactDays = useMemo(
-    () =>
-      COMPACT_DAY_OFFSETS.map((offset) => {
-        const date = addDays(today, offset);
-        const key = toLocalDateKey(date);
-        return { date, key, offset, activities: dayMap.get(key) ?? [] };
-      }),
-    [dayMap, today]
-  );
+  const compactDays = useMemo(() => {
+    const offsets = Array.from(
+      { length: compactDayRange.pastDays + compactDayRange.futureDays + 1 },
+      (_, index) => index - compactDayRange.pastDays
+    );
+
+    return offsets.map((offset) => {
+      const date = addDays(today, offset);
+      const key = toLocalDateKey(date);
+      return { date, key, offset, activities: dayMap.get(key) ?? [] };
+    });
+  }, [compactDayRange.futureDays, compactDayRange.pastDays, dayMap, today]);
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -478,6 +502,32 @@ export default function ActivityCalendar({
   const shouldLinkToSessionPage =
     isProfessorAgenda || enableSessionDetailLinks || !!onEdit;
   const shouldShowDetailButton = isMemberAgenda || isProfessorAgenda;
+  const compactRangeDescription =
+    compactDayRange.pastDays === 1 && compactDayRange.futureDays === 3
+      ? 'Deslizá para ver desde ayer hasta tres días hacia adelante.'
+      : 'Deslizá para ver hasta una semana atrás o adelante.';
+  const compactCardClassNames = {
+    withActivitiesMain:
+      compactCalendarSize === 'large'
+        ? 'w-[min(78vw,22rem)] scale-[1.02] border-primary/50 shadow-md'
+        : 'w-64 scale-[1.02] border-primary/50 shadow-md',
+    withActivitiesSecondary:
+      compactCalendarSize === 'large'
+        ? 'w-[min(72vw,20rem)] opacity-75'
+        : 'w-52 opacity-60',
+    emptyMain:
+      compactCalendarSize === 'large'
+        ? 'w-[min(70vw,19rem)] scale-[1.02] border-primary/30 opacity-90 shadow-md'
+        : 'w-44 scale-[1.02] border-primary/30 opacity-80 shadow-md',
+    emptySecondary:
+      compactCalendarSize === 'large'
+        ? 'w-[min(60vw,16rem)] opacity-70'
+        : 'w-32 opacity-50',
+  };
+  const compactCardPadding =
+    compactCalendarSize === 'large' ? 'p-5 sm:p-6' : 'p-4';
+  const compactEmptyCardPadding =
+    compactCalendarSize === 'large' ? 'p-4 sm:p-5' : 'p-3';
 
   return (
     <div className="space-y-3">
@@ -521,7 +571,7 @@ export default function ActivityCalendar({
                   : 'Agenda de actividades'}
               </p>
               <p className="text-xs text-muted-foreground">
-                Deslizá para ver hasta una semana atrás o adelante.
+                {compactRangeDescription}
               </p>
             </div>
           </div>
@@ -555,15 +605,21 @@ export default function ActivityCalendar({
                     }}
                     className={[
                       'rounded-2xl border bg-background shadow-sm transition-all',
-                      hasActivities ? 'p-4' : 'p-3',
+                      hasActivities
+                        ? compactCardPadding
+                        : compactEmptyCardPadding,
                       hasActivities && isMainDay
-                        ? 'w-64 scale-[1.02] border-primary/50 shadow-md'
+                        ? compactCardClassNames.withActivitiesMain
                         : '',
-                      hasActivities && !isMainDay ? 'w-52 opacity-60' : '',
+                      hasActivities && !isMainDay
+                        ? compactCardClassNames.withActivitiesSecondary
+                        : '',
                       !hasActivities && isMainDay
-                        ? 'w-44 scale-[1.02] border-primary/30 opacity-80 shadow-md'
+                        ? compactCardClassNames.emptyMain
                         : '',
-                      !hasActivities && !isMainDay ? 'w-32 opacity-50' : '',
+                      !hasActivities && !isMainDay
+                        ? compactCardClassNames.emptySecondary
+                        : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
@@ -573,7 +629,7 @@ export default function ActivityCalendar({
                     >
                       <div>
                         <p
-                          className={`${isMainDay ? 'text-base' : 'text-sm'} font-bold text-foreground`}
+                          className={`${isMainDay ? (compactCalendarSize === 'large' ? 'text-lg' : 'text-base') : 'text-sm'} font-bold text-foreground`}
                         >
                           <span>{title}</span>
                           {scheduleLabel && (
@@ -582,7 +638,9 @@ export default function ActivityCalendar({
                             </span>
                           )}
                         </p>
-                        <p className="text-xs font-medium text-muted-foreground">
+                        <p
+                          className={`${compactCalendarSize === 'large' ? 'text-sm' : 'text-xs'} font-medium text-muted-foreground`}
+                        >
                           {date.toLocaleDateString('es-AR', {
                             day: 'numeric',
                             month: 'short',
