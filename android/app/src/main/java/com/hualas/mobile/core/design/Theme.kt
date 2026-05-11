@@ -13,10 +13,12 @@ private val LightColors = lightColorScheme(
     tertiary = Lake,
     background = Snow,
     onBackground = Ink,
-    surface = Snow,
+    surface = ColorTokens.Card,
     onSurface = Ink,
     surfaceVariant = ColorTokens.SurfaceVariant,
-    onSurfaceVariant = Muted
+    onSurfaceVariant = Muted,
+    outline = ColorTokens.Border,
+    outlineVariant = ColorTokens.Border.copy(alpha = 0.55f)
 )
 
 private val DarkColors = darkColorScheme(
@@ -29,7 +31,9 @@ private val DarkColors = darkColorScheme(
     surface = ColorTokens.DarkSurface,
     onSurface = Snow,
     surfaceVariant = ColorTokens.DarkSurfaceVariant,
-    onSurfaceVariant = ColorTokens.DarkMuted
+    onSurfaceVariant = ColorTokens.DarkMuted,
+    outline = ColorTokens.ForestLight.copy(alpha = 0.55f),
+    outlineVariant = ColorTokens.ForestLight.copy(alpha = 0.25f)
 )
 
 @Composable
