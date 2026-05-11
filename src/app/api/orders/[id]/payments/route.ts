@@ -1,11 +1,15 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { requireLegacyAccountingAccess } from '@/lib/legacy-accounting-route';
 import { paymentService } from '@/lib/services/payment-service';
 
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const accessError = await requireLegacyAccountingAccess();
+  if (accessError) return accessError;
+
   const body = await req.json();
   const amount = Number(body.amount);
 
