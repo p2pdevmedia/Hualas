@@ -29,7 +29,7 @@ Admin, super-admin, and accounting management workflows remain web-only.
 - Android Studio with Android SDK Platform 35.
 - JDK 17.
 - Gradle wrapper files in this directory.
-- The Hualas web backend running locally for `localDebug` builds.
+- Network access to `https://hualas.vercel.app/` for `localDebug` builds.
 
 If Gradle cannot find the Android SDK, set `ANDROID_HOME` or create `local.properties`:
 
@@ -41,7 +41,7 @@ sdk.dir=/home/negra/Android/Sdk
 
 Build flavors define the API base URL:
 
-- `local`: `http://10.0.2.2:3000/` for Android emulator talking to a local Next.js server.
+- `local`: `https://hualas.vercel.app/` for phone and emulator smoke testing against the deployed backend.
 - `staging`: `https://hualas.vercel.app/` until a separate staging domain exists.
 - `production`: `https://hualas.vercel.app/`.
 

@@ -29,6 +29,12 @@ export default function Footer() {
             >
               Preguntas Frecuentes
             </Link>
+            <Link
+              href="/android"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
+              App Android
+            </Link>
           </div>
 
           {/* Social Media */}

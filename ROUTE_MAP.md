@@ -21,6 +21,10 @@ Agents should check this before searching the codebase.
   - File: `src/app/faq/page.tsx`
   - Explains application flow, user roles, activities, and social fees
 
+- `/android` → Android APK download page
+  - File: `src/app/android/page.tsx`
+  - Static APK: `public/downloads/hualas-mobile.apk`
+
 ### Auth
 
 - `/login` → Login page

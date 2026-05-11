@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Newspaper, X } from 'lucide-react';
+import { Menu, Newspaper, Smartphone, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -188,6 +188,21 @@ export default function Navbar() {
     </Link>
   );
 
+  const renderAndroidLink = (onClick?: () => void) => (
+    <Link
+      href="/android"
+      className={cn(navLinkClass('/android'), 'inline-flex items-center gap-2')}
+      onClick={onClick}
+    >
+      <Smartphone
+        className="h-5 w-5 shrink-0 text-primary"
+        strokeWidth={2.2}
+        aria-hidden="true"
+      />
+      <span>App Android</span>
+    </Link>
+  );
+
   return (
     <nav
       className={cn(
@@ -231,6 +246,7 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex md:items-center md:gap-6">
+          {renderAndroidLink()}
           {session && !isCounter && (
             <Link
               href={activitiesHref}
@@ -484,6 +500,7 @@ export default function Navbar() {
                   {session.user.name || 'Usuario'}
                 </span>
               </Link>
+              {renderAndroidLink(() => setMenuOpen(false))}
               {session && !isCounter && (
                 <Link
                   href={activitiesHref}
@@ -672,6 +689,7 @@ export default function Navbar() {
               >
                 {t.register}
               </Link>
+              {renderAndroidLink(() => setMenuOpen(false))}
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}

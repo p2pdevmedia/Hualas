@@ -40,7 +40,7 @@ android {
     productFlavors {
         create("local") {
             dimension = "environment"
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://hualas.vercel.app/\"")
         }
         create("staging") {
             dimension = "environment"
