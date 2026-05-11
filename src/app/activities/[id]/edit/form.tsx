@@ -591,6 +591,7 @@ export default function EditActivityForm({
           professors={professors}
           value={professorIds}
           onChange={setProfessorIds}
+          defaultCollapsed
         />
 
         {activityType === 'ANNUAL' && (
