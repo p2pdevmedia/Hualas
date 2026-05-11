@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -23,7 +24,10 @@ import com.hualas.mobile.core.design.HualasTheme
 
 @Composable
 fun LoginScreen(
-    onContinueAsMember: () -> Unit,
+    state: AuthUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -46,27 +50,40 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(28.dp))
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = state.email,
+                onValueChange = onEmailChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Email") },
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = state.password,
+                onValueChange = onPasswordChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true
             )
+            state.errorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             Spacer(modifier = Modifier.height(20.dp))
             Button(
-                onClick = onContinueAsMember,
-                modifier = Modifier.fillMaxWidth()
+                onClick = onLogin,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading
             ) {
-                Text("Entrar")
+                if (state.isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Entrar")
+                }
             }
         }
     }
@@ -76,6 +93,11 @@ fun LoginScreen(
 @Composable
 private fun LoginScreenPreview() {
     HualasTheme {
-        LoginScreen(onContinueAsMember = {})
+        LoginScreen(
+            state = AuthUiState(),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onLogin = {}
+        )
     }
 }

@@ -115,12 +115,12 @@ Create these top-level files and packages during implementation:
 
 **Deliverables:**
 
-- [ ] Confirm that Android is only for `MEMBER` and `PROFESSOR`.
-- [ ] Confirm that admin, super-admin, and accounting admin screens stay web-only.
-- [ ] Document base URL handling for local, staging, and production in `android/README.md`.
-- [ ] Review JSON shapes returned by every `/api/mobile/*` endpoint listed above.
-- [ ] Create a simple API contract table with request method, path, role, purpose, and Android screen owner.
-- [ ] Identify backend gaps before Android screen work starts.
+- [x] Confirm that Android is only for `MEMBER` and `PROFESSOR`.
+- [x] Confirm that admin, super-admin, and accounting admin screens stay web-only.
+- [x] Document base URL handling for local, staging, and production in `android/README.md`.
+- [x] Review JSON shapes returned by every `/api/mobile/*` endpoint listed above.
+- [x] Create a simple API contract table with request method, path, role, purpose, and Android screen owner.
+- [x] Identify backend gaps before Android screen work starts.
 
 **Validation:**
 
@@ -153,12 +153,12 @@ Expected: `401` with `Credenciales invalidas` or the current Spanish invalid-cre
 
 **Deliverables:**
 
-- [ ] Create Gradle Kotlin DSL project and `app` module.
-- [ ] Configure Kotlin, Compose, Material 3, Navigation Compose, ViewModel, DataStore, Retrofit, OkHttp, Kotlin Serialization, Coil, Firebase Messaging, JUnit, MockWebServer, and Compose test dependencies.
-- [ ] Add `HualasApplication`.
-- [ ] Add `MainActivity` as the Compose host.
-- [ ] Add Material 3 theme with Hualas visual identity: quiet operational UI, clear contrast, outdoor/local feel, Spanish labels.
-- [ ] Add `android/README.md` with setup and commands.
+- [x] Create Gradle Kotlin DSL project and `app` module.
+- [x] Configure Kotlin, Compose, Material 3, Navigation Compose, ViewModel, DataStore, Retrofit, OkHttp, Kotlin Serialization, Coil, Firebase Messaging, JUnit, MockWebServer, and Compose test dependencies.
+- [x] Add `HualasApplication`.
+- [x] Add `MainActivity` as the Compose host.
+- [x] Add Material 3 theme with Hualas visual identity: quiet operational UI, clear contrast, outdoor/local feel, Spanish labels.
+- [x] Add `android/README.md` with setup and commands.
 
 **Validation:**
 
@@ -183,12 +183,12 @@ Expected: debug APK builds and unit test task passes.
 
 **Deliverables:**
 
-- [ ] Implement `ApiClient` with Retrofit base URL.
-- [ ] Implement `AuthInterceptor` that adds `Authorization: Bearer <token>`.
-- [ ] Implement `SessionStore` with DataStore for token, user id, active mobile role, allowed roles, and expiry.
-- [ ] Implement typed API result handling for success, validation errors, unauthorized, forbidden, not found, and network failure.
-- [ ] Implement app-level state restoration: splash/loading, authenticated, unauthenticated.
-- [ ] Add shared UI states: loading, empty, inline error, retry, pull-to-refresh.
+- [x] Implement `ApiClient` with Retrofit base URL.
+- [x] Implement `AuthInterceptor` that adds `Authorization: Bearer <token>`.
+- [x] Implement `SessionStore` with DataStore for token, user id, active mobile role, allowed roles, and expiry.
+- [x] Implement typed API result handling for success, validation errors, unauthorized, forbidden, not found, and network failure.
+- [x] Implement app-level state restoration: splash/loading, authenticated, unauthenticated.
+- [x] Add shared UI states: loading, empty, inline error, retry, pull-to-refresh.
 
 **Validation:**
 
@@ -216,13 +216,13 @@ Expected:
 
 **Deliverables:**
 
-- [ ] Login screen using `POST /api/mobile/auth/login`.
-- [ ] Store mobile token and session from login response.
-- [ ] Session restore using `GET /api/mobile/me`.
-- [ ] Logout using `POST /api/mobile/auth/logout` and local session clear.
-- [ ] Role switch screen/action using `POST /api/mobile/auth/switch-role`.
-- [ ] Root navigation that exposes only member screens for `MEMBER` and professor screens for `PROFESSOR`.
-- [ ] User-facing Spanish copy for auth failures and expired sessions.
+- [x] Login screen using `POST /api/mobile/auth/login`.
+- [x] Store mobile token and session from login response.
+- [x] Session restore using `GET /api/mobile/me`.
+- [x] Logout using `POST /api/mobile/auth/logout` and local session clear.
+- [x] Role switch screen/action using `POST /api/mobile/auth/switch-role`.
+- [x] Root navigation that exposes only member screens for `MEMBER` and professor screens for `PROFESSOR`.
+- [x] User-facing Spanish copy for auth failures and expired sessions.
 
 **Validation:**
 
@@ -251,14 +251,14 @@ Expected:
 
 **Deliverables:**
 
-- [ ] Member home backed by `GET /api/mobile/home`.
-- [ ] Professor home backed by `GET /api/mobile/home`.
-- [ ] Bottom navigation with role-aware destinations:
+- [x] Member home backed by `GET /api/mobile/home`.
+- [x] Professor home backed by `GET /api/mobile/home`.
+- [x] Bottom navigation with role-aware destinations:
   - Member: Inicio, Actividades, Familia, Pagos, Chat, Mas.
   - Professor: Inicio, Agenda, Asistencia, Grupos, Chat, Mas.
-- [ ] Show unread notification counts when present.
-- [ ] Show recent news cards from home response.
-- [ ] Keep dense, scan-friendly cards and lists; avoid marketing-style hero screens.
+- [x] Show unread notification counts when present.
+- [x] Show recent news cards from home response.
+- [x] Keep dense, scan-friendly cards and lists; avoid marketing-style hero screens.
 
 **Validation:**
 
@@ -286,13 +286,13 @@ Expected:
 
 **Deliverables:**
 
-- [ ] Agenda list/calendar backed by `GET /api/mobile/activities`.
-- [ ] Day filtering with `day=YYYY-MM-DD` and summary mode where useful.
-- [ ] Activity/day detail backed by `GET /api/mobile/activities/[dayId]`.
-- [ ] Member available activities backed by `GET /api/mobile/activities/available`.
-- [ ] Member checkout entry backed by `/api/mobile/activities/cart/quote` and `/api/mobile/activities/cart/checkout`.
-- [ ] External browser handoff for checkout URLs.
-- [ ] Cancelled-day labels and group labels.
+- [x] Agenda list/calendar backed by `GET /api/mobile/activities`.
+- [x] Day filtering with `day=YYYY-MM-DD` and summary mode where useful.
+- [x] Activity/day detail backed by `GET /api/mobile/activities/[dayId]`.
+- [x] Member available activities backed by `GET /api/mobile/activities/available`.
+- [x] Member checkout entry backed by `/api/mobile/activities/cart/quote` and `/api/mobile/activities/cart/checkout`.
+- [x] External browser handoff for checkout URLs.
+- [x] Cancelled-day labels and group labels.
 
 **Validation:**
 

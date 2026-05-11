@@ -28,10 +28,14 @@ Admin, super-admin, and accounting management workflows remain web-only.
 
 - Android Studio with Android SDK Platform 35.
 - JDK 17.
-- Gradle wrapper files generated or Gradle installed locally.
+- Gradle wrapper files in this directory.
 - The Hualas web backend running locally for `localDebug` builds.
 
-The current Codex environment does not have Java, Gradle, or the Android SDK installed, so compile verification may need to run from Android Studio or a developer machine.
+If Gradle cannot find the Android SDK, set `ANDROID_HOME` or create `local.properties`:
+
+```properties
+sdk.dir=/home/negra/Android/Sdk
+```
 
 ## API Environments
 
@@ -50,13 +54,8 @@ From this directory:
 ```bash
 ./gradlew :app:assembleLocalDebug
 ./gradlew :app:testLocalDebugUnitTest
+./gradlew :app:lintLocalDebug
 ./gradlew :app:connectedLocalDebugAndroidTest
-```
-
-If the Gradle wrapper is not present yet, generate it from a machine with Gradle installed:
-
-```bash
-gradle wrapper --gradle-version 8.11.1
 ```
 
 ## Backend Contract
