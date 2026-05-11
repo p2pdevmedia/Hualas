@@ -165,6 +165,16 @@ private fun HomeContent(
 
         when (selectedDestinationId) {
             "home" -> {
+                if (session.activeRole == MobileRole.MEMBER) {
+                    item { SectionTitle("Actividades disponibles") }
+                    item {
+                        HomeAvailableActivitiesSection(
+                            activitiesState = activitiesState,
+                            onRetry = onLoadActivities,
+                            onStartActivityCheckout = onStartActivityCheckout
+                        )
+                    }
+                }
                 item { StatsSection(home) }
                 item { SectionTitle("Próximos días") }
                 if (home.upcomingDays.isEmpty()) {
@@ -248,6 +258,182 @@ private fun HomeContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomeAvailableActivitiesSection(
+    activitiesState: ActivitiesUiState,
+    onRetry: () -> Unit,
+    onStartActivityCheckout: (AvailableActivity) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        activitiesState.checkoutError?.let {
+            PlainErrorCard(it)
+        }
+        activitiesState.checkoutQuote?.totalAmountWithMercadoPagoFee?.let {
+            AttentionCard(
+                title = "Cotización",
+                value = activityPriceLabel(it),
+                body = "El pago se abre fuera de la app."
+            )
+        }
+
+        when (val availableState = activitiesState.available) {
+            null -> PlainEmptyCard("Abrí Actividades para ver nuevas inscripciones.")
+            UiState.Loading -> InlineHomeLoading("Cargando actividades...")
+            UiState.Empty -> EmptyAvailableActivitiesCard()
+            is UiState.Error -> RetryHomeCard(availableState.message, availableState.retryable, onRetry)
+            is UiState.Content -> {
+                if (availableState.value.activities.isEmpty()) {
+                    EmptyAvailableActivitiesCard()
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        availableState.value.activities.forEach { activity ->
+                            HomeAvailableActivityCard(
+                                activity = activity,
+                                isCheckingOut = activitiesState.isCheckingOut,
+                                onStartActivityCheckout = onStartActivityCheckout
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAvailableActivityCard(
+    activity: AvailableActivity,
+    isCheckingOut: Boolean,
+    onStartActivityCheckout: (AvailableActivity) -> Unit
+) {
+    HomeListCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = activity.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = activity.availabilityLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (activity.hasAvailability) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+            Text(
+                text = activityPriceLabel(activity.price),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        activity.description?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        ActivityMetadataRow(activity)
+
+        Button(
+            onClick = { onStartActivityCheckout(activity) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = activity.hasAvailability && !isCheckingOut
+        ) {
+            Text(if (isCheckingOut) "Preparando..." else "Cotizar e inscribirme")
+        }
+    }
+}
+
+@Composable
+private fun ActivityMetadataRow(activity: AvailableActivity) {
+    val labels = buildList {
+        add(activityFrequencyLabel(activity.frequency))
+        activityGroupCountLabel(activity.groupCount)?.let(::add)
+        activity.date.takeIf { it.isNotBlank() }?.let(::add)
+    }
+    if (labels.isEmpty()) return
+
+    Text(
+        text = labels.joinToString(" · "),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+@Composable
+private fun EmptyAvailableActivitiesCard() {
+    HomeListCard {
+        Text(
+            text = "No hay actividades abiertas ahora mismo.",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Cuando el club publique nuevas actividades, van a aparecer acá.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun InlineHomeLoading(message: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircularProgressIndicator()
+        Text(message, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun RetryHomeCard(message: String, retryable: Boolean, onRetry: () -> Unit) {
+    HomeListCard {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+        if (retryable) {
+            OutlinedButton(onClick = onRetry) {
+                Text("Reintentar")
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlainErrorCard(message: String) {
+    HomeListCard {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
     }
 }
 
