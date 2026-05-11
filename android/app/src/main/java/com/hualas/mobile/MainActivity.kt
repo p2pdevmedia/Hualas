@@ -49,7 +49,13 @@ class MainActivity : ComponentActivity() {
                     sessionState = sessionState,
                     authViewModel = authViewModel,
                     homeViewModel = homeViewModel,
-                    activitiesViewModel = activitiesViewModel
+                    activitiesViewModel = activitiesViewModel,
+                    familyRepository = hualasApplication.familyRepository,
+                    paymentsRepository = hualasApplication.paymentsRepository,
+                    newsRepository = hualasApplication.newsRepository,
+                    chatRepository = hualasApplication.chatRepository,
+                    notificationsRepository = hualasApplication.notificationsRepository,
+                    professorRepository = hualasApplication.professorRepository
                 )
             }
         }

@@ -71,8 +71,14 @@ fun HomeScreen(
     onLoadActivities: () -> Unit = {},
     onSelectActivityDay: (String) -> Unit = {},
     onLoadActivityDayDetail: (String) -> Unit = {},
-    onStartActivityCheckout: (AvailableActivity) -> Unit = {},
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit = {},
     onCheckoutUrlConsumed: () -> Unit = {},
+    familyContent: (@Composable () -> Unit)? = null,
+    paymentsContent: (@Composable () -> Unit)? = null,
+    chatContent: (@Composable () -> Unit)? = null,
+    attendanceContent: (@Composable () -> Unit)? = null,
+    groupsContent: (@Composable () -> Unit)? = null,
+    notificationsContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
@@ -126,7 +132,13 @@ fun HomeScreen(
                     onLoadActivities = onLoadActivities,
                     onSelectActivityDay = onSelectActivityDay,
                     onLoadActivityDayDetail = onLoadActivityDayDetail,
-                    onStartActivityCheckout = onStartActivityCheckout
+                    onOpenPurchaseDetail = onOpenPurchaseDetail,
+                    familyContent = familyContent,
+                    paymentsContent = paymentsContent,
+                    chatContent = chatContent,
+                    attendanceContent = attendanceContent,
+                    groupsContent = groupsContent,
+                    notificationsContent = notificationsContent
                 )
             }
         }
@@ -146,7 +158,13 @@ private fun HomeContent(
     onLoadActivities: () -> Unit,
     onSelectActivityDay: (String) -> Unit,
     onLoadActivityDayDetail: (String) -> Unit,
-    onStartActivityCheckout: (AvailableActivity) -> Unit
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit,
+    familyContent: (@Composable () -> Unit)?,
+    paymentsContent: (@Composable () -> Unit)?,
+    chatContent: (@Composable () -> Unit)?,
+    attendanceContent: (@Composable () -> Unit)?,
+    groupsContent: (@Composable () -> Unit)?,
+    notificationsContent: (@Composable () -> Unit)?
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -171,7 +189,7 @@ private fun HomeContent(
                         HomeAvailableActivitiesSection(
                             activitiesState = activitiesState,
                             onRetry = onLoadActivities,
-                            onStartActivityCheckout = onStartActivityCheckout
+                            onOpenPurchaseDetail = onOpenPurchaseDetail
                         )
                     }
                 }
@@ -201,14 +219,18 @@ private fun HomeContent(
                         onRetry = onLoadActivities,
                         onSelectDay = onSelectActivityDay,
                         onLoadDayDetail = onLoadActivityDayDetail,
-                        onStartCheckout = onStartActivityCheckout
+                        onOpenPurchaseDetail = onOpenPurchaseDetail
                     )
                 }
             }
             "family" -> {
-                item { SectionTitle("Familia") }
-                itemsOrEmpty(home.children, "No hay integrantes familiares cargados.") { child ->
-                    ChildCard(child)
+                if (familyContent != null) {
+                    item { familyContent() }
+                } else {
+                    item { SectionTitle("Familia") }
+                    itemsOrEmpty(home.children, "No hay integrantes familiares cargados.") { child ->
+                        ChildCard(child)
+                    }
                 }
             }
             "agenda" -> {
@@ -219,32 +241,42 @@ private fun HomeContent(
                         onRetry = onLoadActivities,
                         onSelectDay = onSelectActivityDay,
                         onLoadDayDetail = onLoadActivityDayDetail,
-                        onStartCheckout = onStartActivityCheckout
+                        onOpenPurchaseDetail = onOpenPurchaseDetail
                     )
                 }
             }
             "attendance" -> {
-                item { SectionTitle("Asistencia") }
-                item {
-                    AttentionCard(
-                        title = "Pendientes",
-                        value = home.stats.pendingAttendanceCount.toString(),
-                        body = "Registros de asistencia sin cerrar."
-                    )
-                }
-                itemsOrEmpty(home.upcomingDays, "No hay clases próximas.") { day ->
-                    UpcomingDayCard(day)
+                if (attendanceContent != null) {
+                    item { attendanceContent() }
+                } else {
+                    item { SectionTitle("Asistencia") }
+                    item {
+                        AttentionCard(
+                            title = "Pendientes",
+                            value = home.stats.pendingAttendanceCount.toString(),
+                            body = "Registros de asistencia sin cerrar."
+                        )
+                    }
+                    itemsOrEmpty(home.upcomingDays, "No hay clases próximas.") { day ->
+                        UpcomingDayCard(day)
+                    }
                 }
             }
             "groups" -> {
-                item { SectionTitle("Grupos") }
-                itemsOrEmpty(home.activities, "No hay grupos asignados.") { activity ->
-                    ActivityCard(activity, showParticipant = false)
+                if (groupsContent != null) {
+                    item { groupsContent() }
+                } else {
+                    item { SectionTitle("Grupos") }
+                    itemsOrEmpty(home.activities, "No hay grupos asignados.") { activity ->
+                        ActivityCard(activity, showParticipant = false)
+                    }
                 }
             }
-            "payments", "chat" -> {
-                item { SectionTitle(selectedDestinationId.toSectionLabel()) }
-                item { PlainEmptyCard("Sin datos para mostrar por ahora.") }
+            "payments" -> {
+                item { paymentsContent?.invoke() ?: PlainEmptyCard("Sin datos para mostrar por ahora.") }
+            }
+            "chat" -> {
+                item { chatContent?.invoke() ?: PlainEmptyCard("Sin datos para mostrar por ahora.") }
             }
             "more" -> {
                 item { SectionTitle("Más") }
@@ -256,6 +288,9 @@ private fun HomeContent(
                         onSwitchRole = onSwitchRole
                     )
                 }
+                notificationsContent?.let { content ->
+                    item { content() }
+                }
             }
         }
     }
@@ -265,7 +300,7 @@ private fun HomeContent(
 private fun HomeAvailableActivitiesSection(
     activitiesState: ActivitiesUiState,
     onRetry: () -> Unit,
-    onStartActivityCheckout: (AvailableActivity) -> Unit
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         activitiesState.checkoutError?.let {
@@ -293,7 +328,7 @@ private fun HomeAvailableActivitiesSection(
                             HomeAvailableActivityCard(
                                 activity = activity,
                                 isCheckingOut = activitiesState.isCheckingOut,
-                                onStartActivityCheckout = onStartActivityCheckout
+                                onOpenPurchaseDetail = onOpenPurchaseDetail
                             )
                         }
                     }
@@ -307,7 +342,7 @@ private fun HomeAvailableActivitiesSection(
 private fun HomeAvailableActivityCard(
     activity: AvailableActivity,
     isCheckingOut: Boolean,
-    onStartActivityCheckout: (AvailableActivity) -> Unit
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit
 ) {
     HomeListCard {
         Row(
@@ -355,11 +390,11 @@ private fun HomeAvailableActivityCard(
         ActivityMetadataRow(activity)
 
         Button(
-            onClick = { onStartActivityCheckout(activity) },
+            onClick = { onOpenPurchaseDetail(activity) },
             modifier = Modifier.fillMaxWidth(),
             enabled = activity.hasAvailability && !isCheckingOut
         ) {
-            Text(if (isCheckingOut) "Preparando..." else "Cotizar e inscribirme")
+            Text(if (isCheckingOut) "Preparando..." else "Ver opciones")
         }
     }
 }

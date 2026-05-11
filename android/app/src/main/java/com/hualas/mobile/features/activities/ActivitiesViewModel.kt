@@ -9,8 +9,6 @@ import com.hualas.mobile.features.activities.data.ActivitiesAgenda
 import com.hualas.mobile.features.activities.data.ActivitiesRepository
 import com.hualas.mobile.features.activities.data.ActivityDayDetail
 import com.hualas.mobile.features.activities.data.AvailableActivities
-import com.hualas.mobile.features.activities.data.AvailableActivity
-import com.hualas.mobile.features.activities.data.CartItemRequest
 import com.hualas.mobile.features.activities.data.CartQuoteResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +30,7 @@ data class ActivitiesUiState(
 )
 
 class ActivitiesViewModel(
-    private val repository: ActivitiesRepository
+    val repository: ActivitiesRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivitiesUiState())
     val uiState: StateFlow<ActivitiesUiState> = _uiState
@@ -78,76 +76,8 @@ class ActivitiesViewModel(
         }
     }
 
-    fun startCheckout(activity: AvailableActivity) {
-        val item = activity.toCartItem()
-        _uiState.update {
-            it.copy(
-                checkoutQuote = null,
-                checkoutUrl = null,
-                checkoutError = null,
-                isCheckingOut = true,
-                checkoutCompleted = false
-            )
-        }
-
-        viewModelScope.launch {
-            when (val quote = repository.quoteCart(listOf(item))) {
-                is ApiResult.Success -> {
-                    when (val checkout = repository.startCheckout(listOf(item))) {
-                        is ApiResult.Success -> {
-                            val redirectUrl = checkout.value.redirectUrl
-                            _uiState.update {
-                                it.copy(
-                                    checkoutQuote = quote.value,
-                                    checkoutUrl = redirectUrl,
-                                    checkoutError = if (redirectUrl.isNullOrBlank()) {
-                                        "No se recibió el enlace de pago."
-                                    } else {
-                                        null
-                                    },
-                                    isCheckingOut = false,
-                                    checkoutCompleted = false
-                                )
-                            }
-                        }
-                        else -> _uiState.update {
-                            it.copy(
-                                checkoutQuote = quote.value,
-                                checkoutError = checkout.toUserMessage(),
-                                isCheckingOut = false,
-                                checkoutCompleted = false
-                            )
-                        }
-                    }
-                }
-                else -> _uiState.update {
-                    it.copy(
-                        checkoutError = quote.toUserMessage(),
-                        isCheckingOut = false,
-                        checkoutCompleted = false
-                    )
-                }
-            }
-        }
-    }
-
     fun consumeCheckoutUrl() {
         _uiState.update { it.copy(checkoutUrl = null) }
-    }
-
-    private fun AvailableActivity.toCartItem(): CartItemRequest {
-        val firstGroup = groups.firstOrNull()
-        val firstDay = days.firstOrNull()
-        return CartItemRequest(
-            activityId = id,
-            target = "self",
-            targetLabel = "Socio/a",
-            groupId = firstGroup?.id,
-            activityDayId = firstDay?.id,
-            activityDayLabel = firstDay?.let {
-                listOf(it.date, it.schedule, it.groupName).filterNotNull().joinToString(" · ")
-            }
-        )
     }
 
     private fun <T> ApiResult<T>.toUiState(): UiState<T> {
@@ -165,15 +95,4 @@ class ActivitiesViewModel(
         }
     }
 
-    private fun ApiResult<*>.toUserMessage(): String {
-        return when (this) {
-            is ApiResult.Success -> ""
-            is ApiResult.ValidationError -> message
-            ApiResult.Unauthorized -> "Tu sesión venció. Volvé a iniciar sesión."
-            ApiResult.Forbidden -> "No tenés acceso para hacer esta operación."
-            ApiResult.NotFound -> "No encontramos esa información."
-            is ApiResult.ServerError -> message
-            is ApiResult.NetworkFailure -> "No se pudo conectar con Hualas. Revisá tu conexión."
-        }
-    }
 }

@@ -17,7 +17,6 @@ import com.hualas.mobile.features.activities.data.AvailableActivity
 import com.hualas.mobile.features.activities.data.AvailableActivityDay
 import com.hualas.mobile.features.activities.data.AvailableActivityGroup
 import com.hualas.mobile.features.activities.data.CartItemRequest
-import com.hualas.mobile.features.activities.data.CartLineDto
 import com.hualas.mobile.features.activities.data.CartQuoteResponse
 import com.hualas.mobile.features.activities.data.CheckoutResponse
 import com.hualas.mobile.features.activities.data.ActivitiesRepository
@@ -30,7 +29,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -106,31 +104,14 @@ class ActivitiesViewModelTest {
     }
 
     @Test
-    fun checkoutStoresQuoteAndExternalRedirectWithoutCompletingPayment() = runTest {
+    fun activityCardsNoLongerStartCheckoutFromActivitiesViewModel() = runTest {
         val repository = FakeActivitiesRepository()
         val viewModel = ActivitiesViewModel(repository)
 
-        viewModel.startCheckout(availableActivity())
+        viewModel.load(MobileRole.MEMBER)
         advanceUntilIdle()
 
-        assertEquals(12000.0, viewModel.uiState.value.checkoutQuote?.totalAmount ?: 0.0, 0.0)
-        assertEquals("https://mp.test/checkout", viewModel.uiState.value.checkoutUrl)
-        assertEquals(false, viewModel.uiState.value.checkoutCompleted)
-        assertEquals("activity-1", repository.checkoutItems.single().activityId)
-    }
-
-    @Test
-    fun checkoutErrorIsInlineAndDoesNotOpenExternalUrl() = runTest {
-        val repository = FakeActivitiesRepository(
-            checkoutResult = ApiResult.ValidationError("Completá tu perfil")
-        )
-        val viewModel = ActivitiesViewModel(repository)
-
-        viewModel.startCheckout(availableActivity())
-        advanceUntilIdle()
-
-        assertEquals("Completá tu perfil", viewModel.uiState.value.checkoutError)
-        assertNull(viewModel.uiState.value.checkoutUrl)
+        assertEquals(emptyList<CartItemRequest>(), repository.checkoutItems)
     }
 }
 
@@ -141,7 +122,7 @@ private class FakeActivitiesRepository(
         AvailableActivities(MobileRole.MEMBER, listOf(availableActivity()))
     ),
     private val detailResult: ApiResult<ActivityDayDetail> = ApiResult.Success(dayDetail()),
-    private val quoteResult: ApiResult<CartQuoteResponse> = ApiResult.Success(quote()),
+    private val quoteResult: ApiResult<CartQuoteResponse> = ApiResult.Success(emptyQuote()),
     private val checkoutResult: ApiResult<CheckoutResponse> = ApiResult.Success(
         CheckoutResponse(redirectUrl = "https://mp.test/checkout")
     )
@@ -257,8 +238,8 @@ private fun availableActivity() = AvailableActivity(
     )
 )
 
-private fun quote() = CartQuoteResponse(
-    activityLines = listOf(CartLineDto("Escalada", 12000.0)),
+private fun emptyQuote() = CartQuoteResponse(
+    activityLines = emptyList(),
     discountLines = emptyList(),
     socialFeeLines = emptyList(),
     mercadoPagoFeeLines = emptyList(),

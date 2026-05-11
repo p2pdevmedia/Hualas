@@ -51,7 +51,7 @@ fun ActivitiesPanel(
     onRetry: () -> Unit,
     onSelectDay: (String) -> Unit,
     onLoadDayDetail: (String) -> Unit,
-    onStartCheckout: (AvailableActivity) -> Unit,
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -81,7 +81,7 @@ fun ActivitiesPanel(
                 checkoutTotal = state.checkoutQuote?.totalAmountWithMercadoPagoFee,
                 checkoutError = state.checkoutError,
                 onRetry = onRetry,
-                onStartCheckout = onStartCheckout
+                onOpenPurchaseDetail = onOpenPurchaseDetail
             )
         }
     }
@@ -501,7 +501,7 @@ private fun AvailableActivitiesState(
     checkoutTotal: Double?,
     checkoutError: String?,
     onRetry: () -> Unit,
-    onStartCheckout: (AvailableActivity) -> Unit
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit
 ) {
     Text(
         text = "Disponibles",
@@ -527,7 +527,7 @@ private fun AvailableActivitiesState(
                     AvailableActivityCard(
                         activity = activity,
                         isCheckingOut = isCheckingOut,
-                        onStartCheckout = onStartCheckout
+                        onOpenPurchaseDetail = onOpenPurchaseDetail
                     )
                 }
             }
@@ -539,7 +539,7 @@ private fun AvailableActivitiesState(
 private fun AvailableActivityCard(
     activity: AvailableActivity,
     isCheckingOut: Boolean,
-    onStartCheckout: (AvailableActivity) -> Unit
+    onOpenPurchaseDetail: (AvailableActivity) -> Unit
 ) {
     StageCard {
         Row(
@@ -590,10 +590,10 @@ private fun AvailableActivityCard(
             )
         }
         Button(
-            onClick = { onStartCheckout(activity) },
+            onClick = { onOpenPurchaseDetail(activity) },
             enabled = activity.hasAvailability && !isCheckingOut
         ) {
-            Text(if (isCheckingOut) "Preparando..." else "Cotizar e inscribirme")
+            Text(if (isCheckingOut) "Preparando..." else "Ver opciones")
         }
     }
 }
