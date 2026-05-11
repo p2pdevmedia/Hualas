@@ -1,43 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { enqueueMutation } from '@/lib/offline/pending-mutations';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 async function saveDayField(
   dayId: string,
   field: 'planificacion' | 'devolucion',
   value: string
 ): Promise<{ savedLocally: boolean }> {
-  if (!navigator.onLine) {
-    await enqueueMutation({
-      url: `/api/activity-days/${dayId}`,
-      method: 'PATCH',
-      body: { [field]: value },
-    });
-    return { savedLocally: true };
-  }
-  try {
-    const res = await fetch(`/api/activity-days/${dayId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [field]: value }),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => null);
-      throw new Error(payload?.error || 'No se pudo guardar');
-    }
-    return { savedLocally: false };
-  } catch (err) {
-    if (!navigator.onLine) {
-      await enqueueMutation({
-        url: `/api/activity-days/${dayId}`,
-        method: 'PATCH',
-        body: { [field]: value },
-      });
-      return { savedLocally: true };
-    }
-    throw err;
-  }
+  return saveOrQueueProfessorMutation({
+    url: `/api/activity-days/${dayId}`,
+    method: 'PATCH',
+    body: { [field]: value },
+    dedupeKey: `activity-day:${dayId}:${field}`,
+  });
 }
 
 function NoteCard({

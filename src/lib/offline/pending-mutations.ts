@@ -3,6 +3,7 @@ export type PendingMutation = {
   url: string;
   method: string;
   body: Record<string, unknown>;
+  dedupeKey?: string;
   createdAt: number;
 };
 
@@ -39,7 +40,21 @@ export async function enqueueMutation(
   };
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).add(item);
+    const store = tx.objectStore(STORE);
+    if (item.dedupeKey) {
+      const req = store.getAll();
+      req.onsuccess = () => {
+        for (const existing of req.result as PendingMutation[]) {
+          if (existing.dedupeKey === item.dedupeKey) {
+            store.delete(existing.id);
+          }
+        }
+        store.add(item);
+      };
+      req.onerror = () => reject(req.error);
+    } else {
+      store.add(item);
+    }
     tx.oncomplete = () => {
       window.dispatchEvent(new CustomEvent('hualas-mutation-queued'));
       resolve(item.id);

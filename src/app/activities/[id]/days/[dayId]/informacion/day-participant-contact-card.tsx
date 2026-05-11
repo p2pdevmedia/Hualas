@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MessageCircle, X } from 'lucide-react';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 type ParticipantContact = {
   id: string;
@@ -56,7 +57,15 @@ export default function DayParticipantContactCard({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [savedLocally, setSavedLocally] = useState(false);
   const whatsappHref = getWhatsAppHref(participant.phone);
+
+  useEffect(() => {
+    const onSynced = () => setSavedLocally(false);
+    window.addEventListener('hualas-mutations-synced', onSynced);
+    return () =>
+      window.removeEventListener('hualas-mutations-synced', onSynced);
+  }, []);
 
   async function saveReport() {
     const trimmed = body.trim();
@@ -69,28 +78,27 @@ export default function DayParticipantContactCard({
     setSaving(true);
     setError('');
     setSuccess('');
+    setSavedLocally(false);
 
     try {
-      const res = await fetch(
-        `/api/activities/${activityId}/days/${dayId}/reports`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            activityParticipantId: participant.id,
-            body: trimmed,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.error || 'No se pudo guardar el reporte.');
-      }
+      const result = await saveOrQueueProfessorMutation({
+        url: `/api/activities/${activityId}/days/${dayId}/reports`,
+        method: 'POST',
+        body: {
+          activityParticipantId: participant.id,
+          body: trimmed,
+        },
+        dedupeKey: `participant-report:${dayId}:${participant.id}`,
+      });
 
       setSavedBody(trimmed);
       setBody(trimmed);
-      setSuccess('Reporte guardado en el historial del participante.');
+      if (result.savedLocally) {
+        setSavedLocally(true);
+        setSuccess('Reporte guardado localmente. Se enviará al reconectar.');
+      } else {
+        setSuccess('Reporte guardado en el historial del participante.');
+      }
       setIsOpen(false);
     } catch (err) {
       setError(
@@ -168,6 +176,7 @@ export default function DayParticipantContactCard({
               setBody(savedBody);
               setError('');
               setSuccess('');
+              setSavedLocally(false);
               setIsOpen(true);
             }}
             className="inline-flex h-9 items-center rounded-full border px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
@@ -183,6 +192,11 @@ export default function DayParticipantContactCard({
         </p>
       )}
       {success && <p className="text-xs text-emerald-700">{success}</p>}
+      {savedLocally && (
+        <p className="text-xs font-medium text-amber-700">
+          Pendiente de sincronización.
+        </p>
+      )}
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       {isOpen && (

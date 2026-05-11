@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { saveOrQueueProfessorMutation } from '@/lib/offline/professor-workflow';
 
 interface Props {
   dayId: string;
@@ -24,6 +25,14 @@ export default function CancelDayButton({
   const [confirmingReactivate, setConfirmingReactivate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedLocally, setSavedLocally] = useState(false);
+
+  useEffect(() => {
+    const onSynced = () => setSavedLocally(false);
+    window.addEventListener('hualas-mutations-synced', onSynced);
+    return () =>
+      window.removeEventListener('hualas-mutations-synced', onSynced);
+  }, []);
 
   async function handleCancel() {
     if (!reason.trim()) {
@@ -32,22 +41,21 @@ export default function CancelDayButton({
     }
     setLoading(true);
     setError(null);
+    setSavedLocally(false);
     try {
-      const res = await fetch(`/api/activity-days/${dayId}/cancel`, {
+      const result = await saveOrQueueProfessorMutation({
+        url: `/api/activity-days/${dayId}/cancel`,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           cancelled: true,
           cancellationReason: reason.trim(),
-        }),
+        },
+        dedupeKey: `activity-day:${dayId}:cancelled`,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Error al cancelar el día');
-      }
       setCancelled(true);
       setDialogOpen(false);
-      router.refresh();
+      if (result.savedLocally) setSavedLocally(true);
+      else router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cancelar el día');
     } finally {
@@ -58,20 +66,19 @@ export default function CancelDayButton({
   async function handleReactivate() {
     setLoading(true);
     setError(null);
+    setSavedLocally(false);
     try {
-      const res = await fetch(`/api/activity-days/${dayId}/cancel`, {
+      const result = await saveOrQueueProfessorMutation({
+        url: `/api/activity-days/${dayId}/cancel`,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cancelled: false }),
+        body: { cancelled: false },
+        dedupeKey: `activity-day:${dayId}:cancelled`,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Error al reactivar el día');
-      }
       setCancelled(false);
       setReason('');
       setConfirmingReactivate(false);
-      router.refresh();
+      if (result.savedLocally) setSavedLocally(true);
+      else router.refresh();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Error al reactivar el día'
@@ -83,6 +90,12 @@ export default function CancelDayButton({
 
   return (
     <div className="space-y-2">
+      {savedLocally && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          Cambio guardado localmente · se enviará al reconectar
+        </p>
+      )}
+
       {!cancelled && !dialogOpen && (
         <Button
           variant="destructive"
