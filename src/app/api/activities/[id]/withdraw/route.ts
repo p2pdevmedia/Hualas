@@ -6,6 +6,8 @@ import { withdrawActivityParticipant } from '@/lib/activity-withdrawal';
 
 const withdrawalSchema = z.object({
   participantId: z.string().min(1),
+  note: z.string().trim().min(50, 'La nota debe tener al menos 50 caracteres.'),
+  rating: z.number().int().min(0).max(5),
 });
 
 export async function POST(
@@ -29,6 +31,8 @@ export async function POST(
     activityId: params.id,
     participantId: payload.participantId,
     userId: session.user.id,
+    note: payload.note,
+    rating: payload.rating,
   });
 
   if (!participant) {

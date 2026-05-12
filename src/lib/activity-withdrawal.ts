@@ -10,6 +10,8 @@ type WithdrawalInput = {
   activityId: string;
   participantId: string;
   userId: string;
+  note: string;
+  rating: number;
   now?: Date;
 };
 
@@ -69,11 +71,15 @@ export async function withdrawActivityParticipant(
       data: {
         status: 'WITHDRAWN',
         withdrawnAt,
+        withdrawalNote: input.note.trim(),
+        withdrawalRating: input.rating,
       },
       select: {
         id: true,
         status: true,
         withdrawnAt: true,
+        withdrawalNote: true,
+        withdrawalRating: true,
       },
     });
   });

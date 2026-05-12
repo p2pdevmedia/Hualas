@@ -51,6 +51,8 @@ describe('activity withdrawal', () => {
       activityId: 'activity_1',
       participantId: 'participant_1',
       userId: 'user_1',
+      note: 'Me doy de baja porque cambiaron mis horarios laborales y ya no puedo asistir.',
+      rating: 4,
       now: new Date('2026-05-11T12:00:00.000Z'),
     });
 
@@ -82,6 +84,9 @@ describe('activity withdrawal', () => {
         data: {
           status: 'WITHDRAWN',
           withdrawnAt: new Date('2026-05-11T12:00:00.000Z'),
+          withdrawalNote:
+            'Me doy de baja porque cambiaron mis horarios laborales y ya no puedo asistir.',
+          withdrawalRating: 4,
         },
       })
     );
@@ -94,6 +99,8 @@ describe('activity withdrawal', () => {
       activityId: 'activity_1',
       participantId: 'participant_1',
       userId: 'other_user',
+      note: 'Me doy de baja porque cambiaron mis horarios laborales y ya no puedo asistir.',
+      rating: 2,
       now: new Date('2026-05-11T12:00:00.000Z'),
     });
 

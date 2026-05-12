@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
+import { MapPin, Navigation } from 'lucide-react';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
 import { authOptions } from '@/lib/auth';
@@ -46,6 +47,9 @@ const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
   TEMPORARY: 'Temporal',
   ANNUAL: 'Anual',
 };
+
+const mapEmbedUrl =
+  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47685.15!2d-71.3586!3d-40.1569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9610be21a87b3b29%3A0x3f3d5fc3f3da0c0!2sSan%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n!5e0!3m2!1ses!2sar!4v1';
 
 export default async function Home() {
   let activities: Awaited<
@@ -220,6 +224,49 @@ export default async function Home() {
                 </div>
               )}
             </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* Dónde estamos */}
+      <section className="border-t bg-muted/25 px-4 py-14">
+        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch">
+          <div className="flex flex-col justify-center">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              Dónde estamos
+            </p>
+            <h2 className="mt-2 font-heading text-3xl font-semibold">
+              En San Martín de los Andes
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
+              Hualas nace y se mueve entre la ciudad, los cerros y los espacios
+              de encuentro de la comunidad. Nuestra actividad tiene base en San
+              Martín de los Andes, Neuquén, en plena Patagonia argentina.
+            </p>
+
+            <div className="mt-6 space-y-3 text-sm">
+              <p className="inline-flex items-center gap-2 font-medium text-foreground">
+                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
+                San Martín de los Andes, Neuquén, Argentina
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex w-fit items-center gap-2 rounded-md border bg-card px-4 py-2.5 font-semibold text-foreground transition hover:border-primary hover:text-primary"
+              >
+                Ver contacto
+                <Navigation className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+            <iframe
+              title="San Martín de los Andes"
+              src={mapEmbedUrl}
+              className="h-[340px] w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
         </div>
       </section>

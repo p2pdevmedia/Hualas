@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Registration = {
@@ -20,7 +21,10 @@ export default function ActivityWithdrawalPanel({
 }: ActivityWithdrawalPanelProps) {
   const router = useRouter();
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [feedbackId, setFeedbackId] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
 
   if (registrations.length === 0) {
@@ -28,6 +32,14 @@ export default function ActivityWithdrawalPanel({
   }
 
   async function withdraw(participantId: string) {
+    const note = notes[participantId]?.trim() ?? '';
+    const rating = ratings[participantId] ?? 0;
+
+    if (note.length < 50) {
+      setError('La nota debe tener al menos 50 caracteres.');
+      return;
+    }
+
     setError('');
     setSubmittingId(participantId);
 
@@ -35,7 +47,7 @@ export default function ActivityWithdrawalPanel({
       const response = await fetch(`/api/activities/${activityId}/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId }),
+        body: JSON.stringify({ participantId, note, rating }),
       });
 
       if (!response.ok) {
@@ -44,6 +56,7 @@ export default function ActivityWithdrawalPanel({
       }
 
       setConfirmingId(null);
+      setFeedbackId(null);
       router.refresh();
     } catch (err) {
       setError(
@@ -69,7 +82,11 @@ export default function ActivityWithdrawalPanel({
       <div className="mt-4 space-y-3">
         {registrations.map((registration) => {
           const isConfirming = confirmingId === registration.id;
+          const isWritingFeedback = feedbackId === registration.id;
           const isSubmitting = submittingId === registration.id;
+          const note = notes[registration.id] ?? '';
+          const rating = ratings[registration.id] ?? 0;
+          const noteCharacters = note.trim().length;
 
           return (
             <div
@@ -80,28 +97,120 @@ export default function ActivityWithdrawalPanel({
                 <p className="text-sm font-medium text-foreground">
                   {registration.label}
                 </p>
-                {isConfirming && (
+                {isConfirming && !isWritingFeedback && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Confirmá la baja para esta inscripción.
                   </p>
                 )}
               </div>
 
-              {isConfirming ? (
+              {isWritingFeedback ? (
+                <div className="space-y-4 sm:min-w-[26rem]">
+                  <div>
+                    <label
+                      htmlFor={`withdrawal-note-${registration.id}`}
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Contanos el motivo de la baja
+                    </label>
+                    <textarea
+                      id={`withdrawal-note-${registration.id}`}
+                      value={note}
+                      onChange={(event) =>
+                        setNotes((current) => ({
+                          ...current,
+                          [registration.id]: event.target.value,
+                        }))
+                      }
+                      rows={4}
+                      minLength={50}
+                      className="mt-2 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                      placeholder="Escribí una nota de al menos 50 caracteres."
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {noteCharacters}/50 caracteres mínimos
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Valoración de la actividad
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                      {Array.from({ length: 6 }, (_, value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setRatings((current) => ({
+                              ...current,
+                              [registration.id]: value,
+                            }))
+                          }
+                          className={`inline-flex h-9 items-center gap-1 rounded-full border px-3 text-sm transition-colors ${
+                            rating === value
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border text-muted-foreground hover:bg-muted'
+                          }`}
+                          aria-label={`Valorar con ${value} estrellas`}
+                        >
+                          {value}
+                          <Star
+                            className="h-4 w-4"
+                            fill={
+                              value > 0 && rating === value
+                                ? 'currentColor'
+                                : 'none'
+                            }
+                            aria-hidden="true"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => withdraw(registration.id)}
+                      disabled={isSubmitting || noteCharacters < 50}
+                    >
+                      {isSubmitting ? 'Procesando...' : 'Enviar baja'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFeedbackId(null);
+                        setConfirmingId(null);
+                        setError('');
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : isConfirming ? (
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={() => withdraw(registration.id)}
-                    disabled={isSubmitting}
+                    onClick={() => {
+                      setFeedbackId(registration.id);
+                      setError('');
+                    }}
                   >
-                    {isSubmitting ? 'Procesando...' : 'Confirmar baja'}
+                    Confirmar baja
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setConfirmingId(null)}
-                    disabled={isSubmitting}
+                    onClick={() => {
+                      setConfirmingId(null);
+                      setError('');
+                    }}
                   >
                     Cancelar
                   </Button>
@@ -110,7 +219,11 @@ export default function ActivityWithdrawalPanel({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setConfirmingId(registration.id)}
+                  onClick={() => {
+                    setConfirmingId(registration.id);
+                    setFeedbackId(null);
+                    setError('');
+                  }}
                   disabled={Boolean(submittingId)}
                 >
                   Desinscribirme

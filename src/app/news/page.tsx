@@ -95,6 +95,8 @@ async function loadNewsPageData({
       id: item.id,
       title: item.title,
       body: item.body,
+      scope: item.scope,
+      activityId: item.activityId,
       scopeLabel:
         item.scope === 'CLUB'
           ? 'Para todo el club'
@@ -169,7 +171,7 @@ export default async function NewsPage() {
           </p>
         </div>
       ) : (
-        <NewsList items={news} />
+        <NewsList items={news} canEdit={isAdmin} activities={activities} />
       )}
     </main>
   );

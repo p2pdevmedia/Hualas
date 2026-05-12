@@ -195,22 +195,24 @@ model ActivityMedia {
 }
 
 model ActivityParticipant {
-  id              String                       @id @default(cuid())
-  activityId      String
-  userId          String
-  childId         String?
-  participantKey  String                       @unique
-  status          ActivityParticipantStatus    @default(ACTIVE)
-  receipt         String?
-  receiptDate     DateTime?
-  withdrawnAt     DateTime?
-  activity        Activity                     @relation(fields: [activityId], references: [id])
-  user            User                         @relation(fields: [userId], references: [id])
-  child           Child?                       @relation(fields: [childId], references: [id])
-  groupMembership ActivityGroupMember?
-  attendances     ActivityDayAttendance[]
-  payments        ActivityParticipantPayment[]
-  reports         ActivityParticipantReport[]
+  id               String                       @id @default(cuid())
+  activityId       String
+  userId           String
+  childId          String?
+  participantKey   String                       @unique
+  status           ActivityParticipantStatus    @default(ACTIVE)
+  receipt          String?
+  receiptDate      DateTime?
+  withdrawnAt      DateTime?
+  withdrawalNote   String?
+  withdrawalRating Int?
+  activity         Activity                     @relation(fields: [activityId], references: [id])
+  user             User                         @relation(fields: [userId], references: [id])
+  child            Child?                       @relation(fields: [childId], references: [id])
+  groupMembership  ActivityGroupMember?
+  attendances      ActivityDayAttendance[]
+  payments         ActivityParticipantPayment[]
+  reports          ActivityParticipantReport[]
 }
 
 model ActivityParticipantPayment {
