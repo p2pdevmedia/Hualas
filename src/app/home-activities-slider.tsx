@@ -147,7 +147,10 @@ export default function HomeActivitiesSlider({
       </div>
 
       {hasMultipleSlides && (
-        <div className="flex flex-wrap gap-2" aria-label="Seleccionar actividad">
+        <div
+          className="flex flex-wrap gap-2"
+          aria-label="Seleccionar actividad"
+        >
           {activities.map((activity, index) => (
             <button
               key={activity.id}
