@@ -508,6 +508,33 @@ export default function JoinEnrollmentPanel({
     !profileIncomplete &&
     !groupAgeError;
 
+  const joinReturnTo = `/activities/join/${activity.id}`;
+  const missingProfileTargets = useMemo(() => {
+    if (!session) return [];
+
+    const targets: Array<{ key: string; label: string; href: string }> = [];
+    if ((selfMissingFields?.length ?? 0) > 0) {
+      targets.push({
+        key: 'self',
+        label: 'tu perfil',
+        href: `/profile?returnTo=${encodeURIComponent(joinReturnTo)}&onboarding=1`,
+      });
+    }
+
+    for (const child of children) {
+      if (getMissingChildFields(child).length === 0) continue;
+
+      targets.push({
+        key: child.id,
+        label: `${child.name}${child.lastName ? ` ${child.lastName}` : ''}`,
+        href: `/profile/children/${child.id}/edit?returnTo=${encodeURIComponent(joinReturnTo)}`,
+      });
+    }
+
+    return targets;
+  }, [session, selfMissingFields, children, joinReturnTo]);
+  const firstMissingProfileTarget = missingProfileTargets[0] ?? null;
+
   const handleChildSaved = (updatedChild: Child) => {
     setChildren((currentChildren) =>
       currentChildren.map((child) =>
@@ -564,6 +591,29 @@ export default function JoinEnrollmentPanel({
           onSaved={handleChildSaved}
         />
       )}
+      {firstMissingProfileTarget && (
+        <div className="sticky top-20 z-30 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm lg:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="font-semibold">Hay datos pendientes</p>
+              <p>
+                Para completar inscripciones, actualizá los datos obligatorios
+                de{' '}
+                {missingProfileTargets.map((target) => target.label).join(', ')}
+                .
+              </p>
+            </div>
+            <Link
+              href={firstMissingProfileTarget.href}
+              prefetch={true}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-amber-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
+            >
+              Completar datos
+            </Link>
+          </div>
+        </div>
+      )}
+
       {session && people.length > 1 && (
         <div className="rounded-xl border bg-card p-5 lg:col-start-1">
           <PersonPicker
@@ -647,11 +697,11 @@ export default function JoinEnrollmentPanel({
           </div>
         ) : profileIncomplete ? (
           <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-body space-y-2">
-            <p className="font-medium">Completá el perfil para inscribirte</p>
+            <p className="font-medium">Hay datos pendientes</p>
             <p>Faltan: {missingFields.join(', ')}.</p>
             {effectivePersonId === 'self' ? (
               <Link
-                href="/profile"
+                href={`/profile?returnTo=${encodeURIComponent(joinReturnTo)}&onboarding=1`}
                 prefetch={true}
                 className="underline underline-offset-4 hover:text-amber-900"
               >
@@ -671,7 +721,7 @@ export default function JoinEnrollmentPanel({
                 {!userPhone?.trim() && (
                   <div>
                     <Link
-                      href="/profile"
+                      href={`/profile?returnTo=${encodeURIComponent(joinReturnTo)}&onboarding=1`}
                       prefetch={true}
                       className="underline underline-offset-4 hover:text-amber-900"
                     >
