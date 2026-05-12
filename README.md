@@ -29,6 +29,7 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 - `MP_ENVIRONMENT=testing` usa `MP_PUBLIC_KEY` y `MP_ACCESS_TOKEN`.
 - `MP_ENVIRONMENT=production` usa `MERCADOPAGO_PUBLIC_KEY` y `MERCADOPAGO_ACCESS_TOKEN`.
+- Webhooks: `MP_WEBHOOK_SECRET` para testing y `MERCADOPAGO_WEBHOOK_SECRET` para production. Usar la clave secreta generada en Mercado Pago > Tus integraciones > Webhooks.
 
 ### Opciones de Checkout Pro
 

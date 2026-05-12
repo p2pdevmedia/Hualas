@@ -4,11 +4,15 @@ import { hash } from 'bcrypt';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validations/auth';
+import { hasAdminCapability } from '@/lib/roles';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!hasAdminCapability(session)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const users = await prisma.user.findMany({

@@ -17,12 +17,28 @@ import {
   syncMercadoPagoApprovedPayment,
 } from '@/lib/services/mercado-pago-accounting-service';
 import {
+  getMercadoPagoWebhookSecret,
+  verifyMercadoPagoWebhookSignature,
+} from '@/lib/mercadopago-webhooks';
+import {
   notifyOrderPaymentApproved,
   notifyActivityPaymentApproved,
   notifyActivityCapacityFull,
 } from '@/lib/notifications/notification-service';
 
 export async function POST(req: NextRequest) {
+  const url = new URL(req.url);
+  const dataId = url.searchParams.get('data.id') || url.searchParams.get('id');
+  const signatureIsValid = verifyMercadoPagoWebhookSignature({
+    signatureHeader: req.headers.get('x-signature'),
+    requestId: req.headers.get('x-request-id'),
+    dataId,
+    secret: getMercadoPagoWebhookSecret(),
+  });
+  if (!signatureIsValid) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
   let body: Prisma.InputJsonValue | null = null;
   try {
     body = await req.json();
@@ -32,12 +48,12 @@ export async function POST(req: NextRequest) {
 
   const topic =
     (body as { type?: string } | null)?.type ||
-    req.nextUrl.searchParams.get('type') ||
-    req.nextUrl.searchParams.get('topic');
+    url.searchParams.get('type') ||
+    url.searchParams.get('topic');
   const id =
     (body as { data?: { id?: string } } | null)?.data?.id ||
-    req.nextUrl.searchParams.get('data.id') ||
-    req.nextUrl.searchParams.get('id');
+    url.searchParams.get('data.id') ||
+    url.searchParams.get('id');
 
   await prisma.mercadoPagoNotification.create({
     data: {
@@ -48,6 +64,14 @@ export async function POST(req: NextRequest) {
 
   if (topic !== 'payment' || !id) {
     return NextResponse.json({ received: true });
+  }
+
+  const existingPayment = await prisma.payment.findUnique({
+    where: { id: `mp-payment:${id}` },
+    select: { id: true },
+  });
+  if (existingPayment) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   const { accessToken } = getMercadoPagoCredentials();

@@ -15,6 +15,23 @@ import {
   syncMercadoPagoApprovedPayment,
 } from '@/lib/services/mercado-pago-accounting-service';
 import { notifyOrderPaymentApproved } from '@/lib/notifications/notification-service';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+
+function metadataValue(
+  metadata: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+) {
+  for (const key of keys) {
+    const value = metadata?.[key];
+    if (value != null && value !== '') return String(value);
+  }
+  return null;
+}
+
+function paymentAmountInCents(value: unknown) {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? Math.round(amount * 100) : null;
+}
 
 export async function POST(
   req: Request,
@@ -60,7 +77,78 @@ export async function POST(
     }
 
     const userId = (session.user as any).id;
-    const participantChildId = childId ?? null;
+    const references = parseMercadoPagoReferences(payment.external_reference);
+    const matchingReference = references.find(
+      (reference) =>
+        reference.activityId === params.id &&
+        reference.userId === userId &&
+        (childId ? reference.childId === childId : true)
+    );
+
+    if (!matchingReference) {
+      return NextResponse.json(
+        { error: 'Payment does not belong to this user or activity' },
+        { status: 403 }
+      );
+    }
+
+    const participantChildId = matchingReference.childId;
+    if (childId && childId !== participantChildId) {
+      return NextResponse.json(
+        { error: 'Payment child does not match request' },
+        { status: 403 }
+      );
+    }
+
+    if (participantChildId) {
+      const ownerIds = await getAccessibleChildOwnerIds(userId);
+      const child = await prisma.child.findFirst({
+        where: { id: participantChildId, userId: { in: ownerIds } },
+        select: { id: true },
+      });
+      if (!child) {
+        return NextResponse.json(
+          { error: 'Payment child is not accessible' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const metadata = payment.metadata as Record<string, unknown> | undefined;
+    const metadataActivityId = metadataValue(
+      metadata,
+      'activityId',
+      'activity_id'
+    );
+    const metadataUserId = metadataValue(metadata, 'userId', 'user_id');
+    const metadataChildId = metadataValue(metadata, 'childId', 'child_id');
+    if (
+      (metadataActivityId && metadataActivityId !== params.id) ||
+      (metadataUserId && metadataUserId !== userId) ||
+      (metadataChildId && metadataChildId !== participantChildId)
+    ) {
+      return NextResponse.json(
+        { error: 'Payment metadata does not match request' },
+        { status: 403 }
+      );
+    }
+
+    const activity = await prisma.activity.findUnique({
+      where: { id: params.id },
+      select: { price: true },
+    });
+    const paidAmount = paymentAmountInCents(payment.transaction_amount);
+    if (
+      !activity ||
+      paidAmount == null ||
+      paidAmount < Number(activity.price)
+    ) {
+      return NextResponse.json(
+        { error: 'Payment amount does not match activity' },
+        { status: 400 }
+      );
+    }
+
     const participantKey = getActivityParticipantKey(
       params.id,
       userId,
@@ -118,19 +206,6 @@ export async function POST(
     const participants = parseSocialFeeParticipants(
       payment.metadata?.socialFeeParticipants
     );
-    let references = parseMercadoPagoReferences(payment.external_reference);
-    if (references.length === 0) {
-      references = [
-        {
-          activityId: params.id,
-          userId,
-          childId: participantChildId,
-          groupId: null,
-          activityDayId: null,
-        },
-      ];
-    }
-
     if (participants.length > 0 && socialFeeAmount > 0) {
       const uniqueParticipants = new Map(
         participants.map((participant) => [
