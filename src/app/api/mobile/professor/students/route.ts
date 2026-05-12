@@ -18,6 +18,7 @@ export async function GET(req: Request) {
 
   const students = await prisma.activityParticipant.findMany({
     where: {
+      status: 'ACTIVE',
       activity: {
         professors: { some: { userId: session.userId } },
       },
@@ -85,7 +86,9 @@ export async function GET(req: Request) {
       label: student.child
         ? formatFullName(student.child)
         : formatFullName(student.user),
-      birthDate: formatMobileDateOnly(student.child?.birthDate ?? student.user.birthDate),
+      birthDate: formatMobileDateOnly(
+        student.child?.birthDate ?? student.user.birthDate
+      ),
       activity: student.activity,
       groupName: student.groupMembership?.activityGroup?.name ?? null,
       lastPayment: student.payments[0]

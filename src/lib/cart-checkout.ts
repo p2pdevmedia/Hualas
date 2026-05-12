@@ -1,8 +1,10 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { centsToPesos } from '@/lib/accounting';
 import { getActivityParticipantKey } from '@/lib/activity-participants';
-import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import {
+  getAccessibleChildOwnerIds,
+  getAccessibleChildrenWhere,
+} from '@/lib/family-access';
 import {
   getSocialFeeAmount,
   hasSocialFeeForCurrentMonth,
@@ -62,6 +64,7 @@ export type CartQuote = {
 type BuildCartQuoteInput = {
   userId: string;
   items: CartCheckoutItem[];
+  socialFeeOnly?: boolean;
 };
 
 class CartQuoteError extends Error {
@@ -96,11 +99,50 @@ function normalizeTarget(target?: string) {
   return !target || target === 'self' ? null : target;
 }
 
+function getSocialFeeParticipantKey(participant: SocialFeeParticipant) {
+  return participant.childId
+    ? `child:${participant.childId}`
+    : `user:${participant.userId}`;
+}
+
+async function getActiveSocialFeeParticipants(userId: string) {
+  const ownerIds = await getAccessibleChildOwnerIds(userId);
+  const activeUsers = await prisma.user.findMany({
+    where: {
+      id: { in: ownerIds },
+      isActive: true,
+      socialFeeActive: true,
+    },
+    select: {
+      id: true,
+      children: {
+        select: { id: true },
+      },
+    },
+  });
+
+  const participants: SocialFeeParticipant[] = [];
+  for (const user of activeUsers) {
+    participants.push(normalizeSocialFeeParticipant({ userId: user.id }));
+    for (const child of user.children) {
+      participants.push(
+        normalizeSocialFeeParticipant({
+          userId: user.id,
+          childId: child.id,
+        })
+      );
+    }
+  }
+
+  return participants;
+}
+
 export async function buildCartQuote({
   userId,
   items,
+  socialFeeOnly = false,
 }: BuildCartQuoteInput): Promise<CartQuote> {
-  if (!items.length) {
+  if (!items.length && !socialFeeOnly) {
     throw new CartQuoteError(400, 'El carrito está vacío.');
   }
 
@@ -116,32 +158,37 @@ export async function buildCartQuote({
     }
     seenSelections.add(selectionKey);
   }
-  const activities = await prisma.activity.findMany({
-    where: { id: { in: uniqueIds } },
-    include: {
-      participants: { select: { id: true } },
-      days: {
-        where: { cancelled: false },
-        select: {
-          id: true,
-          activityId: true,
-          activityGroupId: true,
-          date: true,
-          schedule: true,
+  const activities = uniqueIds.length
+    ? await prisma.activity.findMany({
+        where: { id: { in: uniqueIds } },
+        include: {
+          participants: {
+            where: { status: 'ACTIVE' },
+            select: { id: true },
+          },
+          days: {
+            where: { cancelled: false },
+            select: {
+              id: true,
+              activityId: true,
+              activityGroupId: true,
+              date: true,
+              schedule: true,
+            },
+          },
+          groups: {
+            select: {
+              id: true,
+              name: true,
+              capacity: true,
+              minAge: true,
+              maxAge: true,
+              _count: { select: { members: true } },
+            },
+          },
         },
-      },
-      groups: {
-        select: {
-          id: true,
-          name: true,
-          capacity: true,
-          minAge: true,
-          maxAge: true,
-          _count: { select: { members: true } },
-        },
-      },
-    },
-  });
+      })
+    : [];
   const activityById = new Map(
     activities.map((activity) => [activity.id, activity])
   );
@@ -315,27 +362,32 @@ export async function buildCartQuote({
       normalizeTarget(item.target)
     )
   );
-  const existingParticipants = await prisma.activityParticipant.findMany({
-    where: {
-      OR: [
-        { participantKey: { in: participantKeys } },
-        ...items
-          .map((item) => ({
-            activityId: item.activityId,
-            childId: normalizeTarget(item.target),
-          }))
-          .filter((item): item is { activityId: string; childId: string } =>
-            Boolean(item.childId)
-          ),
-      ],
-    },
-    select: {
-      id: true,
-      participantKey: true,
-      activityId: true,
-      activity: { select: { name: true } },
-    },
-  });
+  const existingParticipants =
+    participantKeys.length > 0
+      ? await prisma.activityParticipant.findMany({
+          where: {
+            status: 'ACTIVE',
+            OR: [
+              { participantKey: { in: participantKeys } },
+              ...items
+                .map((item) => ({
+                  activityId: item.activityId,
+                  childId: normalizeTarget(item.target),
+                }))
+                .filter(
+                  (item): item is { activityId: string; childId: string } =>
+                    Boolean(item.childId)
+                ),
+            ],
+          },
+          select: {
+            id: true,
+            participantKey: true,
+            activityId: true,
+            activity: { select: { name: true } },
+          },
+        })
+      : [];
 
   if (existingParticipants.length > 0) {
     const participantByKey = new Map(
@@ -468,8 +520,11 @@ export async function buildCartQuote({
       userId,
       childId,
     });
-    const key = `${participant.userId}:${participant.childId ?? 'self'}`;
-    participantByKey.set(key, participant);
+    participantByKey.set(getSocialFeeParticipantKey(participant), participant);
+  }
+
+  for (const participant of await getActiveSocialFeeParticipants(userId)) {
+    participantByKey.set(getSocialFeeParticipantKey(participant), participant);
   }
 
   const socialFeeAmount = await getSocialFeeAmount();

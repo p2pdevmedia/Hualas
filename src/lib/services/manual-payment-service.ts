@@ -521,8 +521,13 @@ export async function createManualPaymentCheckout(input: {
                   ? source.target
                   : null,
               participantKey,
+              status: 'ACTIVE',
+              withdrawnAt: null,
             },
-            update: {},
+            update: {
+              status: 'ACTIVE',
+              withdrawnAt: null,
+            },
             select: { id: true },
           });
 
@@ -721,8 +726,13 @@ export async function approveManualPayment({
         userId: payment.order.responsibleUserId ?? reviewer.id,
         childId,
         participantKey,
+        status: 'ACTIVE',
+        withdrawnAt: null,
       },
-      update: {},
+      update: {
+        status: 'ACTIVE',
+        withdrawnAt: null,
+      },
       select: { id: true },
     });
 

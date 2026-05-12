@@ -61,6 +61,7 @@ export async function GET(
   const participants = await prisma.activityParticipant.findMany({
     where: {
       activityId: day.activity.id,
+      status: 'ACTIVE',
       ...(day.activityGroupId
         ? {
             groupMembership: {

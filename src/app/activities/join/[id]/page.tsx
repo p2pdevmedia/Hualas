@@ -42,7 +42,11 @@ export default async function ActivityJoinPage({
         description: true,
         price: true,
         createdAt: true,
-        _count: { select: { participants: true } },
+        _count: {
+          select: {
+            participants: { where: { status: 'ACTIVE' } },
+          },
+        },
         media: {
           orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
           select: { id: true, type: true, fileName: true },

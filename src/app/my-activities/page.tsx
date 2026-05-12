@@ -154,6 +154,7 @@ export default async function MyActivitiesPage({
     } else {
       participations = await prisma.activityParticipant.findMany({
         where: {
+          status: 'ACTIVE',
           OR: [
             { userId },
             { child: { userId: { in: accessibleChildOwnerIds } } },

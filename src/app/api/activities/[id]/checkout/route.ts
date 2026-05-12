@@ -101,7 +101,9 @@ export async function GET(
     activity = await prisma.activity.findUnique({
       where: { id: params.id },
       include: {
-        participants: true,
+        participants: {
+          where: { status: 'ACTIVE' },
+        },
         groups: { select: { capacity: true } },
       },
     });

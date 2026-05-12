@@ -93,10 +93,14 @@ export async function POST(
         participantKey,
         receipt,
         receiptDate,
+        status: 'ACTIVE',
+        withdrawnAt: null,
       },
       update: {
         receipt,
         receiptDate,
+        status: 'ACTIVE',
+        withdrawnAt: null,
       },
       select: { id: true },
     });

@@ -62,10 +62,12 @@ export async function POST(req: Request) {
   let items: CartItem[] = [];
   let paymentMethod: unknown;
   let proofFile: File | null = null;
+  let socialFeeOnly = false;
 
   if (isFormData) {
     const formData = await req.formData();
     paymentMethod = formData.get('paymentMethod');
+    socialFeeOnly = formData.get('socialFeeOnly') === 'true';
     const rawItems = formData.get('items');
     proofFile =
       formData.get('proof') instanceof File
@@ -93,6 +95,8 @@ export async function POST(req: Request) {
     items = Array.isArray((payload as { items?: unknown } | null)?.items)
       ? ((payload as { items: CartItem[] }).items ?? [])
       : [];
+    socialFeeOnly =
+      (payload as { socialFeeOnly?: unknown } | null)?.socialFeeOnly === true;
   }
 
   const userId = (session.user as { id: string }).id;
@@ -165,6 +169,7 @@ export async function POST(req: Request) {
     quote = await buildCartQuote({
       userId,
       items,
+      ...(socialFeeOnly ? { socialFeeOnly } : {}),
     });
   } catch (error) {
     const response = buildCartQuoteErrorResponse(error);
@@ -175,6 +180,13 @@ export async function POST(req: Request) {
       );
     }
     throw error;
+  }
+
+  if (items.length === 0 && quote.totalAmount <= 0) {
+    return NextResponse.json(
+      { error: 'No hay cuota social pendiente para pagar.' },
+      { status: 400 }
+    );
   }
 
   if (isManualPaymentMethod(paymentMethod)) {

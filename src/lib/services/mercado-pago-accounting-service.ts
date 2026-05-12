@@ -151,7 +151,16 @@ export async function syncMercadoPagoApprovedPayment(input: {
   const references = input.references.filter(
     (reference) => Boolean(reference.activityId) && Boolean(reference.userId)
   );
-  if (references.length === 0) {
+  const normalizedSocialFeeAmount = Math.max(
+    Number(input.socialFeeAmount ?? 0) || 0,
+    0
+  );
+  const canSyncSocialFeeOnly =
+    references.length === 0 &&
+    Boolean(input.userId) &&
+    normalizedSocialFeeAmount > 0 &&
+    input.socialFeeParticipantCount > 0;
+  if (references.length === 0 && !canSyncSocialFeeOnly) {
     return null;
   }
 
@@ -176,14 +185,16 @@ export async function syncMercadoPagoApprovedPayment(input: {
         role: true,
       },
     }),
-    prisma.activity.findMany({
-      where: { id: { in: activityIds } },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-      },
-    }),
+    activityIds.length > 0
+      ? prisma.activity.findMany({
+          where: { id: { in: activityIds } },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+          },
+        })
+      : Promise.resolve([]),
     getBillableConceptIds(),
   ]);
 
@@ -211,7 +222,7 @@ export async function syncMercadoPagoApprovedPayment(input: {
     Number(input.familyDiscountAmount ?? 0) || 0,
     0
   );
-  const socialFeeAmount = Math.max(Number(input.socialFeeAmount ?? 0) || 0, 0);
+  const socialFeeAmount = normalizedSocialFeeAmount;
   const mpFeeBase =
     references.reduce((sum, reference) => {
       const activity = activityById.get(reference.activityId);

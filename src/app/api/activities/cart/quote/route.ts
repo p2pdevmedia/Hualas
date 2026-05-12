@@ -31,11 +31,14 @@ export async function POST(req: Request) {
   const items = Array.isArray((payload as { items?: unknown } | null)?.items)
     ? ((payload as { items: CartItem[] }).items ?? [])
     : [];
+  const socialFeeOnly =
+    (payload as { socialFeeOnly?: unknown } | null)?.socialFeeOnly === true;
 
   try {
     const quote = await buildCartQuote({
       userId: (session.user as { id: string }).id,
       items,
+      ...(socialFeeOnly ? { socialFeeOnly } : {}),
     });
 
     return NextResponse.json({

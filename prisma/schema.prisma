@@ -68,7 +68,7 @@ model User {
   professorProfile            ProfessorProfile?
   professorPaymentsCreated    ProfessorPayment[]           @relation("ProfessorPaymentCreatedBy")
   professorInvoices           ProfessorInvoice[]           @relation("ProfessorInvoices")
-  createdParticipantReports   ActivityParticipantReport[]   @relation("ActivityParticipantReportCreatedBy")
+  createdParticipantReports   ActivityParticipantReport[]  @relation("ActivityParticipantReportCreatedBy")
   roleAssignments             UserRoleAssignment[]         @relation("UserRoleAssignmentUser")
   roleAssignmentsGranted      UserRoleAssignment[]         @relation("UserRoleAssignmentAssignedBy")
 }
@@ -159,24 +159,24 @@ model FormResponse {
 }
 
 model Activity {
-  id           String                @id @default(cuid())
-  name         String
-  date         DateTime
-  endDate      DateTime
-  activityType ActivityType          @default(TEMPORARY)
-  frequency    ActivityFrequency     @default(ONE_TIME)
-  image        String?
-  description  String?
-  price        Int                   @default(0)
-  participants ActivityParticipant[]
+  id                  String                       @id @default(cuid())
+  name                String
+  date                DateTime
+  endDate             DateTime
+  activityType        ActivityType                 @default(TEMPORARY)
+  frequency           ActivityFrequency            @default(ONE_TIME)
+  image               String?
+  description         String?
+  price               Int                          @default(0)
+  participants        ActivityParticipant[]
   participantPayments ActivityParticipantPayment[]
-  media        ActivityMedia[]
-  news         News[]
-  professors   ActivityProfessor[]
-  groups       ActivityGroup[]
-  days         ActivityDay[]
-  createdAt    DateTime              @default(now())
-  orderItems   OrderItem[]
+  media               ActivityMedia[]
+  news                News[]
+  professors          ActivityProfessor[]
+  groups              ActivityGroup[]
+  days                ActivityDay[]
+  createdAt           DateTime                     @default(now())
+  orderItems          OrderItem[]
 }
 
 model ActivityMedia {
@@ -195,20 +195,22 @@ model ActivityMedia {
 }
 
 model ActivityParticipant {
-  id              String                  @id @default(cuid())
+  id              String                       @id @default(cuid())
   activityId      String
   userId          String
   childId         String?
-  participantKey  String                  @unique
+  participantKey  String                       @unique
+  status          ActivityParticipantStatus    @default(ACTIVE)
   receipt         String?
   receiptDate     DateTime?
-  activity        Activity                @relation(fields: [activityId], references: [id])
-  user            User                    @relation(fields: [userId], references: [id])
-  child           Child?                  @relation(fields: [childId], references: [id])
+  withdrawnAt     DateTime?
+  activity        Activity                     @relation(fields: [activityId], references: [id])
+  user            User                         @relation(fields: [userId], references: [id])
+  child           Child?                       @relation(fields: [childId], references: [id])
   groupMembership ActivityGroupMember?
   attendances     ActivityDayAttendance[]
-  payments         ActivityParticipantPayment[]
-  reports          ActivityParticipantReport[]
+  payments        ActivityParticipantPayment[]
+  reports         ActivityParticipantReport[]
 }
 
 model ActivityParticipantPayment {
@@ -281,29 +283,29 @@ model ActivityGroupMember {
 }
 
 model ActivityDay {
-  id                 String                  @id @default(cuid())
-  activityId         String
-  activityGroupId    String?
-  createdById        String
-  date               DateTime
-  schedule           String
-  description        String?
-  planificacion      String?
-  devolucion         String?
-  geoLocation        String
-  latitude           Float?
-  longitude          Float?
-  sportIcon          String?
-  cancelled          Boolean                 @default(false)
-  cancellationReason String?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  activity           Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  activityGroup      ActivityGroup?          @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
-  createdBy          User                    @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  attendances        ActivityDayAttendance[]
-  professors         ActivityDayProfessor[]
-  pickupNotices      PickupNotice[]
+  id                  String                       @id @default(cuid())
+  activityId          String
+  activityGroupId     String?
+  createdById         String
+  date                DateTime
+  schedule            String
+  description         String?
+  planificacion       String?
+  devolucion          String?
+  geoLocation         String
+  latitude            Float?
+  longitude           Float?
+  sportIcon           String?
+  cancelled           Boolean                      @default(false)
+  cancellationReason  String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+  activity            Activity                     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityGroup       ActivityGroup?               @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
+  createdBy           User                         @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  attendances         ActivityDayAttendance[]
+  professors          ActivityDayProfessor[]
+  pickupNotices       PickupNotice[]
   participantPayments ActivityParticipantPayment[]
   participantReports  ActivityParticipantReport[]
 
@@ -397,36 +399,36 @@ model PickupNoticeAcknowledgment {
 }
 
 model Child {
-  id                   String                @id @default(cuid())
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id])
-  name                 String
-  lastName             String?
-  profilePhoto         String?
-  documentType         String?
-  documentNumber       String?
-  documentFrontPhoto   String?
-  documentBackPhoto    String?
-  birthDate            DateTime?
-  address              String?
-  gender               Gender?
-  nationality          String?
-  maritalStatus        String?
-  allergies            String?
-  regularMedication    String?
-  relevantDiseases     String?
-  previousInjuries     String?
-  physicalRestrictions String?
-  bloodGroup           String?
-  primaryDoctor        String?
-  doctorPhone          String?
-  doctorCertificate    String?
-  observations         String?
-  createdAt            DateTime              @default(now())
-  activityParticipants ActivityParticipant[]
+  id                          String                       @id @default(cuid())
+  userId                      String
+  user                        User                         @relation(fields: [userId], references: [id])
+  name                        String
+  lastName                    String?
+  profilePhoto                String?
+  documentType                String?
+  documentNumber              String?
+  documentFrontPhoto          String?
+  documentBackPhoto           String?
+  birthDate                   DateTime?
+  address                     String?
+  gender                      Gender?
+  nationality                 String?
+  maritalStatus               String?
+  allergies                   String?
+  regularMedication           String?
+  relevantDiseases            String?
+  previousInjuries            String?
+  physicalRestrictions        String?
+  bloodGroup                  String?
+  primaryDoctor               String?
+  doctorPhone                 String?
+  doctorCertificate           String?
+  observations                String?
+  createdAt                   DateTime                     @default(now())
+  activityParticipants        ActivityParticipant[]
   activityParticipantPayments ActivityParticipantPayment[]
-  socialFeePayments    SocialFeePayment[]
-  pickupNotices        PickupNotice[]
+  socialFeePayments           SocialFeePayment[]
+  pickupNotices               PickupNotice[]
 }
 
 model SocialFeePayment {
@@ -654,40 +656,40 @@ model PushAlertSubscription {
 }
 
 model MobileSession {
-  id         String         @id @default(cuid())
-  userId     String
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash  String         @unique
-  appRole    Role
-  platform   String?
-  deviceName String?
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  appRole     Role
+  platform    String?
+  deviceName  String?
   deviceModel String?
-  appVersion String?
-  expiresAt  DateTime
-  lastUsedAt DateTime       @default(now())
-  revokedAt  DateTime?
-  createdAt  DateTime       @default(now())
+  appVersion  String?
+  expiresAt   DateTime
+  lastUsedAt  DateTime  @default(now())
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([userId, appRole])
   @@index([expiresAt, revokedAt])
 }
 
 model MobileDeviceToken {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token        String   @unique
-  platform     String   @default("iOS")
-  bundleId     String?
-  environment  String?
-  deviceName   String?
-  deviceModel  String?
-  appVersion   String?
-  sessionId    String?
-  lastSeenAt   DateTime @default(now())
-  revokedAt    DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String    @unique
+  platform    String    @default("iOS")
+  bundleId    String?
+  environment String?
+  deviceName  String?
+  deviceModel String?
+  appVersion  String?
+  sessionId   String?
+  lastSeenAt  DateTime  @default(now())
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([userId])
   @@index([platform, environment])
@@ -733,6 +735,11 @@ enum ActivityMediaType {
 enum ActivityType {
   TEMPORARY
   ANNUAL
+}
+
+enum ActivityParticipantStatus {
+  ACTIVE
+  WITHDRAWN
 }
 
 enum ActivityParticipantPaymentType {
@@ -801,18 +808,18 @@ enum PaymentStatus {
 }
 
 model News {
-  id          String      @id @default(cuid())
-  title       String
-  body        String
-  scope       NewsScope
-  activityId  String?
-  activity    Activity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  createdById String
-  createdBy   User        @relation("NewsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  id           String            @id @default(cuid())
+  title        String
+  body         String
+  scope        NewsScope
+  activityId   String?
+  activity     Activity?         @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdById  String
+  createdBy    User              @relation("NewsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   media        NewsMedia[]
   readReceipts NewsReadReceipt[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([scope, createdAt])
   @@index([activityId, createdAt])

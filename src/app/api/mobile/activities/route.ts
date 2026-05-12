@@ -174,7 +174,9 @@ export async function GET(req: Request) {
     }
 
     const selectedDays = requestedDay
-      ? visibleDays.filter((day) => formatDateOnly(day.date) === requestedDay.dayKey)
+      ? visibleDays.filter(
+          (day) => formatDateOnly(day.date) === requestedDay.dayKey
+        )
       : visibleDays;
 
     const sessions = selectedDays.map((day) => ({
@@ -212,6 +214,7 @@ export async function GET(req: Request) {
   );
   const participations = await prisma.activityParticipant.findMany({
     where: {
+      status: 'ACTIVE',
       OR: [
         { userId: session.userId },
         { child: { userId: { in: accessibleChildOwnerIds } } },
@@ -285,7 +288,9 @@ export async function GET(req: Request) {
   }
 
   const selectedDays = requestedDay
-    ? visibleDays.filter((day) => formatDateOnly(day.date) === requestedDay.dayKey)
+    ? visibleDays.filter(
+        (day) => formatDateOnly(day.date) === requestedDay.dayKey
+      )
     : visibleDays;
 
   const sessions = selectedDays.map((day) => {
@@ -338,8 +343,12 @@ function formatAudienceLabel(
     childId: string | null;
   }>
 ) {
-  const childCount = participations.filter((participation) => participation.childId !== null).length;
-  const hasSelf = participations.some((participation) => participation.childId === null);
+  const childCount = participations.filter(
+    (participation) => participation.childId !== null
+  ).length;
+  const hasSelf = participations.some(
+    (participation) => participation.childId === null
+  );
 
   if (hasSelf && childCount === 0) {
     return 'Para vos';

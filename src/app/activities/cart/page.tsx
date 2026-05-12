@@ -80,14 +80,6 @@ export default function ActivitiesCartPage() {
       return;
     }
 
-    if (items.length === 0) {
-      setQuote(null);
-      setError(null);
-      setErrorAction(null);
-      setQuoteLoading(false);
-      return;
-    }
-
     const controller = new AbortController();
     const fetchQuote = async () => {
       setQuoteLoading(true);
@@ -97,7 +89,9 @@ export default function ActivitiesCartPage() {
         const response = await fetch('/api/activities/cart/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items }),
+          body: JSON.stringify(
+            items.length === 0 ? { items: [], socialFeeOnly: true } : { items }
+          ),
           signal: controller.signal,
         });
         const data = (await response.json().catch(() => ({}))) as
@@ -150,7 +144,9 @@ export default function ActivitiesCartPage() {
       const response = await fetch('/api/activities/cart/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify(
+          items.length === 0 ? { items: [], socialFeeOnly: true } : { items }
+        ),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -182,7 +178,8 @@ export default function ActivitiesCartPage() {
     }
   };
 
-  const canCheckout = !!quote && !quoteLoading && !submitting;
+  const canCheckout =
+    !!quote && !quoteLoading && !submitting && quote.totalAmount > 0;
   const manualItems = items.map((item) => ({
     activityId: item.activityId,
     target: item.target === 'self' ? 'self' : item.target,
@@ -213,6 +210,77 @@ export default function ActivitiesCartPage() {
           >
             Buscar actividades
           </Link>
+
+          {quoteLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Buscando cuota social pendiente...
+            </p>
+          ) : quote && quote.totalSocialFeeAmount > 0 ? (
+            <section className="mt-4 w-full max-w-md rounded-xl border bg-card p-5 text-left shadow-sm">
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold">Cuota social</h2>
+                <p className="text-sm text-muted-foreground">
+                  Tenés cuota social pendiente y podés pagarla sin agregar una
+                  actividad.
+                </p>
+              </div>
+              <div className="mt-4 space-y-2 text-sm">
+                {quote.socialFeeLines.map((line, index) => (
+                  <div
+                    key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${index}`}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <span>{line.label}</span>
+                    <span className="font-medium">
+                      {formatAmount(line.amount)}
+                    </span>
+                  </div>
+                ))}
+                {quote.mercadoPagoFeeLines.map((line, index) => (
+                  <div
+                    key={`empty-mp-fee-${index}`}
+                    className="flex items-center justify-between gap-4 text-orange-700"
+                  >
+                    <span>{line.label}</span>
+                    <span className="font-medium">
+                      +{formatAmount(line.amount)}
+                    </span>
+                  </div>
+                ))}
+                <div className="border-t pt-2 flex items-center justify-between gap-4 text-base">
+                  <span className="font-semibold">Total</span>
+                  <span className="font-semibold">
+                    {formatAmount(quote.totalAmountWithMercadoPagoFee)}
+                  </span>
+                </div>
+              </div>
+              <Button
+                className="mt-4 w-full"
+                onClick={handleCheckout}
+                disabled={!canCheckout}
+              >
+                {submitting ? 'Procesando...' : 'Pagar solo cuota social'}
+              </Button>
+            </section>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No hay cuota social pendiente para pagar.
+            </p>
+          )}
+
+          {error && (
+            <div className="space-y-2 text-sm text-red-600">
+              <p>{error}</p>
+              {errorAction && (
+                <Link
+                  href={`${errorAction.url}?returnTo=${encodeURIComponent('/activities/cart')}`}
+                  className="inline-flex underline underline-offset-4 hover:text-red-700"
+                >
+                  {errorAction.label}
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <>

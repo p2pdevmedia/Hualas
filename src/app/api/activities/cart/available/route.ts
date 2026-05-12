@@ -37,7 +37,9 @@ export async function POST(req: Request) {
       price: true,
       groups: { select: { capacity: true } },
       _count: {
-        select: { participants: true },
+        select: {
+          participants: { where: { status: 'ACTIVE' } },
+        },
       },
     },
     orderBy: { date: 'asc' },

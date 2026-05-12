@@ -12,6 +12,7 @@ jest.mock('@/lib/prisma', () => ({
     },
     user: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     child: {
       findMany: jest.fn(),
@@ -41,7 +42,7 @@ import {
 const mockPrisma = prisma as unknown as {
   activity: { findMany: jest.Mock };
   familyGroup: { findMany: jest.Mock };
-  user: { findUnique: jest.Mock };
+  user: { findUnique: jest.Mock; findMany: jest.Mock };
   child: { findMany: jest.Mock };
   activityParticipant: { findMany: jest.Mock };
 };
@@ -70,6 +71,15 @@ describe('buildCartQuote', () => {
     mockPrisma.user.findUnique.mockResolvedValue({
       birthDate: new Date('2010-01-01T00:00:00Z'),
     });
+    mockPrisma.user.findMany.mockResolvedValue([
+      {
+        id: 'user_1',
+        children: [
+          { id: 'child_1' },
+          { id: 'child_2' },
+        ],
+      },
+    ]);
     mockPrisma.activityParticipant.findMany.mockResolvedValue([]);
     (getSocialFeeAmount as jest.Mock).mockResolvedValue(2500);
     (hasSocialFeeForCurrentMonth as jest.Mock).mockResolvedValue(false);
@@ -99,7 +109,7 @@ describe('buildCartQuote', () => {
     );
     expect(
       mpItems.find((item) => item.title === 'Descuento familiar')?.unit_price
-    ).toBe(-1000);
+    ).toBe(-10);
   });
 
   it('no aplica descuento con un solo hijo', async () => {
@@ -112,6 +122,38 @@ describe('buildCartQuote', () => {
 
     expect(quote.discountLines).toEqual([]);
     expect(quote.totalDiscountAmount).toBe(0);
+    expect(quote.totalAmount).toBe(12500);
+  });
+
+  it('permite cotizar solo cuota social con el carrito vacío', async () => {
+    const quote = await buildCartQuote({
+      userId: 'user_1',
+      items: [],
+      socialFeeOnly: true,
+    });
+
+    expect(quote.activityLines).toEqual([]);
+    expect(quote.socialFeeLines).toHaveLength(3);
+    expect(quote.totalActivityAmount).toBe(0);
+    expect(quote.totalSocialFeeAmount).toBe(7500);
     expect(quote.totalAmount).toBe(7500);
+    expect(quote.validatedItems).toEqual([]);
+  });
+
+  it('incluye automaticamente cuotas sociales activas aunque la actividad sea para otra persona', async () => {
+    const quote = await buildCartQuote({
+      userId: 'user_1',
+      items: [
+        { activityId: 'activity_1', target: 'child_1', targetLabel: 'Ana' },
+      ],
+    });
+
+    expect(quote.socialFeeParticipants).toEqual([
+      { userId: 'user_1', childId: 'child_1' },
+      { userId: 'user_1', childId: null },
+      { userId: 'user_1', childId: 'child_2' },
+    ]);
+    expect(quote.totalSocialFeeAmount).toBe(7500);
+    expect(quote.totalAmount).toBe(12500);
   });
 });

@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
             },
           },
           participants: {
+            where: { status: 'ACTIVE' },
             select: {
               id: true,
             },
@@ -159,6 +160,8 @@ export async function POST(req: NextRequest) {
         participantKey,
         receipt,
         receiptDate: new Date(date),
+        status: 'ACTIVE' as const,
+        withdrawnAt: null,
       };
 
       const participant = await prisma.activityParticipant.upsert({

@@ -52,10 +52,7 @@ function getCapacity(activity: ActivityRow) {
     return null;
   }
 
-  return activity.groups.reduce(
-    (sum, group) => sum + (group.capacity ?? 0),
-    0
-  );
+  return activity.groups.reduce((sum, group) => sum + (group.capacity ?? 0), 0);
 }
 
 function getMondayBasedWeekday(date: Date) {
@@ -78,7 +75,7 @@ export async function GET(req: Request) {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const activities = await prisma.activity.findMany({
+  const activities = (await prisma.activity.findMany({
     where: {
       endDate: { gte: todayStart },
     },
@@ -92,7 +89,10 @@ export async function GET(req: Request) {
       image: true,
       description: true,
       price: true,
-      participants: { select: { id: true } },
+      participants: {
+        where: { status: 'ACTIVE' },
+        select: { id: true },
+      },
       groups: {
         select: {
           id: true,
@@ -125,11 +125,13 @@ export async function GET(req: Request) {
         orderBy: [{ date: 'asc' }, { schedule: 'asc' }],
       },
       _count: {
-        select: { participants: true },
+        select: {
+          participants: { where: { status: 'ACTIVE' } },
+        },
       },
     },
     orderBy: { date: 'asc' },
-  }) as ActivityRow[];
+  })) as ActivityRow[];
 
   const availableActivities = activities
     .map((activity) => {

@@ -10,6 +10,7 @@ import {
   summarizeAccounting,
   type ProfessorPaymentLike,
 } from '@/lib/accounting-summary';
+import { isActivityParticipantBillableForPeriod } from '@/lib/activity-withdrawal';
 
 export type AccountingMonthCloseActivity = {
   activityId: string;
@@ -152,6 +153,8 @@ export async function buildAccountingMonthCloseSnapshot({
         participants: {
           select: {
             id: true,
+            status: true,
+            withdrawnAt: true,
             receipt: true,
             receiptDate: true,
             payments: {
@@ -221,13 +224,16 @@ export async function buildAccountingMonthCloseSnapshot({
     .reduce((sum, movement) => sum + movement.amount, 0);
 
   const activityReports = activities.map((activity) => {
-    const paidParticipants = activity.participants.filter(
+    const billableParticipants = activity.participants.filter((participant) =>
+      isActivityParticipantBillableForPeriod(participant, periodStart)
+    );
+    const paidParticipants = billableParticipants.filter(
       (participant) =>
         participant.payments.length > 0 ||
         (Boolean(participant.receipt) &&
           isDateInRange(participant.receiptDate, periodStart, periodEnd))
     );
-    const paidAmount = activity.participants.reduce((sum, participant) => {
+    const paidAmount = billableParticipants.reduce((sum, participant) => {
       const registeredPaymentsAmount = participant.payments.reduce(
         (paymentSum, payment) => paymentSum + payment.amount,
         0
@@ -247,10 +253,10 @@ export async function buildAccountingMonthCloseSnapshot({
     return {
       activityId: activity.id,
       activityName: activity.name,
-      totalParticipants: activity.participants.length,
+      totalParticipants: billableParticipants.length,
       paidParticipants: paidParticipants.length,
       pendingParticipants: Math.max(
-        activity.participants.length - paidParticipants.length,
+        billableParticipants.length - paidParticipants.length,
         0
       ),
       paidAmount,

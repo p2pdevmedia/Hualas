@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import PaymentHandler from './payment-handler';
 import ActivityDaysPanel from './activity-days-panel';
 import InscriptosPanel from './inscriptos-panel';
+import ActivityWithdrawalPanel from './activity-withdrawal-panel';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
@@ -307,6 +308,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }
 
   // Create a map of participants for quick lookup
+  const activeParticipants = participants.filter(
+    (participant) => participant.status === 'ACTIVE'
+  );
   const participantsMap = new Map(participants.map((p) => [p.id, p]));
 
   // Create a map of pickup notices by dayId
@@ -335,7 +339,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           year: 'numeric',
         })}`
   }`;
-  const enrolledCount = participants.length;
+  const enrolledCount = activeParticipants.length;
   const activityProfessorIds = activityProfessors.map(
     (assignment: { userId: string }) => assignment.userId
   );
@@ -364,11 +368,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }> = [];
 
   if (session) {
-    const activityParticipants = participants.filter((participant: any) => {
-      const isOwner = participant.userId === session.user.id;
-      const childOwner = participant.child?.userId === session.user.id;
-      return isOwner || childOwner;
-    });
+    const activityParticipants = activeParticipants.filter(
+      (participant: any) => {
+        const isOwner = participant.userId === session.user.id;
+        const childOwner = participant.child?.userId === session.user.id;
+        return isOwner || childOwner;
+      }
+    );
 
     registrations = activityParticipants.map((participant: any) => ({
       id: participant.id,
@@ -680,7 +686,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
         {(isAdmin || isProfessor) && (
           <InscriptosPanel
-            participants={(participants as any[]).map((p) => ({
+            participants={(activeParticipants as any[]).map((p) => ({
               id: p.id,
               name: getParticipantName(p),
               subtitle: getParticipantSubtitle(p),
@@ -703,6 +709,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             canAssignGroups={isAdmin}
             enrolledCount={enrolledCount}
             capacity={capacity}
+          />
+        )}
+
+        {isParticipantInActivity && (
+          <ActivityWithdrawalPanel
+            activityId={activity.id}
+            registrations={registrations.map((registration) => ({
+              id: registration.id,
+              label: registration.label,
+            }))}
           />
         )}
       </div>

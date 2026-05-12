@@ -43,7 +43,7 @@ export default async function DayGroupInfoPage({
   }
 
   const allParticipants = await prisma.activityParticipant.findMany({
-    where: { activityId: params.id },
+    where: { activityId: params.id, status: 'ACTIVE' },
     include: {
       user: {
         select: {

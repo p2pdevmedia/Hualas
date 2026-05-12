@@ -4,7 +4,15 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getManualPaymentRawData } from '@/lib/manual-payments';
 import { formatManualPaymentStatus } from '@/lib/manual-payment-ui';
-import { formatAmount, formatCurrencyFromCents } from '@/lib/accounting';
+import {
+  formatAmount,
+  formatCurrencyFromCents,
+  formatPersonName,
+} from '@/lib/accounting';
+import {
+  buildPaymentDetailLines,
+  collectPaymentDetailChildIds,
+} from '@/lib/profile-payment-details';
 import { hasProfessorCapability } from '@/lib/roles';
 
 const MONTHS = [
@@ -58,9 +66,15 @@ export default async function ProfilePaymentsPage() {
       include: {
         order: {
           select: {
+            responsibleName: true,
             items: {
               select: {
                 description: true,
+                quantity: true,
+                unitPrice: true,
+                total: true,
+                periodMonth: true,
+                periodYear: true,
                 billableConcept: {
                   select: {
                     code: true,
@@ -88,6 +102,32 @@ export default async function ProfilePaymentsPage() {
         })
       : Promise.resolve(null),
   ]);
+
+  const manualPaymentRawDataById = new Map(
+    manualPayments.map((payment) => [
+      payment.id,
+      getManualPaymentRawData(payment.rawData),
+    ])
+  );
+  const childIds = Array.from(
+    new Set(
+      Array.from(manualPaymentRawDataById.values()).flatMap(
+        collectPaymentDetailChildIds
+      )
+    )
+  );
+  const childNameById = new Map<string, string>();
+
+  if (childIds.length > 0) {
+    const children = await prisma.child.findMany({
+      where: { id: { in: childIds } },
+      select: { id: true, name: true, lastName: true },
+    });
+
+    for (const child of children) {
+      childNameById.set(child.id, formatPersonName(child));
+    }
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">
@@ -174,12 +214,14 @@ export default async function ProfilePaymentsPage() {
                   <th className="px-3 py-2 text-left font-medium">
                     Comentario
                   </th>
+                  <th className="px-3 py-2 text-left font-medium">Detalle</th>
                   <th className="px-3 py-2 text-right font-medium">Monto</th>
                 </tr>
               </thead>
               <tbody>
                 {manualPayments.map((payment) => {
-                  const rawData = getManualPaymentRawData(payment.rawData);
+                  const rawData =
+                    manualPaymentRawDataById.get(payment.id) ?? {};
                   const status = formatManualPaymentStatus(payment.status);
                   const activityNames = payment.order.items
                     .filter(
@@ -187,6 +229,12 @@ export default async function ProfilePaymentsPage() {
                     )
                     .map((item) => item.activity?.name ?? item.description)
                     .filter((name): name is string => Boolean(name));
+                  const detailLines = buildPaymentDetailLines({
+                    orderItems: payment.order.items,
+                    rawData,
+                    selfName: payment.order.responsibleName || 'Titular',
+                    childNameById,
+                  });
 
                   return (
                     <tr key={payment.id} className="border-b last:border-0">
@@ -211,6 +259,45 @@ export default async function ProfilePaymentsPage() {
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
                         {rawData.accountantComments ?? '-'}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <details className="min-w-[20rem] max-w-xl">
+                          <summary className="cursor-pointer select-none text-sm font-medium text-primary hover:underline">
+                            Ver detalle
+                          </summary>
+                          <div className="mt-3 rounded-lg border bg-muted/20 p-3">
+                            {detailLines.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">
+                                Sin detalle disponible.
+                              </p>
+                            ) : (
+                              <ul className="space-y-3">
+                                {detailLines.map((line) => (
+                                  <li
+                                    key={line.id}
+                                    className="grid gap-2 border-b pb-3 last:border-0 last:pb-0 sm:grid-cols-[1fr_auto]"
+                                  >
+                                    <div>
+                                      <p className="font-medium leading-snug">
+                                        {line.description}
+                                      </p>
+                                      <p className="mt-1 text-xs text-muted-foreground">
+                                        {line.concept} · {line.participantName}{' '}
+                                        · {line.periodLabel}
+                                      </p>
+                                    </div>
+                                    <p className="font-mono text-sm font-semibold sm:text-right">
+                                      {formatCurrencyFromCents(
+                                        line.amount,
+                                        payment.currency
+                                      )}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </details>
                       </td>
                       <td className="px-3 py-2 text-right font-medium">
                         {formatCurrencyFromCents(
