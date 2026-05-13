@@ -71,14 +71,16 @@ async function hasAssignedMemberActivities(userId: string) {
 const mapEmbedUrl =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47685.15!2d-71.3586!3d-40.1569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9610be21a87b3b29%3A0x3f3d5fc3f3da0c0!2sSan%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n!5e0!3m2!1ses!2sar!4v1';
 
-const documentaryDriveFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
-const documentaryDriveUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/view?usp=sharing`;
-const documentaryDriveEmbedUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/preview`;
-const documentaryThumbnailUrl = `https://drive.google.com/thumbnail?id=${documentaryDriveFileId}`;
+const documentaryYoutubeId = 'r2-qBpH6FHg';
+const documentaryYoutubeUrl = `https://www.youtube.com/watch?v=${documentaryYoutubeId}`;
+const documentaryYoutubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${documentaryYoutubeId}`;
+const documentaryPdfFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
+const documentaryPdfUrl = `https://drive.google.com/file/d/${documentaryPdfFileId}/view?usp=sharing`;
+const documentaryThumbnailUrl = `https://img.youtube.com/vi/${documentaryYoutubeId}/hqdefault.jpg`;
 
 function documentaryPhotoStyle(size: number, gradient: string) {
   return {
-    backgroundImage: `${gradient}, url('${documentaryThumbnailUrl}&sz=w${size}')`,
+    backgroundImage: `${gradient}, url('${documentaryThumbnailUrl}?w=${size}')`,
   };
 }
 
@@ -290,19 +292,21 @@ export default async function Home() {
               que habitamos.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/documental-pequenos-habitantes"
+              <a
+                href={documentaryPdfUrl}
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
-                Conocer más
-              </Link>
+                Ver más
+              </a>
               <a
-                href={documentaryDriveUrl}
+                href={documentaryYoutubeUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex rounded-md border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
               >
-                Abrir trailer
+                Abrir video
               </a>
             </div>
           </div>
@@ -311,9 +315,9 @@ export default async function Home() {
             <div className="overflow-hidden rounded-xl border bg-black shadow-sm">
               <iframe
                 title="Trailer de Pequeños habitantes de la tierra"
-                src={documentaryDriveEmbedUrl}
+                src={documentaryYoutubeEmbedUrl}
                 className="aspect-video w-full"
-                allow="autoplay; fullscreen"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 loading="lazy"
               />
