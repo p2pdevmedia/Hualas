@@ -28,6 +28,9 @@ Agents should check this before searching the codebase.
   - File: `src/app/android/page.tsx`
   - Static APK: `public/downloads/hualas-mobile.apk`
 
+- `GET /api/documental-pequenos-habitantes/pdf` → proxy cached del PDF del documental para el visor tipo libro
+  - File: `src/app/api/documental-pequenos-habitantes/pdf/route.ts`
+
 ### Auth
 
 - `/login` → Login page
