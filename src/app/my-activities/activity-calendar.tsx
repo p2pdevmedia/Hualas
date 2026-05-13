@@ -81,6 +81,10 @@ function addDays(date: Date, amount: number): Date {
   return nextDate;
 }
 
+function dateFromLocalKey(key: string): Date {
+  return new Date(`${key}T12:00:00`);
+}
+
 function formatDayTitle(date: Date, todayKey: string): string {
   const key = toLocalDateKey(date);
   const weekday = date.toLocaleDateString('es-AR', { weekday: 'long' });
@@ -259,21 +263,6 @@ export default function ActivityCalendar({
   const compactCardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const scrollFrameRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (variant === 'month' || showMonthCalendar) return;
-
-    if (compactInitialScroll === 'start') {
-      compactScrollerRef.current?.scrollTo({ left: 0 });
-      setActiveCompactKey(todayKey);
-      return;
-    }
-
-    todayCardRef.current?.scrollIntoView({
-      block: 'nearest',
-      inline: 'center',
-    });
-  }, [compactInitialScroll, showMonthCalendar, todayKey, variant]);
-
   useEffect(
     () => () => {
       if (scrollFrameRef.current !== null) {
@@ -305,12 +294,74 @@ export default function ActivityCalendar({
       (_, index) => index - compactDayRange.pastDays
     );
 
-    return offsets.map((offset) => {
-      const date = addDays(today, offset);
-      const key = toLocalDateKey(date);
-      return { date, key, offset, activities: dayMap.get(key) ?? [] };
+    const daysInRangeWithActivities = offsets
+      .map((offset) => {
+        const date = addDays(today, offset);
+        const key = toLocalDateKey(date);
+        return { date, key, activities: dayMap.get(key) ?? [] };
+      })
+      .filter((day) => day.activities.length > 0);
+
+    const visibleKeys = new Set(
+      daysInRangeWithActivities.map((day) => day.key)
+    );
+    const activityKeys = Array.from(dayMap.keys()).sort();
+    const nextActivityKey = activityKeys.find((key) => key >= todayKey);
+    const fallbackActivityKey = activityKeys.at(-1);
+    const extraActivityKey =
+      nextActivityKey ??
+      (daysInRangeWithActivities.length === 0
+        ? fallbackActivityKey
+        : undefined);
+
+    if (extraActivityKey && !visibleKeys.has(extraActivityKey)) {
+      daysInRangeWithActivities.push({
+        date: dateFromLocalKey(extraActivityKey),
+        key: extraActivityKey,
+        activities: dayMap.get(extraActivityKey) ?? [],
+      });
+    }
+
+    return daysInRangeWithActivities.sort((a, b) => a.key.localeCompare(b.key));
+  }, [
+    compactDayRange.futureDays,
+    compactDayRange.pastDays,
+    dayMap,
+    today,
+    todayKey,
+  ]);
+
+  const firstUpcomingCompactKey =
+    compactDays.find((day) => day.key >= todayKey)?.key ??
+    compactDays[0]?.key ??
+    todayKey;
+
+  useEffect(() => {
+    if (variant === 'month' || showMonthCalendar || compactDays.length === 0) {
+      return;
+    }
+
+    setActiveCompactKey((currentKey) =>
+      compactDays.some((day) => day.key === currentKey)
+        ? currentKey
+        : firstUpcomingCompactKey
+    );
+  }, [compactDays, firstUpcomingCompactKey, showMonthCalendar, variant]);
+
+  useEffect(() => {
+    if (variant === 'month' || showMonthCalendar) return;
+
+    if (compactInitialScroll === 'start') {
+      compactScrollerRef.current?.scrollTo({ left: 0 });
+      setActiveCompactKey(compactDays[0]?.key ?? todayKey);
+      return;
+    }
+
+    todayCardRef.current?.scrollIntoView({
+      block: 'nearest',
+      inline: 'center',
     });
-  }, [compactDayRange.futureDays, compactDayRange.pastDays, dayMap, today]);
+  }, [compactDays, compactInitialScroll, showMonthCalendar, todayKey, variant]);
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -487,8 +538,8 @@ export default function ActivityCalendar({
   const shouldShowDetailButton = isMemberAgenda || isProfessorAgenda;
   const compactRangeDescription =
     compactDayRange.pastDays === 1 && compactDayRange.futureDays === 3
-      ? 'Deslizá para ver desde ayer hasta tres días hacia adelante.'
-      : 'Deslizá para ver hasta una semana atrás o adelante.';
+      ? 'Solo se muestran los días con actividad. Si no hay actividad cerca, vas directo al próximo encuentro.'
+      : 'Solo se muestran los días con actividad en la semana y el próximo encuentro disponible.';
   const compactCardClassNames = {
     withActivitiesMain:
       compactCalendarSize === 'large'
@@ -564,6 +615,11 @@ export default function ActivityCalendar({
             className="-mx-4 overflow-x-auto px-4 pb-2"
           >
             <div className="flex w-max gap-3">
+              {compactDays.length === 0 && (
+                <div className="w-[min(78vw,22rem)] rounded-2xl border border-dashed bg-background p-5 text-sm text-muted-foreground shadow-sm">
+                  No hay actividades programadas por ahora.
+                </div>
+              )}
               {compactDays.map(({ date, key, activities }) => {
                 const isMainDay = key === activeCompactKey;
                 const title = formatDayTitle(date, todayKey);
@@ -581,7 +637,9 @@ export default function ActivityCalendar({
                     key={key}
                     ref={(node) => {
                       setCompactCardRef(key, node);
-                      if (key === todayKey) todayCardRef.current = node;
+                      if (key === firstUpcomingCompactKey) {
+                        todayCardRef.current = node;
+                      }
                     }}
                     className={[
                       'rounded-2xl border bg-background shadow-sm transition-all',

@@ -473,7 +473,7 @@ export default async function MyActivitiesPage({
           isSelfParticipantAgenda ? { pastDays: 1, futureDays: 3 } : undefined
         }
         compactCalendarSize={isSelfParticipantAgenda ? 'large' : 'normal'}
-        compactInitialScroll={isSelfParticipantAgenda ? 'start' : 'today'}
+        compactInitialScroll="today"
       />
     </main>
   );
