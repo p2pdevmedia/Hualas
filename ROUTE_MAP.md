@@ -13,6 +13,9 @@ Agents should check this before searching the codebase.
 - `/` → Home page
   - File: `src/app/page.tsx`
 
+- `/documental-pequenos-habitantes` → Documentary detail page for Pequeños habitantes de la tierra
+  - File: `src/app/documental-pequenos-habitantes/page.tsx`
+
 - `/contact` → Contact page
   - File: `src/app/contact/page.tsx`
   - Related component: `src/app/contact/contact-form.tsx`

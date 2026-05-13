@@ -51,6 +51,17 @@ const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
 const mapEmbedUrl =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47685.15!2d-71.3586!3d-40.1569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9610be21a87b3b29%3A0x3f3d5fc3f3da0c0!2sSan%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n!5e0!3m2!1ses!2sar!4v1';
 
+const documentaryDriveFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
+const documentaryDriveUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/view?usp=sharing`;
+const documentaryDriveEmbedUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/preview`;
+const documentaryThumbnailUrl = `https://drive.google.com/thumbnail?id=${documentaryDriveFileId}`;
+
+function documentaryPhotoStyle(size: number, gradient: string) {
+  return {
+    backgroundImage: `${gradient}, url('${documentaryThumbnailUrl}&sz=w${size}')`,
+  };
+}
+
 export default async function Home() {
   let activities: Awaited<
     ReturnType<typeof listActivitiesWithParticipantCount>
@@ -224,6 +235,87 @@ export default async function Home() {
                 </div>
               )}
             </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* Documental */}
+      <section className="border-t bg-gradient-to-br from-primary/10 via-background to-muted/40 px-4 py-14">
+        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Proyecto audiovisual
+              </p>
+              <h2 className="mt-2 font-heading text-3xl font-semibold sm:text-4xl">
+                Pequeños habitantes de la tierra
+              </h2>
+            </div>
+            <p className="text-base leading-7 text-muted-foreground">
+              Un documental del Club Hualas que invita a mirar la naturaleza con
+              ojos curiosos: las infancias, el territorio y la vida pequeña que
+              sostiene los paisajes de nuestra Patagonia.
+            </p>
+            <p className="text-base leading-7 text-muted-foreground">
+              La propuesta acompaña el trabajo educativo del club y comparte una
+              experiencia sensible para descubrir, cuidar y valorar el ambiente
+              que habitamos.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/documental-pequenos-habitantes"
+                className="inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                Conocer más
+              </Link>
+              <a
+                href={documentaryDriveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-md border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+              >
+                Abrir trailer
+              </a>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-xl border bg-black shadow-sm">
+              <iframe
+                title="Trailer de Pequeños habitantes de la tierra"
+                src={documentaryDriveEmbedUrl}
+                className="aspect-video w-full"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+            <div
+              className="grid grid-cols-3 gap-3"
+              aria-label="Fotos del documental"
+            >
+              <div
+                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
+                style={documentaryPhotoStyle(
+                  600,
+                  'linear-gradient(135deg, rgba(34,197,94,0.35), rgba(14,116,144,0.2))'
+                )}
+              />
+              <div
+                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
+                style={documentaryPhotoStyle(
+                  800,
+                  'linear-gradient(135deg, rgba(245,158,11,0.28), rgba(22,101,52,0.2))'
+                )}
+              />
+              <div
+                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
+                style={documentaryPhotoStyle(
+                  1000,
+                  'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(132,204,22,0.22))'
+                )}
+              />
+            </div>
           </div>
         </div>
       </section>
