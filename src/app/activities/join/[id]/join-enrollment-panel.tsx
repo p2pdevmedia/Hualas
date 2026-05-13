@@ -385,15 +385,20 @@ export default function JoinEnrollmentPanel({
         label: 'Para mí',
         birthDate: userBirthDate ?? null,
         photoUrl: userId ? `/api/users/${userId}/photo` : '',
+        missingFields: selfMissingFields ?? [],
       },
-      ...children.map((c) => ({
-        id: c.id,
-        label: [c.name, c.lastName].filter(Boolean).join(' '),
-        birthDate: c.birthDate,
-        photoUrl: `/api/children/${c.id}/photo`,
-      })),
+      ...children.map((c) => {
+        const parentMissingFields = !userPhone?.trim() ? ['tu teléfono'] : [];
+        return {
+          id: c.id,
+          label: [c.name, c.lastName].filter(Boolean).join(' '),
+          birthDate: c.birthDate,
+          photoUrl: `/api/children/${c.id}/photo`,
+          missingFields: [...getMissingChildFields(c), ...parentMissingFields],
+        };
+      }),
     ];
-  }, [session, children, userBirthDate, userId]);
+  }, [session, children, userBirthDate, userId, selfMissingFields, userPhone]);
 
   const effectivePersonId =
     people.length === 1 ? people[0].id : selectedPersonId;
@@ -509,31 +514,26 @@ export default function JoinEnrollmentPanel({
     !groupAgeError;
 
   const joinReturnTo = `/activities/join/${activity.id}`;
-  const missingProfileTargets = useMemo(() => {
-    if (!session) return [];
+  const missingProfileTarget = useMemo(() => {
+    if (!session || !effectivePersonId || missingFields.length === 0) {
+      return null;
+    }
 
-    const targets: Array<{ key: string; label: string; href: string }> = [];
-    if ((selfMissingFields?.length ?? 0) > 0) {
-      targets.push({
-        key: 'self',
+    if (effectivePersonId === 'self') {
+      return {
         label: 'tu perfil',
         href: `/profile?returnTo=${encodeURIComponent(joinReturnTo)}&onboarding=1`,
-      });
+      };
     }
 
-    for (const child of children) {
-      if (getMissingChildFields(child).length === 0) continue;
+    const child = children.find((c) => c.id === effectivePersonId);
+    if (!child) return null;
 
-      targets.push({
-        key: child.id,
-        label: `${child.name}${child.lastName ? ` ${child.lastName}` : ''}`,
-        href: `/profile/children/${child.id}/edit?returnTo=${encodeURIComponent(joinReturnTo)}`,
-      });
-    }
-
-    return targets;
-  }, [session, selfMissingFields, children, joinReturnTo]);
-  const firstMissingProfileTarget = missingProfileTargets[0] ?? null;
+    return {
+      label: `${child.name}${child.lastName ? ` ${child.lastName}` : ''}`,
+      href: `/profile/children/${child.id}/edit?returnTo=${encodeURIComponent(joinReturnTo)}`,
+    };
+  }, [session, effectivePersonId, missingFields, children, joinReturnTo]);
 
   const handleChildSaved = (updatedChild: Child) => {
     setChildren((currentChildren) =>
@@ -591,20 +591,19 @@ export default function JoinEnrollmentPanel({
           onSaved={handleChildSaved}
         />
       )}
-      {firstMissingProfileTarget && (
+      {missingProfileTarget && (
         <div className="sticky top-20 z-30 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <p className="font-semibold">Hay datos pendientes</p>
               <p>
-                Para completar inscripciones, actualizá los datos obligatorios
-                de{' '}
-                {missingProfileTargets.map((target) => target.label).join(', ')}
-                .
+                Para inscribir a {missingProfileTarget.label}, completá:{' '}
+                {missingFields.join(', ')}. Podés elegir otra persona con datos
+                completos y continuar con esa inscripción.
               </p>
             </div>
             <Link
-              href={firstMissingProfileTarget.href}
+              href={missingProfileTarget.href}
               prefetch={true}
               className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-amber-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
             >

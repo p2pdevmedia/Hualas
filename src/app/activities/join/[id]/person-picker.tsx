@@ -7,6 +7,7 @@ type PersonOption = {
   id: string;
   label: string;
   photoUrl: string;
+  missingFields?: string[];
 };
 
 export function Avatar({ src, name }: { src: string; name: string }) {
@@ -72,6 +73,11 @@ export default function PersonPicker({
               <span className={selected ? 'font-semibold' : 'font-medium'}>
                 {person.label}
               </span>
+              {(person.missingFields?.length ?? 0) > 0 && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                  Datos pendientes
+                </span>
+              )}
               {selected && (
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
               )}
