@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { MapPin, Navigation } from 'lucide-react';
+import { ClipboardList, MapPin, Navigation, Users, Wallet } from 'lucide-react';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
 import { authOptions } from '@/lib/auth';
@@ -48,6 +48,30 @@ const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
   TEMPORARY: 'Temporal',
   ANNUAL: 'Anual',
 };
+
+const professorWorkspaceLinks = [
+  {
+    href: '/my-activities',
+    label: 'Actividades',
+    description:
+      'Consultá tus actividades asignadas, días programados y asistencias.',
+    icon: ClipboardList,
+  },
+  {
+    href: '/professor/students',
+    label: 'Mis grupos',
+    description:
+      'Accedé a tus grupos, alumnos, fichas y seguimiento de cada participante.',
+    icon: Users,
+  },
+  {
+    href: '/my-payments',
+    label: 'Ingresos',
+    description:
+      'Revisá tus datos de pago, facturas cargadas e historial registrado.',
+    icon: Wallet,
+  },
+];
 
 async function hasAssignedMemberActivities(userId: string) {
   try {
@@ -142,8 +166,9 @@ export default async function Home() {
     })
   );
   const isLoggedIn = Boolean(session?.user);
-  const isMemberSession =
-    (session?.user.activeRole ?? session?.user.role) === 'MEMBER';
+  const activeRole = session?.user.activeRole ?? session?.user.role;
+  const isMemberSession = activeRole === 'MEMBER';
+  const isProfessorSession = activeRole === 'PROFESSOR';
   const showMemberSpace =
     isMemberSession && session?.user.id
       ? await hasAssignedMemberActivities(session.user.id)
@@ -154,49 +179,91 @@ export default async function Home() {
       {/* Divisor */}
       <div className="border-t border-border" />
 
-      {/* Quiénes somos */}
-      <section className="px-4 py-12">
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Club Hualas
-            </p>
-            <h1 className="font-heading text-4xl font-semibold leading-tight sm:text-5xl">
-              Quiénes somos
-            </h1>
-            <p className="max-w-3xl text-lg leading-8 text-muted-foreground">
-              Somos un club de San Martín de los Andes que acompaña a familias,
-              chicos y adultos en actividades de montaña, naturaleza y vida
-              comunitaria. Organizamos propuestas deportivas y recreativas con
-              profesores, salidas planificadas y un fuerte espíritu local.
-            </p>
-          </div>
-
-          {showMemberSpace || !isLoggedIn ? (
-            <div className="rounded-lg border bg-card p-6 shadow-sm">
+      {isProfessorSession ? (
+        <section className="px-4 py-12">
+          <div className="mx-auto max-w-5xl space-y-8">
+            <div className="max-w-3xl space-y-4">
               <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                {showMemberSpace ? 'Tu espacio' : 'Sumate'}
+                Profesor Hualas
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                {showMemberSpace
-                  ? 'Seguís tus actividades desde acá.'
-                  : 'Entrá al club y empezá a participar.'}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {showMemberSpace
-                  ? 'Revisá tus inscripciones, próximos encuentros y novedades vinculadas a tus grupos.'
-                  : 'Creá tu cuenta para anotarte en actividades, recibir novedades y gestionar tu perfil familiar.'}
+              <h1 className="font-heading text-4xl font-semibold leading-tight sm:text-5xl">
+                Tu espacio de trabajo
+              </h1>
+              <p className="text-lg leading-8 text-muted-foreground">
+                Un acceso rápido para organizar tu día en el club: revisá tus
+                actividades, acompañá a tus grupos y consultá tus ingresos desde
+                un solo lugar.
               </p>
-              <Link
-                href={showMemberSpace ? '/my-activities' : '/register'}
-                className="mt-5 inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-              >
-                {showMemberSpace ? 'Ir a mis actividades' : 'Ingresá al club'}
-              </Link>
             </div>
-          ) : null}
-        </div>
-      </section>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {professorWorkspaceLinks.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group rounded-lg border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                  >
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <h2 className="mt-4 text-xl font-semibold">{item.label}</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="px-4 py-12">
+          <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Club Hualas
+              </p>
+              <h1 className="font-heading text-4xl font-semibold leading-tight sm:text-5xl">
+                Quiénes somos
+              </h1>
+              <p className="max-w-3xl text-lg leading-8 text-muted-foreground">
+                Somos un club de San Martín de los Andes que acompaña a
+                familias, chicos y adultos en actividades de montaña, naturaleza
+                y vida comunitaria. Organizamos propuestas deportivas y
+                recreativas con profesores, salidas planificadas y un fuerte
+                espíritu local.
+              </p>
+            </div>
+
+            {showMemberSpace || !isLoggedIn ? (
+              <div className="rounded-lg border bg-card p-6 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                  {showMemberSpace ? 'Tu espacio' : 'Sumate'}
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">
+                  {showMemberSpace
+                    ? 'Seguís tus actividades desde acá.'
+                    : 'Entrá al club y empezá a participar.'}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  {showMemberSpace
+                    ? 'Revisá tus inscripciones, próximos encuentros y novedades vinculadas a tus grupos.'
+                    : 'Creá tu cuenta para anotarte en actividades, recibir novedades y gestionar tu perfil familiar.'}
+                </p>
+                <Link
+                  href={showMemberSpace ? '/my-activities' : '/register'}
+                  className="mt-5 inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                >
+                  {showMemberSpace ? 'Ir a mis actividades' : 'Ingresá al club'}
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      )}
 
       {/* Próximas actividades y noticias */}
       <section className="px-4 pb-14">
