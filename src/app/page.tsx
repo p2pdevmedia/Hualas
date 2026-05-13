@@ -76,14 +76,6 @@ const documentaryYoutubeUrl = `https://www.youtube.com/watch?v=${documentaryYout
 const documentaryYoutubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${documentaryYoutubeId}`;
 const documentaryPdfFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
 const documentaryPdfUrl = `https://drive.google.com/file/d/${documentaryPdfFileId}/view?usp=sharing`;
-const documentaryThumbnailUrl = `https://img.youtube.com/vi/${documentaryYoutubeId}/hqdefault.jpg`;
-
-function documentaryPhotoStyle(size: number, gradient: string) {
-  return {
-    backgroundImage: `${gradient}, url('${documentaryThumbnailUrl}?w=${size}')`,
-  };
-}
-
 export default async function Home() {
   let activities: Awaited<
     ReturnType<typeof listActivitiesWithParticipantCount>
@@ -311,43 +303,15 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-xl border bg-black shadow-sm">
-              <iframe
-                title="Trailer de Pequeños habitantes de la tierra"
-                src={documentaryYoutubeEmbedUrl}
-                className="aspect-video w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-              />
-            </div>
-            <div
-              className="grid grid-cols-3 gap-3"
-              aria-label="Fotos del documental"
-            >
-              <div
-                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
-                style={documentaryPhotoStyle(
-                  600,
-                  'linear-gradient(135deg, rgba(34,197,94,0.35), rgba(14,116,144,0.2))'
-                )}
-              />
-              <div
-                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
-                style={documentaryPhotoStyle(
-                  800,
-                  'linear-gradient(135deg, rgba(245,158,11,0.28), rgba(22,101,52,0.2))'
-                )}
-              />
-              <div
-                className="h-24 rounded-lg border bg-cover bg-center shadow-sm sm:h-28"
-                style={documentaryPhotoStyle(
-                  1000,
-                  'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(132,204,22,0.22))'
-                )}
-              />
-            </div>
+          <div className="overflow-hidden rounded-xl border bg-black shadow-sm">
+            <iframe
+              title="Trailer de Pequeños habitantes de la tierra"
+              src={documentaryYoutubeEmbedUrl}
+              className="aspect-video w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+            />
           </div>
         </div>
       </section>
