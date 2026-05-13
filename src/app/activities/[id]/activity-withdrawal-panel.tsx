@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const DEFAULT_WITHDRAWAL_RATING = 5;
+
 type Registration = {
   id: string;
   label: string;
@@ -33,7 +35,7 @@ export default function ActivityWithdrawalPanel({
 
   async function withdraw(participantId: string) {
     const note = notes[participantId]?.trim() ?? '';
-    const rating = ratings[participantId] ?? 0;
+    const rating = ratings[participantId] ?? DEFAULT_WITHDRAWAL_RATING;
 
     if (note.length < 50) {
       setError('La nota debe tener al menos 50 caracteres.');
@@ -85,7 +87,7 @@ export default function ActivityWithdrawalPanel({
           const isWritingFeedback = feedbackId === registration.id;
           const isSubmitting = submittingId === registration.id;
           const note = notes[registration.id] ?? '';
-          const rating = ratings[registration.id] ?? 0;
+          const rating = ratings[registration.id] ?? DEFAULT_WITHDRAWAL_RATING;
           const noteCharacters = note.trim().length;
 
           return (
