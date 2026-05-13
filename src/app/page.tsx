@@ -4,6 +4,7 @@ import { MapPin, Navigation } from 'lucide-react';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
 import { authOptions } from '@/lib/auth';
+import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { prisma } from '@/lib/prisma';
 import HomeActivitiesSlider, {
   type HomeActivitySlide,
@@ -47,6 +48,25 @@ const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
   TEMPORARY: 'Temporal',
   ANNUAL: 'Anual',
 };
+
+async function hasAssignedMemberActivities(userId: string) {
+  try {
+    const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
+    const activityCount = await prisma.activityParticipant.count({
+      where: {
+        status: 'ACTIVE',
+        OR: [
+          { userId },
+          { child: { userId: { in: accessibleChildOwnerIds } } },
+        ],
+      },
+    });
+
+    return activityCount > 0;
+  } catch {
+    return false;
+  }
+}
 
 const mapEmbedUrl =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47685.15!2d-71.3586!3d-40.1569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9610be21a87b3b29%3A0x3f3d5fc3f3da0c0!2sSan%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n!5e0!3m2!1ses!2sar!4v1';
@@ -128,6 +148,12 @@ export default async function Home() {
     })
   );
   const isLoggedIn = Boolean(session?.user);
+  const isMemberSession =
+    (session?.user.activeRole ?? session?.user.role) === 'MEMBER';
+  const showMemberSpace =
+    isMemberSession && session?.user.id
+      ? await hasAssignedMemberActivities(session.user.id)
+      : false;
 
   return (
     <>
@@ -152,27 +178,29 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              {isLoggedIn ? 'Tu espacio' : 'Sumate'}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">
-              {isLoggedIn
-                ? 'Seguís tus actividades desde acá.'
-                : 'Entrá al club y empezá a participar.'}
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {isLoggedIn
-                ? 'Revisá tus inscripciones, próximos encuentros y novedades vinculadas a tus grupos.'
-                : 'Creá tu cuenta para anotarte en actividades, recibir novedades y gestionar tu perfil familiar.'}
-            </p>
-            <Link
-              href={isLoggedIn ? '/my-activities' : '/register'}
-              className="mt-5 inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              {isLoggedIn ? 'Ir a mis actividades' : 'Ingresá al club'}
-            </Link>
-          </div>
+          {showMemberSpace || !isLoggedIn ? (
+            <div className="rounded-lg border bg-card p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                {showMemberSpace ? 'Tu espacio' : 'Sumate'}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                {showMemberSpace
+                  ? 'Seguís tus actividades desde acá.'
+                  : 'Entrá al club y empezá a participar.'}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {showMemberSpace
+                  ? 'Revisá tus inscripciones, próximos encuentros y novedades vinculadas a tus grupos.'
+                  : 'Creá tu cuenta para anotarte en actividades, recibir novedades y gestionar tu perfil familiar.'}
+              </p>
+              <Link
+                href={showMemberSpace ? '/my-activities' : '/register'}
+                className="mt-5 inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                {showMemberSpace ? 'Ir a mis actividades' : 'Ingresá al club'}
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
 
