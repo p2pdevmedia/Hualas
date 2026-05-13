@@ -1,16 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { DocumentaryBookViewer } from './documentary-book-viewer';
 
 const documentaryDriveFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
 const documentaryDriveUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/view?usp=sharing`;
 const documentaryDriveEmbedUrl = `https://drive.google.com/file/d/${documentaryDriveFileId}/preview`;
-const documentaryThumbnailUrl = `https://drive.google.com/thumbnail?id=${documentaryDriveFileId}`;
-
-function documentaryPhotoStyle(size: number, gradient: string) {
-  return {
-    backgroundImage: `${gradient}, url('${documentaryThumbnailUrl}&sz=w${size}')`,
-  };
-}
+const documentaryPdfProxyUrl = '/api/documental-pequenos-habitantes/pdf';
 
 export default function DocumentaryPage() {
   return (
@@ -43,7 +38,7 @@ export default function DocumentaryPage() {
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
-              Ver trailer en Drive
+              Abrir PDF en Drive
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           </div>
@@ -93,34 +88,7 @@ export default function DocumentaryPage() {
           </article>
         </section>
 
-        <section className="rounded-xl border bg-muted/30 p-5 shadow-sm">
-          <div
-            className="grid gap-3 sm:grid-cols-3"
-            aria-label="Fotos del documental"
-          >
-            <div
-              className="h-40 rounded-lg border bg-cover bg-center"
-              style={documentaryPhotoStyle(
-                700,
-                'linear-gradient(135deg, rgba(34,197,94,0.35), rgba(14,116,144,0.2))'
-              )}
-            />
-            <div
-              className="h-40 rounded-lg border bg-cover bg-center"
-              style={documentaryPhotoStyle(
-                900,
-                'linear-gradient(135deg, rgba(245,158,11,0.28), rgba(22,101,52,0.2))'
-              )}
-            />
-            <div
-              className="h-40 rounded-lg border bg-cover bg-center"
-              style={documentaryPhotoStyle(
-                1100,
-                'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(132,204,22,0.22))'
-              )}
-            />
-          </div>
-        </section>
+        <DocumentaryBookViewer pdfUrl={documentaryPdfProxyUrl} />
       </div>
     </main>
   );
