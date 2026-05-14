@@ -29,7 +29,8 @@ export default async function ManualPaymentsPage({
   const status =
     searchParams.status === 'PENDING' ||
     searchParams.status === 'APPROVED' ||
-    searchParams.status === 'REJECTED'
+    searchParams.status === 'REJECTED' ||
+    searchParams.status === 'CANCELLED'
       ? searchParams.status
       : null;
   const q = searchParams.q?.trim() ?? '';
@@ -62,6 +63,7 @@ export default async function ManualPaymentsPage({
             <option value="PENDING">Pendientes</option>
             <option value="APPROVED">Aprobados</option>
             <option value="REJECTED">Rechazados</option>
+            <option value="CANCELLED">Cancelados</option>
           </select>
         </label>
         <label className="space-y-1 text-sm">

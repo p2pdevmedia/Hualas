@@ -22,6 +22,10 @@ import {
   buildManualPaymentReceiptUrl,
 } from '@/lib/blob-urls';
 import { matchesAccountingSearch } from '@/lib/accounting-search';
+import {
+  buildManualPaymentHistoryActionHref,
+  manualPaymentHistoryStatusLabel,
+} from '@/lib/accounting-manual-payment-history';
 import MonthCloseButton from './month-close-button';
 
 function startOfMonth(date: Date) {
@@ -45,6 +49,7 @@ type RecentAccountingEntry = {
   actionLabel: string;
   actionHref: string;
   personHref?: string | null;
+  paymentStatus?: string | null;
 };
 
 export default async function AccountingDashboardPage({
@@ -64,6 +69,7 @@ export default async function AccountingDashboardPage({
     recentMovements,
     monthPayments,
     approvedManualPayments,
+    recentManualPayments,
     verifiedManualPaymentsCount,
     pendingManualPaymentsCount,
     monthProfessorPayments,
@@ -112,6 +118,31 @@ export default async function AccountingDashboardPage({
         id: true,
         amount: true,
         payerName: true,
+        receiptUrl: true,
+        order: {
+          select: {
+            responsibleUserId: true,
+            responsibleName: true,
+            total: true,
+          },
+        },
+        paidAt: true,
+        updatedAt: true,
+        createdAt: true,
+      },
+    }),
+    prisma.payment.findMany({
+      where: {
+        provider: 'MANUAL_TRANSFER',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        payerName: true,
+        payerEmail: true,
         receiptUrl: true,
         order: {
           select: {
@@ -201,7 +232,7 @@ export default async function AccountingDashboardPage({
       actionHref: `/accounting/movements/${movement.id}/edit`,
     })
   );
-  const recentManualPaymentEntries = approvedManualPayments.reduce<
+  const recentManualPaymentEntries = recentManualPayments.reduce<
     RecentAccountingEntry[]
   >((entries, payment) => {
     const paymentDate = getAccountingPaymentDate(payment);
@@ -221,10 +252,18 @@ export default async function AccountingDashboardPage({
         ? buildManualPaymentReceiptUrl(payment.id)
         : null,
       actionLabel: 'Revisar',
-      actionHref: '/accounting/manual-payments?status=PENDING',
+      actionHref: buildManualPaymentHistoryActionHref({
+        status: payment.status,
+        search:
+          payment.payerEmail ??
+          payment.payerName ??
+          payment.order.responsibleName ??
+          '',
+      }),
       personHref: payment.order.responsibleUserId
         ? getAccountingUserProfileHref(payment.order.responsibleUserId)
         : null,
+      paymentStatus: payment.status,
     });
 
     return entries;
@@ -353,8 +392,8 @@ export default async function AccountingDashboardPage({
                 Movimientos
               </h2>
               <p className="text-sm text-muted-foreground">
-                Movimientos manuales, pagos manuales aprobados y pagos MP en una
-                sola vista.
+                Movimientos manuales, pagos manuales y pagos MP en una sola
+                vista.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -426,12 +465,23 @@ export default async function AccountingDashboardPage({
                       </td>
                       <td className="py-3 pr-4">{entry.category}</td>
                       <td className="py-3 pr-4">
-                        <PersonLink
-                          href={entry.personHref}
-                          className="text-link hover:underline"
-                        >
-                          {entry.description}
-                        </PersonLink>
+                        <div className="space-y-1">
+                          <PersonLink
+                            href={entry.personHref}
+                            className="text-link hover:underline"
+                          >
+                            {entry.description}
+                          </PersonLink>
+                          {entry.origin === 'MANUAL_PAYMENT' &&
+                            entry.paymentStatus && (
+                              <p className="text-xs text-muted-foreground">
+                                Estado:{' '}
+                                {manualPaymentHistoryStatusLabel(
+                                  entry.paymentStatus
+                                )}
+                              </p>
+                            )}
+                        </div>
                       </td>
                       <td className="py-3 pr-4 font-medium">
                         {formatAmount(entry.amount)}

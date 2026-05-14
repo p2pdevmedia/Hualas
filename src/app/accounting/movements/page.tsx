@@ -17,6 +17,10 @@ import {
   buildManualPaymentReceiptUrl,
 } from '@/lib/blob-urls';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
+import {
+  buildManualPaymentHistoryActionHref,
+  manualPaymentHistoryStatusLabel,
+} from '@/lib/accounting-manual-payment-history';
 import MovementTabs from './movement-tabs';
 
 const PAGE_SIZE = 20;
@@ -52,6 +56,7 @@ type HistoryRow = {
   amount: number;
   receiptNumber: string | null;
   receiptLabel: string | null;
+  paymentStatus: string | null;
   personName: string | null;
   personEmail: string | null;
   personHref: string | null;
@@ -124,6 +129,7 @@ export default async function MovementsPage({
           WHEN m."receiptNumber" IS NOT NULL THEN m."receiptNumber"
           ELSE NULL
         END AS "receiptLabel",
+        NULL::text AS "paymentStatus",
         concat_ws(' ', u."name", u."lastName") AS "personName",
         u."email" AS "personEmail",
         '/admin/users/' || u."id" || '/view' AS "personHref"
@@ -147,6 +153,7 @@ export default async function MovementsPage({
           WHEN p."receiptUrl" IS NOT NULL THEN 'Ver'
           ELSE NULL
         END AS "receiptLabel",
+        p."status"::text AS "paymentStatus",
         COALESCE(concat_ws(' ', ru."name", ru."lastName"), o."responsibleName") AS "personName",
         ru."email" AS "personEmail",
         CASE
@@ -157,7 +164,7 @@ export default async function MovementsPage({
       FROM "Payment" p
       JOIN "Order" o ON o."id" = p."orderId"
       LEFT JOIN "User" ru ON ru."id" = o."responsibleUserId"
-      WHERE p."provider" = 'MANUAL_TRANSFER' AND p."status" = 'APPROVED'
+      WHERE p."provider" = 'MANUAL_TRANSFER'
     `,
     Prisma.sql`
       SELECT
@@ -173,6 +180,7 @@ export default async function MovementsPage({
           WHEN ap."receipt" IS NOT NULL THEN ap."receipt"
           ELSE NULL
         END AS "receiptLabel",
+        NULL::text AS "paymentStatus",
         CASE
           WHEN c."id" IS NOT NULL THEN concat_ws(' ', c."name", c."lastName")
           ELSE concat_ws(' ', u."name", u."lastName")
@@ -247,9 +255,10 @@ export default async function MovementsPage({
           : null;
     } else if (entry.origin === 'MANUAL_PAYMENT') {
       actionLabel = 'Revisar';
-      actionHref = `/accounting/manual-payments?status=PENDING&q=${encodeURIComponent(
-        entry.personName ?? entry.description
-      )}`;
+      actionHref = buildManualPaymentHistoryActionHref({
+        status: entry.paymentStatus ?? 'PENDING',
+        search: entry.personEmail ?? entry.personName ?? entry.description,
+      });
       receiptHref =
         entry.receiptLabel === 'Ver'
           ? buildManualPaymentReceiptUrl(entry.id)
@@ -277,8 +286,8 @@ export default async function MovementsPage({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Movimientos</h2>
           <p className="text-sm text-muted-foreground">
-            Histórico completo de movimientos manuales, pagos manuales aprobados
-            y pagos de Mercado Pago.
+            Histórico completo de movimientos manuales, pagos manuales y pagos
+            de Mercado Pago.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -420,6 +429,15 @@ export default async function MovementsPage({
                       <p className="font-medium text-foreground">
                         {entry.description}
                       </p>
+                      {entry.origin === 'MANUAL_PAYMENT' &&
+                        entry.paymentStatus && (
+                          <p className="text-xs text-muted-foreground">
+                            Estado:{' '}
+                            {manualPaymentHistoryStatusLabel(
+                              entry.paymentStatus
+                            )}
+                          </p>
+                        )}
                       {entry.receiptNumber && entry.origin === 'MOVEMENT' && (
                         <p className="text-xs text-muted-foreground">
                           Recibo: {entry.receiptNumber}

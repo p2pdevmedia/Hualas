@@ -18,7 +18,8 @@ export async function GET(request: Request) {
   const status =
     statusParam === 'PENDING' ||
     statusParam === 'APPROVED' ||
-    statusParam === 'REJECTED'
+    statusParam === 'REJECTED' ||
+    statusParam === 'CANCELLED'
       ? statusParam
       : null;
 
