@@ -4,8 +4,8 @@
   "private": true,
   "packageManager": "pnpm@8.15.4",
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "dev": "node scripts/copy-pdf-worker.mjs && next dev",
+    "build": "node scripts/copy-pdf-worker.mjs && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",

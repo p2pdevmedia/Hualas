@@ -14,10 +14,7 @@ import {
   useState,
 } from 'react';
 
-GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 const pageGap = 28;
 const pageWidth = 360;

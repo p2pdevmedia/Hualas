@@ -11,8 +11,9 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 ## Deployment
 
-- The production build applies pending Prisma migrations first with `pnpm db:migrate:deploy`.
-- Make sure `DATABASE_URL` points to the target production database before deploying.
+- The production build generates Prisma Client and compiles Next.js.
+- Apply pending Prisma migrations separately with `pnpm db:migrate:deploy` before or after deploy, using the intended target database.
+- Make sure `DATABASE_URL` points to the target database when running migrations.
 - If a deployment is already serving an older schema, run `pnpm db:migrate:deploy` once against that database and redeploy.
 
 ## Google OAuth on Vercel
