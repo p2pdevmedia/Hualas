@@ -150,8 +150,9 @@ Agents should check this before searching the codebase.
   - File: `src/app/accounting/reports/page.tsx`
   - Related client: `src/app/accounting/reports/reports-client.tsx`
 
-- `/my-payments` → Professor self-view of banking data and payment history (read-only)
+- `/my-payments` → Professor self-view of banking data, editable own banking tab, invoices, and payment history
   - File: `src/app/my-payments/page.tsx`
+  - Related client: `src/app/my-payments/my-payments-client.tsx`
 
 ### Admin
 
@@ -385,7 +386,7 @@ Agents should check this before searching the codebase.
 - `GET /api/professors/[id]/profile` → get professor banking/salary profile
   - File: `src/app/api/professors/[id]/profile/route.ts`
 
-- `PUT /api/professors/[id]/profile` → upsert professor profile (COUNTER/ADMIN only)
+- `PUT /api/professors/[id]/profile` → upsert professor profile (COUNTER/ADMIN can edit salary/banking/notes; professor self can edit own banking data)
   - File: `src/app/api/professors/[id]/profile/route.ts`
 
 - `GET /api/professors/[id]/payments` → list professor payments
