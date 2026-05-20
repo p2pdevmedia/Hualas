@@ -37,6 +37,9 @@ type AnnualScheduleDraft = {
   schedule: string;
   groupId: string;
   professorIds: string[];
+  description: string;
+  geoLocation: string;
+  sportIcon: string;
 };
 
 type AnnualSharedDraft = {
@@ -76,7 +79,13 @@ interface EditActivityFormProps {
     professorIds: string[];
   };
   annualDefaults?: AnnualSharedDraft;
-  initialAnnualSchedules?: Omit<AnnualScheduleDraft, 'tempId'>[];
+  initialAnnualSchedules?: Array<
+    Omit<AnnualScheduleDraft, 'tempId' | 'description' | 'geoLocation' | 'sportIcon'> & {
+      description?: string;
+      geoLocation?: string;
+      sportIcon?: string;
+    }
+  >;
   professors: ProfessorOption[];
   initialGroups: ExistingGroup[];
   existingDayCount: number;
@@ -89,6 +98,9 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     schedule: '',
     groupId: '',
     professorIds: [],
+    description: '',
+    geoLocation: '',
+    sportIcon: '',
   };
 }
 
@@ -115,6 +127,9 @@ export default function EditActivityForm({
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     initialAnnualSchedules.map((draft) => ({
       ...draft,
+      description: draft.description ?? '',
+      geoLocation: draft.geoLocation ?? '',
+      sportIcon: draft.sportIcon ?? '',
       tempId: crypto.randomUUID(),
     }))
   );
@@ -342,6 +357,9 @@ export default function EditActivityForm({
               schedule: d.schedule.trim(),
               groupId: d.groupId || undefined,
               professorIds: d.professorIds,
+              description: d.description.trim() || undefined,
+              geoLocation: d.geoLocation.trim() || undefined,
+              sportIcon: d.sportIcon || undefined,
             }))
           : [];
 
@@ -781,6 +799,44 @@ export default function EditActivityForm({
                               }
                               className={inputClass}
                             />
+                            <input
+                              type="text"
+                              placeholder="Lugar"
+                              value={draft.geoLocation}
+                              onChange={(e) =>
+                                updateScheduleDraft(draft.tempId, {
+                                  geoLocation: e.target.value,
+                                })
+                              }
+                              className={inputClass}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Materiales"
+                              value={draft.description}
+                              onChange={(e) =>
+                                updateScheduleDraft(draft.tempId, {
+                                  description: e.target.value,
+                                })
+                              }
+                              className={inputClass}
+                            />
+                            <select
+                              value={draft.sportIcon}
+                              onChange={(e) =>
+                                updateScheduleDraft(draft.tempId, {
+                                  sportIcon: e.target.value,
+                                })
+                              }
+                              className={inputClass}
+                            >
+                              <option value="">Deporte compartido</option>
+                              {SPORT_ICONS.map((icon) => (
+                                <option key={icon.file} value={icon.file}>
+                                  {icon.label}
+                                </option>
+                              ))}
+                            </select>
                             <select
                               value={draft.groupId}
                               onChange={(e) =>
