@@ -98,6 +98,7 @@ export default function BulkSessionCreator({
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [professorIds, setProfessorIds] =
     useState<string[]>(defaultProfessorIds);
+  const ALL_GROUPS_VALUE = '__all_groups__';
   const [activityGroupId, setActivityGroupId] = useState<string | null>(null);
   const [sportIcon, setSportIcon] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -172,26 +173,33 @@ export default function BulkSessionCreator({
     const dates = Array.from(selectedDates).sort();
     let failCount = 0;
 
+    const targetGroupIds =
+      activityGroupId === ALL_GROUPS_VALUE
+        ? groups.map((group) => group.id)
+        : [activityGroupId];
+
     for (const dateStr of dates) {
-      try {
-        const res = await fetch(`/api/activities/${activityId}/days`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: dateStr,
-            schedule: schedule.trim(),
-            description: description.trim() || undefined,
-            geoLocation: geoLocation.trim(),
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
-            professorIds,
-            activityGroupId,
-            sportIcon: sportIcon || null,
-          }),
-        });
-        if (!res.ok) failCount++;
-      } catch {
-        failCount++;
+      for (const targetGroupId of targetGroupIds) {
+        try {
+          const res = await fetch(`/api/activities/${activityId}/days`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: dateStr,
+              schedule: schedule.trim(),
+              description: description.trim() || undefined,
+              geoLocation: geoLocation.trim(),
+              latitude: coordinates.latitude,
+              longitude: coordinates.longitude,
+              professorIds,
+              activityGroupId: targetGroupId,
+              sportIcon: sportIcon || null,
+            }),
+          });
+          if (!res.ok) failCount++;
+        } catch {
+          failCount++;
+        }
       }
     }
 
@@ -398,6 +406,7 @@ export default function BulkSessionCreator({
                   className={inputClass}
                 >
                   <option value="">Sin restricción de grupo</option>
+                  <option value={ALL_GROUPS_VALUE}>Todos los grupos</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
