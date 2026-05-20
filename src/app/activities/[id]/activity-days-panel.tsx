@@ -1,13 +1,25 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ChevronDown } from 'lucide-react';
+import { CalendarDays, ChevronDown, MapPin, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BulkSessionCreator from './bulk-session-creator';
 import ActivityCalendar, {
   type CalendarActivityDay,
 } from '@/app/my-activities/activity-calendar';
+import { SPORT_ICONS } from '@/lib/sport-icons';
+
+const LocationMapPicker = dynamic(() => import('../location-map-picker'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-56 items-center justify-center rounded-lg border bg-muted/20 text-sm text-muted-foreground">
+      Cargando mapa...
+    </div>
+  ),
+});
 
 type ProfessorOption = {
   id: string;
@@ -89,6 +101,15 @@ export default function ActivityDaysPanel({
   const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingDayId, setEditingDayId] = useState<string | null>(null);
+  const [quickSportIcon, setQuickSportIcon] = useState<string | null>(null);
+  const [quickGeoLocation, setQuickGeoLocation] = useState('');
+  const [quickCoordinates, setQuickCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [quickSaving, setQuickSaving] = useState(false);
+  const [quickError, setQuickError] = useState<string | null>(null);
   const capacity =
     groups.length === 0 || groups.some((group) => group.capacity == null)
       ? null
@@ -188,6 +209,78 @@ export default function ActivityDaysPanel({
     }
   };
 
+  const editingDay = editingDayId
+    ? (days.find((day) => day.id === editingDayId) ?? null)
+    : null;
+
+  const openQuickEditor = (day: ActivityDay) => {
+    setEditingDayId(day.id);
+    setQuickSportIcon(day.sportIcon);
+    setQuickGeoLocation(day.geoLocation);
+    if (day.latitude != null && day.longitude != null) {
+      setQuickCoordinates({ latitude: day.latitude, longitude: day.longitude });
+    } else {
+      setQuickCoordinates(null);
+    }
+    setQuickError(null);
+  };
+
+  const closeQuickEditor = () => {
+    if (quickSaving) return;
+    setEditingDayId(null);
+    setQuickError(null);
+  };
+
+  const handleQuickSave = async () => {
+    if (!editingDay) return;
+    if (!quickGeoLocation.trim()) {
+      setQuickError('Completá la ubicación.');
+      return;
+    }
+    if (!quickCoordinates) {
+      setQuickError('Seleccioná un punto en el mapa.');
+      return;
+    }
+
+    try {
+      setQuickSaving(true);
+      setQuickError(null);
+      const response = await fetch(`/api/activity-days/${editingDay.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: editingDay.date.slice(0, 10),
+          schedule: editingDay.schedule,
+          description: editingDay.description ?? undefined,
+          geoLocation: quickGeoLocation.trim(),
+          latitude: quickCoordinates.latitude,
+          longitude: quickCoordinates.longitude,
+          professorIds: editingDay.assignedProfessors.map(
+            (professor) => professor.id
+          ),
+          activityGroupId: editingDay.activityGroupId,
+          sportIcon: quickSportIcon,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? 'No se pudieron guardar los cambios');
+      }
+
+      setEditingDayId(null);
+      router.refresh();
+    } catch (error) {
+      setQuickError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron guardar los cambios'
+      );
+    } finally {
+      setQuickSaving(false);
+    }
+  };
+
   const weeklyGrid = weekdayLabels.map((weekdayLabel, weekdayIndex) => {
     const perGroup = groups.map((group) => {
       const match = days.find((day) => {
@@ -215,6 +308,96 @@ export default function ActivityDaysPanel({
           onClose={() => setShowBulkCreator(false)}
         />
       )}
+
+      {editingDay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl rounded-xl bg-background p-4 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="font-semibold">
+                Editar deporte y punto de encuentro
+              </h4>
+              <button
+                type="button"
+                onClick={closeQuickEditor}
+                className="text-muted-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              {new Date(editingDay.date).toLocaleDateString('es-AR')} ·{' '}
+              {editingDay.activityGroup?.name ?? 'Sin grupo'}{' '}
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium">Lugar</label>
+                <input
+                  value={quickGeoLocation}
+                  onChange={(e) => setQuickGeoLocation(e.target.value)}
+                  className="mb-3 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  placeholder="Nombre o referencia del lugar"
+                />
+                <label className="mb-2 block text-sm font-medium">
+                  Deporte
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {SPORT_ICONS.map((icon) => (
+                    <button
+                      key={icon.file}
+                      type="button"
+                      onClick={() =>
+                        setQuickSportIcon((prev) =>
+                          prev === icon.file ? null : icon.file
+                        )
+                      }
+                      className={`rounded-md border p-1 text-[11px] ${quickSportIcon === icon.file ? 'border-primary bg-primary/10' : 'border-border'}`}
+                    >
+                      <Image
+                        src={`/icons/${icon.file}`}
+                        alt={icon.label}
+                        width={28}
+                        height={28}
+                        className="mx-auto h-7 w-7 object-contain"
+                      />
+                      <span>{icon.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                  <MapPin className="h-4 w-4" /> Punto en mapa
+                </div>
+                <LocationMapPicker
+                  value={quickCoordinates}
+                  onChange={setQuickCoordinates}
+                />
+              </div>
+            </div>
+            {quickError && (
+              <p className="mt-2 text-sm text-destructive">{quickError}</p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeQuickEditor}
+                disabled={quickSaving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleQuickSave()}
+                disabled={quickSaving}
+              >
+                {quickSaving ? 'Guardando…' : 'Guardar cambios'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -402,24 +585,37 @@ export default function ActivityDaysPanel({
                               </p>
                               <p>
                                 <span className="font-medium">Deporte:</span>{' '}
-                                {day.sportIcon || 'Sin definir'}
+                                {SPORT_ICONS.find(
+                                  (icon) => icon.file === day.sportIcon
+                                )?.label ?? 'Sin definir'}
                               </p>
                               <p>
                                 <span className="font-medium">Materiales:</span>{' '}
                                 {day.description || 'Sin definir'}
                               </p>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="px-3 py-1 text-xs"
-                                onClick={() =>
-                                  router.push(
-                                    `/activities/${activityId}/days/${day.id}/edit`
-                                  )
-                                }
-                              >
-                                Editar
-                              </Button>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="px-3 py-1 text-xs"
+                                  onClick={() => openQuickEditor(day)}
+                                >
+                                  <PencilLine className="mr-1 h-3.5 w-3.5" />
+                                  Editar deporte y punto
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="px-3 py-1 text-xs"
+                                  onClick={() =>
+                                    router.push(
+                                      `/activities/${activityId}/days/${day.id}/edit`
+                                    )
+                                  }
+                                >
+                                  Editar sesión completa
+                                </Button>
+                              </div>
                             </div>
                           ) : (
                             <p className="text-muted-foreground">
