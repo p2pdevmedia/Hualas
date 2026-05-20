@@ -333,7 +333,7 @@ export default function JoinEnrollmentPanel({
     id: string;
     name: string;
     price: number;
-    activityType: 'ANNUAL' | 'TEMPORARY';
+    activityType: 'ANNUAL' | 'TEMPORARY' | 'EVENTUAL';
   };
   groups: Group[];
   sessions: Session[];
@@ -417,7 +417,7 @@ export default function JoinEnrollmentPanel({
     [eligibleGroups]
   );
   const eligibleSessions = useMemo(() => {
-    if (activity.activityType === 'TEMPORARY') {
+    if (activity.activityType !== 'ANNUAL') {
       return sessions.filter(
         (activitySession) =>
           !activitySession.activityGroupId ||
@@ -436,7 +436,7 @@ export default function JoinEnrollmentPanel({
       (activitySession) => activitySession.id === selectedActivityDayId
     ) ?? null;
   const effectiveGroupId =
-    activity.activityType === 'TEMPORARY'
+    activity.activityType !== 'ANNUAL'
       ? (selectedActivityDay?.activityGroupId ?? selectedGroupId)
       : selectedGroupId;
   const selectedGroup = groups.find((g) => g.id === effectiveGroupId);
@@ -496,7 +496,7 @@ export default function JoinEnrollmentPanel({
     session && people.length > 1 && !selectedPersonId
   );
   const needsSessionSelection =
-    activity.activityType === 'TEMPORARY' &&
+    activity.activityType !== 'ANNUAL' &&
     eligibleSessions.length > 0 &&
     !selectedActivityDayId;
   const needsGroupSelection =
@@ -560,11 +560,11 @@ export default function JoinEnrollmentPanel({
       groupId: effectiveGroupId || undefined,
       groupName: selectedGroup?.name,
       activityDayId:
-        activity.activityType === 'TEMPORARY'
+        activity.activityType !== 'ANNUAL'
           ? selectedActivityDayId || undefined
           : undefined,
       activityDayLabel:
-        activity.activityType === 'TEMPORARY'
+        activity.activityType !== 'ANNUAL'
           ? formatSessionLabel(selectedActivityDay)
           : undefined,
     };
@@ -624,7 +624,7 @@ export default function JoinEnrollmentPanel({
       )}
 
       {(groups.length > 0 ||
-        (activity.activityType === 'TEMPORARY' && sessions.length > 0)) && (
+        (activity.activityType !== 'ANNUAL' && sessions.length > 0)) && (
         <div className="lg:col-span-2">
           <GroupScheduleCalendar
             activityType={activity.activityType}

@@ -84,9 +84,9 @@ export default function CreateActivityForm({
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [activityType, setActivityType] = useState<'TEMPORARY' | 'ANNUAL'>(
-    'TEMPORARY'
-  );
+  const [activityType, setActivityType] = useState<
+    'TEMPORARY' | 'EVENTUAL' | 'ANNUAL'
+  >('TEMPORARY');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [professorIds, setProfessorIds] = useState<string[]>([]);
@@ -356,11 +356,14 @@ export default function CreateActivityForm({
         <select
           value={activityType}
           onChange={(e) =>
-            setActivityType(e.target.value as 'TEMPORARY' | 'ANNUAL')
+            setActivityType(
+              e.target.value as 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL'
+            )
           }
           className={inputClass}
         >
           <option value="TEMPORARY">Temporal</option>
+          <option value="EVENTUAL">Eventual</option>
           <option value="ANNUAL">Anual</option>
         </select>
       </div>

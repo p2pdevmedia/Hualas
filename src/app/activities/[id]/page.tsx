@@ -392,8 +392,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const isParticipantInActivity = registrations.length > 0;
   const canSeeSessions = isAdmin || isProfessor || isParticipantInActivity;
   const hideSessionDetails = activity.activityType === 'ANNUAL';
-  const hideSessionList =
-    activity.activityType === 'ANNUAL' || activity.activityType === 'TEMPORARY';
+  const hideSessionList = true;
   const activityListHref = isParticipantInActivity
     ? '/my-activities'
     : '/activities';

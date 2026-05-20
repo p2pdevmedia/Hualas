@@ -741,6 +741,7 @@ enum ActivityMediaType {
 
 enum ActivityType {
   TEMPORARY
+  EVENTUAL
   ANNUAL
 }
 

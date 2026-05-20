@@ -44,10 +44,12 @@ function summarizeText(text: string, maxLength = 155) {
     : cleanText;
 }
 
-const activityTypeLabels: Record<'TEMPORARY' | 'ANNUAL', string> = {
-  TEMPORARY: 'Temporal',
-  ANNUAL: 'Anual',
-};
+const activityTypeLabels: Record<'TEMPORARY' | 'EVENTUAL' | 'ANNUAL', string> =
+  {
+    TEMPORARY: 'Temporal',
+    EVENTUAL: 'Eventual',
+    ANNUAL: 'Anual',
+  };
 
 const professorWorkspaceLinks = [
   {

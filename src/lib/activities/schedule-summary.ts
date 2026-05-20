@@ -1,4 +1,4 @@
-export type ActivityScheduleSummaryType = 'TEMPORARY' | 'ANNUAL';
+export type ActivityScheduleSummaryType = 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL';
 
 export type ActivityScheduleDay = {
   id: string;

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 
-export type ActivityType = 'TEMPORARY' | 'ANNUAL';
+export type ActivityType = 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL';
 
 export type ActivityBaseRecord = {
   id: string;

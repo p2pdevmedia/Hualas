@@ -8,7 +8,7 @@ import { formatAmount } from '@/lib/accounting';
 type ActivityItem = {
   id: string;
   name: string;
-  activityType: 'TEMPORARY' | 'ANNUAL';
+  activityType: 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL';
   date: string;
   endDate: string;
   price: number;
