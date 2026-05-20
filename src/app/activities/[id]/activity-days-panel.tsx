@@ -3,11 +3,14 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import BulkSessionCreator from './bulk-session-creator';
 import ActivityCalendar, {
   type CalendarActivityDay,
 } from '@/app/my-activities/activity-calendar';
+import { SPORT_ICONS } from '@/lib/sport-icons';
 
 type ProfessorOption = {
   id: string;
@@ -56,6 +59,20 @@ type ActivityDay = {
   pickupNotices: unknown[];
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+const LocationMapPicker = dynamic(() => import('../location-map-picker'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-72 items-center justify-center rounded-lg border bg-muted/20 text-sm text-muted-foreground">
+      Cargando mapa...
+    </div>
+  ),
+});
+
 interface ActivityDaysPanelProps {
   activityId: string;
   isTemporaryActivity: boolean;
@@ -88,6 +105,15 @@ export default function ActivityDaysPanel({
   const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [hideEmptyWeekdays, setHideEmptyWeekdays] = useState(true);
+  const [editingDayId, setEditingDayId] = useState<string | null>(null);
+  const [draftGeoLocation, setDraftGeoLocation] = useState('');
+  const [draftSportIcon, setDraftSportIcon] = useState<string | null>(null);
+  const [draftCoordinates, setDraftCoordinates] = useState<Coordinates | null>(
+    null
+  );
+  const [isSavingInline, setIsSavingInline] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
   const capacity =
     groups.length === 0 || groups.some((group) => group.capacity == null)
       ? null
@@ -201,6 +227,63 @@ export default function ActivityDaysPanel({
       perGroup,
     };
   });
+  const weeklyGridRows = hideEmptyWeekdays
+    ? weeklyGrid.filter((row) => row.perGroup.some((item) => item.day !== null))
+    : weeklyGrid;
+
+  const startInlineEdit = (day: ActivityDay) => {
+    setEditingDayId(day.id);
+    setDraftGeoLocation(day.geoLocation);
+    setDraftSportIcon(day.sportIcon);
+    setDraftCoordinates(
+      day.latitude != null && day.longitude != null
+        ? { latitude: day.latitude, longitude: day.longitude }
+        : null
+    );
+    setInlineError(null);
+  };
+
+  const saveInlineEdit = async () => {
+    if (!editingDayId || !draftCoordinates) {
+      setInlineError('Elegí un punto en el mapa para guardar.');
+      return;
+    }
+    setIsSavingInline(true);
+    setInlineError(null);
+    try {
+      const day = days.find((item) => item.id === editingDayId);
+      if (!day) throw new Error('No se encontró la sesión seleccionada.');
+
+      const res = await fetch(`/api/activity-days/${editingDayId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: day.date.slice(0, 10),
+          schedule: day.schedule,
+          description: day.description ?? undefined,
+          geoLocation: draftGeoLocation,
+          latitude: draftCoordinates.latitude,
+          longitude: draftCoordinates.longitude,
+          professorIds: day.assignedProfessors.map((professor) => professor.id),
+          activityGroupId: day.activityGroupId,
+          sportIcon: draftSportIcon,
+        }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error ?? 'No se pudo actualizar la sesión');
+      }
+      setEditingDayId(null);
+      router.refresh();
+    } catch (error) {
+      setInlineError(
+        error instanceof Error ? error.message : 'No se pudo guardar'
+      );
+    } finally {
+      setIsSavingInline(false);
+    }
+  };
 
   return (
     <>
@@ -355,6 +438,14 @@ export default function ActivityDaysPanel({
               Definí por grupo y día el lugar, deporte y materiales desde cada
               sesión.
             </p>
+            <label className="mt-3 inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={hideEmptyWeekdays}
+                onChange={(e) => setHideEmptyWeekdays(e.target.checked)}
+              />
+              Ocultar días sin actividad
+            </label>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[800px] border-collapse text-sm">
                 <thead>
@@ -371,7 +462,7 @@ export default function ActivityDaysPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {weeklyGrid.map((row) => (
+                  {weeklyGridRows.map((row) => (
                     <tr key={row.weekdayLabel}>
                       <td className="border p-2 font-medium">
                         {row.weekdayLabel}
@@ -396,13 +487,9 @@ export default function ActivityDaysPanel({
                                 type="button"
                                 variant="outline"
                                 className="px-3 py-1 text-xs"
-                                onClick={() =>
-                                  router.push(
-                                    `/activities/${activityId}/days/${day.id}/edit`
-                                  )
-                                }
+                                onClick={() => startInlineEdit(day)}
                               >
-                                Editar
+                                Editar en grilla
                               </Button>
                             </div>
                           ) : (
@@ -417,6 +504,73 @@ export default function ActivityDaysPanel({
                 </tbody>
               </table>
             </div>
+            {editingDayId && (
+              <div className="mt-4 rounded-lg border bg-background p-4">
+                <p className="text-sm font-semibold">Editar sesión en grilla</p>
+                <div className="mt-3 space-y-3">
+                  <input
+                    type="text"
+                    value={draftGeoLocation}
+                    onChange={(event) =>
+                      setDraftGeoLocation(event.target.value)
+                    }
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    placeholder="Nombre o referencia del lugar"
+                  />
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                    {SPORT_ICONS.map((icon) => (
+                      <button
+                        key={icon.file}
+                        type="button"
+                        onClick={() =>
+                          setDraftSportIcon(
+                            draftSportIcon === icon.file ? null : icon.file
+                          )
+                        }
+                        className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-xs ${
+                          draftSportIcon === icon.file
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Image
+                          src={`/icons/${icon.file}`}
+                          alt={icon.label}
+                          width={32}
+                          height={32}
+                        />
+                        <span className="text-center leading-tight">
+                          {icon.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <LocationMapPicker
+                    value={draftCoordinates}
+                    onChange={setDraftCoordinates}
+                  />
+                  {inlineError && (
+                    <p className="text-sm text-destructive">{inlineError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingDayId(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={isSavingInline}
+                      onClick={saveInlineEdit}
+                    >
+                      {isSavingInline ? 'Guardando…' : 'Guardar cambios'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
