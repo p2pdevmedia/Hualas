@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       category: parsed.data.category,
       description: parsed.data.description,
       receiptNumber: parsed.data.receiptNumber,
+      activityId: parsed.data.activityId,
       createdById: (session!.user as any).id,
     },
   });

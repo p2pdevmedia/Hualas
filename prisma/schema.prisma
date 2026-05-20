@@ -358,6 +358,7 @@ model ActivityParticipantReport {
   @@unique([activityDayId, activityParticipantId])
   @@index([activityParticipantId])
   @@index([createdById])
+  @@index([activityId])
 }
 
 model PickupNotice {
@@ -383,6 +384,7 @@ model PickupNotice {
   @@unique([activityDayId, childId])
   @@index([childId])
   @@index([createdById])
+  @@index([activityId])
   @@index([activityDayId])
 }
 
@@ -460,12 +462,15 @@ model AccountingMovement {
   receiptNumber String?
   receiptImage  String?
   createdById   String
+  activityId    String?
   createdBy     User         @relation(fields: [createdById], references: [id])
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@index([date])
   @@index([createdById])
+  @@index([activityId])
 }
 
 model AccountingMonthClose {

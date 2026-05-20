@@ -8,6 +8,7 @@ export const movementSchema = z.object({
   category: z.enum(MOVEMENT_CATEGORIES),
   description: z.string().trim().min(1).max(500),
   receiptNumber: z.string().trim().max(120).optional(),
+  activityId: z.string().cuid().optional(),
 });
 
 export type MovementInput = z.infer<typeof movementSchema>;
