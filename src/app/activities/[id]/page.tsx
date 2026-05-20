@@ -628,6 +628,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         {canSeeSessions && (
           <ActivityDaysPanel
             activityId={activity.id}
+            isTemporaryActivity={activity.activityType === 'TEMPORARY'}
             canManageDays={canManageDays}
             canOpenSessionDetails={isAdmin || isProfessor}
             hideSessionDetails={hideSessionDetails}
