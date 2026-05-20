@@ -106,9 +106,9 @@ export default async function SocialFeePage({
   const [
     concept,
     members,
-    payments,
     socialFeeExpenseMovements,
     previousMonthCloses,
+    payments,
   ] = await Promise.all([
     prisma.billableConcept.findUnique({
       where: { code: BillableConceptCode.SOCIAL_FEE },

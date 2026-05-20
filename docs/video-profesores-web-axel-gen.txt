@@ -1,0 +1,21 @@
+[main] Esta es la experiencia web real para profesores en Hualas.
+
+[profesores] La profesora entra con su perfil y llega a su agenda. Desde ahi ve las jornadas asignadas, el grupo, el horario, el lugar y el estado de asistencia.
+
+[profesores] Al abrir el detalle, la app muestra la informacion clave de la salida y permite pasar directo a cada herramienta de trabajo.
+
+[profesores] En asistencia, el profe registra quien asiste, quien no asiste y quien sigue pendiente. El resumen queda visible para revisar rapido antes de salir.
+
+[profesores] En observaciones y planificacion, puede dejar preparado el objetivo del encuentro y despues escribir la devolucion de la jornada.
+
+[profesores] La descripcion sirve para mantener claro que se va a trabajar, donde se hace la actividad y que necesita saber el equipo.
+
+[familias] En informacion de contacto, cada participante aparece con su responsable, telefono, correo, WhatsApp, chat y reportes.
+
+[familias] Si pasa algo importante, el profe puede hacer un reporte puntual para la familia y dejarlo guardado en la ficha.
+
+[profesores] El chat permite hablar con los responsables desde la misma web, sin perder el contexto de la actividad.
+
+[main] Noticias concentra avisos del club y novedades de la actividad.
+
+[profesores] Finalmente, Mis pagos muestra historial, estado mensual y datos bancarios propios, para que contaduria tenga todo ordenado.
