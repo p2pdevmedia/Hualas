@@ -15,6 +15,7 @@ import MovementTabs from '../movement-tabs';
 
 type SearchParams = {
   activityId?: string;
+  groupId?: string;
   q?: string;
 };
 
@@ -170,6 +171,7 @@ export default async function ActivityMovementsPage({
 
   const q = searchParams?.q?.trim() ?? '';
   const selectedActivityId = searchParams?.activityId?.trim() ?? '';
+  const selectedGroupId = searchParams?.groupId?.trim() ?? '';
   const [activityOptions, selectedActivity] = await Promise.all([
     selectedActivityId ? Promise.resolve([]) : getActivityOptions(q),
     selectedActivityId ? getActivitySummary(selectedActivityId) : null,
@@ -177,7 +179,18 @@ export default async function ActivityMovementsPage({
 
   const payments = selectedActivity
     ? await prisma.activityParticipantPayment.findMany({
-        where: { activityId: selectedActivity.id },
+        where: {
+          activityId: selectedActivity.id,
+          ...(selectedGroupId
+            ? {
+                activityParticipant: {
+                  groupMembership: {
+                    activityGroupId: selectedGroupId,
+                  },
+                },
+              }
+            : {}),
+        },
         orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }],
         include: {
           user: { select: { name: true, lastName: true, email: true } },
@@ -186,6 +199,18 @@ export default async function ActivityMovementsPage({
         },
       })
     : [];
+
+  const activityGroups = selectedActivity
+    ? await prisma.activityGroup.findMany({
+        where: { activityId: selectedActivity.id },
+        orderBy: [{ name: 'asc' }],
+        select: { id: true, name: true },
+      })
+    : [];
+
+  const selectedGroup = selectedGroupId
+    ? (activityGroups.find((group) => group.id === selectedGroupId) ?? null)
+    : null;
 
   const pendingParticipants = selectedActivity
     ? Math.max(
@@ -353,6 +378,48 @@ export default async function ActivityMovementsPage({
               </p>
             </div>
           </section>
+
+          <form className="rounded-2xl border bg-card p-4 shadow-sm">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium">Filtrar por grupo</span>
+                <select
+                  name="groupId"
+                  defaultValue={selectedGroupId}
+                  className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Todos los grupos</option>
+                  {activityGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="hidden"
+                  name="activityId"
+                  value={selectedActivity.id}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit">Aplicar filtro</Button>
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/accounting/movements/activities?activityId=${selectedActivity.id}`}
+                    prefetch={true}
+                  >
+                    Quitar filtro
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            {selectedGroup ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Mostrando pagos del grupo:{' '}
+                <span className="font-medium">{selectedGroup.name}</span>
+              </p>
+            ) : null}
+          </form>
 
           <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
             <table className="min-w-full text-sm">
