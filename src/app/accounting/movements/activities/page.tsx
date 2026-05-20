@@ -17,6 +17,7 @@ type SearchParams = {
   activityId?: string;
   groupId?: string;
   q?: string;
+  tab?: string;
 };
 
 type ActivitySummaryRow = {
@@ -43,6 +44,12 @@ type ActivityPayment = Prisma.ActivityParticipantPaymentGetPayload<{
     user: { select: { name: true; lastName: true; email: true } };
     child: { select: { name: true; lastName: true } };
     activityDay: { select: { date: true; schedule: true } };
+  };
+}>;
+
+type ActivityExpense = Prisma.AccountingMovementGetPayload<{
+  include: {
+    createdBy: { select: { name: true; lastName: true } };
   };
 }>;
 
@@ -185,6 +192,7 @@ export default async function ActivityMovementsPage({
   const q = searchParams?.q?.trim() ?? '';
   const selectedActivityId = searchParams?.activityId?.trim() ?? '';
   const selectedGroupId = searchParams?.groupId?.trim() ?? '';
+  const selectedTab = searchParams?.tab === 'expenses' ? 'expenses' : 'income';
   const [activityOptions, selectedActivity] = await Promise.all([
     selectedActivityId ? Promise.resolve([]) : getActivityOptions(q),
     selectedActivityId ? getActivitySummary(selectedActivityId) : null,
@@ -210,6 +218,19 @@ export default async function ActivityMovementsPage({
           child: { select: { name: true, lastName: true } },
           activityDay: { select: { date: true, schedule: true } },
         },
+      })
+    : [];
+
+  const expenses: ActivityExpense[] = selectedActivity
+    ? await prisma.accountingMovement.findMany({
+        where: {
+          activityId: selectedActivity.id,
+          type: 'EXPENSE',
+        },
+        include: {
+          createdBy: { select: { name: true, lastName: true } },
+        },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
       })
     : [];
 
@@ -414,6 +435,7 @@ export default async function ActivityMovementsPage({
                   name="activityId"
                   value={selectedActivity.id}
                 />
+                <input type="hidden" name="tab" value={selectedTab} />
               </label>
               <div className="flex flex-wrap gap-2">
                 <Button type="submit">Aplicar filtro</Button>
@@ -435,62 +457,139 @@ export default async function ActivityMovementsPage({
             ) : null}
           </form>
 
-          <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
-            <table className="min-w-full text-sm">
-              <thead className="border-b bg-muted/20 text-left text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Fecha</th>
-                  <th className="px-4 py-3 font-medium">Participante</th>
-                  <th className="px-4 py-3 font-medium">Concepto</th>
-                  <th className="px-4 py-3 font-medium">Referencia</th>
-                  <th className="px-4 py-3 font-medium">Importe</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {payments.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-10 text-center text-muted-foreground"
-                    >
-                      Esta actividad todavía no tiene pagos registrados.
-                    </td>
-                  </tr>
-                ) : (
-                  payments.map((payment) => (
-                    <tr key={payment.id} className="align-top">
-                      <td className="px-4 py-3">
-                        {formatAccountingDate(payment.paidAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-foreground">
-                          {getPayerName(payment)}
-                        </p>
-                        {!payment.child && payment.user.email ? (
-                          <p className="text-xs text-muted-foreground">
-                            {payment.user.email}
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="space-y-1">
-                          <p>{getPaymentConcept(payment)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {paymentTypeLabels[payment.paymentType] ??
-                              payment.paymentType}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">{payment.paymentReference}</td>
-                      <td className="px-4 py-3 font-semibold">
-                        {formatAmount(payment.amount)}
-                      </td>
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                asChild
+                variant={selectedTab === 'income' ? 'default' : 'outline'}
+              >
+                <Link
+                  href={`/accounting/movements/activities?activityId=${selectedActivity.id}${selectedGroupId ? `&groupId=${selectedGroupId}` : ''}&tab=income`}
+                  prefetch={true}
+                >
+                  Ingresos ({payments.length})
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant={selectedTab === 'expenses' ? 'default' : 'outline'}
+              >
+                <Link
+                  href={`/accounting/movements/activities?activityId=${selectedActivity.id}${selectedGroupId ? `&groupId=${selectedGroupId}` : ''}&tab=expenses`}
+                  prefetch={true}
+                >
+                  Egresos ({expenses.length})
+                </Link>
+              </Button>
+            </div>
+
+            {selectedTab === 'income' ? (
+              <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b bg-muted/20 text-left text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Fecha</th>
+                      <th className="px-4 py-3 font-medium">Participante</th>
+                      <th className="px-4 py-3 font-medium">Concepto</th>
+                      <th className="px-4 py-3 font-medium">Referencia</th>
+                      <th className="px-4 py-3 font-medium">Importe</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y">
+                    {payments.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-4 py-10 text-center text-muted-foreground"
+                        >
+                          Esta actividad todavía no tiene pagos registrados.
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((payment) => (
+                        <tr key={payment.id} className="align-top">
+                          <td className="px-4 py-3">
+                            {formatAccountingDate(payment.paidAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-foreground">
+                              {getPayerName(payment)}
+                            </p>
+                            {!payment.child && payment.user.email ? (
+                              <p className="text-xs text-muted-foreground">
+                                {payment.user.email}
+                              </p>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <p>{getPaymentConcept(payment)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {paymentTypeLabels[payment.paymentType] ??
+                                  payment.paymentType}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {payment.paymentReference}
+                          </td>
+                          <td className="px-4 py-3 font-semibold">
+                            {formatAmount(payment.amount)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b bg-muted/20 text-left text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Fecha</th>
+                      <th className="px-4 py-3 font-medium">Categoría</th>
+                      <th className="px-4 py-3 font-medium">Detalle</th>
+                      <th className="px-4 py-3 font-medium">Comprobante</th>
+                      <th className="px-4 py-3 font-medium">Registrado por</th>
+                      <th className="px-4 py-3 font-medium">Importe</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {expenses.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-10 text-center text-muted-foreground"
+                        >
+                          Esta actividad todavía no tiene egresos registrados.
+                        </td>
+                      </tr>
+                    ) : (
+                      expenses.map((expense) => (
+                        <tr key={expense.id} className="align-top">
+                          <td className="px-4 py-3">
+                            {formatAccountingDate(expense.date)}
+                          </td>
+                          <td className="px-4 py-3">{expense.category}</td>
+                          <td className="px-4 py-3">{expense.description}</td>
+                          <td className="px-4 py-3">
+                            {expense.receiptNumber ?? '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {formatPersonName(expense.createdBy)}
+                          </td>
+                          <td className="px-4 py-3 font-semibold">
+                            {formatAmount(expense.amount)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </>
       )}
     </div>
