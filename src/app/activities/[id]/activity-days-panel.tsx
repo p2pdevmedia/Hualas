@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BulkSessionCreator from './bulk-session-creator';
 import ActivityCalendar, {
@@ -85,6 +85,7 @@ export default function ActivityDaysPanel({
   const router = useRouter();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showQuickDeleteTab, setShowQuickDeleteTab] = useState(false);
   const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -235,67 +236,82 @@ export default function ActivityDaysPanel({
 
               {days.length > 0 && (
                 <div className="w-full rounded-lg border bg-muted/20 p-3">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Selección rápida para borrar varias sesiones
-                  </p>
-                  <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
-                    {sortedDays.map((day) => {
-                      const dateLabel = new Date(day.date).toLocaleDateString(
-                        'es-AR',
-                        {
-                          weekday: 'short',
-                          day: '2-digit',
-                          month: '2-digit',
-                        }
-                      );
-                      return (
-                        <label
-                          key={day.id}
-                          className="flex cursor-pointer items-center justify-between gap-3 rounded px-2 py-1 hover:bg-muted/40"
-                        >
-                          <span className="text-sm">
-                            {dateLabel} · {day.schedule}
-                          </span>
-                          <input
-                            type="checkbox"
-                            checked={selectedDayIds.includes(day.id)}
-                            onChange={() => toggleDaySelection(day.id)}
-                          />
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {deleteError && (
-                    <p className="mt-2 text-xs text-destructive">
-                      {deleteError}
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between text-left"
+                    onClick={() => setShowQuickDeleteTab((current) => !current)}
+                    aria-expanded={showQuickDeleteTab}
+                  >
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Selección rápida para borrar varias sesiones
                     </p>
+                    <ChevronDown
+                      className={`h-4 w-4 text-muted-foreground transition-transform ${showQuickDeleteTab ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {showQuickDeleteTab && (
+                    <>
+                      <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
+                        {sortedDays.map((day) => {
+                          const dateLabel = new Date(
+                            day.date
+                          ).toLocaleDateString('es-AR', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: '2-digit',
+                          });
+                          return (
+                            <label
+                              key={day.id}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded px-2 py-1 hover:bg-muted/40"
+                            >
+                              <span className="text-sm">
+                                {dateLabel} · {day.schedule}
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={selectedDayIds.includes(day.id)}
+                                onChange={() => toggleDaySelection(day.id)}
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {deleteError && (
+                        <p className="mt-2 text-xs text-destructive">
+                          {deleteError}
+                        </p>
+                      )}
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {selectedCount} seleccionada
+                          {selectedCount === 1 ? '' : 's'}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="px-3 py-1 text-xs"
+                            onClick={clearSelection}
+                            disabled={selectedCount === 0 || isDeleting}
+                          >
+                            Limpiar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            className="px-3 py-1 text-xs"
+                            onClick={handleDeleteSelectedDays}
+                            disabled={selectedCount === 0 || isDeleting}
+                          >
+                            {isDeleting
+                              ? 'Eliminando…'
+                              : 'Eliminar seleccionadas'}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {selectedCount} seleccionada
-                      {selectedCount === 1 ? '' : 's'}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="px-3 py-1 text-xs"
-                        onClick={clearSelection}
-                        disabled={selectedCount === 0 || isDeleting}
-                      >
-                        Limpiar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        className="px-3 py-1 text-xs"
-                        onClick={handleDeleteSelectedDays}
-                        disabled={selectedCount === 0 || isDeleting}
-                      >
-                        {isDeleting ? 'Eliminando…' : 'Eliminar seleccionadas'}
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               )}
 
