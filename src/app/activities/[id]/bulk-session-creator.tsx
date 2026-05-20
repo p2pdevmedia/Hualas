@@ -61,6 +61,7 @@ const MONTH_NAMES: string[] = [
   'Noviembre',
   'Diciembre',
 ];
+const WEEKDAY_SHORT_NAMES = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'] as const;
 
 function getCalendarGrid(year: number, month: number): (number | null)[] {
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
@@ -92,6 +93,9 @@ export default function BulkSessionCreator({
   const [viewYear, setViewYear] = useState(todayDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(todayDate.getMonth());
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+  const [visibleWeekdays, setVisibleWeekdays] = useState<Set<number>>(
+    new Set([0, 1, 2, 3, 4, 5, 6])
+  );
 
   const [schedule, setSchedule] = useState('');
   const [geoLocation, setGeoLocation] = useState('');
@@ -144,6 +148,34 @@ export default function BulkSessionCreator({
     viewYear === maxDate.getFullYear() && viewMonth === maxDate.getMonth();
 
   const calendarGrid = getCalendarGrid(viewYear, viewMonth);
+  const weekRows = Array.from(
+    { length: Math.ceil(calendarGrid.length / 7) },
+    (_, weekIndex) =>
+      calendarGrid
+        .slice(weekIndex * 7, weekIndex * 7 + 7)
+        .concat(
+          Array(
+            Math.max(
+              0,
+              7 - calendarGrid.slice(weekIndex * 7, weekIndex * 7 + 7).length
+            )
+          ).fill(null)
+        )
+  );
+  const weekdayIndexes = [0, 1, 2, 3, 4, 5, 6];
+  const visibleWeekdayIndexes = weekdayIndexes.filter((idx) =>
+    visibleWeekdays.has(idx)
+  );
+
+  function toggleWeekdayColumn(dayIdx: number) {
+    setVisibleWeekdays((prev) => {
+      if (prev.has(dayIdx) && prev.size === 1) return prev;
+      const next = new Set(prev);
+      if (next.has(dayIdx)) next.delete(dayIdx);
+      else next.add(dayIdx);
+      return next;
+    });
+  }
 
   async function handleSubmit() {
     if (selectedDates.size === 0) {
@@ -236,6 +268,30 @@ export default function BulkSessionCreator({
           {/* Calendar */}
           <div>
             <p className="mb-3 text-sm font-medium">Seleccioná los días</p>
+            <div className="mb-3">
+              <p className="mb-2 text-xs text-muted-foreground">
+                Mostrar días en la grilla
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {WEEKDAY_SHORT_NAMES.map((weekday, idx) => {
+                  const active = visibleWeekdays.has(idx);
+                  return (
+                    <button
+                      key={weekday}
+                      type="button"
+                      onClick={() => toggleWeekdayColumn(idx)}
+                      className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                        active
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {weekday}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="flex items-center justify-between mb-3">
               <button
@@ -259,58 +315,72 @@ export default function BulkSessionCreator({
               </button>
             </div>
 
-            <div className="grid grid-cols-7 mb-1">
-              {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((d) => (
+            <div
+              className="mb-1 grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${visibleWeekdayIndexes.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {visibleWeekdayIndexes.map((dayIdx) => (
                 <div
-                  key={d}
+                  key={dayIdx}
                   className="py-1 text-center text-xs font-medium text-muted-foreground"
                 >
-                  {d}
+                  {WEEKDAY_SHORT_NAMES[dayIdx]}
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-1">
-              {calendarGrid.map((day, idx) => {
-                if (day === null) return <div key={`e-${idx}`} />;
+            <div
+              className="grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${visibleWeekdayIndexes.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {weekRows.flatMap((week, weekIdx) =>
+                visibleWeekdayIndexes.map((weekdayIdx) => {
+                  const day = week[weekdayIdx];
+                  if (day === null)
+                    return <div key={`e-${weekIdx}-${weekdayIdx}`} />;
 
-                const dateStr = toDateStr(viewYear, viewMonth, day);
-                const dayDate = new Date(viewYear, viewMonth, day);
-                const isPast = dayDate < todayDate;
-                const isBeyond = dayDate > maxDate;
-                const isDisabled = isPast || isBeyond;
-                const isSelected = selectedDates.has(dateStr);
-                const hasSession = existingSet.has(dateStr);
+                  const dateStr = toDateStr(viewYear, viewMonth, day);
+                  const dayDate = new Date(viewYear, viewMonth, day);
+                  const isPast = dayDate < todayDate;
+                  const isBeyond = dayDate > maxDate;
+                  const isDisabled = isPast || isBeyond;
+                  const isSelected = selectedDates.has(dateStr);
+                  const hasSession = existingSet.has(dateStr);
 
-                return (
-                  <button
-                    key={dateStr}
-                    type="button"
-                    disabled={isDisabled}
-                    onClick={() => toggleDate(dateStr, isDisabled)}
-                    className={[
-                      'relative flex h-9 w-full items-center justify-center rounded-md text-sm transition-colors',
-                      isDisabled
-                        ? 'cursor-not-allowed opacity-30'
-                        : 'cursor-pointer',
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : isDisabled
-                          ? ''
-                          : 'hover:bg-muted',
-                    ].join(' ')}
-                  >
-                    {day}
-                    {hasSession && (
-                      <span
-                        className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${
-                          isSelected ? 'bg-primary-foreground' : 'bg-primary'
-                        }`}
-                      />
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => toggleDate(dateStr, isDisabled)}
+                      className={[
+                        'relative flex h-9 w-full items-center justify-center rounded-md text-sm transition-colors',
+                        isDisabled
+                          ? 'cursor-not-allowed opacity-30'
+                          : 'cursor-pointer',
+                        isSelected
+                          ? 'bg-primary text-primary-foreground'
+                          : isDisabled
+                            ? ''
+                            : 'hover:bg-muted',
+                      ].join(' ')}
+                    >
+                      {day}
+                      {hasSession && (
+                        <span
+                          className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${
+                            isSelected ? 'bg-primary-foreground' : 'bg-primary'
+                          }`}
+                        />
+                      )}
+                    </button>
+                  );
+                })
+              )}
             </div>
 
             <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
