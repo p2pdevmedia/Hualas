@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -85,6 +85,9 @@ export default function ActivityDaysPanel({
   const router = useRouter();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const capacity =
     groups.length === 0 || groups.some((group) => group.capacity == null)
       ? null
@@ -123,6 +126,66 @@ export default function ActivityDaysPanel({
     'Viernes',
     'Sábado',
   ];
+
+  const selectedCount = selectedDayIds.length;
+  const sortedDays = useMemo(
+    () =>
+      [...days].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      ),
+    [days]
+  );
+
+  const toggleDaySelection = (dayId: string) => {
+    setSelectedDayIds((current) =>
+      current.includes(dayId)
+        ? current.filter((id) => id !== dayId)
+        : [...current, dayId]
+    );
+  };
+
+  const clearSelection = () => setSelectedDayIds([]);
+
+  const handleDeleteSelectedDays = async () => {
+    if (selectedDayIds.length === 0 || isDeleting) return;
+
+    const confirmed = window.confirm(
+      `¿Eliminar ${selectedDayIds.length} sesión${selectedDayIds.length !== 1 ? 'es' : ''}? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleteError(null);
+
+    try {
+      setIsDeleting(true);
+      const [firstDayId] = selectedDayIds;
+      const res = await fetch(`/api/activity-days/${firstDayId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedDayIds }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(
+          payload?.error ?? 'No se pudieron eliminar las sesiones'
+        );
+      }
+
+      setSelectedDayIds([]);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron eliminar las sesiones'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const weeklyGrid = weekdayLabels.map((weekdayLabel, weekdayIndex) => {
     const perGroup = groups.map((group) => {
@@ -169,6 +232,73 @@ export default function ActivityDaysPanel({
               <div className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
                 Administración de días
               </div>
+
+              {days.length > 0 && (
+                <div className="w-full rounded-lg border bg-muted/20 p-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Selección rápida para borrar varias sesiones
+                  </p>
+                  <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
+                    {sortedDays.map((day) => {
+                      const dateLabel = new Date(day.date).toLocaleDateString(
+                        'es-AR',
+                        {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: '2-digit',
+                        }
+                      );
+                      return (
+                        <label
+                          key={day.id}
+                          className="flex cursor-pointer items-center justify-between gap-3 rounded px-2 py-1 hover:bg-muted/40"
+                        >
+                          <span className="text-sm">
+                            {dateLabel} · {day.schedule}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={selectedDayIds.includes(day.id)}
+                            onChange={() => toggleDaySelection(day.id)}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {deleteError && (
+                    <p className="mt-2 text-xs text-destructive">
+                      {deleteError}
+                    </p>
+                  )}
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {selectedCount} seleccionada
+                      {selectedCount === 1 ? '' : 's'}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={clearSelection}
+                        disabled={selectedCount === 0 || isDeleting}
+                      >
+                        Limpiar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteSelectedDays}
+                        disabled={selectedCount === 0 || isDeleting}
+                      >
+                        {isDeleting ? 'Eliminando…' : 'Eliminar seleccionadas'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {!hideSessionDetails && (
                 <Button
                   type="button"
