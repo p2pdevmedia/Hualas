@@ -179,3 +179,41 @@ export async function PUT(
 
   return NextResponse.json(updatedDay);
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { dayId: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (
+    !session ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
+  ) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as {
+    ids?: unknown;
+  };
+
+  if (Array.isArray(body.ids)) {
+    const ids = body.ids.filter(
+      (value): value is string => typeof value === 'string'
+    );
+
+    if (ids.length === 0) {
+      return NextResponse.json(
+        { error: 'No se recibieron sesiones válidas para eliminar' },
+        { status: 400 }
+      );
+    }
+
+    const result = await prisma.activityDay.deleteMany({
+      where: { id: { in: ids } },
+    });
+    return NextResponse.json({ deletedCount: result.count });
+  }
+
+  await prisma.activityDay.delete({ where: { id: params.dayId } });
+  return NextResponse.json({ ok: true });
+}
