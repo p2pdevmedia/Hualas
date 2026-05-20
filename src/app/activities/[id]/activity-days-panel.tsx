@@ -58,6 +58,7 @@ type ActivityDay = {
 
 interface ActivityDaysPanelProps {
   activityId: string;
+  isTemporaryActivity: boolean;
   canManageDays: boolean;
   hideSessionDetails?: boolean;
   hideSessionList?: boolean;
@@ -71,6 +72,7 @@ interface ActivityDaysPanelProps {
 
 export default function ActivityDaysPanel({
   activityId,
+  isTemporaryActivity,
   canManageDays,
   hideSessionDetails = false,
   canOpenSessionDetails = false,
@@ -112,6 +114,30 @@ export default function ActivityDaysPanel({
   }));
 
   const existingDayDates = days.map((day) => day.date.slice(0, 10));
+  const weekdayLabels = [
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+  ];
+
+  const weeklyGrid = weekdayLabels.map((weekdayLabel, weekdayIndex) => {
+    const perGroup = groups.map((group) => {
+      const match = days.find((day) => {
+        if (day.activityGroupId !== group.id) return false;
+        return new Date(day.date).getDay() === weekdayIndex;
+      });
+      return { group, day: match ?? null };
+    });
+
+    return {
+      weekdayLabel,
+      perGroup,
+    };
+  });
 
   return (
     <>
@@ -188,6 +214,80 @@ export default function ActivityDaysPanel({
           <p className="mt-6 text-sm text-muted-foreground font-body">
             Aún no hay días cargados para esta actividad.
           </p>
+        )}
+
+        {canManageDays && isTemporaryActivity && groups.length > 0 && (
+          <div className="mt-8 rounded-lg border bg-muted/20 p-4">
+            <h3 className="font-heading text-lg font-semibold">
+              Planificar semana (actividades temporales)
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Definí por grupo y día el lugar, deporte y materiales desde cada
+              sesión.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[800px] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border bg-background p-2 text-left">Día</th>
+                    {groups.map((group) => (
+                      <th
+                        key={group.id}
+                        className="border bg-background p-2 text-left"
+                      >
+                        {group.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {weeklyGrid.map((row) => (
+                    <tr key={row.weekdayLabel}>
+                      <td className="border p-2 font-medium">
+                        {row.weekdayLabel}
+                      </td>
+                      {row.perGroup.map(({ group, day }) => (
+                        <td key={group.id} className="border p-2 align-top">
+                          {day ? (
+                            <div className="space-y-1">
+                              <p>
+                                <span className="font-medium">Lugar:</span>{' '}
+                                {day.geoLocation}
+                              </p>
+                              <p>
+                                <span className="font-medium">Deporte:</span>{' '}
+                                {day.sportIcon || 'Sin definir'}
+                              </p>
+                              <p>
+                                <span className="font-medium">Materiales:</span>{' '}
+                                {day.description || 'Sin definir'}
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(
+                                    `/activities/${activityId}/days/${day.id}/edit`
+                                  )
+                                }
+                              >
+                                Editar
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Sin sesión para este cruce.
+                            </p>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </section>
     </>
