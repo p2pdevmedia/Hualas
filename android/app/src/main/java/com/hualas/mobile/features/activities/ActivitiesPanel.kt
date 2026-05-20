@@ -19,12 +19,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ViewWeek
 import com.hualas.mobile.core.session.MobileRole
 import com.hualas.mobile.core.ui.UiState
 import com.hualas.mobile.features.activities.data.ActivitiesAgenda
@@ -145,6 +152,10 @@ private fun ActivityCalendarCard(
     val calendarCells = remember(calendarDays, resolvedSelectedDay, today) {
         buildActivityCalendarCells(calendarDays, resolvedSelectedDay, today)
     }
+    var showMonthlyView by remember { mutableStateOf(false) }
+    val selectedWeek = remember(calendarCells, resolvedSelectedDay) {
+        buildSelectedWeekCells(calendarCells, resolvedSelectedDay)
+    }
 
     if (calendarCells.isEmpty() || resolvedSelectedDay == null) {
         InlineEmpty("No hay días en los próximos 30 días.")
@@ -157,9 +168,26 @@ private fun ActivityCalendarCard(
             selectedDay = resolvedSelectedDay,
             sessionCount = calendarDays.firstOrNull { it.date == resolvedSelectedDay }?.sessionCount ?: 0
         )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            OutlinedButton(onClick = { showMonthlyView = !showMonthlyView }) {
+                Icon(
+                    imageVector = if (showMonthlyView) Icons.Outlined.ViewWeek else Icons.Outlined.CalendarMonth,
+                    contentDescription = null
+                )
+                Text(
+                    text = if (showMonthlyView) "Semanal" else "Mensual",
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
         WeekdayHeader()
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            calendarCells.chunked(7).forEach { week ->
+            val weeksToRender = if (showMonthlyView) {
+                calendarCells.chunked(7)
+            } else {
+                listOf(selectedWeek)
+            }
+            weeksToRender.forEach { week ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -175,11 +203,21 @@ private fun ActivityCalendarCard(
             }
         }
         Text(
-            text = "Tocá un día con sesiones para ver la agenda.",
+            text = "Tocá un día con sesiones para ver la agenda y usá el botón del calendario para cambiar a vista mensual.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+private fun buildSelectedWeekCells(
+    calendarCells: List<ActivityCalendarCell>,
+    selectedDay: String
+): List<ActivityCalendarCell> {
+    return calendarCells
+        .chunked(7)
+        .firstOrNull { week -> week.any { it.date == selectedDay } }
+        ?: calendarCells.take(7)
 }
 
 @Composable
