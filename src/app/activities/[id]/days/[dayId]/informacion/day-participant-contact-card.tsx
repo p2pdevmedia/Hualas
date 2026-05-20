@@ -52,6 +52,7 @@ export default function DayParticipantContactCard({
   participant: ParticipantContact;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showContactInfo, setShowContactInfo] = useState(false);
   const [body, setBody] = useState(participant.existingReport ?? '');
   const [savedBody, setSavedBody] = useState(participant.existingReport ?? '');
   const [saving, setSaving] = useState(false);
@@ -114,34 +115,43 @@ export default function DayParticipantContactCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <p className="font-semibold text-sm">{participant.displayName}</p>
-          {participant.isChild && participant.contactName && (
-            <p className="text-xs text-muted-foreground">
-              Responsable: {participant.contactName}
-            </p>
+          <button
+            type="button"
+            onClick={() => setShowContactInfo((prev) => !prev)}
+            className="inline-flex h-8 items-center self-start rounded-full border px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            {showContactInfo ? 'Ocultar contactos' : 'Ver contactos'}
+          </button>
+          {showContactInfo && (
+            <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs space-y-1">
+              {participant.isChild && participant.contactName && (
+                <p className="text-muted-foreground">
+                  Responsable: {participant.contactName}
+                </p>
+              )}
+              {participant.email && (
+                <a
+                  href={`mailto:${participant.email}`}
+                  className="block text-link hover:underline underline-offset-4"
+                >
+                  {participant.email}
+                </a>
+              )}
+              {participant.phone && (
+                <a
+                  href={`tel:${participant.phone}`}
+                  className="block text-link hover:underline underline-offset-4"
+                >
+                  {participant.phone}
+                </a>
+              )}
+              {!participant.email && !participant.phone && (
+                <p className="text-muted-foreground italic">
+                  Sin datos de contacto
+                </p>
+              )}
+            </div>
           )}
-          <div className="flex flex-col gap-1">
-            {participant.email && (
-              <a
-                href={`mailto:${participant.email}`}
-                className="text-xs text-link hover:underline underline-offset-4"
-              >
-                {participant.email}
-              </a>
-            )}
-            {participant.phone && (
-              <a
-                href={`tel:${participant.phone}`}
-                className="text-xs text-link hover:underline underline-offset-4"
-              >
-                {participant.phone}
-              </a>
-            )}
-            {!participant.email && !participant.phone && (
-              <p className="text-xs text-muted-foreground italic">
-                Sin datos de contacto
-              </p>
-            )}
-          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 sm:justify-end">
