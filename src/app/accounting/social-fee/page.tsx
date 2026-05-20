@@ -1,4 +1,4 @@
-import { BillableConceptCode } from '@prisma/client';
+import { BillableConceptCode, MovementType } from '@prisma/client';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
@@ -100,7 +100,16 @@ export default async function SocialFeePage({
     1
   );
 
-  const [concept, members, payments] = await Promise.all([
+  const periodStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+  const periodEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+  const [
+    concept,
+    members,
+    payments,
+    socialFeeExpenseMovements,
+    previousMonthCloses,
+  ] = await Promise.all([
     prisma.billableConcept.findUnique({
       where: { code: BillableConceptCode.SOCIAL_FEE },
       select: { defaultAmount: true, name: true, active: true },
@@ -127,6 +136,50 @@ export default async function SocialFeePage({
         },
       },
       orderBy: [{ lastName: 'asc' }, { name: 'asc' }],
+    }),
+
+    prisma.accountingMovement.findMany({
+      where: {
+        type: MovementType.EXPENSE,
+        date: {
+          gte: periodStart,
+          lte: periodEnd,
+        },
+        OR: [
+          {
+            category: {
+              contains: 'cuota social',
+              mode: 'insensitive',
+            },
+          },
+          {
+            description: {
+              contains: 'cuota social',
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      select: {
+        amount: true,
+      },
+    }),
+    prisma.accountingMonthClose.findMany({
+      where: {
+        OR: [
+          { periodYear: { lt: year } },
+          {
+            periodYear: year,
+            periodMonth: { lt: month },
+          },
+        ],
+      },
+      orderBy: [{ periodYear: 'asc' }, { periodMonth: 'asc' }],
+      select: {
+        periodMonth: true,
+        periodYear: true,
+        positiveBalance: true,
+      },
     }),
     prisma.socialFeePayment.findMany({
       where: {
@@ -263,6 +316,16 @@ export default async function SocialFeePage({
     (sum, person) => sum + person.amount,
     0
   );
+  const socialFeeExpenseAmount = socialFeeExpenseMovements.reduce(
+    (sum, movement) => sum + movement.amount,
+    0
+  );
+  const previousSocialFeeCash = previousMonthCloses.reduce(
+    (sum, close) => sum + Math.max(close.positiveBalance, 0),
+    0
+  );
+  const socialFeeCashAmount =
+    collectedAmount - socialFeeExpenseAmount + previousSocialFeeCash;
   const expectedAmount = people.length * socialFeeAmount;
   const visiblePaidRangeLabel =
     paidPeople.length === 0
@@ -290,8 +353,20 @@ export default async function SocialFeePage({
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
+          {
+            label: 'Caja',
+            value: formatAmount(socialFeeCashAmount),
+            helper: `${formatAmount(collectedAmount)} - ${formatAmount(
+              socialFeeExpenseAmount
+            )} + ${formatAmount(previousSocialFeeCash)}`,
+          },
+          {
+            label: 'Pagos registrados',
+            value: paidPeople.length.toString(),
+            helper: formatAmount(collectedAmount),
+          },
           {
             label: 'Cuota configurada',
             value: formatAmount(socialFeeAmount),
@@ -301,11 +376,6 @@ export default async function SocialFeePage({
             label: 'Obligados del período',
             value: people.length.toString(),
             helper: `${formatPeriodLabel(month, year)}`,
-          },
-          {
-            label: 'Pagos registrados',
-            value: paidPeople.length.toString(),
-            helper: formatAmount(collectedAmount),
           },
           {
             label: 'Pendientes',
