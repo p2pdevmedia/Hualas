@@ -55,6 +55,7 @@ const activityGroupBaseSchema = z
 const activityGroupDraftSchema = z
   .object({
     tempId: z.string().min(1),
+    professorIds: z.array(z.string().min(1)).min(1),
     ...activityGroupBaseShape,
   })
   .refine((data) => data.maxAge >= data.minAge, {
@@ -210,7 +211,9 @@ export const activityUpdateSchema = activityBaseSchema
     }
   });
 
-export const activityGroupCreateSchema = activityGroupBaseSchema;
+export const activityGroupCreateSchema = activityGroupBaseSchema.extend({
+  professorIds: z.array(z.string().min(1)).min(1),
+});
 
 export const activityDayCreateSchema = z.object({
   date: z

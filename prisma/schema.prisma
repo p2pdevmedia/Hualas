@@ -45,6 +45,7 @@ model User {
   activityParticipants        ActivityParticipant[]
   activityParticipantPayments ActivityParticipantPayment[]
   activityProfessors          ActivityProfessor[]
+  activityGroupProfessors     ActivityGroupProfessor[]
   createdActivityDays         ActivityDay[]                @relation("ActivityDayCreatedBy")
   activityDayProfessors       ActivityDayProfessor[]
   children                    Child[]
@@ -270,8 +271,22 @@ model ActivityGroup {
   activity    Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
   members     ActivityGroupMember[]
   days        ActivityDay[]
+  professors  ActivityGroupProfessor[]
 
   @@index([activityId])
+}
+
+model ActivityGroupProfessor {
+  id              String        @id @default(cuid())
+  activityGroupId String
+  userId          String
+  createdAt       DateTime      @default(now())
+  activityGroup   ActivityGroup @relation(fields: [activityGroupId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityGroupId, userId])
+  @@index([activityGroupId])
+  @@index([userId])
 }
 
 model ActivityGroupMember {

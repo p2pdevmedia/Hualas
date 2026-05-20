@@ -54,6 +54,12 @@ export async function POST(
       maxAge: data.maxAge,
     },
   });
+  await prisma.activityGroupProfessor.createMany({
+    data: data.professorIds.map((userId) => ({
+      activityGroupId: group.id,
+      userId,
+    })),
+  });
 
   return NextResponse.json(group);
 }

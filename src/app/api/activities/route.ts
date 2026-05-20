@@ -22,8 +22,11 @@ export async function POST(req: Request) {
   const annualProfessorIds = Array.from(
     new Set(data.annualSchedules.flatMap((schedule) => schedule.professorIds))
   );
+  const groupProfessorIds = Array.from(
+    new Set(data.groups.flatMap((group) => group.professorIds))
+  );
   const professorIdsToValidate = Array.from(
-    new Set([...professorIds, ...annualProfessorIds])
+    new Set([...professorIds, ...annualProfessorIds, ...groupProfessorIds])
   );
   if (professorIdsToValidate.length > 0) {
     const validProfessors = await prisma.user.findMany({
@@ -84,6 +87,12 @@ export async function POST(req: Request) {
             select: { id: true },
           });
           groupIdByTempId.set(group.tempId, createdGroup.id);
+          await tx.activityGroupProfessor.createMany({
+            data: group.professorIds.map((userId) => ({
+              activityGroupId: createdGroup.id,
+              userId,
+            })),
+          });
         }
       }
 
