@@ -20,7 +20,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,6 +33,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -129,6 +136,7 @@ fun HomeScreen(
                     onRefresh = onRefresh,
                     onLogout = onLogout,
                     onSwitchRole = onSwitchRole,
+                    destinations = destinations,
                     onLoadActivities = onLoadActivities,
                     onSelectActivityDay = onSelectActivityDay,
                     onLoadActivityDayDetail = onLoadActivityDayDetail,
@@ -155,6 +163,7 @@ private fun HomeContent(
     onRefresh: () -> Unit,
     onLogout: () -> Unit,
     onSwitchRole: (MobileRole) -> Unit,
+    destinations: List<PrimaryDestination>,
     onLoadActivities: () -> Unit,
     onSelectActivityDay: (String) -> Unit,
     onLoadActivityDayDetail: (String) -> Unit,
@@ -177,6 +186,10 @@ private fun HomeContent(
                 profile = home.profile,
                 isRefreshing = isRefreshing,
                 onRefresh = onRefresh,
+                destinations = destinations,
+                selectedDestinationId = selectedDestinationId,
+                onSelectDestination = { selectedDestinationId = it },
+                onOpenNotifications = { selectedDestinationId = "more" },
                 onSwitchRole = onSwitchRole
             )
         }
@@ -492,8 +505,14 @@ private fun Header(
     profile: HomeProfile,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    destinations: List<PrimaryDestination>,
+    selectedDestinationId: String,
+    onSelectDestination: (String) -> Unit,
+    onOpenNotifications: () -> Unit,
     onSwitchRole: (MobileRole) -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -514,8 +533,52 @@ private fun Header(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            TextButton(onClick = onRefresh, enabled = !isRefreshing) {
-                Text(if (isRefreshing) "Actualizando" else "Actualizar")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onOpenNotifications) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notificaciones"
+                    )
+                }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Menú"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        destinations
+                            .filterNot { it.id == "home" }
+                            .forEach { destination ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (destination.id == selectedDestinationId) {
+                                                "✓ ${destination.label}"
+                                            } else {
+                                                destination.label
+                                            }
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onSelectDestination(destination.id)
+                                    }
+                                )
+                            }
+                        DropdownMenuItem(
+                            text = { Text(if (isRefreshing) "Actualizando..." else "Actualizar") },
+                            onClick = {
+                                menuExpanded = false
+                                if (!isRefreshing) onRefresh()
+                            }
+                        )
+                    }
+                }
             }
         }
         if (session.allowedRoles.size > 1) {
