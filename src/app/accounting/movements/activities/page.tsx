@@ -33,6 +33,8 @@ type ActivitySummaryRow = {
   monthlyPaymentCount: number;
   sessionPaymentCount: number;
   totalCollected: number;
+  totalExpenses: number;
+  availableBalance: number;
   lastPaidAt: Date | null;
 };
 
@@ -110,6 +112,8 @@ async function getActivitySummary(activityId: string) {
       COALESCE(payments."monthlyPaymentCount", 0)::int AS "monthlyPaymentCount",
       COALESCE(payments."sessionPaymentCount", 0)::int AS "sessionPaymentCount",
       COALESCE(payments."totalCollected", 0)::double precision AS "totalCollected",
+      COALESCE(expenses."totalExpenses", 0)::double precision AS "totalExpenses",
+      (COALESCE(payments."totalCollected", 0) - COALESCE(expenses."totalExpenses", 0))::double precision AS "availableBalance",
       payments."lastPaidAt" AS "lastPaidAt"
     FROM "Activity" a
     LEFT JOIN (
@@ -131,6 +135,15 @@ async function getActivitySummary(activityId: string) {
       FROM "ActivityParticipantPayment" app
       GROUP BY app."activityId"
     ) payments ON payments."activityId" = a."id"
+    LEFT JOIN (
+      SELECT
+        am."activityId",
+        SUM(am."amount") AS "totalExpenses"
+      FROM "AccountingMovement" am
+      WHERE am."type" = 'EXPENSE'
+        AND am."activityId" IS NOT NULL
+      GROUP BY am."activityId"
+    ) expenses ON expenses."activityId" = a."id"
     WHERE a."id" = ${activityId}
     LIMIT 1
   `;
@@ -369,12 +382,13 @@ export default async function ActivityMovementsPage({
               </p>
             </div>
             <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <p className="text-sm text-muted-foreground">Recaudado</p>
+              <p className="text-sm text-muted-foreground">Caja disponible</p>
               <p className="mt-2 text-2xl font-bold">
-                {formatAmount(selectedActivity.totalCollected)}
+                {formatAmount(selectedActivity.availableBalance)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Precio base: {formatAmount(selectedActivity.price)}
+                Recaudado: {formatAmount(selectedActivity.totalCollected)} ·
+                Egresos: {formatAmount(selectedActivity.totalExpenses)}
               </p>
             </div>
           </section>
