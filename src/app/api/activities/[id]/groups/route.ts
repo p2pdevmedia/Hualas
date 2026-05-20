@@ -55,7 +55,7 @@ export async function POST(
     },
   });
   await prisma.activityGroupProfessor.createMany({
-    data: data.professorIds.map((userId) => ({
+    data: data.professorIds.map((userId: string) => ({
       activityGroupId: group.id,
       userId,
     })),

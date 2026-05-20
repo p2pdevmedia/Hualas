@@ -211,9 +211,15 @@ export const activityUpdateSchema = activityBaseSchema
     }
   });
 
-export const activityGroupCreateSchema = activityGroupBaseSchema.extend({
-  professorIds: z.array(z.string().min(1)).min(1),
-});
+export const activityGroupCreateSchema = z
+  .object({
+    professorIds: z.array(z.string().min(1)).min(1),
+    ...activityGroupBaseShape,
+  })
+  .refine((data) => data.maxAge >= data.minAge, {
+    message: 'La edad máxima debe ser mayor o igual a la mínima',
+    path: ['maxAge'],
+  });
 
 export const activityDayCreateSchema = z.object({
   date: z

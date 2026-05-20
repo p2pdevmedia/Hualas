@@ -1,7 +1,7 @@
 import { ActivityType, type Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
-type PrismaClientLike = typeof prisma | Prisma.TransactionClient;
+type PrismaClientLike = Prisma.TransactionClient;
 
 type RegisterActivityParticipantPaymentInput = {
   activityParticipantId: string;
@@ -61,7 +61,7 @@ async function resolveTemporaryActivityDayId(
 
 export async function registerActivityParticipantPayment(
   input: RegisterActivityParticipantPaymentInput,
-  db: PrismaClientLike = prisma
+  db: PrismaClientLike = prisma as unknown as PrismaClientLike
 ) {
   const paidAt = getPaidAt(input.paidAt);
   const activity = await db.activity.findUnique({

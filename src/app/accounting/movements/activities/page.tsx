@@ -461,7 +461,7 @@ export default async function ActivityMovementsPage({
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 asChild
-                variant={selectedTab === 'income' ? 'default' : 'outline'}
+                variant={selectedTab === 'income' ? 'primary' : 'outline'}
               >
                 <Link
                   href={`/accounting/movements/activities?activityId=${selectedActivity.id}${selectedGroupId ? `&groupId=${selectedGroupId}` : ''}&tab=income`}
@@ -472,7 +472,7 @@ export default async function ActivityMovementsPage({
               </Button>
               <Button
                 asChild
-                variant={selectedTab === 'expenses' ? 'default' : 'outline'}
+                variant={selectedTab === 'expenses' ? 'primary' : 'outline'}
               >
                 <Link
                   href={`/accounting/movements/activities?activityId=${selectedActivity.id}${selectedGroupId ? `&groupId=${selectedGroupId}` : ''}&tab=expenses`}
