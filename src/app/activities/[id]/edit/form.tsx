@@ -133,6 +133,7 @@ export default function EditActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
+  const [newGroupProfessorId, setNewGroupProfessorId] = useState('');
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
@@ -202,9 +203,10 @@ export default function EditActivityForm({
       !newGroupName.trim() ||
       !newGroupCapacity ||
       !newGroupMinAge ||
-      !newGroupMaxAge
+      !newGroupMaxAge ||
+      !newGroupProfessorId
     ) {
-      setGroupError('Completá nombre, cupo y edades del grupo');
+      setGroupError('Completá nombre, cupo, edades y profesor del grupo');
       return;
     }
     if (Number(newGroupCapacity) < 1) {
@@ -229,6 +231,7 @@ export default function EditActivityForm({
           capacity: Number(newGroupCapacity),
           minAge: Number(newGroupMinAge),
           maxAge: Number(newGroupMaxAge),
+          professorIds: [newGroupProfessorId],
         }),
       });
       if (!res.ok) throw new Error('No se pudo crear el grupo');
@@ -239,6 +242,7 @@ export default function EditActivityForm({
       setNewGroupCapacity('');
       setNewGroupMinAge('');
       setNewGroupMaxAge('');
+      setNewGroupProfessorId('');
     } catch (err) {
       setGroupError(
         err instanceof Error ? err.message : 'Error al crear el grupo'
@@ -521,7 +525,7 @@ export default function EditActivityForm({
             <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
           )}
 
-          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_auto]">
+          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_110px_auto]">
             <input
               type="text"
               placeholder="Nombre del grupo"
@@ -572,6 +576,18 @@ export default function EditActivityForm({
               onChange={(e) => setNewGroupMaxAge(e.target.value)}
               className={inputClass}
             />
+            <select
+              value={newGroupProfessorId}
+              onChange={(e) => setNewGroupProfessorId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Profesor del grupo</option>
+              {selectedProfessors.map((professor) => (
+                <option key={professor.id} value={professor.id}>
+                  {professor.name ?? 'Sin nombre'} {professor.lastName ?? ''}
+                </option>
+              ))}
+            </select>
             <Button
               type="button"
               variant="outline"

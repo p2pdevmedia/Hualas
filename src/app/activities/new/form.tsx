@@ -22,6 +22,7 @@ type GroupDraft = {
   capacity: string;
   minAge: string;
   maxAge: string;
+  professorIds: string[];
 };
 
 type Coordinates = {
@@ -96,6 +97,7 @@ export default function CreateActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
+  const [newGroupProfessorId, setNewGroupProfessorId] = useState('');
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
@@ -121,9 +123,10 @@ export default function CreateActivityForm({
       !newGroupName.trim() ||
       !newGroupCapacity ||
       !newGroupMinAge ||
-      !newGroupMaxAge
+      !newGroupMaxAge ||
+      !newGroupProfessorId
     ) {
-      setError('Completá nombre, cupo y edades del grupo');
+      setError('Completá nombre, cupo, edades y profesor del grupo');
       return;
     }
     if (Number(newGroupCapacity) < 1) {
@@ -144,6 +147,7 @@ export default function CreateActivityForm({
         capacity: newGroupCapacity,
         minAge: newGroupMinAge,
         maxAge: newGroupMaxAge,
+        professorIds: [newGroupProfessorId],
       },
     ]);
     setNewGroupName('');
@@ -151,6 +155,7 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
+    setNewGroupProfessorId('');
   }
 
   function removeGroupDraft(tempId: string) {
@@ -204,6 +209,7 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
+    setNewGroupProfessorId('');
     setAnnualSchedules([]);
     setAnnualShared({
       geoLocation: '',
@@ -277,6 +283,7 @@ export default function CreateActivityForm({
             capacity: Number(group.capacity),
             minAge: Number(group.minAge),
             maxAge: Number(group.maxAge),
+            professorIds: group.professorIds,
           })),
           annualSchedules: normalizedAnnualSchedules,
           geoLocation:
@@ -404,6 +411,11 @@ export default function CreateActivityForm({
                     - Cupo {group.capacity} - {group.minAge} a {group.maxAge}{' '}
                     años
                   </span>
+                  <span className="ml-2 text-muted-foreground">
+                    - Profesor:{' '}
+                    {professors.find((p) => p.id === group.professorIds[0])
+                      ?.name ?? 'Sin nombre'}
+                  </span>
                 </span>
                 <button
                   type="button"
@@ -417,7 +429,7 @@ export default function CreateActivityForm({
           </ul>
         )}
 
-        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_110px_110px_110px_auto]">
+        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_110px_auto]">
           <input
             type="text"
             placeholder="Nombre del grupo"
@@ -468,6 +480,18 @@ export default function CreateActivityForm({
             onChange={(e) => setNewGroupMaxAge(e.target.value)}
             className={inputClass}
           />
+          <select
+            value={newGroupProfessorId}
+            onChange={(e) => setNewGroupProfessorId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Profesor del grupo</option>
+            {selectedProfessors.map((professor) => (
+              <option key={professor.id} value={professor.id}>
+                {professor.name ?? 'Sin nombre'} {professor.lastName ?? ''}
+              </option>
+            ))}
+          </select>
           <Button type="button" variant="outline" onClick={addGroupDraft}>
             Agregar
           </Button>
