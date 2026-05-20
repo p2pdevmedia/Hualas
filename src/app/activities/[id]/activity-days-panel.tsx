@@ -279,7 +279,7 @@ export default function ActivityDaysPanel({
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
+                        className="px-3 py-1 text-xs"
                         onClick={clearSelection}
                         disabled={selectedCount === 0 || isDeleting}
                       >
@@ -288,7 +288,7 @@ export default function ActivityDaysPanel({
                       <Button
                         type="button"
                         variant="destructive"
-                        size="sm"
+                        className="px-3 py-1 text-xs"
                         onClick={handleDeleteSelectedDays}
                         disabled={selectedCount === 0 || isDeleting}
                       >
@@ -395,7 +395,7 @@ export default function ActivityDaysPanel({
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
+                                className="px-3 py-1 text-xs"
                                 onClick={() =>
                                   router.push(
                                     `/activities/${activityId}/days/${day.id}/edit`
