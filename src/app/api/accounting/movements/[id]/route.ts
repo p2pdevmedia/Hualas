@@ -32,6 +32,7 @@ export async function PUT(
       category: parsed.data.category,
       description: parsed.data.description,
       receiptNumber: parsed.data.receiptNumber,
+      activityId: parsed.data.activityId,
     },
   });
 

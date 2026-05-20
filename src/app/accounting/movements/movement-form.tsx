@@ -20,12 +20,20 @@ type MovementFormData = {
   description: string;
   receiptNumber: string | null;
   receiptImage: string | null;
+  activityId: string | null;
+};
+
+type ActivityOption = {
+  id: string;
+  name: string;
 };
 
 export default function MovementForm({
   movement,
+  activities,
 }: {
   movement?: MovementFormData;
+  activities: ActivityOption[];
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +50,7 @@ export default function MovementForm({
     movement?.receiptNumber ?? ''
   );
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [activityId, setActivityId] = useState(movement?.activityId ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -66,6 +75,7 @@ export default function MovementForm({
         category,
         description,
         receiptNumber: receiptNumber.trim() || undefined,
+        activityId: activityId || undefined,
       };
 
       const res = await fetch(
@@ -157,6 +167,26 @@ export default function MovementForm({
             </option>
           ))}
         </select>
+      </label>
+
+      <label className="space-y-1 text-sm block">
+        <span className="font-medium">Actividad</span>
+        <select
+          value={activityId}
+          onChange={(e) => setActivityId(e.target.value)}
+          className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Sin actividad</option>
+          {activities.map((activity) => (
+            <option key={activity.id} value={activity.id}>
+              {activity.name}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-muted-foreground">
+          Si seleccionás una actividad, el movimiento impacta su caja: suma en
+          ingresos y descuenta en egresos.
+        </span>
       </label>
 
       <label className="space-y-1 text-sm block">

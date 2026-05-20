@@ -2,7 +2,6 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isAccountingRole } from '@/lib/accounting';
 import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
 import MovementForm from '../../movement-form';
 
@@ -22,12 +21,18 @@ export default async function EditMovementPage({
     redirect('/accounting/movements');
   }
 
+  const activities = await prisma.activity.findMany({
+    select: { id: true, name: true },
+    orderBy: [{ endDate: 'desc' }, { name: 'asc' }],
+  });
+
   return (
     <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-6 shadow-sm">
       <h2 className="mb-4 text-2xl font-bold tracking-tight">
         Editar movimiento
       </h2>
       <MovementForm
+        activities={activities}
         movement={{
           id: movement.id,
           date: movement.date.toISOString().split('T')[0],
@@ -39,6 +44,7 @@ export default async function EditMovementPage({
           receiptImage: movement.receiptImage
             ? buildAccountingMovementReceiptUrl(movement.id)
             : null,
+          activityId: movement.activityId,
         }}
       />
     </div>
