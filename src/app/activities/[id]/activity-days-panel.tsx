@@ -1,10 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ChevronDown, MapPin, PencilLine } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  PencilLine,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BulkSessionCreator from './bulk-session-creator';
 import ActivityCalendar, {
@@ -82,6 +89,16 @@ interface ActivityDaysPanelProps {
   days: ActivityDay[];
 }
 
+const WEEKDAY_LABELS = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+];
+
 export default function ActivityDaysPanel({
   activityId,
   isTemporaryActivity,
@@ -110,6 +127,7 @@ export default function ActivityDaysPanel({
   } | null>(null);
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickError, setQuickError] = useState<string | null>(null);
+  const [selectedActivityWeekIndex, setSelectedActivityWeekIndex] = useState(0);
   const capacity =
     groups.length === 0 || groups.some((group) => group.capacity == null)
       ? null
@@ -139,15 +157,6 @@ export default function ActivityDaysPanel({
   }));
 
   const existingDayDates = days.map((day) => day.date.slice(0, 10));
-  const weekdayLabels = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
 
   const selectedCount = selectedDayIds.length;
   const sortedDays = useMemo(
@@ -157,6 +166,16 @@ export default function ActivityDaysPanel({
       ),
     [days]
   );
+
+  const getWeekStart = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(date.getDate() + mondayOffset);
+    return start;
+  };
 
   const toggleDaySelection = (dayId: string) => {
     setSelectedDayIds((current) =>
@@ -281,20 +300,70 @@ export default function ActivityDaysPanel({
     }
   };
 
-  const weeklyGrid = weekdayLabels.map((weekdayLabel, weekdayIndex) => {
-    const perGroup = groups.map((group) => {
-      const match = days.find((day) => {
-        if (day.activityGroupId !== group.id) return false;
-        return new Date(day.date).getDay() === weekdayIndex;
-      });
-      return { group, day: match ?? null };
+  const activityWeeks = useMemo(() => {
+    const weekMap = new Map<string, { key: string; start: Date }>();
+    sortedDays.forEach((day) => {
+      const weekStart = getWeekStart(day.date);
+      const key = weekStart.toISOString().slice(0, 10);
+      if (!weekMap.has(key)) {
+        weekMap.set(key, { key, start: weekStart });
+      }
     });
+    return Array.from(weekMap.values()).sort(
+      (a, b) => a.start.getTime() - b.start.getTime()
+    );
+  }, [sortedDays]);
 
-    return {
-      weekdayLabel,
-      perGroup,
-    };
-  });
+  useEffect(() => {
+    if (activityWeeks.length === 0) return;
+    const todayWeekStartKey = getWeekStart(
+      new Date().toISOString()
+    ).toISOString();
+    const nextWeekIndex = activityWeeks.findIndex(
+      (week) => week.start.toISOString() >= todayWeekStartKey
+    );
+    if (nextWeekIndex > 0) {
+      setSelectedActivityWeekIndex(nextWeekIndex);
+    }
+  }, [activityWeeks]);
+
+  const selectedWeek = activityWeeks[selectedActivityWeekIndex] ?? null;
+  const weekDays = useMemo(() => {
+    if (selectedWeek == null) return [];
+    return days.filter((day) => {
+      const dayWeekKey = getWeekStart(day.date).toISOString().slice(0, 10);
+      return dayWeekKey === selectedWeek.key;
+    });
+  }, [days, selectedWeek]);
+
+  const weeklyGrid = useMemo(() => {
+    const activeWeekdayIndexes = Array.from(
+      new Set(weekDays.map((day) => new Date(day.date).getDay()))
+    ).sort((a, b) => a - b);
+
+    return activeWeekdayIndexes.map((weekdayIndex) => {
+      const weekdayLabel = WEEKDAY_LABELS[weekdayIndex] ?? 'Día';
+      const perGroup = groups.map((group) => {
+        const match = weekDays.find((day) => {
+          if (day.activityGroupId !== group.id) return false;
+          return new Date(day.date).getDay() === weekdayIndex;
+        });
+        return { group, day: match ?? null };
+      });
+
+      return {
+        weekdayLabel,
+        perGroup,
+      };
+    });
+  }, [groups, weekDays]);
+
+  const selectedWeekLabel =
+    selectedWeek == null
+      ? 'Sin semanas con actividad'
+      : `${selectedWeek.start.toLocaleDateString('es-AR')} - ${new Date(
+          selectedWeek.start.getTime() + 6 * 24 * 60 * 60 * 1000
+        ).toLocaleDateString('es-AR')}`;
 
   return (
     <>
@@ -547,9 +616,49 @@ export default function ActivityDaysPanel({
 
         {canManageDays && isTemporaryActivity && groups.length > 0 && (
           <div className="mt-8 rounded-lg border bg-muted/20 p-4">
-            <h3 className="font-heading text-lg font-semibold">
-              Planificar semana (actividades temporales)
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h3 className="font-heading text-lg font-semibold">
+                  Planificar semana (actividades temporales)
+                </h3>
+                <span className="text-sm text-muted-foreground">
+                  {selectedWeekLabel}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setSelectedActivityWeekIndex((current) =>
+                      Math.max(0, current - 1)
+                    )
+                  }
+                  disabled={selectedActivityWeekIndex === 0}
+                  aria-label="Semana anterior con actividad"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setSelectedActivityWeekIndex((current) =>
+                      Math.min(activityWeeks.length - 1, current + 1)
+                    )
+                  }
+                  disabled={
+                    activityWeeks.length === 0 ||
+                    selectedActivityWeekIndex >= activityWeeks.length - 1
+                  }
+                  aria-label="Siguiente semana con actividad"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
               Definí por grupo y día el lugar, deporte y materiales desde cada
               sesión.
@@ -626,6 +735,16 @@ export default function ActivityDaysPanel({
                       ))}
                     </tr>
                   ))}
+                  {weeklyGrid.length === 0 && (
+                    <tr>
+                      <td
+                        className="border p-3 text-muted-foreground"
+                        colSpan={groups.length + 1}
+                      >
+                        No hay sesiones para esta semana.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
