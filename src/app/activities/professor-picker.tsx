@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 type ProfessorOption = {
@@ -22,6 +22,7 @@ export default function ProfessorPicker({
   value,
   onChange,
 }: ProfessorPickerProps) {
+  const dialogId = useId();
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -55,7 +56,14 @@ export default function ProfessorPicker({
           <h3 className="text-sm font-semibold">Profesores</h3>
           <p className="text-xs text-muted-foreground">{selectedCountLabel}</p>
         </div>
-        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setOpen(true)}
+          aria-controls={dialogId}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+        >
           Seleccionar profesores
         </Button>
       </div>
@@ -75,7 +83,12 @@ export default function ProfessorPicker({
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div
+          id={dialogId}
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
           <div className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-lg bg-background shadow-xl">
             <div className="border-b p-4">
               <h4 className="text-base font-semibold">

@@ -636,7 +636,7 @@ export default function ActivityDaysPanel({
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  className="h-9 w-9 p-0"
                   onClick={() =>
                     setSelectedActivityWeekIndex((current) =>
                       Math.max(0, current - 1)
@@ -650,7 +650,7 @@ export default function ActivityDaysPanel({
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  className="h-9 w-9 p-0"
                   onClick={() =>
                     setSelectedActivityWeekIndex((current) =>
                       Math.min(activityWeeks.length - 1, current + 1)

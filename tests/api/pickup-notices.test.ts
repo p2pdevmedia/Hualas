@@ -4,8 +4,15 @@
 
 jest.mock('next-auth');
 jest.mock('@/lib/auth');
+jest.mock('@/lib/notifications/notification-service', () => ({
+  notifyPickupNoticeCreated: jest.fn().mockResolvedValue(undefined),
+  notifyPickupNoticeAcknowledged: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    familyGroup: {
+      findMany: jest.fn(),
+    },
     pickupNotice: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -21,6 +28,7 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
     },
     child: {
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
     activityParticipant: {
@@ -45,6 +53,9 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 
 const mockPrisma = prisma as {
+  familyGroup: {
+    findMany: jest.Mock;
+  };
   pickupNotice: {
     create: jest.Mock;
     findUnique: jest.Mock;
@@ -60,6 +71,7 @@ const mockPrisma = prisma as {
     findUnique: jest.Mock;
   };
   child: {
+    findFirst: jest.Mock;
     findUnique: jest.Mock;
   };
   activityParticipant: {
@@ -101,6 +113,7 @@ function makeDayContext(dayId = DAY_ID) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockPrisma.familyGroup.findMany.mockResolvedValue([]);
 });
 
 // ---------------------------------------------------------------------------
@@ -176,10 +189,7 @@ describe('POST /api/activity-days/[dayId]/pickup-notices', () => {
       activityId: 'act_001',
       activity: { id: 'act_001' },
     });
-    mockPrisma.child.findUnique.mockResolvedValueOnce({
-      id: CHILD_ID,
-      userId: 'other_user',
-    });
+    mockPrisma.child.findFirst.mockResolvedValueOnce(null);
 
     const res = await postPickupNotice(
       makePostRequest({
@@ -203,7 +213,7 @@ describe('POST /api/activity-days/[dayId]/pickup-notices', () => {
       activityId: 'act_001',
       activity: { id: 'act_001' },
     });
-    mockPrisma.child.findUnique.mockResolvedValueOnce({
+    mockPrisma.child.findFirst.mockResolvedValueOnce({
       id: CHILD_ID,
       userId: SESSION_USER.id,
     });
@@ -233,7 +243,7 @@ describe('POST /api/activity-days/[dayId]/pickup-notices', () => {
       activityId: 'act_001',
       activity: { id: 'act_001' },
     });
-    mockPrisma.child.findUnique.mockResolvedValueOnce({
+    mockPrisma.child.findFirst.mockResolvedValueOnce({
       id: CHILD_ID,
       userId: SESSION_USER.id,
     });
@@ -283,7 +293,7 @@ describe('POST /api/activity-days/[dayId]/pickup-notices', () => {
       activityId: 'act_001',
       activity: { id: 'act_001' },
     });
-    mockPrisma.child.findUnique.mockResolvedValueOnce({
+    mockPrisma.child.findFirst.mockResolvedValueOnce({
       id: CHILD_ID,
       userId: SESSION_USER.id,
     });
@@ -348,7 +358,7 @@ describe('POST /api/activity-days/[dayId]/pickup-notices', () => {
       activityId: 'act_001',
       activity: { id: 'act_001' },
     });
-    mockPrisma.child.findUnique.mockResolvedValueOnce({
+    mockPrisma.child.findFirst.mockResolvedValueOnce({
       id: CHILD_ID,
       userId: SESSION_USER.id,
     });
