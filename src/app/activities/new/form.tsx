@@ -36,6 +36,9 @@ type AnnualScheduleDraft = {
   schedule: string;
   groupTempId: string;
   professorIds: string[];
+  description: string;
+  geoLocation: string;
+  sportIcon: string;
 };
 
 type AnnualSharedDraft = {
@@ -75,6 +78,9 @@ function createEmptyAnnualScheduleDraft(): AnnualScheduleDraft {
     schedule: '',
     groupTempId: '',
     professorIds: [],
+    description: '',
+    geoLocation: '',
+    sportIcon: '',
   };
 }
 
@@ -249,6 +255,9 @@ export default function CreateActivityForm({
                 schedule: draft.schedule.trim(),
                 groupTempId: draft.groupTempId || undefined,
                 professorIds: draft.professorIds,
+                description: draft.description.trim() || undefined,
+                geoLocation: draft.geoLocation.trim() || undefined,
+                sportIcon: draft.sportIcon || undefined,
               };
             })
           : [];
@@ -679,6 +688,44 @@ export default function CreateActivityForm({
                             }
                             className={inputClass}
                           />
+                          <input
+                            type="text"
+                            placeholder="Lugar"
+                            value={draft.geoLocation}
+                            onChange={(e) =>
+                              updateAnnualScheduleDraft(draft.tempId, {
+                                geoLocation: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Materiales"
+                            value={draft.description}
+                            onChange={(e) =>
+                              updateAnnualScheduleDraft(draft.tempId, {
+                                description: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          />
+                          <select
+                            value={draft.sportIcon}
+                            onChange={(e) =>
+                              updateAnnualScheduleDraft(draft.tempId, {
+                                sportIcon: e.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          >
+                            <option value="">Deporte compartido</option>
+                            {SPORT_ICONS.map((icon) => (
+                              <option key={icon.file} value={icon.file}>
+                                {icon.label}
+                              </option>
+                            ))}
+                          </select>
                           <select
                             value={draft.groupTempId}
                             onChange={(e) =>

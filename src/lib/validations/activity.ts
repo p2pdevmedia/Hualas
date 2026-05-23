@@ -27,6 +27,9 @@ const annualScheduleSchema = z.object({
   schedule: z.string().min(1),
   groupTempId: z.string().min(1).optional(),
   professorIds: z.array(z.string().min(1)).min(1),
+  description: z.string().optional(),
+  geoLocation: z.string().optional(),
+  sportIcon: z.string().optional().nullable(),
 });
 
 const annualScheduleEditSchema = z.object({
@@ -35,6 +38,9 @@ const annualScheduleEditSchema = z.object({
   schedule: z.string().min(1),
   groupId: z.string().min(1).optional(),
   professorIds: z.array(z.string().min(1)).min(1),
+  description: z.string().optional(),
+  geoLocation: z.string().optional(),
+  sportIcon: z.string().optional().nullable(),
 });
 
 const activityGroupBaseShape = {

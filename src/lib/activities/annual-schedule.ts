@@ -5,6 +5,9 @@ type AnnualScheduleTemplate = {
   groupTempId?: string;
   groupId?: string;
   professorIds?: string[];
+  description?: string;
+  geoLocation?: string;
+  sportIcon?: string;
 };
 
 type AnnualSharedFields = {
@@ -49,11 +52,11 @@ export function buildAnnualActivityDays(
       days.push({
         ...template,
         date: new Date(cursor),
-        description: sharedFields.description,
-        geoLocation: sharedFields.geoLocation,
+        description: template.description ?? sharedFields.description,
+        geoLocation: template.geoLocation ?? sharedFields.geoLocation,
         latitude: sharedFields.latitude,
         longitude: sharedFields.longitude,
-        sportIcon: sharedFields.sportIcon,
+        sportIcon: template.sportIcon ?? sharedFields.sportIcon,
       });
     }
   }
