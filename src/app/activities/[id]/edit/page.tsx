@@ -156,7 +156,7 @@ export default async function EditActivityPage({
         }
         initialAnnualSchedules={initialAnnualSchedules}
         professors={professors}
-        initialGroups={groups}
+        initialGroups={groups.map((group) => ({ ...group, professorIds: [] }))}
         existingDayCount={existingDayCount}
       />
       <div className="mt-8 border-t pt-8">

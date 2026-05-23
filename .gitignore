@@ -1,10 +1,12 @@
 node_modules
+.pnpm-store
 .next
 .env*
 !.env.example
 tsconfig.tsbuildinfo
 package-lock.json
 .codex
+.codex-tools
 .claude-flow
 .worktrees
 pagos_pendientes_de_confirmar.md

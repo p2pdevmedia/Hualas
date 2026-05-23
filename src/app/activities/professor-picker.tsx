@@ -49,7 +49,7 @@ export default function ProfessorPicker({
     <div>
       <h3 className="text-sm font-semibold">Profesores</h3>
       <p className="text-xs text-muted-foreground">
-        Asigná uno o más profesores responsables de la actividad.
+        Asigna uno o mas profesores responsables de la actividad.
       </p>
     </div>
   );
@@ -141,7 +141,7 @@ export default function ProfessorPicker({
         {!collapsed && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Asigná uno o más profesores responsables de la actividad.
+              Asigna uno o mas profesores responsables de la actividad.
             </p>
             {professorList}
           </div>

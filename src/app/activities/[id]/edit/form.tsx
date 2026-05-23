@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ type ExistingGroup = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
+  professorIds: string[];
 };
 
 type Coordinates = {
@@ -92,6 +94,122 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
   };
 }
 
+function formatProfessorName(professor: ProfessorOption) {
+  return (
+    `${professor.name ?? ''} ${professor.lastName ?? ''}`.trim() ||
+    professor.email
+  );
+}
+
+function GroupProfessorPicker({
+  professors,
+  value,
+  onChange,
+}: {
+  professors: ProfessorOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedProfessors = professors.filter((professor) =>
+    value.includes(professor.id)
+  );
+  const selectedLabel =
+    selectedProfessors.length === 0
+      ? 'Sin profesores'
+      : selectedProfessors.length === 1
+        ? '1 profesor'
+        : `${selectedProfessors.length} profesores`;
+
+  return (
+    <div className="space-y-1">
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full justify-between"
+        onClick={() => setOpen(true)}
+      >
+        <span>Profesores</span>
+        <span className="text-xs font-normal text-muted-foreground">
+          {selectedLabel}
+        </span>
+      </Button>
+
+      {selectedProfessors.length > 0 && (
+        <p className="line-clamp-2 text-xs text-muted-foreground">
+          {selectedProfessors.map(formatProfessorName).join(', ')}
+        </p>
+      )}
+
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div className="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-lg bg-background shadow-xl">
+            <div className="border-b p-4">
+              <h4 className="text-base font-semibold">Profesores</h4>
+              <p className="text-xs text-muted-foreground">
+                Selecciona uno o mas profesores para este grupo.
+              </p>
+            </div>
+
+            <div className="max-h-[60vh] space-y-2 overflow-y-auto p-4">
+              {professors.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Primero selecciona profesores para la actividad.
+                </p>
+              ) : (
+                professors.map((professor) => {
+                  const checked = value.includes(professor.id);
+                  return (
+                    <label
+                      key={professor.id}
+                      className="flex items-start gap-3 rounded-md border bg-background p-3 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            onChange([...value, professor.id]);
+                            return;
+                          }
+                          onChange(value.filter((id) => id !== professor.id));
+                        }}
+                        className="mt-1 accent-primary"
+                      />
+                      <span>
+                        <span className="block font-medium">
+                          {formatProfessorName(professor)}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {professor.email}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="flex justify-end border-t p-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function EditActivityForm({
   activity,
   annualDefaults,
@@ -133,7 +251,9 @@ export default function EditActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
-  const [newGroupProfessorId, setNewGroupProfessorId] = useState('');
+  const [newGroupProfessorIds, setNewGroupProfessorIds] = useState<string[]>(
+    []
+  );
   const [groupError, setGroupError] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
@@ -160,6 +280,13 @@ export default function EditActivityForm({
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
+  function handleActivityProfessorChange(nextProfessorIds: string[]) {
+    setProfessorIds(nextProfessorIds);
+    setNewGroupProfessorIds((current) =>
+      current.filter((id) => nextProfessorIds.includes(id))
+    );
+  }
 
   function addAnnualScheduleDraft(weekday = '1') {
     setSchedulesModified(true);
@@ -204,7 +331,7 @@ export default function EditActivityForm({
       !newGroupCapacity ||
       !newGroupMinAge ||
       !newGroupMaxAge ||
-      !newGroupProfessorId
+      newGroupProfessorIds.length === 0
     ) {
       setGroupError('Completá nombre, cupo, edades y profesor del grupo');
       return;
@@ -231,18 +358,21 @@ export default function EditActivityForm({
           capacity: Number(newGroupCapacity),
           minAge: Number(newGroupMinAge),
           maxAge: Number(newGroupMaxAge),
-          professorIds: [newGroupProfessorId],
+          professorIds: newGroupProfessorIds,
         }),
       });
       if (!res.ok) throw new Error('No se pudo crear el grupo');
       const group = await res.json();
-      setExistingGroups((current) => [...current, group]);
+      setExistingGroups((current) => [
+        ...current,
+        { ...group, professorIds: newGroupProfessorIds },
+      ]);
       setNewGroupName('');
       setNewGroupDesc('');
       setNewGroupCapacity('');
       setNewGroupMinAge('');
       setNewGroupMaxAge('');
-      setNewGroupProfessorId('');
+      setNewGroupProfessorIds([]);
     } catch (err) {
       setGroupError(
         err instanceof Error ? err.message : 'Error al crear el grupo'
@@ -492,7 +622,7 @@ export default function EditActivityForm({
                   key={group.id}
                   className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
                 >
-                  <span>
+                  <span className="min-w-0">
                     {group.name}
                     {group.description && (
                       <span className="ml-2 text-muted-foreground">
@@ -508,16 +638,25 @@ export default function EditActivityForm({
                         </span>
                       )}
                   </span>
-                  <button
-                    type="button"
-                    disabled={deletingGroupId === group.id}
-                    onClick={() => setConfirmDeleteGroupId(group.id)}
-                    className="ml-4 text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
-                  >
-                    {deletingGroupId === group.id
-                      ? 'Eliminando...'
-                      : 'Eliminar'}
-                  </button>
+                  <div className="ml-4 flex shrink-0 items-center gap-3">
+                    <Link
+                      href={`/activities/${activity.id}/groups/${group.id}/edit`}
+                      prefetch={true}
+                      className="text-xs font-medium text-primary hover:text-primary/80"
+                    >
+                      Editar
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={deletingGroupId === group.id}
+                      onClick={() => setConfirmDeleteGroupId(group.id)}
+                      className="text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
+                    >
+                      {deletingGroupId === group.id
+                        ? 'Eliminando...'
+                        : 'Eliminar'}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -525,7 +664,7 @@ export default function EditActivityForm({
             <p className="text-xs text-muted-foreground">Sin grupos todavía.</p>
           )}
 
-          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_110px_auto]">
+          <div className="grid gap-2 items-end sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_minmax(180px,1fr)_auto]">
             <input
               type="text"
               placeholder="Nombre del grupo"
@@ -576,18 +715,11 @@ export default function EditActivityForm({
               onChange={(e) => setNewGroupMaxAge(e.target.value)}
               className={inputClass}
             />
-            <select
-              value={newGroupProfessorId}
-              onChange={(e) => setNewGroupProfessorId(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Profesor del grupo</option>
-              {selectedProfessors.map((professor) => (
-                <option key={professor.id} value={professor.id}>
-                  {professor.name ?? 'Sin nombre'} {professor.lastName ?? ''}
-                </option>
-              ))}
-            </select>
+            <GroupProfessorPicker
+              professors={selectedProfessors}
+              value={newGroupProfessorIds}
+              onChange={setNewGroupProfessorIds}
+            />
             <Button
               type="button"
               variant="outline"
@@ -606,7 +738,7 @@ export default function EditActivityForm({
         <ProfessorPicker
           professors={professors}
           value={professorIds}
-          onChange={setProfessorIds}
+          onChange={handleActivityProfessorChange}
           defaultCollapsed
         />
 
