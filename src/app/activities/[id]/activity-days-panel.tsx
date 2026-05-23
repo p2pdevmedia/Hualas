@@ -114,6 +114,7 @@ export default function ActivityDaysPanel({
   const router = useRouter();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showWeeklyPlanner, setShowWeeklyPlanner] = useState(false);
   const [showQuickDeleteTab, setShowQuickDeleteTab] = useState(false);
   const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -618,9 +619,15 @@ export default function ActivityDaysPanel({
           <div className="mt-8 rounded-lg border bg-muted/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <h3 className="font-heading text-lg font-semibold">
-                  Planificar semana (actividades temporales)
-                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowWeeklyPlanner((current) => !current)}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                  aria-expanded={showWeeklyPlanner}
+                >
+                  <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                  Planificar semana
+                </button>
                 <span className="text-sm text-muted-foreground">
                   {selectedWeekLabel}
                 </span>
@@ -659,95 +666,86 @@ export default function ActivityDaysPanel({
                 </Button>
               </div>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Definí por grupo y día el lugar, deporte y materiales desde cada
-              sesión.
-            </p>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[800px] border-collapse text-sm">
-                <thead>
-                  <tr>
-                    <th className="border bg-background p-2 text-left">Día</th>
-                    {groups.map((group) => (
-                      <th
-                        key={group.id}
-                        className="border bg-background p-2 text-left"
-                      >
-                        {group.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {weeklyGrid.map((row) => (
-                    <tr key={row.weekdayLabel}>
-                      <td className="border p-2 font-medium">
-                        {row.weekdayLabel}
-                      </td>
-                      {row.perGroup.map(({ group, day }) => (
-                        <td key={group.id} className="border p-2 align-top">
-                          {day ? (
-                            <div className="space-y-1">
-                              <p>
-                                <span className="font-medium">Lugar:</span>{' '}
-                                {day.geoLocation}
-                              </p>
-                              <p>
-                                <span className="font-medium">Deporte:</span>{' '}
-                                {SPORT_ICONS.find(
-                                  (icon) => icon.file === day.sportIcon
-                                )?.label ?? 'Sin definir'}
-                              </p>
-                              <p>
-                                <span className="font-medium">Materiales:</span>{' '}
-                                {day.description || 'Sin definir'}
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="px-3 py-1 text-xs"
-                                  onClick={() => openQuickEditor(day)}
-                                >
-                                  <PencilLine className="mr-1 h-3.5 w-3.5" />
-                                  Editar deporte y punto
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="px-3 py-1 text-xs"
-                                  onClick={() =>
-                                    router.push(
-                                      `/activities/${activityId}/days/${day.id}/edit`
-                                    )
-                                  }
-                                >
-                                  Editar sesión completa
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-muted-foreground">
-                              Sin sesión para este cruce.
-                            </p>
-                          )}
-                        </td>
+            {showWeeklyPlanner && (
+              <>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Definí por grupo y día el lugar y deporte desde cada sesión.
+                </p>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full min-w-[800px] border-collapse text-sm">
+                    <thead>
+                      <tr>
+                        <th className="border bg-background p-2 text-left">
+                          Día
+                        </th>
+                        {groups.map((group) => (
+                          <th
+                            key={group.id}
+                            className="border bg-background p-2 text-left"
+                          >
+                            {group.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {weeklyGrid.map((row) => (
+                        <tr key={row.weekdayLabel}>
+                          <td className="border p-2 font-medium">
+                            {row.weekdayLabel}
+                          </td>
+                          {row.perGroup.map(({ group, day }) => (
+                            <td key={group.id} className="border p-2 align-top">
+                              {day ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    {day.sportIcon ? (
+                                      <Image
+                                        src={`/sports/${day.sportIcon}`}
+                                        alt="Icono de deporte"
+                                        width={24}
+                                        height={24}
+                                        className="h-6 w-6 object-contain"
+                                      />
+                                    ) : null}
+                                    <p>{day.geoLocation}</p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="px-3 py-1 text-xs"
+                                      onClick={() => openQuickEditor(day)}
+                                    >
+                                      <PencilLine className="mr-1 h-3.5 w-3.5" />
+                                      Editar deporte y punto
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-muted-foreground">
+                                  Sin sesión para este cruce.
+                                </p>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                  {weeklyGrid.length === 0 && (
-                    <tr>
-                      <td
-                        className="border p-3 text-muted-foreground"
-                        colSpan={groups.length + 1}
-                      >
-                        No hay sesiones para esta semana.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      {weeklyGrid.length === 0 && (
+                        <tr>
+                          <td
+                            className="border p-3 text-muted-foreground"
+                            colSpan={groups.length + 1}
+                          >
+                            No hay sesiones para esta semana.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
         )}
       </section>
