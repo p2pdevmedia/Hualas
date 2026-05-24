@@ -32,7 +32,7 @@ export async function POST(
   }
 
   const data = activityDayCreateSchema.parse(await req.json());
-  const activityGroupId = data.activityGroupId ?? null;
+  const activityGroupId = data.activityGroupId;
 
   if (activityGroupId) {
     const group = await prisma.activityGroup.findFirst({

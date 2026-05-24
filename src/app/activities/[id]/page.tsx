@@ -206,6 +206,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         where: { activityId: activity.id },
         orderBy: { createdAt: 'asc' },
         include: {
+          professors: {
+            select: {
+              userId: true,
+            },
+          },
           _count: {
             select: {
               members: true,
@@ -303,7 +308,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   if (
     isProfessor &&
-    !activityProfessors.some((prof) => prof.userId === session?.user.id)
+    !activityProfessors.some((prof) => prof.userId === session?.user.id) &&
+    !activityGroups.some((group: any) =>
+      group.professors.some(
+        (assignment: { userId: string }) => assignment.userId === session?.user.id
+      )
+    )
   ) {
     redirect('/');
   }

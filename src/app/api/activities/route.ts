@@ -114,7 +114,7 @@ export async function POST(req: Request) {
           const activityGroupId = day.groupTempId
             ? groupIdByTempId.get(day.groupTempId)
             : null;
-          if (day.groupTempId && !activityGroupId) {
+          if (!activityGroupId) {
             throw new Error('Una sesión anual referencia un grupo inválido');
           }
           return {
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
             date: day.date,
             schedule: day.schedule,
             description: day.description ?? null,
-            activityGroupId: activityGroupId ?? null,
+            activityGroupId,
             sportIcon: day.sportIcon ?? null,
             geoLocation: day.geoLocation,
             latitude: day.latitude,

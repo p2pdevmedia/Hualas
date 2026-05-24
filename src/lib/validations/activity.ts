@@ -111,6 +111,34 @@ export const activityCreateSchema = activityBaseSchema
         });
       }
 
+      if (data.groups.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Definí al menos un grupo para la actividad anual',
+          path: ['groups'],
+        });
+      }
+
+      const groupTempIds = new Set(data.groups.map((group) => group.tempId));
+      for (let i = 0; i < data.annualSchedules.length; i++) {
+        const schedule = data.annualSchedules[i];
+        if (!schedule.groupTempId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Seleccioná un grupo para la sesión ${i + 1}`,
+            path: ['annualSchedules', i, 'groupTempId'],
+          });
+          continue;
+        }
+        if (!groupTempIds.has(schedule.groupTempId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `El grupo de la sesión ${i + 1} no es válido`,
+            path: ['annualSchedules', i, 'groupTempId'],
+          });
+        }
+      }
+
       if (!data.geoLocation?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -205,6 +233,14 @@ export const activityUpdateSchema = activityBaseSchema
             path: ['annualSchedules', i, 'schedule'],
           });
         }
+
+        if (!s.groupId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Seleccioná un grupo para la sesión ${i + 1}`,
+            path: ['annualSchedules', i, 'groupId'],
+          });
+        }
       }
     }
   });
@@ -240,7 +276,7 @@ export const activityDayCreateSchema = z.object({
   geoLocation: z.string().min(1),
   latitude: z.number(),
   longitude: z.number(),
-  activityGroupId: z.string().min(1).nullable().optional(),
+  activityGroupId: z.string().min(1),
   sportIcon: z.string().optional().nullable(),
 });
 

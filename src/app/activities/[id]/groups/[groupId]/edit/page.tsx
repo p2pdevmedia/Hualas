@@ -38,7 +38,8 @@ export default async function EditActivityGroupPage({
     redirect(`/activities/${params.id}`);
   }
 
-  const isAdmin = session!.user.role === 'ADMIN';
+  const isAdmin =
+    session!.user.role === 'ADMIN' || session!.user.role === 'SUPER_ADMIN';
   const canManageGroup =
     isAdmin ||
     group.professors.some(

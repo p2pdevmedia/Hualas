@@ -38,7 +38,6 @@ type AnnualScheduleDraft = {
   weekday: string;
   schedule: string;
   groupId: string;
-  professorIds: string[];
 };
 
 type AnnualSharedDraft = {
@@ -90,7 +89,6 @@ function createEmptyScheduleDraft(): AnnualScheduleDraft {
     weekday: '1',
     schedule: '',
     groupId: '',
-    professorIds: [],
   };
 }
 
@@ -444,8 +442,8 @@ export default function EditActivityForm({
             setError(`Completá el horario de la sesión ${i + 1}`);
             return;
           }
-          if (draft.professorIds.length === 0) {
-            setError(`Seleccioná al menos un profesor en la sesión ${i + 1}`);
+          if (!draft.groupId) {
+            setError(`Seleccioná un grupo en la sesión ${i + 1}`);
             return;
           }
         }
@@ -474,8 +472,7 @@ export default function EditActivityForm({
               tempId: d.tempId,
               weekday: Number(d.weekday),
               schedule: d.schedule.trim(),
-              groupId: d.groupId || undefined,
-              professorIds: d.professorIds,
+              groupId: d.groupId,
             }))
           : [];
 
@@ -867,12 +864,6 @@ export default function EditActivityForm({
                             const groupName =
                               existingGroups.find((g) => g.id === draft.groupId)
                                 ?.name ?? 'Sin grupo';
-                            const profNames = selectedProfessors
-                              .filter((p) => draft.professorIds.includes(p.id))
-                              .map((p) =>
-                                `${p.name ?? ''} ${p.lastName ?? ''}`.trim()
-                              )
-                              .join(', ');
                             return (
                               <li
                                 key={draft.tempId}
@@ -887,16 +878,6 @@ export default function EditActivityForm({
                                 <span className="text-muted-foreground">
                                   {groupName}
                                 </span>
-                                {profNames && (
-                                  <>
-                                    <span className="mx-1 text-muted-foreground">
-                                      ·
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {profNames}
-                                    </span>
-                                  </>
-                                )}
                               </li>
                             );
                           })}
@@ -938,48 +919,13 @@ export default function EditActivityForm({
                               }
                               className={inputClass}
                             >
-                              <option value="">Sin grupo</option>
+                              <option value="">Grupo de la sesión</option>
                               {existingGroups.map((group) => (
                                 <option key={group.id} value={group.id}>
                                   {group.name}
                                 </option>
                               ))}
                             </select>
-                            <div className="max-h-28 space-y-1 overflow-auto rounded border p-2">
-                              {selectedProfessors.map((professor) => (
-                                <label
-                                  key={professor.id}
-                                  className="flex items-center gap-2 text-xs"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={draft.professorIds.includes(
-                                      professor.id
-                                    )}
-                                    onChange={(e) =>
-                                      updateScheduleDraft(draft.tempId, {
-                                        professorIds: e.target.checked
-                                          ? [
-                                              ...draft.professorIds,
-                                              professor.id,
-                                            ]
-                                          : draft.professorIds.filter(
-                                              (id) => id !== professor.id
-                                            ),
-                                      })
-                                    }
-                                  />
-                                  {professor.name ?? 'Sin nombre'}{' '}
-                                  {professor.lastName ?? ''}
-                                </label>
-                              ))}
-                              {selectedProfessors.length === 0 && (
-                                <p className="text-xs text-muted-foreground">
-                                  Seleccioná profesores de la actividad para
-                                  asignarlos a esta sesión.
-                                </p>
-                              )}
-                            </div>
                           </div>
                         ))
                       )}

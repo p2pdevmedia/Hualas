@@ -103,25 +103,24 @@ export default async function ActivityGroupPage({
       }),
   ]);
 
-  const isAdmin = session!.user.role === 'ADMIN';
-  const canManageGroup =
-    isAdmin ||
-    Boolean(
-      group?.professors.some(
-        (assignment) => assignment.userId === session!.user.id
-      )
-    );
-
-  if (!canManageGroup) {
-    redirect('/');
-  }
-
   if (!group) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12 text-center text-muted-foreground font-body">
         Grupo no encontrado
       </main>
     );
+  }
+
+  const isAdmin =
+    session!.user.role === 'ADMIN' || session!.user.role === 'SUPER_ADMIN';
+  const canManageGroup =
+    isAdmin ||
+    group.professors.some(
+      (assignment) => assignment.userId === session!.user.id
+    );
+
+  if (!canManageGroup) {
+    redirect('/');
   }
 
   const allParticipants = participants

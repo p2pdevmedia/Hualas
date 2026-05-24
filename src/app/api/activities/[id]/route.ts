@@ -41,6 +41,29 @@ export async function PUT(
     }
   }
 
+  const annualScheduleGroupIds = Array.from(
+    new Set(
+      data.annualSchedules
+        .map((schedule) => schedule.groupId)
+        .filter((groupId): groupId is string => Boolean(groupId))
+    )
+  );
+  if (data.activityType === 'ANNUAL' && annualScheduleGroupIds.length > 0) {
+    const validGroups = await prisma.activityGroup.findMany({
+      where: {
+        id: { in: annualScheduleGroupIds },
+        activityId: params.id,
+      },
+      select: { id: true },
+    });
+    if (validGroups.length !== annualScheduleGroupIds.length) {
+      return NextResponse.json(
+        { error: 'Una o mas sesiones tienen un grupo invalido' },
+        { status: 400 }
+      );
+    }
+  }
+
   const activity = await prisma
     .$transaction(
       async (tx) => {
@@ -111,13 +134,16 @@ export async function PUT(
             const schedule = data.annualSchedules.find(
               (s) => s.tempId === day.tempId
             );
+            if (!schedule?.groupId) {
+              throw new Error('Una sesion anual no tiene grupo asignado');
+            }
             return {
               activityId,
               createdById: session.user.id,
               date: day.date,
               schedule: day.schedule,
               description: day.description ?? null,
-              activityGroupId: schedule?.groupId ?? null,
+              activityGroupId: schedule.groupId,
               sportIcon: day.sportIcon ?? null,
               geoLocation: day.geoLocation,
               latitude: day.latitude,

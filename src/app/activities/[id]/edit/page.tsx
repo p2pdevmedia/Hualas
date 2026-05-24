@@ -152,7 +152,6 @@ export default async function EditActivityPage({
           weekday: String(day.date.getUTCDay()),
           schedule: day.schedule,
           groupId: day.activityGroupId ?? '',
-          professorIds: [],
         }))
       : [];
 

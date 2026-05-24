@@ -121,6 +121,9 @@ export default function ActivityDayForm({
       if (!coordinates) {
         throw new Error('Seleccioná un punto en el mapa');
       }
+      if (!activityGroupId) {
+        throw new Error('Seleccioná un grupo para la sesión');
+      }
       const res = await fetch(
         isEdit && dayId
           ? `/api/activity-days/${dayId}`
@@ -245,7 +248,7 @@ export default function ActivityDayForm({
           }
           className={inputClass}
         >
-          <option value="">Sin restricción de grupo</option>
+          <option value="">Grupo de la sesión</option>
           {groups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.name}

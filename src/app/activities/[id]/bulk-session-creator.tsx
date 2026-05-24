@@ -175,6 +175,10 @@ export default function BulkSessionCreator({
       setError('Seleccioná un punto en el mapa.');
       return;
     }
+    if (!activityGroupId) {
+      setError('Seleccioná un grupo para la sesión.');
+      return;
+    }
     setError('');
     setSaving(true);
 
@@ -450,7 +454,7 @@ export default function BulkSessionCreator({
                   onChange={(e) => setActivityGroupId(e.target.value || null)}
                   className={inputClass}
                 >
-                  <option value="">Sin restricción de grupo</option>
+                  <option value="">Grupo de la sesión</option>
                   <option value={ALL_GROUPS_VALUE}>Todos los grupos</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
