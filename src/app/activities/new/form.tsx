@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SPORT_ICONS } from '@/lib/sport-icons';
 import { pesosToCents } from '@/lib/accounting';
 import ProfessorPicker from '../professor-picker';
+import GroupProfessorPicker from '../group-professor-picker';
 
 type ProfessorOption = {
   id: string;
@@ -95,7 +96,9 @@ export default function CreateActivityForm({
   const [newGroupCapacity, setNewGroupCapacity] = useState('');
   const [newGroupMinAge, setNewGroupMinAge] = useState('');
   const [newGroupMaxAge, setNewGroupMaxAge] = useState('');
-  const [newGroupProfessorId, setNewGroupProfessorId] = useState('');
+  const [newGroupProfessorIds, setNewGroupProfessorIds] = useState<string[]>(
+    []
+  );
   const [annualSchedules, setAnnualSchedules] = useState<AnnualScheduleDraft[]>(
     []
   );
@@ -122,7 +125,7 @@ export default function CreateActivityForm({
       !newGroupCapacity ||
       !newGroupMinAge ||
       !newGroupMaxAge ||
-      !newGroupProfessorId
+      newGroupProfessorIds.length === 0
     ) {
       setError('Completá nombre, cupo, edades y profesor del grupo');
       return;
@@ -145,7 +148,7 @@ export default function CreateActivityForm({
         capacity: newGroupCapacity,
         minAge: newGroupMinAge,
         maxAge: newGroupMaxAge,
-        professorIds: [newGroupProfessorId],
+        professorIds: [...newGroupProfessorIds],
       },
     ]);
     setNewGroupName('');
@@ -153,7 +156,14 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
-    setNewGroupProfessorId('');
+    setNewGroupProfessorIds([]);
+  }
+
+  function handleActivityProfessorChange(nextProfessorIds: string[]) {
+    setProfessorIds(nextProfessorIds);
+    setNewGroupProfessorIds((current) =>
+      current.filter((id) => nextProfessorIds.includes(id))
+    );
   }
 
   function removeGroupDraft(tempId: string) {
@@ -207,7 +217,7 @@ export default function CreateActivityForm({
     setNewGroupCapacity('');
     setNewGroupMinAge('');
     setNewGroupMaxAge('');
-    setNewGroupProfessorId('');
+    setNewGroupProfessorIds([]);
     setAnnualSchedules([]);
     setAnnualShared({
       geoLocation: '',
@@ -410,9 +420,21 @@ export default function CreateActivityForm({
                     años
                   </span>
                   <span className="ml-2 text-muted-foreground">
-                    - Profesor:{' '}
-                    {professors.find((p) => p.id === group.professorIds[0])
-                      ?.name ?? 'Sin nombre'}
+                    - Profesores:{' '}
+                    {group.professorIds
+                      .map((professorId) => {
+                        const professor = professors.find(
+                          (p) => p.id === professorId
+                        );
+                        return (
+                          `${professor?.name ?? ''} ${
+                            professor?.lastName ?? ''
+                          }`.trim() ||
+                          professor?.email ||
+                          'Sin nombre'
+                        );
+                      })
+                      .join(', ')}
                   </span>
                 </span>
                 <button
@@ -427,7 +449,7 @@ export default function CreateActivityForm({
           </ul>
         )}
 
-        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_110px_auto]">
+        <div className="grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_130px_110px_110px_minmax(180px,1fr)_auto]">
           <input
             type="text"
             placeholder="Nombre del grupo"
@@ -478,18 +500,11 @@ export default function CreateActivityForm({
             onChange={(e) => setNewGroupMaxAge(e.target.value)}
             className={inputClass}
           />
-          <select
-            value={newGroupProfessorId}
-            onChange={(e) => setNewGroupProfessorId(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Profesor del grupo</option>
-            {selectedProfessors.map((professor) => (
-              <option key={professor.id} value={professor.id}>
-                {professor.name ?? 'Sin nombre'} {professor.lastName ?? ''}
-              </option>
-            ))}
-          </select>
+          <GroupProfessorPicker
+            professors={selectedProfessors}
+            value={newGroupProfessorIds}
+            onChange={setNewGroupProfessorIds}
+          />
           <Button type="button" variant="outline" onClick={addGroupDraft}>
             Agregar
           </Button>
@@ -499,7 +514,7 @@ export default function CreateActivityForm({
       <ProfessorPicker
         professors={professors}
         value={professorIds}
-        onChange={setProfessorIds}
+        onChange={handleActivityProfessorChange}
       />
 
       {activityType === 'ANNUAL' && (
