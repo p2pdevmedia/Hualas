@@ -693,23 +693,25 @@ export default function ActivityDaysPanel({
                             <td key={group.id} className="border p-2 align-top">
                               {day ? (
                                 <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-start gap-2">
                                     {day.sportIcon ? (
                                       <Image
                                         src={`/icons/${day.sportIcon}`}
                                         alt="Icono de deporte"
-                                        width={24}
-                                        height={24}
-                                        className="h-6 w-6 object-contain"
+                                        width={32}
+                                        height={32}
+                                        className="h-8 w-8 flex-shrink-0 object-contain"
                                       />
                                     ) : null}
-                                    <p>{day.geoLocation}</p>
+                                    <p className="min-w-0 flex-1 whitespace-normal break-words text-left leading-snug [overflow-wrap:anywhere]">
+                                      {day.geoLocation}
+                                    </p>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      className="h-8 w-8 rounded-md border-blue-600 p-0 text-blue-600 hover:bg-blue-50"
+                                      className="h-8 w-8 rounded-md p-0"
                                       onClick={() => openQuickEditor(day)}
                                       title="Editar deporte y punto"
                                       aria-label="Editar deporte y punto"
