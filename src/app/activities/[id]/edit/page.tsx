@@ -12,6 +12,42 @@ interface EditActivityPageProps {
   params: { id: string };
 }
 
+async function getActivityGroupProfessorAssignments(activityId: string) {
+  try {
+    return await prisma.activityGroupProfessor.findMany({
+      where: { activityGroup: { activityId } },
+      select: {
+        activityGroupId: true,
+        userId: true,
+      },
+    });
+  } catch (error) {
+    console.error(
+      '[activities/edit] could not load group professor assignments',
+      error
+    );
+    return [];
+  }
+}
+
+async function getActivityMediaForEdit(activityId: string) {
+  try {
+    return await prisma.activityMedia.findMany({
+      where: { activityId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        type: true,
+        fileName: true,
+        sortOrder: true,
+      },
+    });
+  } catch (error) {
+    console.error('[activities/edit] could not load activity media', error);
+    return [];
+  }
+}
+
 export default async function EditActivityPage({
   params,
 }: EditActivityPageProps) {
@@ -30,6 +66,7 @@ export default async function EditActivityPage({
     existingDayCount,
     firstAnnualDay,
     annualCalendarSample,
+    groupProfessorAssignments,
     activityMedia,
   ] = await Promise.all([
     prisma.user.findMany({
@@ -55,10 +92,6 @@ export default async function EditActivityPage({
         capacity: true,
         minAge: true,
         maxAge: true,
-        professors: {
-          select: { userId: true },
-          orderBy: { createdAt: 'asc' },
-        },
       },
     }),
     prisma.activityProfessor.findMany({
@@ -99,17 +132,19 @@ export default async function EditActivityPage({
         activityGroupId: true,
       },
     }),
-    prisma.activityMedia.findMany({
-      where: { activityId: params.id },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-      select: {
-        id: true,
-        type: true,
-        fileName: true,
-        sortOrder: true,
-      },
-    }),
+    getActivityGroupProfessorAssignments(params.id),
+    getActivityMediaForEdit(params.id),
   ]);
+
+  const professorIdsByGroupId = groupProfessorAssignments.reduce(
+    (byGroup, assignment) => {
+      const current = byGroup.get(assignment.activityGroupId) ?? [];
+      current.push(assignment.userId);
+      byGroup.set(assignment.activityGroupId, current);
+      return byGroup;
+    },
+    new Map<string, string[]>()
+  );
 
   const initialAnnualSchedules =
     activity.activityType === 'ANNUAL'
@@ -158,7 +193,7 @@ export default async function EditActivityPage({
         professors={professors}
         initialGroups={groups.map((group) => ({
           ...group,
-          professorIds: group.professors.map((professor) => professor.userId),
+          professorIds: professorIdsByGroupId.get(group.id) ?? [],
         }))}
         existingDayCount={existingDayCount}
       />
