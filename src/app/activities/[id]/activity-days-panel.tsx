@@ -693,17 +693,17 @@ export default function ActivityDaysPanel({
                             <td key={group.id} className="border p-2 align-top">
                               {day ? (
                                 <div className="space-y-2">
-                                  <div className="flex items-start gap-2">
+                                  <div className="flex items-center gap-2">
                                     {day.sportIcon ? (
                                       <Image
                                         src={`/icons/${day.sportIcon}`}
                                         alt="Icono de deporte"
-                                        width={32}
-                                        height={32}
-                                        className="h-8 w-8 flex-shrink-0 object-contain"
+                                        width={40}
+                                        height={40}
+                                        className="h-10 w-10 flex-shrink-0 object-contain"
                                       />
                                     ) : null}
-                                    <p className="min-w-0 flex-1 whitespace-normal break-words text-left leading-snug [overflow-wrap:anywhere]">
+                                    <p className="min-w-0 max-w-full flex-1 whitespace-normal break-words [overflow-wrap:anywhere]">
                                       {day.geoLocation}
                                     </p>
                                   </div>
