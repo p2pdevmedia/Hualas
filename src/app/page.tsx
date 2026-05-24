@@ -1,6 +1,15 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { ClipboardList, MapPin, Navigation, Users, Wallet } from 'lucide-react';
+import {
+  ArrowRight,
+  ClipboardList,
+  CreditCard,
+  MapPin,
+  Navigation,
+  UserPlus,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
 import { authOptions } from '@/lib/auth';
@@ -238,35 +247,63 @@ export default async function Home() {
               </p>
             </div>
 
-            {showMemberSpace || !isLoggedIn ? (
-              <div className="rounded-lg border bg-card p-6 shadow-sm">
-                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                  {showMemberSpace ? 'Tu espacio' : 'Sumate'}
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">
-                  {showMemberSpace
-                    ? 'Seguís tus actividades desde acá.'
-                    : 'Entrá al club y empezá a participar.'}
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  {showMemberSpace
-                    ? 'Revisá tus inscripciones, próximos encuentros y novedades vinculadas a tus grupos.'
-                    : 'Creá tu cuenta para anotarte en actividades, recibir novedades y gestionar tu perfil familiar.'}
-                </p>
+            <div className="rounded-lg border bg-card p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                {showMemberSpace ? 'Tu espacio' : 'Sumate'}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Asociate al club
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Podés pagar solo la cuota social mensual para asociarte, sin
+                inscribirte ahora en una actividad. Cuando quieras sumarte a una
+                propuesta, lo hacés desde la agenda.
+              </p>
+
+              <div className="mt-5 grid gap-3">
                 <Link
-                  href={showMemberSpace ? '/my-activities' : '/register'}
-                  className="mt-5 inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                  href={
+                    isLoggedIn
+                      ? '/activities/cart'
+                      : '/register?returnTo=/activities/cart'
+                  }
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                 >
-                  {showMemberSpace ? 'Ir a mis actividades' : 'Ingresá al club'}
+                  {isLoggedIn ? (
+                    <CreditCard className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {isLoggedIn
+                    ? 'Pagar cuota social'
+                    : 'Crear cuenta y asociarme'}
                 </Link>
+
+                {showMemberSpace ? (
+                  <Link
+                    href="/my-activities"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                  >
+                    Ir a mis actividades
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="#actividades"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                  >
+                    Ver actividades disponibles
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
-            ) : null}
+            </div>
           </div>
         </section>
       )}
 
       {/* Próximas actividades y noticias */}
-      <section className="px-4 pb-14">
+      <section id="actividades" className="px-4 pb-14">
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>

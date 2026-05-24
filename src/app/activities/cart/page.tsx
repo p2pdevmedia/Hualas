@@ -192,36 +192,46 @@ export default function ActivitiesCartPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Carrito de actividades</h1>
+        <h1 className="text-2xl font-semibold">
+          {items.length === 0 ? 'Asociate al club' : 'Carrito de actividades'}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          El total incluye automáticamente la cuota social si corresponde y
-          aplica descuento familiar cuando hay dos hijos o más.
+          {items.length === 0
+            ? 'Pagá solo la cuota social mensual para asociarte al club, sin inscribirte ahora en actividades.'
+            : 'El total incluye automáticamente la cuota social si corresponde y aplica descuento familiar cuando hay dos hijos o más.'}
         </p>
       </header>
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="text-muted-foreground">
-            No hay actividades en el carrito.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Buscar actividades
-          </Link>
+        <div className="grid gap-6 py-8 lg:grid-cols-[1fr_420px] lg:items-start">
+          <div className="rounded-xl border bg-muted/30 p-6 text-left">
+            <h2 className="text-lg font-semibold">
+              Solo cuota social mensual
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Este camino es para asociarte al club sin elegir una actividad en
+              este momento. Si después querés participar en una propuesta,
+              podés volver a la agenda y sumarla por separado.
+            </p>
+            <Link
+              href="/#actividades"
+              className="mt-5 inline-flex h-9 items-center justify-center rounded-full border border-primary px-5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              Ver actividades
+            </Link>
+          </div>
 
           {quoteLoading ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
               Buscando cuota social pendiente...
             </p>
           ) : quote && quote.totalSocialFeeAmount > 0 ? (
-            <section className="mt-4 w-full max-w-md rounded-xl border bg-card p-5 text-left shadow-sm">
+            <section className="rounded-xl border bg-card p-5 text-left shadow-sm">
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold">Cuota social</h2>
                 <p className="text-sm text-muted-foreground">
-                  Tenés cuota social pendiente y podés pagarla sin agregar una
-                  actividad.
+                  Tenés cuota social pendiente. El pago activa tu asociación al
+                  club para el período actual.
                 </p>
               </div>
               <div className="mt-4 space-y-2 text-sm">
@@ -263,13 +273,13 @@ export default function ActivitiesCartPage() {
               </Button>
             </section>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
               No hay cuota social pendiente para pagar.
             </p>
           )}
 
           {error && (
-            <div className="space-y-2 text-sm text-red-600">
+            <div className="space-y-2 text-sm text-red-600 lg:col-span-2">
               <p>{error}</p>
               {errorAction && (
                 <Link

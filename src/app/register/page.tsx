@@ -20,6 +20,16 @@ export default function RegisterPage() {
   const router = useRouter();
   const t = useTranslation().auth;
 
+  const getSafeReturnTo = () => {
+    const returnTo = new URLSearchParams(window.location.search).get(
+      'returnTo'
+    );
+
+    return returnTo?.startsWith('/') && !returnTo.startsWith('//')
+      ? returnTo
+      : null;
+  };
+
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
@@ -54,11 +64,16 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess('Registro exitoso. Te llevamos a completar tu perfil.');
+      const returnTo = getSafeReturnTo();
+      setSuccess(
+        returnTo
+          ? 'Registro exitoso. Te llevamos al pago de la cuota social.'
+          : 'Registro exitoso. Te llevamos a completar tu perfil.'
+      );
       setEmail('');
       setPassword('');
       setName('');
-      router.push('/profile?onboarding=1');
+      router.push(returnTo ?? '/profile?onboarding=1');
     } catch (e) {
       setError('Registration failed');
     }
@@ -144,7 +159,9 @@ export default function RegisterPage() {
           <Button
             className="w-full flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-muted"
             onClick={() =>
-              signIn('google', { callbackUrl: '/profile?onboarding=1' })
+              signIn('google', {
+                callbackUrl: getSafeReturnTo() ?? '/profile?onboarding=1',
+              })
             }
           >
             <Image src="/google.svg" alt="Google logo" width={18} height={18} />
