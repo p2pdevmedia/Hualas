@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { notifyChatMessage } from '@/lib/notifications/notification-service';
+import { hasAnyCapability } from '@/lib/roles';
 
 export async function GET(
   req: NextRequest,
@@ -113,11 +114,15 @@ export async function POST(
     return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
   }
 
-  const senderRole = session.user.role;
+  const senderRole = session.user.activeRole ?? session.user.role;
   const senderRoles =
     ((session.user as any).roles as string[] | undefined) ?? [];
-  const isSenderAdmin = senderRole === 'ADMIN' || senderRole === 'SUPER_ADMIN';
-  const isSenderCounter = senderRole === 'COUNTER';
+  const isSenderAdmin =
+    hasAnyCapability(session, ['ADMIN', 'SUPER_ADMIN']) ||
+    senderRole === 'ADMIN' ||
+    senderRole === 'SUPER_ADMIN';
+  const isSenderCounter =
+    hasAnyCapability(session, ['COUNTER']) || senderRole === 'COUNTER';
   const isSenderProfessor =
     senderRole === 'PROFESSOR' || senderRoles.includes('PROFESSOR');
   const isRecipientAdmin =

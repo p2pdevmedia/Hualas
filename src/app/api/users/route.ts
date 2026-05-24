@@ -11,7 +11,13 @@ export async function GET() {
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!hasAnyCapability(session, ['COUNTER', 'ADMIN', 'SUPER_ADMIN'])) {
+  const activeRole = session.user.activeRole ?? session.user.role;
+  const canListUsers =
+    hasAnyCapability(session, ['COUNTER', 'ADMIN', 'SUPER_ADMIN']) ||
+    activeRole === 'COUNTER' ||
+    activeRole === 'ADMIN' ||
+    activeRole === 'SUPER_ADMIN';
+  if (!canListUsers) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

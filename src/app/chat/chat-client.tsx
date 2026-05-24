@@ -293,15 +293,19 @@ export default function ChatClient() {
   useEffect(() => {
     if (!session) return;
     const roles = ((session.user as any).roles as string[] | undefined) ?? [];
+    const activeRole = session.user.activeRole ?? session.user.role;
+    const canMessageAnyUser =
+      roles.includes('ADMIN') ||
+      roles.includes('SUPER_ADMIN') ||
+      roles.includes('COUNTER') ||
+      activeRole === 'ADMIN' ||
+      activeRole === 'SUPER_ADMIN' ||
+      activeRole === 'COUNTER';
     const isProfessor =
-      roles.includes('PROFESSOR') ||
-      session.user.role === 'PROFESSOR' ||
-      session.user.activeRole === 'PROFESSOR';
+      roles.includes('PROFESSOR') || activeRole === 'PROFESSOR';
     const isMember =
-      roles.includes('MEMBER') ||
-      session.user.role === 'MEMBER' ||
-      session.user.activeRole === 'MEMBER';
-    if (!isProfessor && !isMember) {
+      roles.includes('MEMBER') || activeRole === 'MEMBER';
+    if (canMessageAnyUser || (!isProfessor && !isMember)) {
       setProfessorContext(null);
       return;
     }
@@ -361,6 +365,16 @@ export default function ChatClient() {
     sessionRoles.includes('PROFESSOR') ||
     session?.user.role === 'PROFESSOR' ||
     session?.user.activeRole === 'PROFESSOR';
+  const canMessageAnyUser =
+    sessionRoles.includes('ADMIN') ||
+    sessionRoles.includes('SUPER_ADMIN') ||
+    sessionRoles.includes('COUNTER') ||
+    session?.user.role === 'ADMIN' ||
+    session?.user.role === 'SUPER_ADMIN' ||
+    session?.user.role === 'COUNTER' ||
+    session?.user.activeRole === 'ADMIN' ||
+    session?.user.activeRole === 'SUPER_ADMIN' ||
+    session?.user.activeRole === 'COUNTER';
 
   const activeChats = useMemo(() => {
     if (!session) return [];
@@ -414,10 +428,8 @@ export default function ChatClient() {
   const pickerPeople = useMemo<PersonOption[]>(() => {
     if (!session) return [];
 
-    const isAdmin =
-      session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-
     if (
+      !canMessageAnyUser &&
       (hasProfessorCapability || session.user.role === 'MEMBER') &&
       professorContext
     ) {
@@ -461,8 +473,7 @@ export default function ChatClient() {
     return users
       .filter((user) => user.id !== session.user.id)
       .filter((user) => {
-        const isCounter = session.user.role === 'COUNTER';
-        if (isAdmin || isCounter) return true;
+        if (canMessageAnyUser) return true;
         return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
       })
       .map((user) => ({
@@ -474,7 +485,13 @@ export default function ChatClient() {
         updatedAt: user.updatedAt,
       }))
       .sort((a, b) => a.label.localeCompare(b.label, 'es'));
-  }, [hasProfessorCapability, professorContext, session, users]);
+  }, [
+    canMessageAnyUser,
+    hasProfessorCapability,
+    professorContext,
+    session,
+    users,
+  ]);
 
   const pickerGroups = useMemo<GroupOption[]>(() => {
     if (!professorContext) return [];
