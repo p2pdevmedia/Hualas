@@ -1,5 +1,6 @@
 package com.hualas.mobile.features.activities
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -32,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -154,7 +158,7 @@ private fun ActivityCalendarCard(
     }
     var showMonthlyView by remember { mutableStateOf(false) }
     val selectedWeek = remember(calendarCells, resolvedSelectedDay) {
-        buildSelectedWeekCells(calendarCells, resolvedSelectedDay)
+        buildSelectedWeekCells(calendarCells, resolvedSelectedDay ?: today)
     }
 
     if (calendarCells.isEmpty() || resolvedSelectedDay == null) {
@@ -162,50 +166,181 @@ private fun ActivityCalendarCard(
         return
     }
 
-    StageCard {
-        CalendarHeader(
-            monthLabel = agenda.monthLabel,
-            selectedDay = resolvedSelectedDay,
-            sessionCount = calendarDays.firstOrNull { it.date == resolvedSelectedDay }?.sessionCount ?: 0
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        CalendarViewToggle(
+            showMonthlyView = showMonthlyView,
+            onShowWeekly = { showMonthlyView = false },
+            onShowMonthly = { showMonthlyView = true }
         )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            OutlinedButton(onClick = { showMonthlyView = !showMonthlyView }) {
-                Icon(
-                    imageVector = if (showMonthlyView) Icons.Outlined.ViewWeek else Icons.Outlined.CalendarMonth,
-                    contentDescription = null
-                )
-                Text(
-                    text = if (showMonthlyView) "Semanal" else "Mensual",
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-        }
-        WeekdayHeader()
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val weeksToRender = if (showMonthlyView) {
-                calendarCells.chunked(7)
-            } else {
-                listOf(selectedWeek)
-            }
-            weeksToRender.forEach { week ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    week.forEach { cell ->
-                        CalendarDayCell(
-                            cell = cell,
-                            onSelectDay = onSelectDay,
-                            modifier = Modifier.weight(1f)
-                        )
+        StageCard {
+            CalendarHeader(
+                monthLabel = agenda.monthLabel,
+                selectedDay = resolvedSelectedDay,
+                sessionCount = calendarDays.firstOrNull { it.date == resolvedSelectedDay }?.sessionCount ?: 0
+            )
+            if (showMonthlyView) {
+                WeekdayHeader()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    calendarCells.chunked(7).forEach { week ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            week.forEach { cell ->
+                                CalendarDayCell(
+                                    cell = cell,
+                                    onSelectDay = onSelectDay,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
                     }
                 }
+            } else {
+                WeeklyCalendarStrip(
+                    week = selectedWeek,
+                    onSelectDay = onSelectDay
+                )
             }
-        }
         Text(
             text = "Tocá un día con sesiones para ver la agenda y usá el botón del calendario para cambiar a vista mensual.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+}
+
+@Composable
+private fun CalendarViewToggle(
+    showMonthlyView: Boolean,
+    onShowWeekly: () -> Unit,
+    onShowMonthly: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        CalendarToggleButton(
+            selected = !showMonthlyView,
+            label = "Semanal",
+            icon = Icons.Outlined.ViewWeek,
+            onClick = onShowWeekly
+        )
+        CalendarToggleButton(
+            selected = showMonthlyView,
+            label = "Calendario mensual",
+            icon = Icons.Outlined.CalendarMonth,
+            onClick = onShowMonthly
+        )
+    }
+}
+
+@Composable
+private fun CalendarToggleButton(
+    selected: Boolean,
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    val background = if (selected) MaterialTheme.colorScheme.background else Color.Transparent
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onBackground
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Row(
+        modifier = Modifier
+            .background(background, RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 11.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun WeeklyCalendarStrip(
+    week: List<ActivityCalendarCell>,
+    onSelectDay: (String) -> Unit
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(week, key = { it.date }) { cell ->
+            WeeklyDayCard(
+                cell = cell,
+                onSelectDay = onSelectDay
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeeklyDayCard(
+    cell: ActivityCalendarCell,
+    onSelectDay: (String) -> Unit
+) {
+    val hasSessions = cell.sessionCount > 0
+    val enabled = cell.isCurrentMonth && hasSessions
+    val borderColor = when {
+        cell.isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        hasSessions -> MaterialTheme.colorScheme.outlineVariant
+        else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+    }
+    val backgroundColor = when {
+        cell.isSelected -> MaterialTheme.colorScheme.background
+        hasSessions -> MaterialTheme.colorScheme.background
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+    }
+
+    Column(
+        modifier = Modifier
+            .widthIn(min = 112.dp, max = 132.dp)
+            .background(backgroundColor, RoundedCornerShape(16.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+            .clickable(enabled = enabled) { onSelectDay(cell.date) }
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = dayBadge(cell.date) ?: shortWeekdayLabel(cell.date),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (cell.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = shortDayLabel(cell.date) ?: cell.dayOfMonth.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (hasSessions) {
+                "${cell.sessionCount} sesiÃ³n${if (cell.sessionCount == 1) "" else "es"}"
+            } else {
+                "Sin actividad"
+            },
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (hasSessions) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (hasSessions) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -640,7 +775,10 @@ private fun AvailableActivityCard(
 private fun StageCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -731,6 +869,20 @@ private fun dayBadge(dayKey: String): String? {
         today.plusDays(1) -> "Mañana"
         else -> null
     }
+}
+
+private fun shortWeekdayLabel(dayKey: String): String {
+    return parseDay(dayKey)
+        ?.format(DateTimeFormatter.ofPattern("EEE", Locale("es", "AR")))
+        ?.replace(".", "")
+        ?.replaceFirstChar { it.titlecase(Locale("es", "AR")) }
+        ?: "DÃ­a"
+}
+
+private fun shortDayLabel(dayKey: String): String? {
+    return parseDay(dayKey)
+        ?.format(DateTimeFormatter.ofPattern("d MMM", Locale("es", "AR")))
+        ?.replace(".", "")
 }
 
 private fun parseDay(dayKey: String): LocalDate? {
