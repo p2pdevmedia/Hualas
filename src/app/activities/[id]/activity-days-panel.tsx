@@ -696,7 +696,7 @@ export default function ActivityDaysPanel({
                                   <div className="flex items-center gap-2">
                                     {day.sportIcon ? (
                                       <Image
-                                        src={`/sports/${day.sportIcon}`}
+                                        src={`/icons/${day.sportIcon}`}
                                         alt="Icono de deporte"
                                         width={24}
                                         height={24}
@@ -709,11 +709,12 @@ export default function ActivityDaysPanel({
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      className="px-3 py-1 text-xs"
+                                      className="h-8 w-8 rounded-md border-blue-600 p-0 text-blue-600 hover:bg-blue-50"
                                       onClick={() => openQuickEditor(day)}
+                                      title="Editar deporte y punto"
+                                      aria-label="Editar deporte y punto"
                                     >
-                                      <PencilLine className="mr-1 h-3.5 w-3.5" />
-                                      Editar deporte y punto
+                                      <PencilLine className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 </div>
