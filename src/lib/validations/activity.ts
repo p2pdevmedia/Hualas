@@ -26,7 +26,6 @@ const annualScheduleSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
   groupTempId: z.string().min(1).optional(),
-  professorIds: z.array(z.string().min(1)).min(1),
 });
 
 const annualScheduleEditSchema = z.object({
@@ -34,7 +33,6 @@ const annualScheduleEditSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   schedule: z.string().min(1),
   groupId: z.string().min(1).optional(),
-  professorIds: z.array(z.string().min(1)).min(1),
 });
 
 const activityGroupBaseShape = {
@@ -213,7 +211,7 @@ export const activityUpdateSchema = activityBaseSchema
 
 export const activityGroupCreateSchema = z
   .object({
-    professorIds: z.array(z.string().min(1)).min(1),
+    professorIds: z.array(z.string().min(1)).optional().default([]),
     ...activityGroupBaseShape,
   })
   .refine((data) => data.maxAge >= data.minAge, {
@@ -242,7 +240,6 @@ export const activityDayCreateSchema = z.object({
   geoLocation: z.string().min(1),
   latitude: z.number(),
   longitude: z.number(),
-  professorIds: z.array(z.string().min(1)).min(1),
   activityGroupId: z.string().min(1).nullable().optional(),
   sportIcon: z.string().optional().nullable(),
 });

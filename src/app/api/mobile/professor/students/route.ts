@@ -19,8 +19,10 @@ export async function GET(req: Request) {
   const students = await prisma.activityParticipant.findMany({
     where: {
       status: 'ACTIVE',
-      activity: {
-        professors: { some: { userId: session.userId } },
+      groupMembership: {
+        activityGroup: {
+          professors: { some: { userId: session.userId } },
+        },
       },
       ...(groupId
         ? {

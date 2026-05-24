@@ -3,10 +3,22 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityDayUpdateSchema } from '@/lib/validations/activity';
-import {
-  notifyActivityDayUpdated,
-  notifyProfessorGroupAssigned,
-} from '@/lib/notifications/notification-service';
+import { notifyActivityDayUpdated } from '@/lib/notifications/notification-service';
+
+function isProfessorAssignedToDay(
+  day: {
+    activity: { professors: Array<{ userId: string }> };
+    activityGroup: { professors: Array<{ userId: string }> } | null;
+  },
+  userId: string
+) {
+  const groupProfessors = day.activityGroup?.professors;
+  if (groupProfessors != null) {
+    return groupProfessors.some((p) => p.userId === userId);
+  }
+
+  return day.activity.professors.some((p) => p.userId === userId);
+}
 
 export async function PATCH(
   req: Request,
@@ -19,18 +31,21 @@ export async function PATCH(
 
   const day = await prisma.activityDay.findUnique({
     where: { id: params.dayId },
-    include: { professors: { select: { userId: true } } },
+    include: {
+      activity: { select: { professors: { select: { userId: true } } } },
+      activityGroup: { select: { professors: { select: { userId: true } } } },
+    },
   });
 
   if (!day) {
-    return NextResponse.json({ error: 'Día no encontrado' }, { status: 404 });
+    return NextResponse.json({ error: 'Dia no encontrado' }, { status: 404 });
   }
 
   const isAdmin =
     session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
   const isProfessorOfDay =
     session.user.role === 'PROFESSOR' &&
-    day.professors.some((p) => p.userId === session.user.id);
+    isProfessorAssignedToDay(day, session.user.id);
 
   if (!isAdmin && !isProfessorOfDay) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -75,21 +90,16 @@ export async function PUT(
     select: {
       id: true,
       activityId: true,
-      date: true,
-      schedule: true,
-      geoLocation: true,
-      activityGroupId: true,
-      professors: { select: { userId: true } },
     },
   });
 
   if (!day) {
-    return NextResponse.json({ error: 'Día no encontrado' }, { status: 404 });
+    return NextResponse.json({ error: 'Dia no encontrado' }, { status: 404 });
   }
 
   const data = activityDayUpdateSchema.parse(await req.json());
-  const professorIds = Array.from(new Set(data.professorIds));
   const activityGroupId = data.activityGroupId ?? null;
+
   if (activityGroupId) {
     const group = await prisma.activityGroup.findFirst({
       where: {
@@ -98,6 +108,7 @@ export async function PUT(
       },
       select: { id: true },
     });
+
     if (!group) {
       return NextResponse.json(
         { error: 'El grupo no pertenece a esta actividad' },
@@ -105,26 +116,6 @@ export async function PUT(
       );
     }
   }
-  const validProfessors = await prisma.user.findMany({
-    where: {
-      id: { in: professorIds },
-      roleAssignments: { some: { role: 'PROFESSOR' } },
-      isActive: true,
-    },
-    select: { id: true },
-  });
-  if (validProfessors.length !== professorIds.length) {
-    return NextResponse.json(
-      { error: 'Uno o más profesores no son válidos' },
-      { status: 400 }
-    );
-  }
-
-  const previousProfessorIds = new Set(day.professors.map((p) => p.userId));
-  const shouldNotifyGroupAssignment = (userId: string) =>
-    Boolean(activityGroupId) &&
-    (activityGroupId !== day.activityGroupId ||
-      !previousProfessorIds.has(userId));
 
   const updatedDay = await prisma.activityDay.update({
     where: { id: day.id },
@@ -137,45 +128,12 @@ export async function PUT(
       longitude: data.longitude,
       activityGroupId,
       sportIcon: data.sportIcon ?? null,
-      professors: {
-        deleteMany: {},
-        create: professorIds.map((userId) => ({
-          user: { connect: { id: userId } },
-        })),
-      },
-    },
-    include: {
-      professors: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      },
     },
   });
 
   notifyActivityDayUpdated(updatedDay.id).catch((err) =>
     console.error('[notifications] notifyActivityDayUpdated failed', err)
   );
-
-  if (activityGroupId) {
-    const newlyAssignedProfessorIds = professorIds.filter(
-      shouldNotifyGroupAssignment
-    );
-    notifyProfessorGroupAssigned(
-      day.activityId,
-      activityGroupId,
-      newlyAssignedProfessorIds
-    ).catch((err) =>
-      console.error('[notifications] notifyProfessorGroupAssigned failed', err)
-    );
-  }
 
   return NextResponse.json(updatedDay);
 }
@@ -203,7 +161,7 @@ export async function DELETE(
 
     if (ids.length === 0) {
       return NextResponse.json(
-        { error: 'No se recibieron sesiones válidas para eliminar' },
+        { error: 'No se recibieron sesiones validas para eliminar' },
         { status: 400 }
       );
     }

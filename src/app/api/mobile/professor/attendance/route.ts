@@ -18,7 +18,13 @@ export async function GET(req: Request) {
 
   const days = await prisma.activityDay.findMany({
     where: {
-      professors: { some: { userId: session.userId } },
+      OR: [
+        { activityGroup: { professors: { some: { userId: session.userId } } } },
+        {
+          activityGroupId: null,
+          activity: { professors: { some: { userId: session.userId } } },
+        },
+      ],
       date: { gte: today },
     },
     select: {

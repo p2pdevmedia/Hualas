@@ -11,6 +11,7 @@ type Group = {
   capacity: number | null;
   minAge: number | null;
   maxAge: number | null;
+  professors: Array<{ userId: string }>;
 };
 
 interface GroupEditFormProps {
@@ -58,6 +59,7 @@ export default function GroupEditForm({
           capacity: Number(capacity),
           minAge: Number(minAge),
           maxAge: Number(maxAge),
+          professorIds: group.professors.map((professor) => professor.userId),
         }),
       });
 

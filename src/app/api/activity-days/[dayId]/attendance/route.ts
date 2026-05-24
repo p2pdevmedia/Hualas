@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { activityDayAttendanceSchema } from '@/lib/validations/activity';
+import { isUserAssignedToActivityDay } from '@/lib/activity-day-professors';
 
 export async function PATCH(
   req: Request,
@@ -60,16 +61,11 @@ export async function PATCH(
     : false;
 
   if (!isSelf && !canManageChild) {
-    const professorAssignment = await prisma.activityDayProfessor.findUnique({
-      where: {
-        activityDayId_userId: {
-          activityDayId: day.id,
-          userId: session.user.id,
-        },
-      },
-      select: { userId: true },
-    });
-    if (!professorAssignment) {
+    const professorAssigned = await isUserAssignedToActivityDay(
+      day.id,
+      session.user.id
+    );
+    if (!professorAssigned) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }

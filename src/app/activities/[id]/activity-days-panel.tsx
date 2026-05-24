@@ -275,9 +275,6 @@ export default function ActivityDaysPanel({
           geoLocation: quickGeoLocation.trim(),
           latitude: quickCoordinates.latitude,
           longitude: quickCoordinates.longitude,
-          professorIds: editingDay.assignedProfessors.map(
-            (professor) => professor.id
-          ),
           activityGroupId: editingDay.activityGroupId,
           sportIcon: quickSportIcon,
         }),
@@ -371,9 +368,7 @@ export default function ActivityDaysPanel({
       {showBulkCreator && (
         <BulkSessionCreator
           activityId={activityId}
-          professors={professors}
           groups={groups}
-          defaultProfessorIds={defaultProfessorIds}
           existingDayDates={existingDayDates}
           onClose={() => setShowBulkCreator(false)}
         />

@@ -58,6 +58,9 @@ export default async function ActivityJoinPage({
             capacity: true,
             minAge: true,
             maxAge: true,
+            professors: {
+              select: { user: { select: { name: true, lastName: true } } },
+            },
           },
           orderBy: { name: 'asc' },
         },
@@ -69,9 +72,6 @@ export default async function ActivityJoinPage({
             schedule: true,
             activityGroupId: true,
             sportIcon: true,
-            professors: {
-              select: { user: { select: { name: true, lastName: true } } },
-            },
           },
           orderBy: { date: 'asc' },
         },
@@ -100,14 +100,12 @@ export default async function ActivityJoinPage({
     : null;
 
   const professorsByGroup: Record<string, string[]> = {};
-  for (const day of activityData.days) {
-    if (!day.activityGroupId) continue;
-    if (!professorsByGroup[day.activityGroupId])
-      professorsByGroup[day.activityGroupId] = [];
-    for (const { user } of day.professors) {
+  for (const group of activityData.groups) {
+    professorsByGroup[group.id] = [];
+    for (const { user } of group.professors) {
       const fullName = [user.name, user.lastName].filter(Boolean).join(' ');
-      if (!professorsByGroup[day.activityGroupId].includes(fullName)) {
-        professorsByGroup[day.activityGroupId].push(fullName);
+      if (!professorsByGroup[group.id].includes(fullName)) {
+        professorsByGroup[group.id].push(fullName);
       }
     }
   }

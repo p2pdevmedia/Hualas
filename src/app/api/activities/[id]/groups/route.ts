@@ -43,6 +43,34 @@ export async function POST(
   }
 
   const data = activityGroupCreateSchema.parse(await req.json());
+  const professorIds = Array.from(
+    new Set(
+      data.professorIds.length > 0
+        ? data.professorIds
+        : activity.professors.map((professor) => professor.userId)
+    )
+  );
+  if (professorIds.length === 0) {
+    return NextResponse.json(
+      { error: 'Selecciona al menos un profesor para el grupo' },
+      { status: 400 }
+    );
+  }
+  const validProfessors = await prisma.user.findMany({
+    where: {
+      id: { in: professorIds },
+      roleAssignments: { some: { role: 'PROFESSOR' } },
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  if (validProfessors.length !== professorIds.length) {
+    return NextResponse.json(
+      { error: 'Uno o mas profesores no son validos' },
+      { status: 400 }
+    );
+  }
 
   const group = await prisma.activityGroup.create({
     data: {
@@ -55,7 +83,7 @@ export async function POST(
     },
   });
   await prisma.activityGroupProfessor.createMany({
-    data: data.professorIds.map((userId: string) => ({
+    data: professorIds.map((userId: string) => ({
       activityGroupId: group.id,
       userId,
     })),

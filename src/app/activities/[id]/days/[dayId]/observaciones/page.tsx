@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
+import { isUserAssignedToActivityDay } from '@/lib/activity-day-professors';
 import Link from 'next/link';
 import DayNotesForm from './day-notes-form';
 
@@ -23,7 +24,6 @@ export default async function DayObservacionesPage({
     include: {
       activity: { select: { id: true, name: true } },
       activityGroup: { select: { id: true, name: true } },
-      professors: { select: { userId: true } },
     },
   });
 
@@ -31,7 +31,7 @@ export default async function DayObservacionesPage({
 
   if (
     isProfessor &&
-    !day.professors.some((p) => p.userId === session!.user.id)
+    !(await isUserAssignedToActivityDay(day.id, session!.user.id))
   ) {
     redirect('/my-activities');
   }

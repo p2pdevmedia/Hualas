@@ -5,16 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import ProfessorPicker from '../professor-picker';
 import { SPORT_ICONS } from '@/lib/sport-icons';
-
-type ProfessorOption = {
-  id: string;
-  name: string | null;
-  lastName: string | null;
-  email: string;
-  phone: string | null;
-};
 
 type GroupOption = {
   id: string;
@@ -28,9 +19,7 @@ type Coordinates = {
 
 interface BulkSessionCreatorProps {
   activityId: string;
-  professors: ProfessorOption[];
   groups: GroupOption[];
-  defaultProfessorIds: string[];
   existingDayDates: string[];
   onClose: () => void;
 }
@@ -77,9 +66,7 @@ function toDateStr(year: number, month: number, day: number): string {
 
 export default function BulkSessionCreator({
   activityId,
-  professors,
   groups,
-  defaultProfessorIds,
   existingDayDates,
   onClose,
 }: BulkSessionCreatorProps) {
@@ -100,8 +87,6 @@ export default function BulkSessionCreator({
   const [schedule, setSchedule] = useState('');
   const [geoLocation, setGeoLocation] = useState('');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const [professorIds, setProfessorIds] =
-    useState<string[]>(defaultProfessorIds);
   const ALL_GROUPS_VALUE = '__all_groups__';
   const [activityGroupId, setActivityGroupId] = useState<string | null>(null);
   const [sportIcon, setSportIcon] = useState<string | null>(null);
@@ -110,10 +95,6 @@ export default function BulkSessionCreator({
   const [saving, setSaving] = useState(false);
 
   const existingSet = new Set(existingDayDates);
-  const activityProfessors = professors.filter((p) =>
-    defaultProfessorIds.includes(p.id)
-  );
-
   function toggleDate(dateStr: string, disabled: boolean) {
     if (disabled) return;
     setSelectedDates((prev) => {
@@ -194,11 +175,6 @@ export default function BulkSessionCreator({
       setError('Seleccioná un punto en el mapa.');
       return;
     }
-    if (professorIds.length === 0) {
-      setError('Seleccioná al menos un profesor.');
-      return;
-    }
-
     setError('');
     setSaving(true);
 
@@ -223,7 +199,6 @@ export default function BulkSessionCreator({
               geoLocation: geoLocation.trim(),
               latitude: coordinates.latitude,
               longitude: coordinates.longitude,
-              professorIds,
               activityGroupId: targetGroupId,
               sportIcon: sportIcon || null,
             }),
@@ -485,12 +460,6 @@ export default function BulkSessionCreator({
                 </select>
               </div>
             )}
-
-            <ProfessorPicker
-              professors={activityProfessors}
-              value={professorIds}
-              onChange={setProfessorIds}
-            />
 
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">

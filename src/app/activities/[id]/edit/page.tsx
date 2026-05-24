@@ -55,6 +55,10 @@ export default async function EditActivityPage({
         capacity: true,
         minAge: true,
         maxAge: true,
+        professors: {
+          select: { userId: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     }),
     prisma.activityProfessor.findMany({
@@ -93,10 +97,6 @@ export default async function EditActivityPage({
         date: true,
         schedule: true,
         activityGroupId: true,
-        professors: {
-          select: { userId: true },
-          orderBy: { createdAt: 'asc' },
-        },
       },
     }),
     prisma.activityMedia.findMany({
@@ -117,7 +117,7 @@ export default async function EditActivityPage({
           weekday: String(day.date.getUTCDay()),
           schedule: day.schedule,
           groupId: day.activityGroupId ?? '',
-          professorIds: day.professors.map((professor) => professor.userId),
+          professorIds: [],
         }))
       : [];
 
@@ -156,7 +156,10 @@ export default async function EditActivityPage({
         }
         initialAnnualSchedules={initialAnnualSchedules}
         professors={professors}
-        initialGroups={groups.map((group) => ({ ...group, professorIds: [] }))}
+        initialGroups={groups.map((group) => ({
+          ...group,
+          professorIds: group.professors.map((professor) => professor.userId),
+        }))}
         existingDayCount={existingDayCount}
       />
       <div className="mt-8 border-t pt-8">

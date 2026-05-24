@@ -127,8 +127,10 @@ export async function POST(
         await prisma.activityParticipant.findFirst({
           where: {
             userId: otherUserId,
-            activity: {
-              professors: { some: { userId: session.user.id } },
+            groupMembership: {
+              activityGroup: {
+                professors: { some: { userId: session.user.id } },
+              },
             },
           },
           select: { id: true },

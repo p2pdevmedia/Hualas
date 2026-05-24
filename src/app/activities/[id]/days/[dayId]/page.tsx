@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { gateActiveRole } from '@/lib/role-guards';
+import { isUserAssignedToActivityDay } from '@/lib/activity-day-professors';
 import Link from 'next/link';
 import Image from 'next/image';
 import CancelDayButton from './cancel-day-button';
@@ -36,7 +37,6 @@ export default async function ActivityDayPage({
       cancellationReason: true,
       activity: { select: { id: true, name: true } },
       activityGroup: { select: { id: true, name: true } },
-      professors: { select: { userId: true } },
       attendances: { select: { status: true } },
     },
   });
@@ -45,7 +45,7 @@ export default async function ActivityDayPage({
 
   if (
     isProfessor &&
-    !day.professors.some((p) => p.userId === session!.user.id)
+    !(await isUserAssignedToActivityDay(day.id, session!.user.id))
   ) {
     redirect('/my-activities');
   }

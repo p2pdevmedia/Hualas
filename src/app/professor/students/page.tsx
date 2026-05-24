@@ -78,20 +78,17 @@ export default async function ProfessorStudentsPage() {
           distinct: ['activityGroupId'],
         })
         .then((rows) => rows.map((row) => row.activityGroupId))
-    : await prisma.activityDay
+    : await prisma.activityGroupProfessor
         .findMany({
           where: {
-            activityId: { in: activityIds },
-            activityGroupId: { not: null },
-            professors: { some: { userId: professorId } },
+            userId: professorId,
+            activityGroup: { activityId: { in: activityIds } },
           },
           select: { activityGroupId: true },
           distinct: ['activityGroupId'],
         })
-        .then((days) =>
-          days
-            .map((day) => day.activityGroupId)
-            .filter((groupId): groupId is string => Boolean(groupId))
+        .then((assignments) =>
+          assignments.map((assignment) => assignment.activityGroupId)
         );
 
   const groupMembers = await prisma.activityGroupMember.findMany({
@@ -169,6 +166,18 @@ export default async function ProfessorStudentsPage() {
     orderBy: [{ activity: { name: 'asc' } }, { name: 'asc' }],
     include: {
       activity: { select: { name: true, activityType: true } },
+      professors: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      },
       days: {
         orderBy: { date: 'asc' },
         select: {
@@ -178,19 +187,6 @@ export default async function ProfessorStudentsPage() {
           cancelled: true,
           planificacion: true,
           devolucion: true,
-          professors: {
-            select: {
-              userId: true,
-              user: {
-                select: {
-                  name: true,
-                  lastName: true,
-                  email: true,
-                  phone: true,
-                },
-              },
-            },
-          },
           attendances: {
             select: {
               activityParticipantId: true,
@@ -480,21 +476,16 @@ export default async function ProfessorStudentsPage() {
         );
       }
 
-      for (const professor of day.professors) {
-        const existing = professorsById.get(professor.userId);
-        if (existing) {
-          existing.sessionCount += 1;
-          continue;
-        }
+    }
 
-        professorsById.set(professor.userId, {
-          userId: professor.userId,
-          name: formatFullName(professor.user),
-          email: professor.user.email,
-          phone: professor.user.phone,
-          sessionCount: 1,
-        });
-      }
+    for (const professor of group.professors) {
+      professorsById.set(professor.userId, {
+        userId: professor.userId,
+        name: formatFullName(professor.user),
+        email: professor.user.email,
+        phone: professor.user.phone,
+        sessionCount: group.days.length,
+      });
     }
 
     return {

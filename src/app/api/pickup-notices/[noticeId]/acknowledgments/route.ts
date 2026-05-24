@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { acknowledgePickupNoticeSchema } from '@/lib/validations/pickup-notice';
 import { notifyPickupNoticeAcknowledged } from '@/lib/notifications/notification-service';
+import { isUserAssignedToActivityDay } from '@/lib/activity-day-professors';
 import { z } from 'zod';
 
 export async function POST(
@@ -30,12 +31,10 @@ export async function POST(
     }
 
     // Verify the professor is assigned to this activity day
-    const isAssigned = await prisma.activityDayProfessor.findFirst({
-      where: {
-        activityDayId: notice.activityDayId,
-        userId: session.user.id,
-      },
-    });
+    const isAssigned = await isUserAssignedToActivityDay(
+      notice.activityDayId,
+      session.user.id
+    );
 
     if (!isAssigned) {
       return NextResponse.json(

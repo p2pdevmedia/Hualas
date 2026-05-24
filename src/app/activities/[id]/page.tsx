@@ -223,22 +223,23 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         where: { activityId: activity.id },
         orderBy: { date: 'asc' },
         include: {
-          professors: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  lastName: true,
-                  email: true,
-                },
-              },
-            },
-          },
           activityGroup: {
             select: {
               id: true,
               name: true,
+              professors: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      lastName: true,
+                      email: true,
+                      phone: true,
+                    },
+                  },
+                },
+              },
             },
           },
           attendances: {
@@ -641,9 +642,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               .filter((day: any) => {
                 if (isAdmin) return true;
                 if (isProfessor) {
-                  return day.professors.some(
+                  return (
+                    day.activityGroup?.professors.some(
+                      (assignment: { userId: string }) =>
+                        assignment.userId === session?.user.id
+                    ) ??
+                    activityProfessors.some(
                     (assignment: { userId: string }) =>
                       assignment.userId === session?.user.id
+                    )
                   );
                 }
                 return true;
@@ -662,10 +669,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 canEdit: isAdmin,
                 canEditDescription:
                   isProfessor &&
-                  day.professors.some(
+                  (day.activityGroup?.professors.some(
                     (a: { userId: string }) => a.userId === session?.user.id
-                  ),
-                assignedProfessors: day.professors.map((assignment: any) => ({
+                  ) ??
+                    activityProfessors.some(
+                      (a: { userId: string }) => a.userId === session?.user.id
+                    )),
+                assignedProfessors: (
+                  day.activityGroup?.professors ?? activityProfessors
+                ).map((assignment: any) => ({
                   id: assignment.user.id,
                   name: assignment.user.name,
                   lastName: assignment.user.lastName,

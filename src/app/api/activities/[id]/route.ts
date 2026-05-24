@@ -23,12 +23,7 @@ export async function PUT(
   }
   const data = activityUpdateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds ?? []));
-  const annualProfessorIds = Array.from(
-    new Set(data.annualSchedules.flatMap((schedule) => schedule.professorIds))
-  );
-  const professorIdsToValidate = Array.from(
-    new Set([...professorIds, ...annualProfessorIds])
-  );
+  const professorIdsToValidate = professorIds;
   if (professorIdsToValidate.length > 0) {
     const validProfessors = await prisma.user.findMany({
       where: {
@@ -49,34 +44,12 @@ export async function PUT(
   const activity = await prisma
     .$transaction(
       async (tx) => {
-        const [existingProfessors, existingGroupAssignments] =
-          await Promise.all([
-            tx.activityProfessor.findMany({
-              where: { activityId: params.id },
-              select: { userId: true },
-            }),
-            tx.activityDay.findMany({
-              where: {
-                activityId: params.id,
-                activityGroupId: { not: null },
-              },
-              select: {
-                activityGroupId: true,
-                professors: { select: { userId: true } },
-              },
-            }),
-          ]);
+        const existingProfessors = await tx.activityProfessor.findMany({
+          where: { activityId: params.id },
+          select: { userId: true },
+        });
         const existingProfessorIds = new Set(
           existingProfessors.map((p) => p.userId)
-        );
-        const existingGroupProfessorKeys = new Set(
-          existingGroupAssignments.flatMap((day) =>
-            day.activityGroupId
-              ? day.professors.map(
-                  (professor) => `${day.activityGroupId}:${professor.userId}`
-                )
-              : []
-          )
         );
 
         const updatedActivity = await tx.activity.update({
@@ -152,30 +125,7 @@ export async function PUT(
             };
           });
 
-          const professorIdsForDays = annualProfessorIds.length
-            ? annualProfessorIds
-            : professorIds;
-
-          if (professorIdsForDays.length > 0) {
-            const createdDays = await tx.activityDay.createManyAndReturn({
-              data: dayData,
-              select: { id: true },
-            });
-            await tx.activityDayProfessor.createMany({
-              data: createdDays.flatMap(({ id: activityDayId }, index) => {
-                const sessionProfessorIds = annualDays[index]?.professorIds
-                  ?.length
-                  ? annualDays[index].professorIds
-                  : professorIdsForDays;
-                return sessionProfessorIds.map((userId) => ({
-                  activityDayId,
-                  userId,
-                }));
-              }),
-            });
-          } else {
-            await tx.activityDay.createMany({ data: dayData });
-          }
+          await tx.activityDay.createMany({ data: dayData });
         } else if (data.activityType === 'ANNUAL') {
           await tx.activityDay.updateMany({
             where: { activityId },
@@ -189,38 +139,15 @@ export async function PUT(
           });
         }
 
-        const groupAssignments = new Map<string, Set<string>>();
-        const defaultAnnualProfessorIds = annualProfessorIds.length
-          ? annualProfessorIds
-          : professorIds;
-        if (data.activityType === 'ANNUAL') {
-          for (const schedule of data.annualSchedules) {
-            const groupId = schedule.groupId ?? undefined;
-            if (!groupId) continue;
-            const scheduleProfessorIds =
-              schedule.professorIds.length > 0
-                ? schedule.professorIds
-                : defaultAnnualProfessorIds;
-            if (scheduleProfessorIds.length === 0) continue;
-            const existing = groupAssignments.get(groupId) ?? new Set<string>();
-            for (const userId of scheduleProfessorIds) {
-              if (!existingGroupProfessorKeys.has(`${groupId}:${userId}`)) {
-                existing.add(userId);
-              }
-            }
-            if (existing.size > 0) groupAssignments.set(groupId, existing);
-          }
-        }
-
         return {
           id: activityId,
           assignedProfessorIds: professorIds.filter(
             (userId) => !existingProfessorIds.has(userId)
           ),
-          groupAssignments: Array.from(groupAssignments, ([groupId, ids]) => ({
-            groupId,
-            professorIds: Array.from(ids),
-          })),
+          groupAssignments: [] as Array<{
+            groupId: string;
+            professorIds: string[];
+          }>,
         };
       },
       { timeout: 30000 }

@@ -39,7 +39,17 @@ export async function GET(req: Request) {
       }),
       prisma.activityDay.findMany({
         where: {
-          professors: { some: { userId: session.userId } },
+          OR: [
+            {
+              activityGroup: {
+                professors: { some: { userId: session.userId } },
+              },
+            },
+            {
+              activityGroupId: null,
+              activity: { professors: { some: { userId: session.userId } } },
+            },
+          ],
           date: { gte: today },
         },
         select: {
@@ -71,7 +81,19 @@ export async function GET(req: Request) {
           status: 'PENDING',
           activityDay: {
             date: { gte: today },
-            professors: { some: { userId: session.userId } },
+            OR: [
+              {
+                activityGroup: {
+                  professors: { some: { userId: session.userId } },
+                },
+              },
+              {
+                activityGroupId: null,
+                activity: {
+                  professors: { some: { userId: session.userId } },
+                },
+              },
+            ],
           },
         },
       }),

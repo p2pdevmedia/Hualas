@@ -31,8 +31,8 @@ export async function recipientsForActivityDayUpdate(
         where: { activityGroupId: day.activityGroupId },
         select: { activityParticipant: { select: { userId: true } } },
       }),
-      prisma.activityDayProfessor.findMany({
-        where: { activityDay: { activityGroupId: day.activityGroupId } },
+      prisma.activityGroupProfessor.findMany({
+        where: { activityGroupId: day.activityGroupId },
         select: { userId: true },
       }),
     ]);
@@ -79,8 +79,8 @@ export async function recipientsForActivityDayCancellation(
         where: { activityGroupId: day.activityGroupId },
         select: { activityParticipant: { select: { userId: true } } },
       }),
-      prisma.activityDayProfessor.findMany({
-        where: { activityDay: { activityGroupId: day.activityGroupId } },
+      prisma.activityGroupProfessor.findMany({
+        where: { activityGroupId: day.activityGroupId },
         select: { userId: true },
       }),
     ]);
@@ -109,13 +109,16 @@ export async function recipientsForPickupNotice(
       activityDay: {
         select: {
           activityId: true,
-          professors: { select: { userId: true } },
+          activityGroup: {
+            select: { professors: { select: { userId: true } } },
+          },
         },
       },
     },
   });
   if (!notice) return [];
-  let professorIds = notice.activityDay.professors.map((p) => p.userId);
+  let professorIds =
+    notice.activityDay.activityGroup?.professors.map((p) => p.userId) ?? [];
   if (professorIds.length === 0) {
     const activityProfs = await prisma.activityProfessor.findMany({
       where: { activityId: notice.activityDay.activityId },

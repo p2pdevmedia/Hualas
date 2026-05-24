@@ -20,7 +20,13 @@ export async function GET(
   const day = await prisma.activityDay.findFirst({
     where: {
       id: params.dayId,
-      professors: { some: { userId: session.userId } },
+      OR: [
+        { activityGroup: { professors: { some: { userId: session.userId } } } },
+        {
+          activityGroupId: null,
+          activity: { professors: { some: { userId: session.userId } } },
+        },
+      ],
     },
     select: {
       id: true,
@@ -147,7 +153,13 @@ export async function PATCH(
   const day = await prisma.activityDay.findFirst({
     where: {
       id: params.dayId,
-      professors: { some: { userId: session.userId } },
+      OR: [
+        { activityGroup: { professors: { some: { userId: session.userId } } } },
+        {
+          activityGroupId: null,
+          activity: { professors: { some: { userId: session.userId } } },
+        },
+      ],
     },
     select: {
       id: true,

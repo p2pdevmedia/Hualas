@@ -40,7 +40,8 @@ export async function POST(
     select: {
       id: true,
       activityGroupId: true,
-      professors: { select: { userId: true } },
+      activity: { select: { professors: { select: { userId: true } } } },
+      activityGroup: { select: { professors: { select: { userId: true } } } },
     },
   });
 
@@ -53,7 +54,14 @@ export async function POST(
 
   if (
     isProfessor &&
-    !day.professors.some((professor) => professor.userId === session.user.id)
+    !(
+      day.activityGroup?.professors.some(
+        (professor) => professor.userId === session.user.id
+      ) ??
+      day.activity.professors.some(
+        (professor) => professor.userId === session.user.id
+      )
+    )
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -116,7 +116,17 @@ export async function GET(req: Request) {
           date: requestedDay
             ? { gte: requestedDay.start, lt: requestedDay.end }
             : { gte: start, lt: end },
-          professors: { some: { userId: session.userId } },
+          OR: [
+            {
+              activityGroup: {
+                professors: { some: { userId: session.userId } },
+              },
+            },
+            {
+              activityGroupId: null,
+              activity: { professors: { some: { userId: session.userId } } },
+            },
+          ],
         },
         select: {
           id: true,

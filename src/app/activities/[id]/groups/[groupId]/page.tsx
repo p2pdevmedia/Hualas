@@ -29,26 +29,13 @@ export default async function ActivityGroupPage({
   const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
   if (block) return block;
 
-  const [activity, activityProfessors] = await Promise.all([
-    prisma.activity.findUnique({
-      where: { id: params.id },
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-    prisma.activityProfessor
-      .findMany({
-        where: { activityId: params.id },
-        select: {
-          userId: true,
-        },
-      })
-      .catch((error) => {
-        console.error('[activity-group-page] professors query failed', error);
-        return [];
-      }),
-  ]);
+  const activity = await prisma.activity.findUnique({
+    where: { id: params.id },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
 
   if (!activity) {
     return (
@@ -58,17 +45,6 @@ export default async function ActivityGroupPage({
     );
   }
 
-  const isAdmin = session!.user.role === 'ADMIN';
-  const canManageGroup =
-    isAdmin ||
-    activityProfessors.some(
-      (assignment) => assignment.userId === session!.user.id
-    );
-
-  if (!canManageGroup) {
-    redirect('/');
-  }
-
   const [group, activityGroups, participants] = await Promise.all([
     prisma.activityGroup.findFirst({
       where: {
@@ -76,6 +52,7 @@ export default async function ActivityGroupPage({
         activityId: activity.id,
       },
       include: {
+        professors: { select: { userId: true } },
         _count: {
           select: {
             members: true,
@@ -125,6 +102,19 @@ export default async function ActivityGroupPage({
         return [];
       }),
   ]);
+
+  const isAdmin = session!.user.role === 'ADMIN';
+  const canManageGroup =
+    isAdmin ||
+    Boolean(
+      group?.professors.some(
+        (assignment) => assignment.userId === session!.user.id
+      )
+    );
+
+  if (!canManageGroup) {
+    redirect('/');
+  }
 
   if (!group) {
     return (

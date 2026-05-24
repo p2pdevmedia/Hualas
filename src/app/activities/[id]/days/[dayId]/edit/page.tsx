@@ -15,7 +15,7 @@ export default async function EditActivityDayPage({
   const block = gateAdmin(session);
   if (block) return block;
 
-  const [day, activityProfessors, groups] = await Promise.all([
+  const [day, groups] = await Promise.all([
     prisma.activityDay.findUnique({
       where: { id: params.dayId },
       select: {
@@ -30,17 +30,7 @@ export default async function EditActivityDayPage({
         activityGroupId: true,
         sportIcon: true,
         activity: { select: { name: true } },
-        professors: { select: { userId: true } },
       },
-    }),
-    prisma.activityProfessor.findMany({
-      where: { activityId: params.id },
-      include: {
-        user: {
-          select: { id: true, name: true, lastName: true, email: true },
-        },
-      },
-      orderBy: [{ user: { name: 'asc' } }],
     }),
     prisma.activityGroup.findMany({
       where: { activityId: params.id },
@@ -48,8 +38,6 @@ export default async function EditActivityDayPage({
       select: { id: true, name: true },
     }),
   ]);
-
-  const professors = activityProfessors.map((ap) => ap.user);
 
   if (!day || day.activityId !== params.id)
     redirect(`/activities/${params.id}`);
@@ -91,9 +79,7 @@ export default async function EditActivityDayPage({
         activityId={params.id}
         mode="edit"
         dayId={params.dayId}
-        professors={professors}
         groups={groups}
-        defaultProfessorIds={activityProfessors.map((p) => p.userId)}
         initialValues={{
           date: day.date.toISOString().slice(0, 10),
           schedule: day.schedule,
@@ -103,7 +89,6 @@ export default async function EditActivityDayPage({
             day.latitude != null && day.longitude != null
               ? { latitude: day.latitude, longitude: day.longitude }
               : null,
-          professorIds: day.professors.map((p) => p.userId),
           activityGroupId: day.activityGroupId,
           sportIcon: day.sportIcon,
         }}

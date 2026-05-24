@@ -5,15 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import ProfessorPicker from '../professor-picker';
 import { SPORT_ICONS } from '@/lib/sport-icons';
-
-type ProfessorOption = {
-  id: string;
-  name: string | null;
-  lastName: string | null;
-  email: string;
-};
 
 type Coordinates = {
   latitude: number;
@@ -26,7 +18,6 @@ type ActivityDayValues = {
   description: string;
   geoLocation: string;
   coordinates: Coordinates | null;
-  professorIds: string[];
   activityGroupId: string | null;
   sportIcon: string | null;
 };
@@ -39,9 +30,7 @@ type GroupOption = {
 interface ActivityDayFormProps {
   activityId: string;
   mode: 'create' | 'edit';
-  professors: ProfessorOption[];
   groups: GroupOption[];
-  defaultProfessorIds: string[];
   initialValues?: ActivityDayValues;
   dayId?: string;
   onSaved?: () => void;
@@ -62,8 +51,7 @@ const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
 function buildInitialState(
-  initialValues: ActivityDayValues | undefined,
-  defaultProfessorIds: string[]
+  initialValues: ActivityDayValues | undefined
 ): ActivityDayValues {
   return (
     initialValues ?? {
@@ -72,7 +60,6 @@ function buildInitialState(
       description: '',
       geoLocation: '',
       coordinates: null,
-      professorIds: defaultProfessorIds,
       activityGroupId: null,
       sportIcon: null,
     }
@@ -82,9 +69,7 @@ function buildInitialState(
 export default function ActivityDayForm({
   activityId,
   mode,
-  professors,
   groups,
-  defaultProfessorIds,
   initialValues,
   dayId,
   onSaved,
@@ -93,28 +78,25 @@ export default function ActivityDayForm({
 }: ActivityDayFormProps) {
   const router = useRouter();
   const [date, setDate] = useState(
-    buildInitialState(initialValues, defaultProfessorIds).date
+    buildInitialState(initialValues).date
   );
   const [schedule, setSchedule] = useState(
-    buildInitialState(initialValues, defaultProfessorIds).schedule
+    buildInitialState(initialValues).schedule
   );
   const [description, setDescription] = useState(
-    buildInitialState(initialValues, defaultProfessorIds).description
+    buildInitialState(initialValues).description
   );
   const [geoLocation, setGeoLocation] = useState(
-    buildInitialState(initialValues, defaultProfessorIds).geoLocation
+    buildInitialState(initialValues).geoLocation
   );
   const [coordinates, setCoordinates] = useState<Coordinates | null>(
-    buildInitialState(initialValues, defaultProfessorIds).coordinates
-  );
-  const [professorIds, setProfessorIds] = useState<string[]>(
-    buildInitialState(initialValues, defaultProfessorIds).professorIds
+    buildInitialState(initialValues).coordinates
   );
   const [activityGroupId, setActivityGroupId] = useState<string | null>(
-    buildInitialState(initialValues, defaultProfessorIds).activityGroupId
+    buildInitialState(initialValues).activityGroupId
   );
   const [sportIcon, setSportIcon] = useState<string | null>(
-    buildInitialState(initialValues, defaultProfessorIds).sportIcon
+    buildInitialState(initialValues).sportIcon
   );
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -127,7 +109,6 @@ export default function ActivityDayForm({
     setDescription('');
     setGeoLocation('');
     setCoordinates(null);
-    setProfessorIds(defaultProfessorIds);
     setActivityGroupId(null);
     setSportIcon(null);
   };
@@ -140,10 +121,6 @@ export default function ActivityDayForm({
       if (!coordinates) {
         throw new Error('Seleccioná un punto en el mapa');
       }
-      if (professorIds.length === 0) {
-        throw new Error('Seleccioná al menos un profesor');
-      }
-
       const res = await fetch(
         isEdit && dayId
           ? `/api/activity-days/${dayId}`
@@ -158,7 +135,6 @@ export default function ActivityDayForm({
             geoLocation,
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
-            professorIds,
             activityGroupId,
             sportIcon: sportIcon || null,
           }),
@@ -277,18 +253,12 @@ export default function ActivityDayForm({
           ))}
         </select>
       </div>
-      <ProfessorPicker
-        professors={professors}
-        value={professorIds}
-        onChange={setProfessorIds}
-      />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         {error ? (
           <p className="text-sm text-destructive">{error}</p>
         ) : (
           <span className="text-xs text-muted-foreground">
-            Guardá fecha, horario, ubicación, mapa, grupo y profesores
-            asignados.
+            Guarda fecha, horario, ubicacion, mapa y grupo asignado.
           </span>
         )}
         <div className="flex gap-2">

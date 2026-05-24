@@ -16,3 +16,17 @@ CREATE INDEX "ActivityGroupProfessor_userId_idx" ON "ActivityGroupProfessor"("us
 ALTER TABLE "ActivityGroupProfessor" ADD CONSTRAINT "ActivityGroupProfessor_activityGroupId_fkey" FOREIGN KEY ("activityGroupId") REFERENCES "ActivityGroup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "ActivityGroupProfessor" ADD CONSTRAINT "ActivityGroupProfessor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+INSERT INTO "ActivityGroupProfessor" ("id", "activityGroupId", "userId", "createdAt")
+SELECT
+    'migrated_' || md5("ActivityDay"."activityGroupId" || ':' || "ActivityDayProfessor"."userId"),
+    "ActivityDay"."activityGroupId",
+    "ActivityDayProfessor"."userId",
+    MIN("ActivityDayProfessor"."createdAt")
+FROM "ActivityDayProfessor"
+INNER JOIN "ActivityDay" ON "ActivityDay"."id" = "ActivityDayProfessor"."activityDayId"
+WHERE "ActivityDay"."activityGroupId" IS NOT NULL
+GROUP BY "ActivityDay"."activityGroupId", "ActivityDayProfessor"."userId"
+ON CONFLICT ("activityGroupId", "userId") DO NOTHING;
+
+DROP TABLE "ActivityDayProfessor";

@@ -15,14 +15,10 @@ export default async function EditActivityGroupPage({
   const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
   if (block) return block;
 
-  const [activity, activityProfessors, group] = await Promise.all([
+  const [activity, group] = await Promise.all([
     prisma.activity.findUnique({
       where: { id: params.id },
       select: { id: true, name: true },
-    }),
-    prisma.activityProfessor.findMany({
-      where: { activityId: params.id },
-      select: { userId: true },
     }),
     prisma.activityGroup.findFirst({
       where: { id: params.groupId, activityId: params.id },
@@ -33,6 +29,7 @@ export default async function EditActivityGroupPage({
         capacity: true,
         minAge: true,
         maxAge: true,
+        professors: { select: { userId: true } },
       },
     }),
   ]);
@@ -44,7 +41,7 @@ export default async function EditActivityGroupPage({
   const isAdmin = session!.user.role === 'ADMIN';
   const canManageGroup =
     isAdmin ||
-    activityProfessors.some(
+    group.professors.some(
       (assignment) => assignment.userId === session!.user.id
     );
 

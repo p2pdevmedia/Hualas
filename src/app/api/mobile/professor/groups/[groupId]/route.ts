@@ -19,9 +19,7 @@ export async function GET(
   const group = await prisma.activityGroup.findFirst({
     where: {
       id: params.groupId,
-      activity: {
-        professors: { some: { userId: session.userId } },
-      },
+      professors: { some: { userId: session.userId } },
     },
     select: {
       id: true,

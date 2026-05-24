@@ -233,7 +233,17 @@ export default async function MyActivitiesPage({
             gte: oneWeekAgo,
             lte: sixMonthsLater,
           },
-          ...(isProfessorView ? { professors: { some: { userId } } } : {}),
+          ...(isProfessorView
+            ? {
+                OR: [
+                  { activityGroup: { professors: { some: { userId } } } },
+                  {
+                    activityGroupId: null,
+                    activity: { professors: { some: { userId } } },
+                  },
+                ],
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -246,16 +256,37 @@ export default async function MyActivitiesPage({
           longitude: true,
           activityGroupId: true,
           cancelled: true,
-          activity: { select: { id: true, name: true } },
-          activityGroup: { select: { name: true } },
-          professors: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  lastName: true,
-                  phone: true,
+          activity: {
+            select: {
+              id: true,
+              name: true,
+              professors: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      lastName: true,
+                      phone: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          activityGroup: {
+            select: {
+              name: true,
+              professors: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      lastName: true,
+                      phone: true,
+                    },
+                  },
                 },
               },
             },
@@ -307,7 +338,9 @@ export default async function MyActivitiesPage({
             longitude: d.longitude,
             activityGroupName: d.activityGroup?.name ?? null,
             cancelled: d.cancelled,
-            professors: d.professors.map((assignment) => ({
+            professors: (
+              d.activityGroup?.professors ?? d.activity.professors
+            ).map((assignment) => ({
               id: assignment.user.id,
               label: `${assignment.user.name ?? 'Sin nombre'}${assignment.user.lastName ? ` ${assignment.user.lastName}` : ''}`,
               phone: assignment.user.phone,

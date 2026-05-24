@@ -15,9 +15,7 @@ export async function GET(req: Request) {
 
   const groups = await prisma.activityGroup.findMany({
     where: {
-      activity: {
-        professors: { some: { userId: session.userId } },
-      },
+      professors: { some: { userId: session.userId } },
     },
     select: {
       id: true,

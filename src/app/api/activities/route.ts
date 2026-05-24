@@ -19,14 +19,11 @@ export async function POST(req: Request) {
   }
   const data = activityCreateSchema.parse(await req.json());
   const professorIds = Array.from(new Set(data.professorIds ?? []));
-  const annualProfessorIds = Array.from(
-    new Set(data.annualSchedules.flatMap((schedule) => schedule.professorIds))
-  );
   const groupProfessorIds = Array.from(
     new Set(data.groups.flatMap((group) => group.professorIds))
   );
   const professorIdsToValidate = Array.from(
-    new Set([...professorIds, ...annualProfessorIds, ...groupProfessorIds])
+    new Set([...professorIds, ...groupProfessorIds])
   );
   if (professorIdsToValidate.length > 0) {
     const validProfessors = await prisma.user.findMany({
@@ -97,16 +94,6 @@ export async function POST(req: Request) {
       }
 
       if (data.activityType === 'ANNUAL') {
-        const annualScheduleProfessorIds = Array.from(
-          new Set(
-            data.annualSchedules.flatMap((schedule) => schedule.professorIds)
-          )
-        );
-        const professorIdsForDays =
-          annualScheduleProfessorIds.length > 0
-            ? annualScheduleProfessorIds
-            : professorIds;
-
         const annualDays = buildAnnualActivityDays(
           data.date,
           data.endDate,
@@ -144,47 +131,14 @@ export async function POST(req: Request) {
           };
         });
 
-        if (professorIdsForDays.length > 0) {
-          const createdDays = await tx.activityDay.createManyAndReturn({
-            data: dayData,
-            select: { id: true },
-          });
-          await tx.activityDayProfessor.createMany({
-            data: createdDays.flatMap(({ id: activityDayId }, index) => {
-              const sessionProfessorIds = annualDays[index]?.professorIds
-                ?.length
-                ? annualDays[index].professorIds
-                : professorIdsForDays;
-              return sessionProfessorIds.map((userId) => ({
-                activityDayId,
-                userId,
-              }));
-            }),
-          });
-        } else {
-          await tx.activityDay.createMany({ data: dayData });
-        }
+        await tx.activityDay.createMany({ data: dayData });
       }
 
       const groupAssignments = new Map<string, Set<string>>();
-      const defaultAnnualProfessorIds = annualProfessorIds.length
-        ? annualProfessorIds
-        : professorIds;
-      if (data.activityType === 'ANNUAL') {
-        for (const schedule of data.annualSchedules) {
-          const groupTempId = schedule.groupTempId ?? undefined;
-          if (!groupTempId) continue;
-          const groupId = groupIdByTempId.get(groupTempId);
-          if (!groupId) continue;
-          const scheduleProfessorIds =
-            schedule.professorIds.length > 0
-              ? schedule.professorIds
-              : defaultAnnualProfessorIds;
-          if (scheduleProfessorIds.length === 0) continue;
-          const existing = groupAssignments.get(groupId) ?? new Set<string>();
-          for (const userId of scheduleProfessorIds) existing.add(userId);
-          groupAssignments.set(groupId, existing);
-        }
+      for (const group of data.groups) {
+        const groupId = groupIdByTempId.get(group.tempId);
+        if (!groupId) continue;
+        groupAssignments.set(groupId, new Set(group.professorIds));
       }
 
       return {

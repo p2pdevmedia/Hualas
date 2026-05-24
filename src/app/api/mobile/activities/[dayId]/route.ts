@@ -37,13 +37,24 @@ export async function GET(
           id: true,
           name: true,
           price: true,
+          professors: {
+            select: {
+              userId: true,
+              user: { select: { name: true, lastName: true, phone: true } },
+            },
+          },
         },
       },
-      activityGroup: { select: { id: true, name: true } },
-      professors: {
+      activityGroup: {
         select: {
-          userId: true,
-          user: { select: { name: true, lastName: true, phone: true } },
+          id: true,
+          name: true,
+          professors: {
+            select: {
+              userId: true,
+              user: { select: { name: true, lastName: true, phone: true } },
+            },
+          },
         },
       },
       attendances: {
@@ -77,12 +88,12 @@ export async function GET(
 
   const canSeeActivity =
     session.appRole === 'PROFESSOR'
-      ? (await prisma.activityProfessor.count({
-          where: {
-            userId: session.userId,
-            activityId: day.activityId,
-          },
-        })) > 0 || day.professors.some((assignment) => assignment.userId === session.userId)
+      ? (day.activityGroup?.professors.some(
+          (assignment) => assignment.userId === session.userId
+        ) ??
+        day.activity.professors.some(
+          (assignment) => assignment.userId === session.userId
+        ))
       : false;
 
   const accessibleChildOwnerIds =
@@ -196,7 +207,9 @@ export async function GET(
       activity: day.activity,
       groupName: day.activityGroup?.name ?? null,
     },
-    professors: day.professors.map((assignment) => ({
+    professors: (
+      day.activityGroup?.professors ?? day.activity.professors
+    ).map((assignment) => ({
       id: assignment.userId,
       label: `${assignment.user.name ?? 'Sin nombre'}${assignment.user.lastName ? ` ${assignment.user.lastName}` : ''}`,
       phone: assignment.user.phone,

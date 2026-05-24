@@ -47,7 +47,6 @@ model User {
   activityProfessors          ActivityProfessor[]
   activityGroupProfessors     ActivityGroupProfessor[]
   createdActivityDays         ActivityDay[]                @relation("ActivityDayCreatedBy")
-  activityDayProfessors       ActivityDayProfessor[]
   children                    Child[]
   accountingMovements         AccountingMovement[]
   accountingMonthClosings     AccountingMonthClose[]
@@ -322,26 +321,12 @@ model ActivityDay {
   activityGroup       ActivityGroup?               @relation(fields: [activityGroupId], references: [id], onDelete: SetNull)
   createdBy           User                         @relation("ActivityDayCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   attendances         ActivityDayAttendance[]
-  professors          ActivityDayProfessor[]
   pickupNotices       PickupNotice[]
   participantPayments ActivityParticipantPayment[]
   participantReports  ActivityParticipantReport[]
 
   @@index([activityId, date])
   @@index([activityGroupId])
-}
-
-model ActivityDayProfessor {
-  id            String      @id @default(cuid())
-  activityDayId String
-  userId        String
-  createdAt     DateTime    @default(now())
-  activityDay   ActivityDay @relation(fields: [activityDayId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([activityDayId, userId])
-  @@index([userId])
-  @@index([activityDayId])
 }
 
 model ActivityDayAttendance {
