@@ -60,6 +60,7 @@ export default function Navbar() {
   const isCounter = isCounterRole(role);
   const isAccounting = role === 'COUNTER' || isAdmin;
   const isProfessor = role === 'PROFESSOR';
+  const canSeeAndroidLink = isAdmin;
   const isMember = !!session && !isAdmin && !isCounter;
   const isMemberRole = role === 'MEMBER';
   const canSeeChildrenSection = isMemberRole;
@@ -246,7 +247,7 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex md:items-center md:gap-6">
-          {renderAndroidLink()}
+          {canSeeAndroidLink && renderAndroidLink()}
           {session && !isCounter && (
             <Link
               href={activitiesHref}
@@ -500,7 +501,7 @@ export default function Navbar() {
                   {session.user.name || 'Usuario'}
                 </span>
               </Link>
-              {renderAndroidLink(() => setMenuOpen(false))}
+              {canSeeAndroidLink && renderAndroidLink(() => setMenuOpen(false))}
               {session && !isCounter && (
                 <Link
                   href={activitiesHref}
@@ -689,7 +690,7 @@ export default function Navbar() {
               >
                 {t.register}
               </Link>
-              {renderAndroidLink(() => setMenuOpen(false))}
+              {canSeeAndroidLink && renderAndroidLink(() => setMenuOpen(false))}
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
