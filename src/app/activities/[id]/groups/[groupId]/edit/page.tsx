@@ -15,7 +15,7 @@ export default async function EditActivityGroupPage({
   const block = gateActiveRole(session, ['ADMIN', 'PROFESSOR']);
   if (block) return block;
 
-  const [activity, group] = await Promise.all([
+  const [activity, group, professors] = await Promise.all([
     prisma.activity.findUnique({
       where: { id: params.id },
       select: { id: true, name: true },
@@ -31,6 +31,19 @@ export default async function EditActivityGroupPage({
         maxAge: true,
         professors: { select: { userId: true } },
       },
+    }),
+    prisma.user.findMany({
+      where: {
+        roleAssignments: { some: { role: 'PROFESSOR' } },
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        email: true,
+      },
+      orderBy: [{ name: 'asc' }, { lastName: 'asc' }],
     }),
   ]);
 
@@ -69,7 +82,11 @@ export default async function EditActivityGroupPage({
       </div>
 
       <section className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-        <GroupEditForm activityId={params.id} group={group} />
+        <GroupEditForm
+          activityId={params.id}
+          group={group}
+          professors={professors}
+        />
       </section>
     </main>
   );

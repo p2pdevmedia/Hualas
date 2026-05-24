@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { activityGroupCreateSchema } from '@/lib/validations/activity';
+import { notifyProfessorGroupAssigned } from '@/lib/notifications/notification-service';
 
 export async function DELETE(
   _req: Request,
@@ -41,18 +42,27 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const isAdmin =
-    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
-  if (!isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const group = await prisma.activityGroup.findUnique({
     where: { id: params.groupId },
+    select: {
+      id: true,
+      activityId: true,
+      professors: { select: { userId: true } },
+    },
   });
 
   if (!group) {
     return NextResponse.json({ error: 'Grupo no encontrado' }, { status: 404 });
+  }
+
+  const isAdmin =
+    session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
+  const isAssignedProfessor = group.professors.some(
+    (assignment) => assignment.userId === session.user.id
+  );
+
+  if (!isAdmin && !isAssignedProfessor) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);
@@ -88,6 +98,13 @@ export async function PATCH(
     );
   }
 
+  const previousProfessorIds = new Set(
+    group.professors.map((assignment) => assignment.userId)
+  );
+  const addedProfessorIds = professorIds.filter(
+    (userId) => !previousProfessorIds.has(userId)
+  );
+
   const updated = await prisma.$transaction(async (tx) => {
     const group = await tx.activityGroup.update({
       where: { id: params.groupId },
@@ -112,6 +129,14 @@ export async function PATCH(
 
     return group;
   });
+
+  notifyProfessorGroupAssigned(
+    group.activityId,
+    params.groupId,
+    addedProfessorIds
+  ).catch((err) =>
+    console.error('[notifications] notifyProfessorGroupAssigned failed', err)
+  );
 
   return NextResponse.json(updated);
 }

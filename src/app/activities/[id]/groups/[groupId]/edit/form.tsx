@@ -3,6 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import ProfessorPicker from '../../../../professor-picker';
+
+type ProfessorOption = {
+  id: string;
+  name: string | null;
+  lastName: string | null;
+  email: string;
+};
 
 type Group = {
   id: string;
@@ -17,6 +25,7 @@ type Group = {
 interface GroupEditFormProps {
   activityId: string;
   group: Group;
+  professors: ProfessorOption[];
 }
 
 const inputClass =
@@ -25,6 +34,7 @@ const inputClass =
 export default function GroupEditForm({
   activityId,
   group,
+  professors,
 }: GroupEditFormProps) {
   const router = useRouter();
   const [name, setName] = useState(group.name);
@@ -32,6 +42,9 @@ export default function GroupEditForm({
   const [capacity, setCapacity] = useState(String(group.capacity ?? ''));
   const [minAge, setMinAge] = useState(String(group.minAge ?? ''));
   const [maxAge, setMaxAge] = useState(String(group.maxAge ?? ''));
+  const [professorIds, setProfessorIds] = useState<string[]>(
+    group.professors.map((professor) => professor.userId)
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,6 +61,11 @@ export default function GroupEditForm({
       return;
     }
 
+    if (professorIds.length === 0) {
+      setError('Selecciona al menos un profesor para el grupo');
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch(`/api/activity-groups/${group.id}`, {
@@ -59,7 +77,7 @@ export default function GroupEditForm({
           capacity: Number(capacity),
           minAge: Number(minAge),
           maxAge: Number(maxAge),
-          professorIds: group.professors.map((professor) => professor.userId),
+          professorIds,
         }),
       });
 
@@ -123,6 +141,12 @@ export default function GroupEditForm({
           required
         />
       </div>
+
+      <ProfessorPicker
+        professors={professors}
+        value={professorIds}
+        onChange={setProfessorIds}
+      />
 
       <div className="flex items-center justify-between gap-3">
         {error ? (
