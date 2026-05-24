@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import ProfessorPicker from '../../../../professor-picker';
+import GroupProfessorPicker from '../../../../group-professor-picker';
 
 type ProfessorOption = {
   id: string;
@@ -142,7 +142,7 @@ export default function GroupEditForm({
         />
       </div>
 
-      <ProfessorPicker
+      <GroupProfessorPicker
         professors={professors}
         value={professorIds}
         onChange={setProfessorIds}
