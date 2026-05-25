@@ -362,6 +362,7 @@ export default function ActivityDaysPanel({
       : `${selectedWeek.start.toLocaleDateString('es-AR')} - ${new Date(
           selectedWeek.start.getTime() + 6 * 24 * 60 * 60 * 1000
         ).toLocaleDateString('es-AR')}`;
+  const weeklyPlannerMinWidth = 120 + groups.length * 220;
 
   return (
     <>
@@ -667,16 +668,19 @@ export default function ActivityDaysPanel({
                   Definí por grupo y día el lugar y deporte desde cada sesión.
                 </p>
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[800px] border-collapse text-sm">
+                  <table
+                    className="w-full border-collapse text-sm"
+                    style={{ minWidth: `${weeklyPlannerMinWidth}px` }}
+                  >
                     <thead>
                       <tr>
-                        <th className="border bg-background p-2 text-left">
+                        <th className="w-[120px] border bg-background p-2 text-left">
                           Día
                         </th>
                         {groups.map((group) => (
                           <th
                             key={group.id}
-                            className="border bg-background p-2 text-left"
+                            className="min-w-[220px] border bg-background p-2 text-left"
                           >
                             {group.name}
                           </th>
@@ -686,14 +690,17 @@ export default function ActivityDaysPanel({
                     <tbody>
                       {weeklyGrid.map((row) => (
                         <tr key={row.weekdayLabel}>
-                          <td className="border p-2 font-medium">
+                          <td className="w-[120px] border p-2 font-medium">
                             {row.weekdayLabel}
                           </td>
                           {row.perGroup.map(({ group, day }) => (
-                            <td key={group.id} className="border p-2 align-top">
+                            <td
+                              key={group.id}
+                              className="min-w-[220px] border p-2 align-top"
+                            >
                               {day ? (
                                 <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-start gap-2">
                                     {day.sportIcon ? (
                                       <Image
                                         src={`/icons/${day.sportIcon}`}
@@ -703,7 +710,7 @@ export default function ActivityDaysPanel({
                                         className="h-10 w-10 flex-shrink-0 object-contain"
                                       />
                                     ) : null}
-                                    <p className="min-w-0 max-w-full flex-1 whitespace-normal break-words [overflow-wrap:anywhere]">
+                                    <p className="min-w-0 max-w-full flex-1 whitespace-normal break-words text-left leading-snug">
                                       {day.geoLocation}
                                     </p>
                                   </div>
