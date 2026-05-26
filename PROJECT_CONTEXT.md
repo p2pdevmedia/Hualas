@@ -81,6 +81,12 @@ Important models:
 - `MercadoPagoNotification`: stored webhook notifications.
 - `DbAuditLog`: audit trail rows.
 
+Database integrity notes:
+
+- Professor access for grouped activity days uses `ActivityGroupProfessor`; ungrouped activity days fall back to `ActivityProfessor`. The retired `ActivityDayProfessor` table only exists in historical migrations.
+- Some database-only guards are implemented as SQL partial unique indexes because Prisma schema cannot represent them: adult `SocialFeePayment` rows are unique per user/month/year when `childId IS NULL`, and non-null `Payment.providerPaymentId` values are unique per provider.
+- `ActivityParticipantPayment` has database check constraints requiring monthly payments to carry `periodMonth`/`periodYear` and session payments to carry `activityDayId`.
+
 ## Product Rules
 
 - This is not a rental platform.

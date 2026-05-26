@@ -34,9 +34,6 @@ jest.mock('@/lib/prisma', () => ({
     activityParticipant: {
       findFirst: jest.fn(),
     },
-    activityDayProfessor: {
-      findFirst: jest.fn(),
-    },
   },
 }));
 
@@ -52,7 +49,7 @@ import { POST as postAcknowledgment } from '@/app/api/pickup-notices/[noticeId]/
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   familyGroup: {
     findMany: jest.Mock;
   };
@@ -77,9 +74,6 @@ const mockPrisma = prisma as {
   activityParticipant: {
     findFirst: jest.Mock;
   };
-  activityDayProfessor: {
-    findFirst: jest.Mock;
-  };
 };
 
 const FUTURE_DATE = new Date(Date.now() + 1000 * 60 * 60 * 24);
@@ -92,7 +86,7 @@ const DAY_ID = 'day_456';
 const CHILD_ID = 'child_789';
 const NOTICE_ID = 'notice_123';
 
-function makePostRequest(body: object) {
+function makePostRequest(body: object): any {
   return new Request(
     `http://localhost/api/activity-days/${DAY_ID}/pickup-notices`,
     {
@@ -101,6 +95,22 @@ function makePostRequest(body: object) {
       body: JSON.stringify(body),
     }
   );
+}
+
+function assignedActivityDay(userId = PROFESSOR_USER.id) {
+  return {
+    id: DAY_ID,
+    activity: { professors: [] },
+    activityGroup: { professors: [{ userId }] },
+  };
+}
+
+function unassignedActivityDay() {
+  return {
+    id: DAY_ID,
+    activity: { professors: [] },
+    activityGroup: { professors: [] },
+  };
 }
 
 function makeNoticeContext(noticeId = NOTICE_ID) {
@@ -443,7 +453,9 @@ describe('GET /api/activity-days/[dayId]/pickup-notices', () => {
       id: DAY_ID,
       date: FUTURE_DATE,
     });
-    mockPrisma.activityDayProfessor.findFirst.mockResolvedValueOnce(null);
+    mockPrisma.activityDay.findUnique.mockResolvedValueOnce(
+      unassignedActivityDay()
+    );
 
     const req = new Request(
       `http://localhost/api/activity-days/${DAY_ID}/pickup-notices`
@@ -473,9 +485,9 @@ describe('GET /api/activity-days/[dayId]/pickup-notices', () => {
       id: DAY_ID,
       date: FUTURE_DATE,
     });
-    mockPrisma.activityDayProfessor.findFirst.mockResolvedValueOnce({
-      id: 'adp_001',
-    });
+    mockPrisma.activityDay.findUnique.mockResolvedValueOnce(
+      assignedActivityDay()
+    );
     mockPrisma.pickupNotice.findMany.mockResolvedValueOnce(notices);
 
     const req = new Request(
@@ -707,7 +719,9 @@ describe('POST /api/pickup-notices/[noticeId]/acknowledgments', () => {
       activityDayId: DAY_ID,
       activityDay: { id: DAY_ID },
     });
-    mockPrisma.activityDayProfessor.findFirst.mockResolvedValueOnce(null);
+    mockPrisma.activityDay.findUnique.mockResolvedValueOnce(
+      unassignedActivityDay()
+    );
 
     const req = new Request(
       `http://localhost/api/pickup-notices/${NOTICE_ID}/acknowledgments`,
@@ -740,9 +754,9 @@ describe('POST /api/pickup-notices/[noticeId]/acknowledgments', () => {
       activityDayId: DAY_ID,
       activityDay: { id: DAY_ID },
     });
-    mockPrisma.activityDayProfessor.findFirst.mockResolvedValueOnce({
-      id: 'adp_001',
-    });
+    mockPrisma.activityDay.findUnique.mockResolvedValueOnce(
+      assignedActivityDay()
+    );
     mockPrisma.pickupNoticeAcknowledgment.upsert.mockResolvedValueOnce(ack);
 
     const req = new Request(
@@ -795,9 +809,9 @@ describe('POST /api/pickup-notices/[noticeId]/acknowledgments', () => {
       activityDayId: DAY_ID,
       activityDay: { id: DAY_ID },
     });
-    mockPrisma.activityDayProfessor.findFirst.mockResolvedValueOnce({
-      id: 'adp_001',
-    });
+    mockPrisma.activityDay.findUnique.mockResolvedValueOnce(
+      assignedActivityDay()
+    );
     mockPrisma.pickupNoticeAcknowledgment.upsert.mockResolvedValueOnce(
       updatedAck
     );

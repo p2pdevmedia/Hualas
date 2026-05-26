@@ -25,7 +25,8 @@ jest.mock('@/lib/prisma', () => ({
 
 jest.mock('@/lib/social-fee', () => ({
   getSocialFeeAmount: jest.fn(),
-  hasSocialFeeForCurrentMonth: jest.fn(),
+  getSocialFeePeriods: jest.fn(() => [{ month: 5, year: 2026 }]),
+  hasSocialFeeForPeriod: jest.fn(),
   normalizeSocialFeeParticipant: jest.fn(({ userId, childId }) => ({
     userId,
     childId: childId ?? null,
@@ -34,10 +35,7 @@ jest.mock('@/lib/social-fee', () => ({
 
 import { prisma } from '@/lib/prisma';
 import { buildCartQuote, toMercadoPagoItems } from '@/lib/cart-checkout';
-import {
-  getSocialFeeAmount,
-  hasSocialFeeForCurrentMonth,
-} from '@/lib/social-fee';
+import { getSocialFeeAmount, hasSocialFeeForPeriod } from '@/lib/social-fee';
 
 const mockPrisma = prisma as unknown as {
   activity: { findMany: jest.Mock };
@@ -74,15 +72,12 @@ describe('buildCartQuote', () => {
     mockPrisma.user.findMany.mockResolvedValue([
       {
         id: 'user_1',
-        children: [
-          { id: 'child_1' },
-          { id: 'child_2' },
-        ],
+        children: [{ id: 'child_1' }, { id: 'child_2' }],
       },
     ]);
     mockPrisma.activityParticipant.findMany.mockResolvedValue([]);
     (getSocialFeeAmount as jest.Mock).mockResolvedValue(2500);
-    (hasSocialFeeForCurrentMonth as jest.Mock).mockResolvedValue(false);
+    (hasSocialFeeForPeriod as jest.Mock).mockResolvedValue(false);
   });
 
   it('aplica descuento familiar del 10% cuando hay dos hijos distintos', async () => {

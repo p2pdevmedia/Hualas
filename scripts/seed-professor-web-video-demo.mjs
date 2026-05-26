@@ -315,10 +315,7 @@ async function main() {
       image:
         'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
       professors: {
-        create: [
-          { userId: professor.id },
-          { userId: assistantProfessor.id },
-        ],
+        create: [{ userId: professor.id }, { userId: assistantProfessor.id }],
       },
     },
   });
@@ -374,6 +371,16 @@ async function main() {
     }),
   ]);
 
+  await prisma.activityGroupProfessor.createMany({
+    data: [
+      { activityGroupId: condores.id, userId: professor.id },
+      { activityGroupId: condores.id, userId: assistantProfessor.id },
+      { activityGroupId: huemules.id, userId: professor.id },
+      { activityGroupId: huemules.id, userId: assistantProfessor.id },
+      { activityGroupId: escaladores.id, userId: professor.id },
+    ],
+  });
+
   const participants = {
     mora: await prisma.activityParticipant.create({
       data: {
@@ -404,11 +411,7 @@ async function main() {
         activityId: mountainSchool.id,
         userId: valeria.id,
         childId: bruno.id,
-        participantKey: participantKey(
-          mountainSchool.id,
-          valeria.id,
-          bruno.id
-        ),
+        participantKey: participantKey(mountainSchool.id, valeria.id, bruno.id),
       },
     }),
     nicolas: await prisma.activityParticipant.create({
@@ -531,24 +534,6 @@ async function main() {
   };
 
   await Promise.all([
-    prisma.activityDayProfessor.create({
-      data: { activityDayId: days.previous.id, userId: professor.id },
-    }),
-    prisma.activityDayProfessor.create({
-      data: { activityDayId: days.today.id, userId: professor.id },
-    }),
-    prisma.activityDayProfessor.create({
-      data: { activityDayId: days.today.id, userId: assistantProfessor.id },
-    }),
-    prisma.activityDayProfessor.create({
-      data: { activityDayId: days.next.id, userId: professor.id },
-    }),
-    prisma.activityDayProfessor.create({
-      data: { activityDayId: days.climbing.id, userId: professor.id },
-    }),
-  ]);
-
-  await Promise.all([
     addAttendance(days.today.id, participants.mora, 'GOING'),
     addAttendance(days.today.id, participants.luna, 'GOING'),
     addAttendance(days.today.id, participants.bruno, 'PENDING'),
@@ -564,8 +549,7 @@ async function main() {
       activityDayId: days.today.id,
       activityParticipantId: participants.mora.id,
       createdById: professor.id,
-      body:
-        'Mora participo muy concentrada en la posta de orientacion. Avisar a la familia que traiga botella extra para la proxima salida.',
+      body: 'Mora participo muy concentrada en la posta de orientacion. Avisar a la familia que traiga botella extra para la proxima salida.',
     },
   });
 
@@ -625,8 +609,7 @@ async function main() {
     prisma.news.create({
       data: {
         title: 'Recordatorio para profes: checklist de salida',
-        body:
-          'Antes de cada encuentro revisar asistencia, agua, abrigo, botiquin y mensajes familiares pendientes.',
+        body: 'Antes de cada encuentro revisar asistencia, agua, abrigo, botiquin y mensajes familiares pendientes.',
         scope: 'CLUB',
         createdById: admin.id,
         createdAt: atOffset(-1, 10),
@@ -635,8 +618,7 @@ async function main() {
     prisma.news.create({
       data: {
         title: 'Escuela de Montana: salida al Mirador Bandurrias',
-        body:
-          'El grupo Condores trabaja orientacion, cuidado del entorno y registro de observaciones por participante.',
+        body: 'El grupo Condores trabaja orientacion, cuidado del entorno y registro de observaciones por participante.',
         scope: 'ACTIVITY',
         activityId: mountainSchool.id,
         createdById: admin.id,
@@ -654,14 +636,12 @@ async function main() {
         create: [
           {
             senderId: ana.id,
-            body:
-              'Hola Laura, Mora va con abrigo extra y la autorizacion en la mochila.',
+            body: 'Hola Laura, Mora va con abrigo extra y la autorizacion en la mochila.',
             createdAt: atOffset(0, 9, 10),
           },
           {
             senderId: professor.id,
-            body:
-              'Perfecto Ana, gracias. Despues de la actividad te dejo una devolucion desde la ficha.',
+            body: 'Perfecto Ana, gracias. Despues de la actividad te dejo una devolucion desde la ficha.',
             createdAt: atOffset(0, 9, 18),
           },
           {
