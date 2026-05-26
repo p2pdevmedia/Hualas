@@ -18,17 +18,45 @@ For every task:
 2. Classify the task type and complexity.
 3. Locate relevant routes using ROUTE_MAP.md.
 4. Decide which agents are needed.
-5. Ask each selected agent for a focused contribution.
-6. Compare their outputs.
+5. Ask each selected agent for a focused contribution. If no extra agent is useful, explicitly keep the task local.
+6. Compare selected outputs when present.
 7. Integrate the final solution.
-8. Run tests or explain why tests were not run.
-9. Perform a short review step before finalizing.
+8. Update the agent-facing documentation for any new or changed functionality.
+9. Run tests or explain why tests were not run.
+10. Perform a short review step before finalizing.
+
+## Documentation Sync Rule
+
+Every new feature, route, API endpoint, role flow, data model, mobile capability, environment variable, or important behavior change must update the relevant agent-facing docs in the same task.
+
+At minimum, check whether these files need changes:
+
+- `PROJECT_CONTEXT.md`: product scope, stack, roles, data models, access rules, payment rules, development rules, or important commands.
+- `ROUTE_MAP.md`: frontend routes, API routes, guards, shared files, native app entrypoints, or feature ownership paths.
+- `.agent-registry.yaml`: agent list or wake rules when a new recurring specialty area appears.
+- Platform docs such as `iphone/README.md`, `android/README.md`, or `android/API_CONTRACT.md` when native app behavior changes.
+- `README.md` when setup, commands, deployment, environment variables, or cross-platform workflow changes.
+
+Do not make future agents rediscover completed work by scanning the whole app. If functionality exists, the map/context files should say where it lives and how to approach it.
 
 ## iPhone App Rule
 
 - When a task mentions the iPhone app, always assume it refers to the native code under `iphone/HualasMobile`.
 - Use `iphone/README.md` for iPhone-specific setup and workflow details.
 - Do not treat iPhone work as part of the Next.js web app unless the user explicitly says otherwise.
+
+## Android App Rule
+
+- When a task mentions the Android app, use the native code under `android`.
+- Use `android/README.md` for Android setup and workflow details.
+- Use `android/API_CONTRACT.md` for the Android-facing mobile backend contract.
+- Do not treat Android work as part of the Next.js web app unless the user explicitly says otherwise.
+
+## Mobile Backend Rule
+
+- Native iPhone and Android clients use `/api/mobile/*` routes with bearer-token auth.
+- Do not call NextAuth cookie routes from native app code.
+- If mobile behavior changes, keep `ROUTE_MAP.md` and the relevant mobile README/API contract in sync.
 
 ## Xcode Build Note
 

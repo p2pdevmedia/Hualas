@@ -23,6 +23,7 @@ This document maps the current mobile backend routes to the Android app scope.
 | POST | `/api/mobile/messages/[userId]` | MEMBER, PROFESSOR | Chat | Send a message to one user. |
 | GET | `/api/mobile/chat/contacts` | MEMBER, PROFESSOR | Chat | Allowed mobile chat contacts. |
 | GET | `/api/mobile/notifications` | MEMBER, PROFESSOR | Notifications | Notification inbox. |
+| PATCH | `/api/mobile/notifications` | MEMBER, PROFESSOR | Notifications | Mark all notifications as read. |
 | PATCH | `/api/mobile/notifications/[id]` | MEMBER, PROFESSOR | Notifications | Mark notification read or update notification state. |
 | POST | `/api/mobile/devices` | MEMBER, PROFESSOR | Notifications | Register Android FCM token. Always send `platform: "Android"`. |
 
@@ -42,18 +43,23 @@ This document maps the current mobile backend routes to the Android app scope.
 | --- | --- | --- | --- | --- |
 | GET | `/api/mobile/profile` | MEMBER | Profile | Load member profile. |
 | PATCH | `/api/mobile/profile` | MEMBER | Profile | Update member profile. |
+| GET | `/api/mobile/profile/photo` | MEMBER | Profile | Fetch profile photo. |
 | POST | `/api/mobile/profile/photo` | MEMBER | Profile | Upload profile photo. |
 | GET | `/api/mobile/children` | MEMBER | Children | List children in family context. |
 | POST | `/api/mobile/children` | MEMBER | Children | Create child profile. |
 | GET | `/api/mobile/children/[id]` | MEMBER | Children | Load child profile. |
-| PATCH | `/api/mobile/children/[id]` | MEMBER | Children | Update child profile. |
+| PUT | `/api/mobile/children/[id]` | MEMBER | Children | Update child profile. |
+| GET | `/api/mobile/children/[id]/photo` | MEMBER | Children | Fetch child photo. |
 | POST | `/api/mobile/children/[id]/photo` | MEMBER | Children | Upload child photo. |
 | GET | `/api/mobile/family-groups/current/members` | MEMBER | Family | Current family group members. |
+| POST | `/api/mobile/family-groups/current/members` | MEMBER | Family | Add a family group member/tutor. |
+| DELETE | `/api/mobile/family-groups/current/members` | MEMBER | Family | Remove a family group member/tutor. |
 | GET | `/api/mobile/payments` | MEMBER | Payments | Member payments and manual transfer state. |
 | GET | `/api/mobile/pickup-notices` | MEMBER | Pickup notices | List pickup notices. |
 | POST | `/api/mobile/pickup-notices` | MEMBER | Pickup notices | Create pickup notice. |
 | GET | `/api/mobile/pickup-notices/options` | MEMBER | Pickup notices | Load activity day options for pickup notice creation. |
-| PATCH | `/api/mobile/pickup-notices/[noticeId]` | MEMBER | Pickup notices | Update pickup notice. |
+| PUT | `/api/mobile/pickup-notices/[noticeId]` | MEMBER | Pickup notices | Update pickup notice. |
+| DELETE | `/api/mobile/pickup-notices/[noticeId]` | MEMBER | Pickup notices | Delete pickup notice. |
 
 ## Professor
 

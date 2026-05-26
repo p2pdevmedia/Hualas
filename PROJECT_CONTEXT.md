@@ -8,11 +8,16 @@ The application helps club operators manage:
 
 - members / socios / parents
 - children linked to adult members
+- family groups and tutors
 - activities and registrations
 - payments through Mercado Pago
+- manual transfer payments and accounting review
 - admin forms and responses
 - member profiles and profile photos
+- activity days, groups, attendance, observations, and pickup notices
 - internal messages / chat
+- notifications and mobile push devices
+- professor banking data, invoices, and payments
 - site branding and public information
 
 ## Stack
@@ -27,6 +32,8 @@ The application helps club operators manage:
 - Mercado Pago
 - Vercel Blob
 - Pinata/IPFS for site assets
+- native iPhone app in `iphone/HualasMobile`
+- native Android app in `android`
 - pnpm
 
 ## Important Commands
@@ -37,6 +44,7 @@ pnpm prisma:generate
 pnpm dev
 pnpm build
 pnpm lint
+pnpm test
 ```
 
 ## Main Data Models
@@ -45,20 +53,32 @@ See `prisma/schema.prisma`.
 
 Important models:
 
-- `User`: adult member / parent account. Roles: `MEMBER`, `PROFESSOR`, `ADMIN`, `SUPER_ADMIN`.
+- `User`: adult member / parent account. Roles: `MEMBER`, `PROFESSOR`, `COUNTER`, `ADMIN`, `SUPER_ADMIN`.
+- `UserRoleAssignment`: extra role capabilities available to a user.
 - `Child`: child profile linked to a `User`.
+- `FamilyGroup`, `FamilyGroupMember`: family/tutor grouping and payment responsibility.
 - `Activity`: club activity, course, outing, or subscription.
+- `ActivityMedia`: images/videos attached to an activity.
 - `ActivityParticipant`: user or child registered to an activity.
+- `ActivityParticipantPayment`: monthly/session payments tied to activity participants.
 - `ActivityProfessor`: professor assignments for activities.
 - `ActivityGroup`: group definitions within an activity.
+- `ActivityGroupProfessor`: professor assignments for groups.
 - `ActivityGroupMember`: participant membership in an activity group.
 - `ActivityDay`: scheduled day for an activity with location, description, and schedule.
-- `ActivityDayProfessor`: professor assignments for activity days.
 - `ActivityDayAttendance`: per-day confirmation record for registered participants.
+- `ActivityParticipantReport`: per-day participant notes/reports.
+- `PickupNotice`, `PickupNoticeAcknowledgment`: alternate pickup notices and professor acknowledgment.
 - `Form`, `FormField`, `FormResponse`: custom admin forms.
 - `Conversation`, `Message`: internal chat.
-- `SiteSetting`: logo/favicon/site branding.
+- `News`, `NewsMedia`, `NewsReadReceipt`: institutional news, media, and read state.
+- `Notification`, `NotificationPreference`, `PushAlertSubscription`: in-app and web push notifications.
+- `MobileSession`, `MobileDeviceToken`: native app auth and device push tokens.
+- `AccountingMovement`, `AccountingMonthClose`: accounting ledger and month-end snapshots.
+- `BillableConcept`, `Order`, `OrderItem`, `Payment`, `SocialFeePayment`: billing and payment records.
+- `ProfessorProfile`, `ProfessorPayment`, `ProfessorInvoice`: professor accounting.
 - `MercadoPagoNotification`: stored webhook notifications.
+- `DbAuditLog`: audit trail rows.
 
 ## Product Rules
 
@@ -73,25 +93,34 @@ Important models:
 ## Access Rules
 
 - Public users can see the home/contact pages and auth pages.
-- Logged-in users can access profile, chat, children data, activity checkout, and personal registration flows.
+- Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - Logged-in professors and admins assign registered users to activity groups.
 - Logged-in professors and admins can open a group detail view to review members and add or remove participants from that group.
 - Activity days can be restricted to a single group; attendance confirmation is blocked for participants outside that group.
-- `ADMIN` and `SUPER_ADMIN` can manage activities, users, forms, and notifications.
-- `SUPER_ADMIN` alone can access site settings.
+- `COUNTER` and active `ADMIN` can access accounting.
+- `ADMIN` and `SUPER_ADMIN` capabilities can manage activities, users, and forms through the active `ADMIN` profile.
+- `SUPER_ADMIN` capability gates audit log and admin notification pages.
+- Users can have multiple capabilities; page visibility follows `activeRole` and role switching.
 
 ## Payment Rules
 
 - Activity checkout uses Mercado Pago.
+- Activity checkout also supports manual transfer proof flows for review.
 - Approved Mercado Pago payments create or update `ActivityParticipant` records.
+- Approved manual payments can also create or update payment/participant state depending on the flow.
 - Capacity must be checked before registering a participant.
 - Activity registration may be for the logged-in user or one of their children.
+- Accounting includes social fees, draft orders, order items, manual movements, Mercado Pago payments, manual payment approval/rejection, professor invoices/payments, and month-close snapshots.
 
 ## Development Rules
 
 - Inspect `ROUTE_MAP.md` before changing pages or API routes.
 - Inspect `prisma/schema.prisma` before changing data logic.
+- Every new or changed feature must update the relevant agent-facing docs in the same task, especially `PROJECT_CONTEXT.md`, `ROUTE_MAP.md`, `.agent-registry.yaml`, platform READMEs/contracts, and README setup notes.
+- Do not leave new functionality discoverable only by reading the source tree; future agents should be able to find it from the context and route map first.
+- For native mobile clients, use `/api/mobile/*` and bearer-token auth, not NextAuth cookie routes.
+- iPhone code lives under `iphone/HualasMobile`; Android code lives under `android`.
 - Reuse existing components and patterns before creating new ones.
 - Do not introduce large dependencies unless clearly justified.
 - Never commit secrets or `.env` files.

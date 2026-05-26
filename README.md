@@ -8,6 +8,23 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 2. Install dependencies with `pnpm install`.
 3. Generate the Prisma client: `pnpm prisma:generate`.
 4. Start the dev server: `pnpm dev`.
+5. Run checks with `pnpm lint` and `pnpm test`.
+
+`pnpm dev` and `pnpm build` run `scripts/copy-pdf-worker.mjs` before Next.js so
+the documentary PDF viewer has the worker asset it expects.
+
+## Native Apps
+
+- iPhone: native SwiftUI app in `iphone/HualasMobile`; setup is in `iphone/README.md`.
+- Android: native Kotlin/Compose app in `android`; setup is in `android/README.md`.
+- Both native apps talk to the backend through `/api/mobile/*` bearer-token endpoints.
+
+## Agent-Facing Docs
+
+When adding or changing functionality, update the docs that future agents read
+first: `PROJECT_CONTEXT.md`, `ROUTE_MAP.md`, `.agent-registry.yaml`, and any
+relevant platform README/API contract. New work should not be discoverable only
+by searching the source tree.
 
 ## Deployment
 

@@ -14,6 +14,10 @@ agents:
     model: cheap
     wakeWhen: [large task, unclear task, architecture, multiple files]
 
+  docs:
+    model: cheap
+    wakeWhen: [documentation, route map, readme, agents, onboarding]
+
   backend:
     model: coder
     wakeWhen: [api, backend, express, prisma, postgres, auth]
@@ -21,6 +25,14 @@ agents:
   frontend:
     model: coder
     wakeWhen: [ui, react, nextjs, tailwind, component]
+
+  mobile:
+    model: coder
+    wakeWhen: [iphone, ios, swiftui, android, kotlin, mobile, api/mobile, apns, fcm]
+
+  accounting:
+    model: coder
+    wakeWhen: [accounting, payments, manual payments, social fee, professor payments, orders]
 
   database:
     model: strong
