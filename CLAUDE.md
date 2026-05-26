@@ -18,7 +18,7 @@ Do not use all agents by default.
 4. Delegate focused work only when a selected agent is useful; otherwise keep the task local.
 5. Integrate results.
 6. Update agent-facing docs for new or changed functionality.
-7. Verify behavior.
+7. Verify behavior, including Prettier and a production build attempt.
 8. Review before finalizing.
 
 ## Rules
@@ -28,6 +28,7 @@ Do not use all agents by default.
 - Never claim completion without verification.
 - Every new feature, route, API endpoint, data model, role flow, mobile capability, env var, or important behavior change must update the relevant docs in the same task.
 - Check `PROJECT_CONTEXT.md`, `ROUTE_MAP.md`, `.agent-registry.yaml`, platform READMEs/contracts, and `README.md` so future agents can understand what exists without scanning the whole app.
+- Before finishing, run `pnpm format:check` and attempt `pnpm build`; if repo-wide Prettier reports unrelated existing files, ensure touched files pass and report the remaining debt. If either command cannot run or fails for environment reasons, report the exact command and reason.
 - iPhone work lives under `iphone/HualasMobile` and should follow `iphone/README.md`.
 - Android work lives under `android` and should follow `android/README.md` plus `android/API_CONTRACT.md`.
 - Native apps use `/api/mobile/*` with bearer-token auth, not NextAuth cookie routes.

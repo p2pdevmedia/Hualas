@@ -44,6 +44,7 @@ pnpm prisma:generate
 pnpm dev
 pnpm build
 pnpm lint
+pnpm format:check
 pnpm test
 ```
 
@@ -119,6 +120,7 @@ Important models:
 - Inspect `prisma/schema.prisma` before changing data logic.
 - Every new or changed feature must update the relevant agent-facing docs in the same task, especially `PROJECT_CONTEXT.md`, `ROUTE_MAP.md`, `.agent-registry.yaml`, platform READMEs/contracts, and README setup notes.
 - Do not leave new functionality discoverable only by reading the source tree; future agents should be able to find it from the context and route map first.
+- Before finishing a task, run `pnpm format:check` and attempt `pnpm build`; if repo-wide Prettier reports unrelated existing files, ensure touched files pass and report the remaining debt. If either cannot run or fails because of environment constraints, report the exact command and reason.
 - For native mobile clients, use `/api/mobile/*` and bearer-token auth, not NextAuth cookie routes.
 - iPhone code lives under `iphone/HualasMobile`; Android code lives under `android`.
 - Reuse existing components and patterns before creating new ones.

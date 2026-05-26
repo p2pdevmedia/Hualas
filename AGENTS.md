@@ -22,7 +22,7 @@ For every task:
 6. Compare selected outputs when present.
 7. Integrate the final solution.
 8. Update the agent-facing documentation for any new or changed functionality.
-9. Run tests or explain why tests were not run.
+9. Run tests and final checks, including Prettier and a production build attempt.
 10. Perform a short review step before finalizing.
 
 ## Documentation Sync Rule
@@ -38,6 +38,17 @@ At minimum, check whether these files need changes:
 - `README.md` when setup, commands, deployment, environment variables, or cross-platform workflow changes.
 
 Do not make future agents rediscover completed work by scanning the whole app. If functionality exists, the map/context files should say where it lives and how to approach it.
+
+## Final Verification Rule
+
+Before finishing any task, run the relevant tests and checks. At minimum, run:
+
+```bash
+pnpm format:check
+pnpm build
+```
+
+If a task is purely documentation or the environment blocks a command, still try the checks when practical. If `pnpm format:check` reports pre-existing formatting issues outside the task scope, make sure every file you touched passes Prettier and report the remaining unrelated files or count. If a check cannot run or fails because of missing secrets, unavailable services, signing credentials, or other environment constraints, report the exact command and reason in the final response. Do not silently skip Prettier or the production build attempt.
 
 ## iPhone App Rule
 

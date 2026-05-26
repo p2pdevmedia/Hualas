@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:migrate:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "test": "jest",
