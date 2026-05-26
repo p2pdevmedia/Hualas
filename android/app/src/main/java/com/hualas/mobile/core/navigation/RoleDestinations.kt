@@ -31,7 +31,7 @@ fun destinationsForRole(
             PrimaryDestination(id = "family", label = "Hijos", icon = Icons.Default.Group),
             PrimaryDestination(id = "payments", label = "Pagos", icon = Icons.Default.CreditCard),
             PrimaryDestination(id = "chat", label = "Chat", icon = Icons.Default.MailOutline),
-            PrimaryDestination(id = "more", label = "Mas", icon = Icons.Default.MoreVert, badgeCount = moreBadge)
+            PrimaryDestination(id = "more", label = "Más", icon = Icons.Default.MoreVert, badgeCount = moreBadge)
         )
         MobileRole.PROFESSOR -> listOf(
             PrimaryDestination(id = "agenda", label = "Mis actividades", icon = Icons.Default.DateRange),

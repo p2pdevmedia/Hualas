@@ -8,7 +8,7 @@ class RoleDestinationsTest {
     @Test
     fun memberOnlySeesMemberDestinations() {
         assertEquals(
-            listOf("Inicio", "Actividades", "Familia", "Pagos", "Chat", "Más"),
+            listOf("Inicio", "Mis actividades", "Hijos", "Pagos", "Chat", "Más"),
             destinationsForRole(MobileRole.MEMBER).map { it.label }
         )
     }
@@ -16,7 +16,7 @@ class RoleDestinationsTest {
     @Test
     fun professorOnlySeesProfessorDestinations() {
         assertEquals(
-            listOf("Inicio", "Agenda", "Asistencia", "Grupos", "Chat", "Más"),
+            listOf("Mis actividades", "Grupos", "Asistencia", "Perfil"),
             destinationsForRole(MobileRole.PROFESSOR).map { it.label }
         )
     }
