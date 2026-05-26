@@ -6,6 +6,8 @@ import RoleSwitchPrompt from '@/components/role-switch-prompt';
 import { hasProfessorCapability } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import { buildCartQuote } from '@/lib/cart-checkout';
+import { formatAmount } from '@/lib/accounting';
 import {
   checkChildProfile,
   checkUserProfile,
@@ -408,6 +410,13 @@ export default async function MyActivitiesPage({
   }));
   const isSelfParticipantAgenda =
     !isProfessorView && selectedParticipantFilter === 'self';
+  const socialFeeQuote = !isProfessorView
+    ? await buildCartQuote({
+        userId,
+        items: [],
+        socialFeeOnly: true,
+      }).catch(() => null)
+    : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -497,6 +506,43 @@ export default async function MyActivitiesPage({
           </div>
         </div>
       )}
+
+      {!isProfessorView &&
+        socialFeeQuote &&
+        socialFeeQuote.totalSocialFeeAmount > 0 && (
+          <section className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-2">
+                <div>
+                  <h2 className="text-base font-semibold">Cuota social</h2>
+                  <p className="text-amber-900">
+                    Hay cuota social pendiente para:
+                  </p>
+                </div>
+                <ul className="space-y-1">
+                  {socialFeeQuote.socialFeeLines.map((line) => (
+                    <li
+                      key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${line.periodYear}-${line.periodMonth}`}
+                      className="flex flex-wrap gap-x-2"
+                    >
+                      <span>{line.label}</span>
+                      <span className="font-medium">
+                        {formatAmount(line.amount)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                href="/activities/cart"
+                prefetch={true}
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-amber-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
+              >
+                Pagar cuota social
+              </Link>
+            </div>
+          </section>
+        )}
 
       <ActivityCalendar
         activityDays={calendarDays}

@@ -29,6 +29,8 @@ type QuoteResponse = {
     };
     amount: number;
     label: string;
+    periodMonth: number;
+    periodYear: number;
   }>;
   mercadoPagoFeeLines: Array<{
     amount: number;
@@ -41,6 +43,7 @@ type QuoteResponse = {
   totalAmount: number;
   totalAmountWithMercadoPagoFee: number;
   socialFeeAmount: number;
+  socialFeeMonths: number;
 };
 
 export default function ActivitiesCartPage() {
@@ -51,6 +54,7 @@ export default function ActivitiesCartPage() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('MERCADO_PAGO');
+  const [socialFeeMonths, setSocialFeeMonths] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [errorAction, setErrorAction] = useState<{
     label: string;
@@ -86,12 +90,14 @@ export default function ActivitiesCartPage() {
       setError(null);
       setErrorAction(null);
       try {
+        const payload =
+          items.length === 0
+            ? { items: [], socialFeeOnly: true, socialFeeMonths }
+            : { items };
         const response = await fetch('/api/activities/cart/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(
-            items.length === 0 ? { items: [], socialFeeOnly: true } : { items }
-          ),
+          body: JSON.stringify(payload),
           signal: controller.signal,
         });
         const data = (await response.json().catch(() => ({}))) as
@@ -125,7 +131,7 @@ export default function ActivitiesCartPage() {
     fetchQuote();
 
     return () => controller.abort();
-  }, [hydrated, items]);
+  }, [hydrated, items, socialFeeMonths]);
 
   const persist = (next: ActivityCartItem[]) => {
     setItems(next);
@@ -141,12 +147,14 @@ export default function ActivitiesCartPage() {
     setErrorAction(null);
 
     try {
+      const payload =
+        items.length === 0
+          ? { items: [], socialFeeOnly: true, socialFeeMonths }
+          : { items };
       const response = await fetch('/api/activities/cart/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          items.length === 0 ? { items: [], socialFeeOnly: true } : { items }
-        ),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -213,6 +221,27 @@ export default function ActivitiesCartPage() {
               este momento. Si después querés participar en una propuesta,
               podés volver a la agenda y sumarla por separado.
             </p>
+            <label className="mt-5 block space-y-2 text-sm">
+              <span className="font-medium">Meses a pagar</span>
+              <select
+                value={socialFeeMonths}
+                onChange={(event) =>
+                  setSocialFeeMonths(Number(event.target.value))
+                }
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                  (months) => (
+                    <option key={months} value={months}>
+                      {months} {months === 1 ? 'mes' : 'meses'}
+                    </option>
+                  )
+                )}
+              </select>
+              <span className="block text-xs text-muted-foreground">
+                Podés adelantar cuotas futuras y dejar varios meses cubiertos.
+              </span>
+            </label>
             <Link
               href="/#actividades"
               className="mt-5 inline-flex h-9 items-center justify-center rounded-full border border-primary px-5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
@@ -230,8 +259,8 @@ export default function ActivitiesCartPage() {
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold">Cuota social</h2>
                 <p className="text-sm text-muted-foreground">
-                  Tenés cuota social pendiente. El pago activa tu asociación al
-                  club para el período actual.
+                  Tenés cuota social pendiente para los integrantes listados
+                  abajo.
                 </p>
               </div>
               <div className="mt-4 space-y-2 text-sm">
@@ -292,6 +321,7 @@ export default function ActivitiesCartPage() {
                   totalAmount={quote.totalAmount}
                   activitySummary="Vas a subir un comprobante para pagar solo la cuota social."
                   socialFeeOnly
+                  socialFeeMonths={socialFeeMonths}
                   embedded
                 />
               )}

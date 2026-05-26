@@ -122,6 +122,8 @@ function baseQuote(overrides: Partial<CartQuote> = {}): CartQuote {
     totalAmountWithMercadoPagoFee: 5500,
     socialFeeAmount: 0,
     socialFeeParticipants: [],
+    socialFeePaymentLines: [],
+    socialFeeMonths: 1,
     validatedItems: [{ activityId: ACTIVITY_ID, target: 'self' }],
     ...overrides,
   };
@@ -218,11 +220,15 @@ describe('createManualPaymentCheckout', () => {
           participant: { userId: USER.id, childId: null },
           amount: 3000,
           label: 'Cuota social - Test User',
+          periodMonth: 5,
+          periodYear: 2026,
         },
         {
           participant: { userId: USER.id, childId: CHILD_ID },
           amount: 3000,
           label: 'Cuota social - Hijo',
+          periodMonth: 5,
+          periodYear: 2026,
         },
       ],
       totalSocialFeeAmount: 6000,
@@ -231,6 +237,22 @@ describe('createManualPaymentCheckout', () => {
       socialFeeParticipants: [
         { userId: USER.id, childId: null },
         { userId: USER.id, childId: CHILD_ID },
+      ],
+      socialFeePaymentLines: [
+        {
+          userId: USER.id,
+          childId: null,
+          month: 5,
+          year: 2026,
+          amount: 3000,
+        },
+        {
+          userId: USER.id,
+          childId: CHILD_ID,
+          month: 5,
+          year: 2026,
+          amount: 3000,
+        },
       ],
     });
 

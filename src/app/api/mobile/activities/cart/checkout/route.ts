@@ -73,11 +73,13 @@ export async function POST(req: Request) {
   let paymentMethod: unknown;
   let proofFile: File | null = null;
   let socialFeeOnly = false;
+  let socialFeeMonths = 1;
 
   if (isFormData) {
     const formData = await req.formData();
     paymentMethod = formData.get('paymentMethod');
     socialFeeOnly = formData.get('socialFeeOnly') === 'true';
+    socialFeeMonths = Number(formData.get('socialFeeMonths') ?? 1);
     const rawItems = formData.get('items');
     proofFile =
       formData.get('proof') instanceof File
@@ -106,6 +108,9 @@ export async function POST(req: Request) {
       : [];
     socialFeeOnly =
       (payload as { socialFeeOnly?: unknown } | null)?.socialFeeOnly === true;
+    socialFeeMonths = Number(
+      (payload as { socialFeeMonths?: unknown } | null)?.socialFeeMonths ?? 1
+    );
   }
 
   const userId = session.userId;
@@ -178,6 +183,7 @@ export async function POST(req: Request) {
       userId,
       items,
       ...(socialFeeOnly ? { socialFeeOnly } : {}),
+      ...(socialFeeOnly ? { socialFeeMonths } : {}),
     });
   } catch (error) {
     const response = buildCartQuoteErrorResponse(error);
@@ -278,6 +284,7 @@ export async function POST(req: Request) {
         socialFeeAmount: quote.socialFeeAmount,
         familyDiscountAmount: quote.totalDiscountAmount,
         socialFeeParticipants: JSON.stringify(quote.socialFeeParticipants),
+        socialFeePaymentLines: JSON.stringify(quote.socialFeePaymentLines),
       },
     },
   });

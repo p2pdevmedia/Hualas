@@ -42,6 +42,13 @@ export type ManualPaymentRawData = {
     userId: string;
     childId: string | null;
   }>;
+  socialFeePaymentLines?: Array<{
+    userId: string;
+    childId: string | null;
+    month: number;
+    year: number;
+    amount: number;
+  }>;
   validatedItems?: Array<{
     activityId: string;
     target?: string;
@@ -164,6 +171,50 @@ export function getManualPaymentRawData(
         )
     : undefined;
 
+  const socialFeePaymentLines = Array.isArray(rawData.socialFeePaymentLines)
+    ? rawData.socialFeePaymentLines
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') return null;
+          const userId =
+            typeof (entry as { userId?: unknown }).userId === 'string'
+              ? (entry as { userId: string }).userId
+              : null;
+          const month = Number((entry as { month?: unknown }).month);
+          const year = Number((entry as { year?: unknown }).year);
+          const amount = Number((entry as { amount?: unknown }).amount);
+          if (
+            !userId ||
+            !Number.isInteger(month) ||
+            month < 1 ||
+            month > 12 ||
+            !Number.isInteger(year) ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+          ) {
+            return null;
+          }
+          const childId = (entry as { childId?: unknown }).childId;
+          return {
+            userId,
+            childId: typeof childId === 'string' ? childId : null,
+            month,
+            year,
+            amount: Math.round(amount),
+          };
+        })
+        .filter(
+          (
+            entry
+          ): entry is {
+            userId: string;
+            childId: string | null;
+            month: number;
+            year: number;
+            amount: number;
+          } => Boolean(entry)
+        )
+    : undefined;
+
   const reviews = Array.isArray(rawData.reviews)
     ? rawData.reviews
         .map((entry) => {
@@ -237,6 +288,7 @@ export function getManualPaymentRawData(
         ? rawData.familyDiscountAmount
         : undefined,
     socialFeeParticipants,
+    socialFeePaymentLines,
     validatedItems,
     reviews,
   };
@@ -281,6 +333,13 @@ export function createManualPaymentRawData(input: {
     userId: string;
     childId: string | null;
   }>;
+  socialFeePaymentLines?: Array<{
+    userId: string;
+    childId: string | null;
+    month: number;
+    year: number;
+    amount: number;
+  }>;
   validatedItems?: Array<{
     activityId: string;
     target?: string;
@@ -299,6 +358,7 @@ export function createManualPaymentRawData(input: {
     socialFeeAmount: input.socialFeeAmount ?? 0,
     familyDiscountAmount: input.familyDiscountAmount ?? 0,
     socialFeeParticipants: input.socialFeeParticipants ?? [],
+    socialFeePaymentLines: input.socialFeePaymentLines ?? [],
     validatedItems: input.validatedItems ?? [],
     reviews: [
       {

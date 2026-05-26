@@ -36,12 +36,16 @@ export async function POST(req: Request) {
     : [];
   const socialFeeOnly =
     (payload as { socialFeeOnly?: unknown } | null)?.socialFeeOnly === true;
+  const socialFeeMonths = Number(
+    (payload as { socialFeeMonths?: unknown } | null)?.socialFeeMonths ?? 1
+  );
 
   try {
     const quote = await buildCartQuote({
       userId: session.userId,
       items,
       ...(socialFeeOnly ? { socialFeeOnly } : {}),
+      ...(socialFeeOnly ? { socialFeeMonths } : {}),
     });
 
     return NextResponse.json({
@@ -56,6 +60,7 @@ export async function POST(req: Request) {
       totalAmount: quote.totalAmount,
       totalAmountWithMercadoPagoFee: quote.totalAmountWithMercadoPagoFee,
       socialFeeAmount: quote.socialFeeAmount,
+      socialFeeMonths: quote.socialFeeMonths,
     });
   } catch (error) {
     const response = buildCartQuoteErrorResponse(error);

@@ -7,9 +7,12 @@ import {
 } from '@/lib/family-access';
 import {
   getSocialFeeAmount,
-  hasSocialFeeForCurrentMonth,
+  getSocialFeePeriods,
+  hasSocialFeeForPeriod,
   normalizeSocialFeeParticipant,
   type SocialFeeParticipant,
+  type SocialFeePaymentLine,
+  type SocialFeePeriod,
 } from '@/lib/social-fee';
 
 export type CartCheckoutItem = {
@@ -33,6 +36,8 @@ type SocialFeeSummary = {
   participant: SocialFeeParticipant;
   amount: number;
   label: string;
+  periodMonth: number;
+  periodYear: number;
 };
 
 type DiscountSummary = {
@@ -58,6 +63,8 @@ export type CartQuote = {
   totalAmountWithMercadoPagoFee: number;
   socialFeeAmount: number;
   socialFeeParticipants: SocialFeeParticipant[];
+  socialFeePaymentLines: SocialFeePaymentLine[];
+  socialFeeMonths: number;
   validatedItems: CartCheckoutItem[];
 };
 
@@ -65,6 +72,7 @@ type BuildCartQuoteInput = {
   userId: string;
   items: CartCheckoutItem[];
   socialFeeOnly?: boolean;
+  socialFeeMonths?: number;
 };
 
 class CartQuoteError extends Error {
@@ -105,6 +113,22 @@ function getSocialFeeParticipantKey(participant: SocialFeeParticipant) {
     : `user:${participant.userId}`;
 }
 
+function formatParticipantName(
+  name: string | null | undefined,
+  lastName: string | null | undefined,
+  fallback: string
+) {
+  return [name, lastName].filter(Boolean).join(' ') || fallback;
+}
+
+function formatSocialFeePeriod({ month, year }: SocialFeePeriod) {
+  return new Intl.DateTimeFormat('es-AR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
 async function getActiveSocialFeeParticipants(userId: string) {
   const ownerIds = await getAccessibleChildOwnerIds(userId);
   const activeUsers = await prisma.user.findMany({
@@ -115,22 +139,31 @@ async function getActiveSocialFeeParticipants(userId: string) {
     },
     select: {
       id: true,
+      name: true,
+      lastName: true,
       children: {
-        select: { id: true },
+        select: { id: true, name: true, lastName: true },
       },
     },
   });
 
-  const participants: SocialFeeParticipant[] = [];
+  const participants: Array<{
+    participant: SocialFeeParticipant;
+    label: string;
+  }> = [];
   for (const user of activeUsers) {
-    participants.push(normalizeSocialFeeParticipant({ userId: user.id }));
+    participants.push({
+      participant: normalizeSocialFeeParticipant({ userId: user.id }),
+      label: `Titular: ${formatParticipantName(user.name, user.lastName, 'Socio')}`,
+    });
     for (const child of user.children) {
-      participants.push(
-        normalizeSocialFeeParticipant({
+      participants.push({
+        participant: normalizeSocialFeeParticipant({
           userId: user.id,
           childId: child.id,
-        })
-      );
+        }),
+        label: `Hijo/a: ${formatParticipantName(child.name, child.lastName, child.name)}`,
+      });
     }
   }
 
@@ -141,6 +174,7 @@ export async function buildCartQuote({
   userId,
   items,
   socialFeeOnly = false,
+  socialFeeMonths = 1,
 }: BuildCartQuoteInput): Promise<CartQuote> {
   if (!items.length && !socialFeeOnly) {
     throw new CartQuoteError(400, 'El carrito está vacío.');
@@ -513,43 +547,88 @@ export async function buildCartQuote({
       ? [{ amount: totalDiscountAmount, label: 'Descuento familiar' }]
       : [];
 
-  const participantByKey = new Map<string, SocialFeeParticipant>();
+  const participantByKey = new Map<
+    string,
+    { participant: SocialFeeParticipant; label: string }
+  >();
   for (const item of items) {
     const childId = normalizeTarget(item.target);
     const participant = normalizeSocialFeeParticipant({
       userId,
       childId,
     });
-    participantByKey.set(getSocialFeeParticipantKey(participant), participant);
+    participantByKey.set(getSocialFeeParticipantKey(participant), {
+      participant,
+      label:
+        item.targetLabel ??
+        (childId ? 'Hijo/a seleccionado' : 'Titular'),
+    });
   }
 
   for (const participant of await getActiveSocialFeeParticipants(userId)) {
-    participantByKey.set(getSocialFeeParticipantKey(participant), participant);
+    participantByKey.set(
+      getSocialFeeParticipantKey(participant.participant),
+      participant
+    );
   }
 
   const socialFeeAmount = await getSocialFeeAmount();
-  const socialFeeParticipants =
+  const socialFeePeriods = getSocialFeePeriods(
+    socialFeeOnly ? socialFeeMonths : 1
+  );
+  const socialFeePaymentLines =
     socialFeeAmount > 0
       ? (
           await Promise.all(
-            [...participantByKey.values()].map(async (participant) => ({
-              participant,
-              owesSocialFee: !(await hasSocialFeeForCurrentMonth(participant)),
-            }))
+            [...participantByKey.values()].flatMap(({ participant, label }) =>
+              socialFeePeriods.map(async (period) => ({
+                participant,
+                label,
+                period,
+                owesSocialFee: !(await hasSocialFeeForPeriod({
+                  ...participant,
+                  ...period,
+                })),
+              }))
+            )
           )
         )
           .filter((entry) => entry.owesSocialFee)
-          .map((entry) => entry.participant)
+          .map((entry) => ({
+            ...entry.participant,
+            month: entry.period.month,
+            year: entry.period.year,
+            amount: socialFeeAmount,
+            label: entry.label,
+          }))
       : [];
 
-  const socialFeeLines: SocialFeeSummary[] = socialFeeParticipants.map(
-    (participant) => ({
-      participant,
-      amount: socialFeeAmount,
-      label: participant.childId
-        ? 'Cuota social para hijo/a'
-        : 'Cuota social para titular',
-    })
+  const socialFeeParticipants = Array.from(
+    new Map(
+      socialFeePaymentLines.map((line) => [
+        `${line.userId}:${line.childId ?? 'self'}`,
+        { userId: line.userId, childId: line.childId },
+      ])
+    ).values()
+  );
+
+  const socialFeeLines: SocialFeeSummary[] = socialFeePaymentLines.map(
+    (line) => {
+      const participantKey = getSocialFeeParticipantKey(line);
+      const participantLabel =
+        participantByKey.get(participantKey)?.label ??
+        (line.childId ? 'Hijo/a' : 'Titular');
+      return {
+        participant: { userId: line.userId, childId: line.childId },
+        amount: line.amount,
+        label: `${participantLabel} - ${formatSocialFeePeriod({
+          month: line.month,
+          year: line.year,
+        })}`,
+        periodMonth: line.month,
+        periodYear: line.year,
+      };
+    }
   );
 
   const totalActivityAmount = activityLines.reduce(
@@ -587,6 +666,8 @@ export async function buildCartQuote({
     totalAmountWithMercadoPagoFee: totalAmount + totalMercadoPagoFeeAmount,
     socialFeeAmount,
     socialFeeParticipants,
+    socialFeePaymentLines,
+    socialFeeMonths: socialFeePeriods.length,
     validatedItems: items,
   };
 }
@@ -613,7 +694,7 @@ export function toMercadoPagoItems(quote: CartQuote) {
   }));
 
   const socialFeeItems = quote.socialFeeLines.map((line) => ({
-    id: `social-fee:${line.participant.userId}:${line.participant.childId ?? 'self'}`,
+    id: `social-fee:${line.participant.userId}:${line.participant.childId ?? 'self'}:${line.periodYear}-${line.periodMonth}`,
     title: line.label,
     quantity: 1,
     unit_price: centsToPesos(line.amount),

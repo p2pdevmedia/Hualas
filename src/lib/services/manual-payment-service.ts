@@ -567,7 +567,7 @@ export async function createManualPaymentCheckout(input: {
           const socialFeeDescription =
             input.quote.socialFeeLines.length === 1
               ? input.quote.socialFeeLines[0].label
-              : `Cuota social (${input.quote.socialFeeLines.length} participantes)`;
+              : `Cuota social (${input.quote.socialFeeLines.length} cuotas)`;
 
           await tx.orderItem.create({
             data: {
@@ -609,6 +609,7 @@ export async function createManualPaymentCheckout(input: {
               socialFeeAmount: input.quote.socialFeeAmount,
               familyDiscountAmount: input.quote.totalDiscountAmount,
               socialFeeParticipants: input.quote.socialFeeParticipants,
+              socialFeePaymentLines: input.quote.socialFeePaymentLines,
               validatedItems: input.quote.validatedItems,
             }),
           },
@@ -692,8 +693,20 @@ export async function approveManualPayment({
   const rawData = getManualPaymentRawData(updatedPayment.rawData);
   const socialFeeParticipants = rawData.socialFeeParticipants ?? [];
   const socialFeeAmount = rawData.socialFeeAmount ?? 0;
+  const socialFeePaymentLines = rawData.socialFeePaymentLines ?? [];
 
-  if (socialFeeParticipants.length > 0 && socialFeeAmount > 0) {
+  if (socialFeePaymentLines.length > 0) {
+    for (const line of socialFeePaymentLines) {
+      await registerSocialFeePayment({
+        userId: line.userId,
+        childId: line.childId,
+        amount: line.amount,
+        mercadoPagoPaymentId: updatedPayment.id,
+        periodMonth: line.month,
+        periodYear: line.year,
+      });
+    }
+  } else if (socialFeeParticipants.length > 0 && socialFeeAmount > 0) {
     const uniqueParticipants = new Map(
       socialFeeParticipants.map((participant) => [
         `${participant.userId}:${participant.childId ?? 'self'}`,

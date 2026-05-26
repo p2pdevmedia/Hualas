@@ -76,6 +76,13 @@ export type ManualPaymentSummary = {
       userId: string;
       childId: string | null;
     }>;
+    socialFeePaymentLines?: Array<{
+      userId: string;
+      childId: string | null;
+      month: number;
+      year: number;
+      amount: number;
+    }>;
     validatedItems?: Array<{
       activityId: string;
       target?: string;

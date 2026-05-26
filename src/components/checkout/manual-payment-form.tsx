@@ -26,6 +26,7 @@ type ManualPaymentFormProps = {
   activitySummary?: string;
   childId?: string | null;
   socialFeeOnly?: boolean;
+  socialFeeMonths?: number;
   embedded?: boolean;
 };
 
@@ -48,6 +49,7 @@ export default function ManualPaymentForm({
   activitySummary,
   childId,
   socialFeeOnly = false,
+  socialFeeMonths = 1,
   embedded = false,
 }: ManualPaymentFormProps) {
   const router = useRouter();
@@ -131,6 +133,7 @@ export default function ManualPaymentForm({
       formData.append('proof', file);
       if (socialFeeOnly) {
         formData.append('socialFeeOnly', 'true');
+        formData.append('socialFeeMonths', String(socialFeeMonths));
       }
       if (childId) {
         formData.append('childId', childId);

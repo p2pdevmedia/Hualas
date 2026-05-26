@@ -11,6 +11,16 @@ export type SocialFeeParticipant = {
   childId: string | null;
 };
 
+export type SocialFeePeriod = {
+  month: number;
+  year: number;
+};
+
+export type SocialFeePaymentLine = SocialFeeParticipant &
+  SocialFeePeriod & {
+    amount: number;
+  };
+
 export function normalizeSocialFeeAmount(amount: number) {
   if (!Number.isFinite(amount) || amount <= 0) {
     return 0;
@@ -47,12 +57,25 @@ async function resolveSocialFeeUserId(
   return child?.userId ?? userId;
 }
 
-function getCurrentPeriod() {
+export function getCurrentSocialFeePeriod(): SocialFeePeriod {
   const now = new Date();
   return {
     month: now.getUTCMonth() + 1,
     year: now.getUTCFullYear(),
   };
+}
+
+export function getSocialFeePeriods(count = 1): SocialFeePeriod[] {
+  const safeCount = Math.min(Math.max(Math.floor(count) || 1, 1), 12);
+  const current = getCurrentSocialFeePeriod();
+
+  return Array.from({ length: safeCount }, (_, index) => {
+    const zeroBasedMonth = current.month - 1 + index;
+    return {
+      month: (zeroBasedMonth % 12) + 1,
+      year: current.year + Math.floor(zeroBasedMonth / 12),
+    };
+  });
 }
 
 export async function getSocialFeeAmount() {
@@ -68,7 +91,19 @@ export async function hasSocialFeeForCurrentMonth({
   userId,
   childId,
 }: ParticipantInput) {
-  const { month, year } = getCurrentPeriod();
+  return hasSocialFeeForPeriod({
+    userId,
+    childId,
+    ...getCurrentSocialFeePeriod(),
+  });
+}
+
+export async function hasSocialFeeForPeriod({
+  userId,
+  childId,
+  month,
+  year,
+}: ParticipantInput & SocialFeePeriod) {
   const effectiveUserId = await resolveSocialFeeUserId(prisma, userId, childId);
 
   const existing = await prisma.socialFeePayment.findFirst({
@@ -98,6 +133,10 @@ export function serializeSocialFeeParticipants(
   participants: SocialFeeParticipant[]
 ) {
   return JSON.stringify(participants);
+}
+
+export function serializeSocialFeePaymentLines(lines: SocialFeePaymentLine[]) {
+  return JSON.stringify(lines);
 }
 
 export function parseSocialFeeParticipants(
@@ -135,13 +174,75 @@ export function parseSocialFeeParticipants(
   }
 }
 
+export function parseSocialFeePaymentLines(
+  value: unknown
+): SocialFeePaymentLine[] {
+  if (typeof value !== 'string' || !value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((entry) => {
+        if (
+          !entry ||
+          typeof entry !== 'object' ||
+          typeof (entry as { userId?: unknown }).userId !== 'string'
+        ) {
+          return null;
+        }
+
+        const month = Number((entry as { month?: unknown }).month);
+        const year = Number((entry as { year?: unknown }).year);
+        const amount = Number((entry as { amount?: unknown }).amount);
+        if (
+          !Number.isInteger(month) ||
+          month < 1 ||
+          month > 12 ||
+          !Number.isInteger(year) ||
+          year < 2000 ||
+          !Number.isFinite(amount) ||
+          amount <= 0
+        ) {
+          return null;
+        }
+
+        const childId = (entry as { childId?: unknown }).childId;
+        return {
+          userId: (entry as { userId: string }).userId,
+          childId: typeof childId === 'string' ? childId : null,
+          month,
+          year,
+          amount: Math.round(amount),
+        };
+      })
+      .filter((entry): entry is SocialFeePaymentLine => Boolean(entry));
+  } catch {
+    return [];
+  }
+}
+
 export async function registerSocialFeePayment({
   userId,
   childId,
   amount,
   mercadoPagoPaymentId,
-}: ParticipantInput & { amount: number; mercadoPagoPaymentId: string }) {
-  const { month, year } = getCurrentPeriod();
+  periodMonth,
+  periodYear,
+}: ParticipantInput & {
+  amount: number;
+  mercadoPagoPaymentId: string;
+  periodMonth?: number;
+  periodYear?: number;
+}) {
+  const currentPeriod = getCurrentSocialFeePeriod();
+  const month = periodMonth ?? currentPeriod.month;
+  const year = periodYear ?? currentPeriod.year;
   const amountInCents = Math.round(amount);
 
   if (childId == null) {

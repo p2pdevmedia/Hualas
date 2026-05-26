@@ -9,6 +9,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 import {
   parseSocialFeeParticipants,
+  parseSocialFeePaymentLines,
   registerSocialFeePayment,
   type SocialFeeParticipant,
 } from '@/lib/social-fee';
@@ -247,6 +248,9 @@ export async function POST(req: NextRequest) {
     }
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
+    const socialFeePaymentLines = parseSocialFeePaymentLines(
+      payment.metadata?.socialFeePaymentLines
+    );
     const participants = parseSocialFeeParticipants(
       payment.metadata?.socialFeeParticipants
     );
@@ -266,7 +270,18 @@ export async function POST(req: NextRequest) {
             )
           : [];
 
-    if (socialFeeAmount > 0 && participantsToRegister.length > 0) {
+    if (socialFeePaymentLines.length > 0) {
+      for (const line of socialFeePaymentLines) {
+        await registerSocialFeePayment({
+          userId: line.userId,
+          childId: line.childId,
+          amount: line.amount,
+          mercadoPagoPaymentId: payment.id?.toString() ?? id.toString(),
+          periodMonth: line.month,
+          periodYear: line.year,
+        });
+      }
+    } else if (socialFeeAmount > 0 && participantsToRegister.length > 0) {
       const uniqueParticipants = new Map(
         participantsToRegister.map((participant) => [
           `${participant.userId}:${participant.childId ?? 'self'}`,
@@ -289,7 +304,8 @@ export async function POST(req: NextRequest) {
       references,
       userId: references[0]?.userId ?? String(payment.metadata?.userId ?? ''),
       socialFeeAmount,
-      socialFeeParticipantCount: participantsToRegister.length,
+      socialFeeParticipantCount:
+        socialFeePaymentLines.length || participantsToRegister.length,
       familyDiscountAmount: Number(payment.metadata?.familyDiscountAmount ?? 0),
     });
 
