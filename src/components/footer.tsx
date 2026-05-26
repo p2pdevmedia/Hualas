@@ -1,6 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import {
+  CLUB_CONTACT_EMAIL,
+  CLUB_WHATSAPP_DISPLAY,
+  CLUB_WHATSAPP_URL,
+} from '@/lib/club-contact';
 
 export default function Footer() {
   return (
@@ -35,6 +40,23 @@ export default function Footer() {
             >
               App Android
             </Link>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <a
+              href={CLUB_WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
+              WhatsApp {CLUB_WHATSAPP_DISPLAY}
+            </a>
+            <a
+              href={`mailto:${CLUB_CONTACT_EMAIL}`}
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            >
+              {CLUB_CONTACT_EMAIL}
+            </a>
           </div>
 
           {/* Social Media */}

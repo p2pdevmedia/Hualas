@@ -247,6 +247,12 @@ export default function Navbar() {
 
         <div className="hidden md:flex md:items-center md:gap-6">
           {renderAndroidLink()}
+          <Link href="/faq" className={navLinkClass('/faq')}>
+            Ayuda
+          </Link>
+          <Link href="/contact" className={navLinkClass('/contact')}>
+            {t.contact}
+          </Link>
           {session && !isCounter && (
             <Link
               href={activitiesHref}
@@ -501,6 +507,20 @@ export default function Navbar() {
                 </span>
               </Link>
               {renderAndroidLink(() => setMenuOpen(false))}
+              <Link
+                href="/faq"
+                className={navLinkClass('/faq')}
+                onClick={() => setMenuOpen(false)}
+              >
+                Ayuda
+              </Link>
+              <Link
+                href="/contact"
+                className={navLinkClass('/contact')}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.contact}
+              </Link>
               {session && !isCounter && (
                 <Link
                   href={activitiesHref}
@@ -681,6 +701,20 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 {t.login}
+              </Link>
+              <Link
+                href="/faq"
+                className={navLinkClass('/faq')}
+                onClick={() => setMenuOpen(false)}
+              >
+                Ayuda
+              </Link>
+              <Link
+                href="/contact"
+                className={navLinkClass('/contact')}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t.contact}
               </Link>
               <Link
                 href="/register"

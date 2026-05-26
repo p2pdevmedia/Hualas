@@ -58,7 +58,7 @@ export default function TutorsList({
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Tutores y padres
+        Madres, padres y tutores
       </p>
       <div className="space-y-2">
         {tutors.map((tutor) => (

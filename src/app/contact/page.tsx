@@ -1,4 +1,9 @@
 import ContactForm from './contact-form';
+import {
+  CLUB_CONTACT_EMAIL,
+  CLUB_WHATSAPP_DISPLAY,
+  CLUB_WHATSAPP_URL,
+} from '@/lib/club-contact';
 
 export default function ContactPage() {
   return (
@@ -15,11 +20,25 @@ export default function ContactPage() {
             </h1>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed font-body">
               ¿Tenés alguna consulta sobre nuestras actividades o querés sumarte
-              al club? Escribinos.
+              al club? Escribinos por WhatsApp o email.
             </p>
           </div>
 
           <ul className="space-y-4 text-sm font-body">
+            <li className="flex items-start gap-3">
+              <span className="text-base mt-0.5">☎</span>
+              <div>
+                <p className="font-medium">WhatsApp</p>
+                <a
+                  href={CLUB_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-link hover:text-link/80 underline underline-offset-4"
+                >
+                  {CLUB_WHATSAPP_DISPLAY}
+                </a>
+              </div>
+            </li>
             <li className="flex items-start gap-3">
               <span className="text-base mt-0.5">📍</span>
               <div>
@@ -48,10 +67,10 @@ export default function ContactPage() {
               <div>
                 <p className="font-medium">Email general</p>
                 <a
-                  href="mailto:Info@clubhualas.com.ar"
+                  href={`mailto:${CLUB_CONTACT_EMAIL}`}
                   className="text-link hover:text-link/80 underline underline-offset-4"
                 >
-                  Info@clubhualas.com.ar
+                  {CLUB_CONTACT_EMAIL}
                 </a>
               </div>
             </li>

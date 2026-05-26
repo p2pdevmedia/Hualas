@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { otherFamilyAdultLabel } from '@/lib/family-labels';
 import { isActiveAdmin, isActiveMember, isActiveProfessor } from '@/lib/roles';
 
 export default async function PickupNoticesPage() {
@@ -70,6 +71,7 @@ export default async function PickupNoticesPage() {
       createdBy: {
         select: {
           name: true,
+          gender: true,
         },
       },
       alternatePersonUser: {
@@ -139,7 +141,7 @@ export default async function PickupNoticesPage() {
               >
                 {!isOwnNotice && !isProfessor && (
                   <div className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-                    Aviso de otro padre
+                    Aviso de {otherFamilyAdultLabel(notice.createdBy.gender)}
                   </div>
                 )}
                 {isProfessor ? (

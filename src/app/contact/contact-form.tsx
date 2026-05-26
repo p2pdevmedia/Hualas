@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
+import { CLUB_CONTACT_EMAIL } from '@/lib/club-contact';
 
 export default function ContactForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'prepared' | 'error'>('idle');
 
   const inputClass =
     'w-full rounded-lg border bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-body';
@@ -20,22 +21,36 @@ export default function ContactForm() {
       setStatus('error');
       return;
     }
-    setStatus('success');
+
+    const subject = encodeURIComponent(`Consulta web de ${name || 'Hualas'}`);
+    const body = encodeURIComponent(
+      [
+        `Nombre: ${name}`,
+        `Email: ${email}`,
+        phone ? `Telefono: ${phone}` : null,
+        '',
+        message,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+    window.location.href = `mailto:${CLUB_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    setStatus('prepared');
     setName('');
     setEmail('');
     setPhone('');
     setMessage('');
   }
 
-  if (status === 'success') {
+  if (status === 'prepared') {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center py-12 space-y-3">
-        <div className="text-4xl">✅</div>
+        <div className="text-4xl">✉</div>
         <h3 className="font-heading text-xl font-semibold">
-          ¡Mensaje enviado!
+          Email preparado
         </h3>
         <p className="text-sm text-muted-foreground font-body">
-          Nos pondremos en contacto pronto.
+          Se abrió tu aplicación de correo para enviarlo a {CLUB_CONTACT_EMAIL}.
         </p>
         <button
           onClick={() => setStatus('idle')}
@@ -67,7 +82,7 @@ export default function ContactForm() {
       <input
         className={inputClass}
         type="tel"
-        placeholder="Teléfono (opcional)"
+        placeholder="Telefono o WhatsApp (opcional)"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
@@ -84,7 +99,7 @@ export default function ContactForm() {
         </p>
       )}
       <Button type="submit" className="w-full">
-        Enviar mensaje
+        Preparar email
       </Button>
     </Form>
   );

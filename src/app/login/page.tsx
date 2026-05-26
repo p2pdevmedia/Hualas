@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useTranslation } from '@/components/language-provider';
@@ -104,6 +105,14 @@ export default function LoginPage() {
               </p>
             )}
             {success && <p className="text-green-600 text-sm">{success}</p>}
+            <div className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <Button type="submit" className="w-full">
               {t.signIn}
             </Button>

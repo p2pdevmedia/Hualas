@@ -1,6 +1,21 @@
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { familyAdultLabel } from '@/lib/family-labels';
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const session = await getServerSession(authOptions);
+  const userGender = session?.user?.id
+    ? (
+        await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { gender: true },
+        })
+      )?.gender
+    : null;
+  const responsibleLabel = familyAdultLabel(userGender);
+
   const sections = [
     {
       title: '🏔️ Sobre el Club Hualas',
@@ -30,10 +45,10 @@ export default function FAQPage() {
           question: '¿Qué puede hacer un Miembro?',
           answer: `Los Miembros pueden:
 - Ver el catálogo completo de actividades disponibles
-- Registrarse en actividades (para ellos mismos o para sus hijos)
+- Registrarse en actividades para sí mismos o para sus hijos/as
 - Pagar actividades a través de Mercado Pago de forma segura
 - Acceder a su perfil personal y gestionar su información
-- Agregar y gestionar perfiles de sus hijos
+- Agregar y gestionar perfiles de sus hijos/as
 - Participar en el chat interno del club para comunicarse con otros miembros
 - Ver el historial de actividades en las que han participado
 - Consultar y pagar la cuota social mensual del club`,
@@ -73,17 +88,17 @@ export default function FAQPage() {
         {
           question: '¿Cómo me registro en la plataforma?',
           answer: `Para registrarte:
-1. Haz clic en el botón "Conocer el club" en la página principal
-2. Completa el formulario de registro con tu información personal
-3. Recibirás una confirmación de tu cuenta
-4. Podrás iniciar sesión y acceder a tu perfil
+1. Entrá en "Inscribirse" o en "Crear cuenta y asociarme"
+2. Completá el formulario de registro con tu email y contraseña
+3. Después de crear la cuenta, completá tu perfil obligatorio
+4. Desde "Familia" podés cargar hijos/as y otros responsables
 
 Solo necesitas un correo electrónico válido y una contraseña segura.`,
         },
         {
-          question: '¿Puedo tener múltiples miembros en mi familia?',
+          question: `¿Qué puedo hacer como ${responsibleLabel}?`,
           answer:
-            'Sí, los miembros pueden agregar hijos o dependientes a sus perfiles. Cada miembro de la familia tendrá su propio perfil vinculado al tuyo, lo que permite registrar a tus hijos en actividades específicas.',
+            `Como ${responsibleLabel}, podés cargar tus datos, sumar hijos/as al grupo familiar, agregar otro tutor/a responsable, inscribir participantes en actividades y consultar pagos o avisos del club.`,
         },
         {
           question: '¿Qué información debo proporcionar al registrarme?',
@@ -93,7 +108,7 @@ Solo necesitas un correo electrónico válido y una contraseña segura.`,
 - Contraseña segura
 - Número de teléfono (opcional pero recomendado)
 
-Posteriormente puedes agregar una foto de perfil y completar más información en tu panel.`,
+Después podés agregar una foto de perfil y completar más información en tu panel.`,
         },
       ],
     },
@@ -114,10 +129,11 @@ Cada actividad muestra: fecha, descripción, precio, cupos disponibles y nivel d
           answer: `Para registrarte en una actividad:
 1. Accede a la plataforma con tu cuenta
 2. Selecciona la actividad que te interesa
-3. Elige si quieres registrarte a ti mismo o a uno de tus hijos
-4. Haz clic en "Registrarse"
-5. Completa el pago a través de Mercado Pago
-6. Una vez confirmado el pago, tu inscripción está lista
+3. Elegí si la inscripción es para vos o para un hijo/a
+4. Elegí grupo o sesión si la actividad lo requiere
+5. Agregá la actividad al carrito
+6. Completá el pago por Mercado Pago o transferencia manual
+7. Una vez confirmado el pago, la inscripción queda lista
 
 ¡Es importante registrarte antes de la fecha de inicio de la actividad!`,
         },
@@ -202,9 +218,8 @@ Te recomendamos mantener tus pagos al día para disfrutar plenamente de los bene
           question: '¿Cómo puedo ver mis deudas pendientes?',
           answer: `Para ver tus deudas:
 1. Inicia sesión en tu cuenta
-2. Ve a "Mi Perfil" o "Panel"
-3. Busca la sección "Cuota Social" o "Mis Pagos"
-4. Verás un resumen de: deudas pendientes, montos, fechas de vencimiento`,
+2. Entrá en "Historial de pagos"
+3. Ahí vas a ver movimientos, pagos pendientes y comprobantes disponibles`,
         },
         {
           question: '¿Qué pasa cuando realizo un pago?',
@@ -213,42 +228,42 @@ Te recomendamos mantener tus pagos al día para disfrutar plenamente de los bene
 2. Recibes una confirmación inmediata
 3. El estado se actualiza en tu cuenta (pendiente → pagado)
 4. Tu inscripción en actividades se confirma
-5. Se genera un comprobante que puedes descargar
+5. Se genera un comprobante que podés consultar
 
 Los pagos se registran en tu historial de transacciones.`,
         },
       ],
     },
     {
-      title: '👨‍👩‍👧‍👦 Gestión de Perfil e Hijos',
+      title: '👨‍👩‍👧‍👦 Gestión de Perfil y Familia',
       faqs: [
         {
-          question: '¿Cómo agrego un hijo a mi perfil?',
-          answer: `Para agregar un hijo:
-1. Ve a "Mi Perfil"
-2. Busca la sección "Mis Hijos" o "Dependientes"
-3. Haz clic en "Agregar Hijo"
+          question: '¿Cómo agrego un hijo/a a mi perfil?',
+          answer: `Para agregar un hijo/a:
+1. Iniciá sesión
+2. Entrá en "Familia"
+3. Hacé clic en "Agregar hijo/a"
 4. Completa la información: nombre, edad, fecha de nacimiento
 5. Guarda los cambios
 
-Una vez agregado, podrás inscribir a tu hijo en actividades disponibles.`,
+Una vez agregado, podrás inscribirlo en actividades disponibles.`,
         },
         {
           question: '¿Puedo cambiar la información de mi perfil?',
-          answer: `Sí, puedes actualizar:
+          answer: `Sí, podés actualizar:
 - Tu nombre y datos personales
 - Tu foto de perfil
 - Tu teléfono y contacto
-- Información de tus hijos
+- Información de tus hijos/as
 - Contraseña
 
-Ve a "Mi Perfil" y haz clic en "Editar" para realizar cambios.`,
+Entrá en "Perfil" para realizar cambios.`,
         },
         {
           question: '¿Cómo subo una foto de perfil?',
           answer: `Para subir una foto:
-1. Ve a "Mi Perfil"
-2. Haz clic en tu foto actual o en "Subir Foto"
+1. Entrá en "Perfil"
+2. Usá la opción de foto de perfil
 3. Selecciona una imagen desde tu dispositivo
 4. Confirma y guarda
 
@@ -262,7 +277,7 @@ Se aceptan formatos JPG, PNG. La foto debe ser menor a 5MB.`,
         {
           question: '¿Cómo funciona el chat interno?',
           answer: `El chat interno permite comunicarte con otros miembros del club:
-1. Ve a la sección "Chat" en tu panel
+1. Entrá en la sección "Chat"
 2. Selecciona una conversación o inicia una nueva
 3. Escribe tu mensaje y envía
 4. Los mensajes se guardan en tu historial
@@ -272,7 +287,7 @@ Es una forma directa de contactar con otros miembros sin necesidad de email.`,
         {
           question: '¿Puedo hablar con un profesor?',
           answer:
-            'Sí, puedes iniciar una conversación privada con cualquier profesor o miembro del club a través del chat interno. También puedes usar la sección de contacto para comunicarte con la administración directamente.',
+            'Sí, podés iniciar una conversación privada con cualquier profesor o miembro del club a través del chat interno. También podés usar la sección de contacto para comunicarte con la administración directamente.',
         },
       ],
     },
@@ -283,7 +298,7 @@ Es una forma directa de contactar con otros miembros sin necesidad de email.`,
           question: '¿Dónde veo mi historial de pagos?',
           answer: `Para ver tu historial:
 1. Inicia sesión en tu cuenta
-2. Ve a "Contabilidad" o "Mis Pagos"
+2. Entrá en "Historial de pagos"
 3. Verás un listado de todas tus transacciones
 4. Puedes filtrar por fecha, tipo de pago, etc.
 5. Puedes descargar comprobantes`,
@@ -321,13 +336,13 @@ Tu privacidad es importante para nosotros.`,
         {
           question: '¿Qué hago si olvido mi contraseña?',
           answer: `Si olvidas tu contraseña:
-1. En la página de login, haz clic en "¿Olvidaste tu contraseña?"
+1. En la página de login, hacé clic en "¿Olvidaste tu contraseña?"
 2. Ingresa tu correo electrónico
-3. Recibirás un enlace para resetear tu contraseña
-4. Sigue las instrucciones en el email
-5. Crea una nueva contraseña segura
+3. El sistema registra la solicitud de recuperación
+4. Si necesitás ayuda, contactá al club por WhatsApp o email
+5. Con el enlace válido vas a poder crear una nueva contraseña segura
 
-Si no recibes el email, verifica tu carpeta de spam.`,
+Por seguridad, el club puede validar tu identidad antes de completar el cambio.`,
         },
         {
           question: '¿Puedo dar de baja mi cuenta?',

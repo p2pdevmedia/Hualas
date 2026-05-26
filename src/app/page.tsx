@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ClipboardList,
   CreditCard,
+  Home as HomeIcon,
   MapPin,
   Navigation,
   UserPlus,
@@ -82,22 +83,102 @@ const professorWorkspaceLinks = [
   },
 ];
 
-async function hasAssignedMemberActivities(userId: string) {
-  try {
-    const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
-    const activityCount = await prisma.activityParticipant.count({
-      where: {
-        status: 'ACTIVE',
-        OR: [
-          { userId },
-          { child: { userId: { in: accessibleChildOwnerIds } } },
-        ],
-      },
-    });
+async function getAssignedMemberActivityCount(userId: string) {
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(userId);
+  return prisma.activityParticipant.count({
+    where: {
+      status: 'ACTIVE',
+      OR: [{ userId }, { child: { userId: { in: accessibleChildOwnerIds } } }],
+    },
+  });
+}
 
-    return activityCount > 0;
+async function getMemberHomeSummary(userId: string) {
+  try {
+    const [activityCount, childOwnerIds, familyGroups, user] =
+      await Promise.all([
+        getAssignedMemberActivityCount(userId),
+        getAccessibleChildOwnerIds(userId),
+        prisma.familyGroup.findMany({
+          where: {
+            OR: [
+              { responsibleUserId: userId },
+              { members: { some: { memberId: userId } } },
+            ],
+          },
+          select: {
+            responsibleUser: {
+              select: {
+                id: true,
+                name: true,
+                lastName: true,
+                socialFeeActive: true,
+              },
+            },
+            members: {
+              select: {
+                member: {
+                  select: {
+                    id: true,
+                    name: true,
+                    lastName: true,
+                    socialFeeActive: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            socialFeeActive: true,
+          },
+        }),
+      ]);
+
+    const childrenCount = await prisma.child.count({
+      where: { userId: { in: childOwnerIds } },
+    });
+    const adultById = new Map<
+      string,
+      { name: string | null; lastName: string | null; socialFeeActive: boolean }
+    >();
+
+    if (user) {
+      adultById.set(user.id, user);
+    }
+
+    for (const group of familyGroups) {
+      if (group.responsibleUser) {
+        adultById.set(group.responsibleUser.id, group.responsibleUser);
+      }
+      for (const { member } of group.members) {
+        adultById.set(member.id, member);
+      }
+    }
+
+    const adults = [...adultById.values()];
+    const unpaidAdultCount = adults.filter(
+      (adult) => !adult.socialFeeActive
+    ).length;
+
+    return {
+      activityCount,
+      childrenCount,
+      adultCount: adults.length,
+      unpaidAdultCount,
+    };
   } catch {
-    return false;
+    return {
+      activityCount: 0,
+      childrenCount: 0,
+      adultCount: 0,
+      unpaidAdultCount: 0,
+    };
   }
 }
 
@@ -178,10 +259,13 @@ export default async function Home() {
   const activeRole = session?.user.activeRole ?? session?.user.role;
   const isMemberSession = activeRole === 'MEMBER';
   const isProfessorSession = activeRole === 'PROFESSOR';
-  const showMemberSpace =
+  const memberHomeSummary =
     isMemberSession && session?.user.id
-      ? await hasAssignedMemberActivities(session.user.id)
-      : false;
+      ? await getMemberHomeSummary(session.user.id)
+      : null;
+  const showMemberSpace = (memberHomeSummary?.activityCount ?? 0) > 0;
+  const hasPendingSocialFee =
+    (memberHomeSummary?.unpaidAdultCount ?? 0) > 0;
 
   return (
     <>
@@ -226,6 +310,98 @@ export default async function Home() {
                 );
               })}
             </div>
+          </div>
+        </section>
+      ) : isMemberSession ? (
+        <section className="px-4 py-12">
+          <div className="mx-auto max-w-5xl space-y-8">
+            <div className="max-w-3xl space-y-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Club Hualas
+              </p>
+              <h1 className="font-heading text-4xl font-semibold leading-tight sm:text-5xl">
+                Tu espacio familiar
+              </h1>
+              <p className="text-lg leading-8 text-muted-foreground">
+                Accedé rápido a tus actividades, la cuota social y los datos de
+                tu familia.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <Link
+                href="/my-activities"
+                className="group rounded-lg border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+              >
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <ClipboardList className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h2 className="mt-4 text-xl font-semibold">Mis actividades</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {memberHomeSummary?.activityCount
+                    ? `${memberHomeSummary.activityCount} inscripción activa en tu grupo familiar.`
+                    : 'Consultá tus actividades y sumá nuevas propuestas desde la agenda.'}
+                </p>
+              </Link>
+
+              <Link
+                href="/activities/cart"
+                className={`group rounded-lg border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${
+                  hasPendingSocialFee ? 'border-amber-300 bg-amber-50/70' : ''
+                }`}
+              >
+                <span
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition group-hover:bg-primary group-hover:text-primary-foreground ${
+                    hasPendingSocialFee
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-primary/10 text-primary'
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h2 className="mt-4 text-xl font-semibold">
+                  {hasPendingSocialFee ? 'Asociate al club' : 'Cuota social'}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {hasPendingSocialFee
+                    ? `${memberHomeSummary?.unpaidAdultCount ?? 1} integrante pendiente de cuota social.`
+                    : 'Tu grupo familiar no muestra adultos pendientes de cuota social.'}
+                </p>
+              </Link>
+
+              <Link
+                href="/profile/children"
+                className="group rounded-lg border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+              >
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <HomeIcon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h2 className="mt-4 text-xl font-semibold">Mi familia</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {memberHomeSummary
+                    ? `${memberHomeSummary.childrenCount} hijo/a y ${memberHomeSummary.adultCount} adulto/a responsable.`
+                    : 'Cargá y revisá los datos del grupo familiar.'}
+                </p>
+              </Link>
+            </div>
+
+            {hasPendingSocialFee && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p>
+                    Hay integrantes con cuota social pendiente. Podés
+                    regularizarla desde el carrito de actividades.
+                  </p>
+                  <Link
+                    href="/activities/cart"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
+                  >
+                    Pagar cuota social
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       ) : (
