@@ -43,13 +43,7 @@ export async function POST(
   }
 
   const data = activityGroupCreateSchema.parse(await req.json());
-  const professorIds = Array.from(
-    new Set(
-      data.professorIds.length > 0
-        ? data.professorIds
-        : activity.professors.map((professor) => professor.userId)
-    )
-  );
+  const professorIds = Array.from(new Set(data.professorIds));
   if (professorIds.length === 0) {
     return NextResponse.json(
       { error: 'Selecciona al menos un profesor para el grupo' },

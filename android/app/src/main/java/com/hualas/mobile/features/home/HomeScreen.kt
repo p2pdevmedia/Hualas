@@ -85,6 +85,7 @@ fun HomeScreen(
     chatContent: (@Composable () -> Unit)? = null,
     attendanceContent: (@Composable () -> Unit)? = null,
     groupsContent: (@Composable () -> Unit)? = null,
+    newsContent: (@Composable () -> Unit)? = null,
     notificationsContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -94,10 +95,10 @@ fun HomeScreen(
         role = session.activeRole,
         unreadNotificationsCount = home?.stats?.unreadNotificationsCount ?: 0
     )
-    var selectedDestinationId by remember(session.activeRole) { mutableStateOf("home") }
+    var selectedDestinationId by remember(session.activeRole) { mutableStateOf(destinations.first().id) }
 
     LaunchedEffect(session.activeRole) {
-        selectedDestinationId = "home"
+        selectedDestinationId = destinations.first().id
     }
 
     LaunchedEffect(activitiesState.checkoutUrl) {
@@ -141,11 +142,13 @@ fun HomeScreen(
                     onSelectActivityDay = onSelectActivityDay,
                     onLoadActivityDayDetail = onLoadActivityDayDetail,
                     onOpenPurchaseDetail = onOpenPurchaseDetail,
+                    onDestinationSelected = { selectedDestinationId = it },
                     familyContent = familyContent,
                     paymentsContent = paymentsContent,
                     chatContent = chatContent,
                     attendanceContent = attendanceContent,
                     groupsContent = groupsContent,
+                    newsContent = newsContent,
                     notificationsContent = notificationsContent
                 )
             }
@@ -168,11 +171,13 @@ private fun HomeContent(
     onSelectActivityDay: (String) -> Unit,
     onLoadActivityDayDetail: (String) -> Unit,
     onOpenPurchaseDetail: (AvailableActivity) -> Unit,
+    onDestinationSelected: (String) -> Unit,
     familyContent: (@Composable () -> Unit)?,
     paymentsContent: (@Composable () -> Unit)?,
     chatContent: (@Composable () -> Unit)?,
     attendanceContent: (@Composable () -> Unit)?,
     groupsContent: (@Composable () -> Unit)?,
+    newsContent: (@Composable () -> Unit)?,
     notificationsContent: (@Composable () -> Unit)?
 ) {
     LazyColumn(
@@ -188,8 +193,8 @@ private fun HomeContent(
                 onRefresh = onRefresh,
                 destinations = destinations,
                 selectedDestinationId = selectedDestinationId,
-                onSelectDestination = { selectedDestinationId = it },
-                onOpenNotifications = { selectedDestinationId = "more" },
+                onSelectDestination = onDestinationSelected,
+                onOpenNotifications = { onDestinationSelected("more") },
                 onSwitchRole = onSwitchRole
             )
         }
@@ -290,6 +295,19 @@ private fun HomeContent(
             }
             "chat" -> {
                 item { chatContent?.invoke() ?: PlainEmptyCard("Sin datos para mostrar por ahora.") }
+            }
+            "profile" -> {
+                item {
+                    ProfileSummaryCard(
+                        profile = home.profile,
+                        session = session,
+                        onLogout = onLogout,
+                        onSwitchRole = onSwitchRole
+                    )
+                }
+                notificationsContent?.let { content ->
+                    item { content() }
+                }
             }
             "more" -> {
                 item { SectionTitle("Más") }
@@ -664,10 +682,9 @@ private fun PrimaryBottomNavigation(
                             }
                         }
                     ) {
-                        Text(
-                            text = destination.iconText,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold
+                        Icon(
+                            imageVector = destination.icon,
+                            contentDescription = destination.label
                         )
                     }
                 },
@@ -879,6 +896,40 @@ private fun MoreCard(
 }
 
 @Composable
+private fun ProfileSummaryCard(
+    profile: HomeProfile,
+    session: MobileSession,
+    onLogout: () -> Unit,
+    onSwitchRole: (MobileRole) -> Unit
+) {
+    HomeListCard {
+        Text("Perfil", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(profile.name, style = MaterialTheme.typography.titleSmall)
+        Text(
+            profile.email,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (session.allowedRoles.size > 1) {
+            HorizontalDivider()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                session.allowedRoles.sortedBy { it.name }.forEach { role ->
+                    OutlinedButton(
+                        onClick = { onSwitchRole(role) },
+                        enabled = role != session.activeRole
+                    ) {
+                        Text(if (role == MobileRole.PROFESSOR) "Profesor" else "Miembro")
+                    }
+                }
+            }
+        }
+        Button(onClick = onLogout) {
+            Text("Cerrar sesion")
+        }
+    }
+}
+
+@Composable
 private fun AttentionCard(title: String, value: String, body: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -970,6 +1021,20 @@ private fun String.toSectionLabel(): String {
         "payments" -> "Pagos"
         "chat" -> "Chat"
         else -> "Inicio"
+    }
+}
+
+private fun activityPriceLabel(price: Double): String = "$${price.toInt()}"
+
+private fun activityFrequencyLabel(frequency: String?): String {
+    return frequency?.takeIf { it.isNotBlank() } ?: "Sin frecuencia"
+}
+
+private fun activityGroupCountLabel(groupCount: Int): String? {
+    return when (groupCount) {
+        0 -> null
+        1 -> "1 grupo"
+        else -> "$groupCount grupos"
     }
 }
 

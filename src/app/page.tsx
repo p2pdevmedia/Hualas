@@ -196,34 +196,40 @@ export default async function Home() {
   > = [];
   let news: HomeNewsItem[] = [];
   const session = await getServerSession(authOptions);
+  const isLoggedIn = Boolean(session?.user);
+  const activeRole = session?.user.activeRole ?? session?.user.role;
+  const isMemberSession = activeRole === 'MEMBER';
+  const isProfessorSession = activeRole === 'PROFESSOR';
 
-  try {
-    activities = await listActivitiesWithParticipantCount();
-  } catch {
-    activities = [];
-  }
+  if (!isProfessorSession) {
+    try {
+      activities = await listActivitiesWithParticipantCount();
+    } catch {
+      activities = [];
+    }
 
-  try {
-    const latestNews = await prisma.news.findMany({
-      where: { scope: 'CLUB' },
-      select: {
-        id: true,
-        title: true,
-        body: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-    });
+    try {
+      const latestNews = await prisma.news.findMany({
+        where: { scope: 'CLUB' },
+        select: {
+          id: true,
+          title: true,
+          body: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+      });
 
-    news = latestNews.map((item) => ({
-      id: item.id,
-      title: item.title,
-      body: summarizeText(item.body),
-      createdAtLabel: formatNewsDate(item.createdAt),
-    }));
-  } catch {
-    news = [];
+      news = latestNews.map((item) => ({
+        id: item.id,
+        title: item.title,
+        body: summarizeText(item.body),
+        createdAtLabel: formatNewsDate(item.createdAt),
+      }));
+    } catch {
+      news = [];
+    }
   }
 
   const now = new Date();
@@ -255,17 +261,12 @@ export default async function Home() {
       imageUrl: activity.image ? `/api/activities/${activity.id}/image` : null,
     })
   );
-  const isLoggedIn = Boolean(session?.user);
-  const activeRole = session?.user.activeRole ?? session?.user.role;
-  const isMemberSession = activeRole === 'MEMBER';
-  const isProfessorSession = activeRole === 'PROFESSOR';
   const memberHomeSummary =
     isMemberSession && session?.user.id
       ? await getMemberHomeSummary(session.user.id)
       : null;
   const showMemberSpace = (memberHomeSummary?.activityCount ?? 0) > 0;
-  const hasPendingSocialFee =
-    (memberHomeSummary?.unpaidAdultCount ?? 0) > 0;
+  const hasPendingSocialFee = (memberHomeSummary?.unpaidAdultCount ?? 0) > 0;
 
   return (
     <>
@@ -427,9 +428,7 @@ export default async function Home() {
               <p className="text-sm font-semibold uppercase tracking-wide text-primary">
                 {showMemberSpace ? 'Tu espacio' : 'Sumate'}
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Asociate al club
-              </h2>
+              <h2 className="mt-2 text-2xl font-semibold">Asociate al club</h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Podés pagar solo la cuota social mensual para asociarte, sin
                 inscribirte ahora en una actividad. Cuando quieras sumarte a una
@@ -478,68 +477,69 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Próximas actividades y noticias */}
-      <section id="actividades" className="px-4 pb-14">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                Agenda del club
-              </p>
-              <h2 className="font-heading text-3xl font-semibold">
-                Próximas actividades
-              </h2>
-            </div>
-            <Link
-              href="/news"
-              className="text-sm font-semibold text-primary transition hover:text-primary/80"
-            >
-              Ver todas las noticias
-            </Link>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-[3fr_1fr]">
-            <HomeActivitiesSlider activities={activitySlides} />
-
-            <aside
-              className="rounded-lg border bg-card p-5 shadow-sm"
-              aria-label="Noticias del club"
-            >
-              <div className="mb-4">
+      {!isProfessorSession && (
+        <section id="actividades" className="px-4 pb-14">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                  Noticias
+                  Agenda del club
                 </p>
-                <h3 className="text-xl font-semibold">Del club</h3>
+                <h2 className="font-heading text-3xl font-semibold">
+                  Próximas actividades
+                </h2>
               </div>
+              <Link
+                href="/news"
+                className="text-sm font-semibold text-primary transition hover:text-primary/80"
+              >
+                Ver todas las noticias
+              </Link>
+            </div>
 
-              {news.length === 0 ? (
-                <div className="rounded-md bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
-                  Todavía no hay noticias publicadas para mostrar.
+            <div className="grid gap-6 lg:grid-cols-[3fr_1fr]">
+              <HomeActivitiesSlider activities={activitySlides} />
+
+              <aside
+                className="rounded-lg border bg-card p-5 shadow-sm"
+                aria-label="Noticias del club"
+              >
+                <div className="mb-4">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                    Noticias
+                  </p>
+                  <h3 className="text-xl font-semibold">Del club</h3>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {news.map((item) => (
-                    <article
-                      key={item.id}
-                      className="border-b pb-4 last:border-0 last:pb-0"
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {item.createdAtLabel}
-                      </p>
-                      <h4 className="mt-1 text-base font-semibold leading-snug">
-                        {item.title}
-                      </h4>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {item.body}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </aside>
+
+                {news.length === 0 ? (
+                  <div className="rounded-md bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
+                    Todavía no hay noticias publicadas para mostrar.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {news.map((item) => (
+                      <article
+                        key={item.id}
+                        className="border-b pb-4 last:border-0 last:pb-0"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {item.createdAtLabel}
+                        </p>
+                        <h4 className="mt-1 text-base font-semibold leading-snug">
+                          {item.title}
+                        </h4>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {item.body}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </aside>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Documental */}
       <section className="border-t bg-gradient-to-br from-primary/10 via-background to-muted/40 px-4 py-14">
@@ -596,48 +596,50 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Dónde estamos */}
-      <section className="border-t bg-muted/25 px-4 py-14">
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch">
-          <div className="flex flex-col justify-center">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Dónde estamos
-            </p>
-            <h2 className="mt-2 font-heading text-3xl font-semibold">
-              En San Martín de los Andes
-            </h2>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">
-              Hualas nace y se mueve entre la ciudad, los cerros y los espacios
-              de encuentro de la comunidad. Nuestra actividad tiene base en San
-              Martín de los Andes, Neuquén, en plena Patagonia argentina.
-            </p>
-
-            <div className="mt-6 space-y-3 text-sm">
-              <p className="inline-flex items-center gap-2 font-medium text-foreground">
-                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
-                San Martín de los Andes, Neuquén, Argentina
+      {!isProfessorSession && (
+        <section className="border-t bg-muted/25 px-4 py-14">
+          <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch">
+            <div className="flex flex-col justify-center">
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Dónde estamos
               </p>
-              <Link
-                href="/contact"
-                className="inline-flex w-fit items-center gap-2 rounded-md border bg-card px-4 py-2.5 font-semibold text-foreground transition hover:border-primary hover:text-primary"
-              >
-                Ver contacto
-                <Navigation className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <h2 className="mt-2 font-heading text-3xl font-semibold">
+                En San Martín de los Andes
+              </h2>
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
+                Hualas nace y se mueve entre la ciudad, los cerros y los
+                espacios de encuentro de la comunidad. Nuestra actividad tiene
+                base en San Martín de los Andes, Neuquén, en plena Patagonia
+                argentina.
+              </p>
+
+              <div className="mt-6 space-y-3 text-sm">
+                <p className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
+                  San Martín de los Andes, Neuquén, Argentina
+                </p>
+                <Link
+                  href="/contact"
+                  className="inline-flex w-fit items-center gap-2 rounded-md border bg-card px-4 py-2.5 font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                >
+                  Ver contacto
+                  <Navigation className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+              <iframe
+                title="San Martín de los Andes"
+                src={mapEmbedUrl}
+                className="h-[340px] w-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
           </div>
-
-          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-            <iframe
-              title="San Martín de los Andes"
-              src={mapEmbedUrl}
-              className="h-[340px] w-full"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
