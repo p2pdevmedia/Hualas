@@ -247,30 +247,54 @@ export default function ActivitiesCartPage() {
                   </div>
                 ))}
                 {quote.mercadoPagoFeeLines.map((line, index) => (
-                  <div
-                    key={`empty-mp-fee-${index}`}
-                    className="flex items-center justify-between gap-4 text-orange-700"
-                  >
-                    <span>{line.label}</span>
-                    <span className="font-medium">
-                      +{formatAmount(line.amount)}
-                    </span>
-                  </div>
+                  paymentMethod === 'MERCADO_PAGO' ? (
+                    <div
+                      key={`empty-mp-fee-${index}`}
+                      className="flex items-center justify-between gap-4 text-orange-700"
+                    >
+                      <span>{line.label}</span>
+                      <span className="font-medium">
+                        +{formatAmount(line.amount)}
+                      </span>
+                    </div>
+                  ) : null
                 ))}
+                <div className="border-t pt-4">
+                  <PaymentMethodSelector
+                    value={paymentMethod}
+                    onChange={setPaymentMethod}
+                    disabled={quoteLoading || !quote}
+                  />
+                </div>
                 <div className="border-t pt-2 flex items-center justify-between gap-4 text-base">
                   <span className="font-semibold">Total</span>
                   <span className="font-semibold">
-                    {formatAmount(quote.totalAmountWithMercadoPagoFee)}
+                    {formatAmount(
+                      paymentMethod === 'MERCADO_PAGO'
+                        ? quote.totalAmountWithMercadoPagoFee
+                        : quote.totalAmount
+                    )}
                   </span>
                 </div>
               </div>
-              <Button
-                className="mt-4 w-full"
-                onClick={handleCheckout}
-                disabled={!canCheckout}
-              >
-                {submitting ? 'Procesando...' : 'Pagar solo cuota social'}
-              </Button>
+              {paymentMethod === 'MERCADO_PAGO' ? (
+                <Button
+                  className="mt-4 w-full"
+                  onClick={handleCheckout}
+                  disabled={!canCheckout}
+                >
+                  {submitting ? 'Procesando...' : 'Pagar solo cuota social'}
+                </Button>
+              ) : (
+                <ManualPaymentForm
+                  endpoint="/api/activities/cart/checkout"
+                  items={[]}
+                  totalAmount={quote.totalAmount}
+                  activitySummary="Vas a subir un comprobante para pagar solo la cuota social."
+                  socialFeeOnly
+                  embedded
+                />
+              )}
             </section>
           ) : (
             <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">

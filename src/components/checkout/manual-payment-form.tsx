@@ -25,6 +25,8 @@ type ManualPaymentFormProps = {
   totalAmount: number;
   activitySummary?: string;
   childId?: string | null;
+  socialFeeOnly?: boolean;
+  embedded?: boolean;
 };
 
 const MANUAL_PAYMENT_BANK_COPY_TEXT = [
@@ -45,6 +47,8 @@ export default function ManualPaymentForm({
   totalAmount,
   activitySummary,
   childId,
+  socialFeeOnly = false,
+  embedded = false,
 }: ManualPaymentFormProps) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -125,6 +129,9 @@ export default function ManualPaymentForm({
       formData.append('paymentMethod', 'MANUAL_TRANSFER');
       formData.append('items', JSON.stringify(items));
       formData.append('proof', file);
+      if (socialFeeOnly) {
+        formData.append('socialFeeOnly', 'true');
+      }
       if (childId) {
         formData.append('childId', childId);
       }
@@ -147,7 +154,9 @@ export default function ManualPaymentForm({
       }
 
       setSuccess(
-        'Pago enviado. Tu inscripción quedó registrada y el comprobante quedó pendiente de revisión.'
+        socialFeeOnly
+          ? 'Pago enviado. Tu comprobante de cuota social quedó pendiente de revisión.'
+          : 'Pago enviado. Tu inscripción quedó registrada y el comprobante quedó pendiente de revisión.'
       );
       setFile(null);
       setNote('');
@@ -169,12 +178,18 @@ export default function ManualPaymentForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border bg-card p-5 shadow-sm"
+      className={
+        embedded
+          ? 'space-y-5 border-t pt-5'
+          : 'space-y-5 rounded-2xl border bg-card p-5 shadow-sm'
+      }
     >
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">Transferencia manual</h3>
         <p className="text-sm text-muted-foreground">
-          Subí el comprobante y dejamos la inscripción registrada al instante.
+          {socialFeeOnly
+            ? 'Subí el comprobante y dejamos el pago de cuota social pendiente de revisión.'
+            : 'Subí el comprobante y dejamos la inscripción registrada al instante.'}
         </p>
       </div>
 
@@ -267,8 +282,9 @@ export default function ManualPaymentForm({
           <span className="font-medium">Monto total</span>
           <Input value={formatAmount(totalAmount)} readOnly />
           <p className="text-xs text-muted-foreground">
-            Se registra el total del checkout con la cuota social incluida, si
-            corresponde.
+            {socialFeeOnly
+              ? 'Se registra el total pendiente de cuota social.'
+              : 'Se registra el total del checkout con la cuota social incluida, si corresponde.'}
           </p>
         </label>
       </div>
