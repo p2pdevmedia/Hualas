@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Newspaper, Smartphone, X } from 'lucide-react';
+import { ChevronDown, Menu, Newspaper, Smartphone, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -69,6 +69,7 @@ export default function Navbar() {
   const actions = translations.actions;
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userLinksOpen, setUserLinksOpen] = useState(false);
   const { chatUnreadCount } = useNotifications();
   const hasUnreadMessages = chatUnreadCount > 0;
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -234,7 +235,12 @@ export default function Navbar() {
           {session && <NotificationBell />}
           <button
             className="rounded-md p-1.5 opacity-80 hover:opacity-100 hover:text-primary transition-all duration-200"
-            onClick={() => setMenuOpen((prev) => !prev)}
+            onClick={() => {
+              setMenuOpen((prev) => {
+                if (prev) setUserLinksOpen(false);
+                return !prev;
+              });
+            }}
             aria-label="Toggle menu"
           >
             {menuOpen ? (
@@ -247,12 +253,6 @@ export default function Navbar() {
 
         <div className="hidden md:flex md:items-center md:gap-6">
           {renderAndroidLink()}
-          <Link href="/faq" className={navLinkClass('/faq')}>
-            Ayuda
-          </Link>
-          <Link href="/contact" className={navLinkClass('/contact')}>
-            {t.contact}
-          </Link>
           {session && !isCounter && (
             <Link
               href={activitiesHref}
@@ -393,6 +393,18 @@ export default function Navbar() {
                   >
                     {t.profile}
                   </Link>
+                  <Link
+                    href="/faq"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                  >
+                    Ayuda
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                  >
+                    {t.contact}
+                  </Link>
                   {canSeeChildrenSection && (
                     <Link
                       href="/profile/children"
@@ -464,13 +476,14 @@ export default function Navbar() {
         <div className="mt-3 border-t border-white/20 pt-3 flex flex-col gap-3 md:hidden">
           {session ? (
             <>
-              <Link
-                href="/profile"
+              <button
+                type="button"
                 className={cn(
                   navLinkClass('/profile'),
-                  'flex items-center gap-3 py-2'
+                  'flex items-center gap-3 py-2 text-left'
                 )}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => setUserLinksOpen((prev) => !prev)}
+                aria-expanded={userLinksOpen}
               >
                 <div
                   className={cn(
@@ -505,22 +518,49 @@ export default function Navbar() {
                 <span className="text-sm font-medium">
                   {session.user.name || 'Usuario'}
                 </span>
-              </Link>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform duration-200',
+                    userLinksOpen && 'rotate-180'
+                  )}
+                  aria-hidden="true"
+                />
+              </button>
+              {userLinksOpen && (
+                <div className="ml-12 flex flex-col gap-3">
+                  <Link
+                    href="/profile"
+                    className={navLinkClass('/profile')}
+                    onClick={() => {
+                      setUserLinksOpen(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {t.profile}
+                  </Link>
+                  <Link
+                    href="/faq"
+                    className={navLinkClass('/faq')}
+                    onClick={() => {
+                      setUserLinksOpen(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Ayuda
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className={navLinkClass('/contact')}
+                    onClick={() => {
+                      setUserLinksOpen(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {t.contact}
+                  </Link>
+                </div>
+              )}
               {renderAndroidLink(() => setMenuOpen(false))}
-              <Link
-                href="/faq"
-                className={navLinkClass('/faq')}
-                onClick={() => setMenuOpen(false)}
-              >
-                Ayuda
-              </Link>
-              <Link
-                href="/contact"
-                className={navLinkClass('/contact')}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t.contact}
-              </Link>
               {session && !isCounter && (
                 <Link
                   href={activitiesHref}
