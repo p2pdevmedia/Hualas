@@ -59,6 +59,9 @@ export default async function MyPaymentsPage() {
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,
+    status: invoice.status,
+    approvedAt: invoice.approvedAt?.toISOString() ?? null,
+    transferredAt: invoice.transferredAt?.toISOString() ?? null,
     createdAt: invoice.createdAt.toISOString(),
     fileUrl: buildProfessorInvoiceFileUrl(invoice.id),
   }));

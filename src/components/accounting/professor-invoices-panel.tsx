@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 type ProfessorInvoice = {
@@ -8,6 +8,9 @@ type ProfessorInvoice = {
   originalName: string;
   contentType: string;
   size: number;
+  status: string;
+  approvedAt: string | null;
+  transferredAt: string | null;
   createdAt: string;
   fileUrl: string;
 };
@@ -28,6 +31,32 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; className: string }> = {
+    PENDING: {
+      label: 'Pendiente',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    },
+    APPROVED: {
+      label: 'Aprobada',
+      className: 'bg-sky-100 text-sky-700 border-sky-200',
+    },
+    TRANSFERRED: {
+      label: 'Transferida',
+      className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    },
+  };
+  const config = map[status] ?? map.PENDING;
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+    >
+      {config.label}
+    </span>
+  );
+}
+
 export default function ProfessorInvoicesPanel({
   professorId,
   initialInvoices,
@@ -43,6 +72,10 @@ export default function ProfessorInvoicesPanel({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deletingId, setDeletingId] = useState('');
+
+  useEffect(() => {
+    setInvoices(initialInvoices);
+  }, [initialInvoices]);
 
   const uploadFile = async (file: File) => {
     setError('');
@@ -156,6 +189,7 @@ export default function ProfessorInvoicesPanel({
               <tr>
                 <th className="px-4 py-3 text-left">Archivo</th>
                 <th className="px-4 py-3 text-left">Tipo</th>
+                <th className="px-4 py-3 text-left">Estado</th>
                 <th className="px-4 py-3 text-left">Tamaño</th>
                 <th className="px-4 py-3 text-left">Cargada</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
@@ -174,6 +208,9 @@ export default function ProfessorInvoicesPanel({
                     {invoice.contentType === 'application/pdf'
                       ? 'PDF'
                       : 'Imagen'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <InvoiceStatusBadge status={invoice.status} />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                     {formatFileSize(invoice.size)}
@@ -196,7 +233,7 @@ export default function ProfessorInvoicesPanel({
                           Ver
                         </a>
                       </Button>
-                      {canDelete && (
+                      {canDelete && invoice.status === 'PENDING' && (
                         <Button
                           type="button"
                           variant="outline"

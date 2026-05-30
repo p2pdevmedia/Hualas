@@ -31,6 +31,9 @@ function serializeInvoice(invoice: {
   originalName: string;
   contentType: string;
   size: number;
+  status: string;
+  approvedAt: Date | null;
+  transferredAt: Date | null;
   createdAt: Date;
 }) {
   return {
@@ -38,6 +41,9 @@ function serializeInvoice(invoice: {
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,
+    status: invoice.status,
+    approvedAt: invoice.approvedAt?.toISOString() ?? null,
+    transferredAt: invoice.transferredAt?.toISOString() ?? null,
     createdAt: invoice.createdAt.toISOString(),
     fileUrl: buildProfessorInvoiceFileUrl(invoice.id),
   };

@@ -33,6 +33,14 @@ export default async function ProfessorAccountingDetailPage({
             orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
             include: {
               createdBy: { select: { id: true, name: true, lastName: true } },
+              invoice: {
+                select: {
+                  id: true,
+                  status: true,
+                  approvedAt: true,
+                  transferredAt: true,
+                },
+              },
             },
           },
         },
@@ -65,6 +73,14 @@ export default async function ProfessorAccountingDetailPage({
     paidAt: p.paidAt?.toISOString() ?? null,
     notes: p.notes,
     createdBy: p.createdBy,
+    invoice: p.invoice
+      ? {
+          id: p.invoice.id,
+          status: p.invoice.status,
+          approvedAt: p.invoice.approvedAt?.toISOString() ?? null,
+          transferredAt: p.invoice.transferredAt?.toISOString() ?? null,
+        }
+      : null,
   }));
 
   const invoices = professor.professorInvoices.map((invoice) => ({
@@ -72,6 +88,9 @@ export default async function ProfessorAccountingDetailPage({
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,
+    status: invoice.status,
+    approvedAt: invoice.approvedAt?.toISOString() ?? null,
+    transferredAt: invoice.transferredAt?.toISOString() ?? null,
     createdAt: invoice.createdAt.toISOString(),
     fileUrl: buildProfessorInvoiceFileUrl(invoice.id),
   }));
@@ -98,6 +117,7 @@ export default async function ProfessorAccountingDetailPage({
         professorId={professor.id}
         profile={profile}
         payments={payments}
+        invoices={invoices}
       />
 
       <ProfessorInvoicesPanel

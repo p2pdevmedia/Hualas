@@ -307,7 +307,7 @@ function PaymentHistory({ payments }: { payments: Payment[] }) {
                 <th className="px-4 py-3 text-left">Período</th>
                 <th className="px-4 py-3 text-right">Monto</th>
                 <th className="px-4 py-3 text-left">Estado</th>
-                <th className="px-4 py-3 text-left">Fecha pago</th>
+                <th className="px-4 py-3 text-left">Fecha transferencia</th>
                 <th className="px-4 py-3 text-left">Notas</th>
               </tr>
             </thead>
@@ -347,11 +347,11 @@ function PaymentHistory({ payments }: { payments: Payment[] }) {
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
     PENDING: {
-      label: 'Pendiente',
-      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      label: 'Aprobada',
+      className: 'bg-sky-100 text-sky-700 border-sky-200',
     },
     PAID: {
-      label: 'Pagado',
+      label: 'Transferido',
       className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     },
     CANCELLED: {

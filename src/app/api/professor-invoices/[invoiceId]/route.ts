@@ -19,7 +19,7 @@ export async function DELETE(
 
   const invoice = await prisma.professorInvoice.findUnique({
     where: { id: params.invoiceId },
-    select: { id: true, professorId: true, blobUrl: true },
+    select: { id: true, professorId: true, blobUrl: true, status: true },
   });
 
   if (!invoice) return new NextResponse(null, { status: 404 });
@@ -29,6 +29,13 @@ export async function DELETE(
   const isAccounting = isAccountingRole(role);
   if (!isProfessorSelf && !isAccounting) {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
+  }
+
+  if (invoice.status !== 'PENDING') {
+    return NextResponse.json(
+      { error: 'No se puede eliminar una factura aprobada o transferida' },
+      { status: 409 }
+    );
   }
 
   await prisma.professorInvoice.delete({ where: { id: invoice.id } });

@@ -30,6 +30,19 @@ type Payment = {
   paidAt: string | null;
   notes: string | null;
   createdBy: { id: string; name: string | null; lastName: string | null };
+  invoice?: {
+    id: string;
+    status: string;
+    approvedAt: string | null;
+    transferredAt: string | null;
+  } | null;
+};
+
+type Invoice = {
+  id: string;
+  originalName: string;
+  status: string;
+  createdAt: string;
 };
 
 type Props = {
@@ -43,12 +56,14 @@ type Props = {
     notes: string | null;
   } | null;
   payments: Payment[];
+  invoices: Invoice[];
 };
 
 export default function ProfessorProfileForm({
   professorId,
   profile,
   payments: initialPayments,
+  invoices: initialInvoices,
 }: Props) {
   const router = useRouter();
 
@@ -102,6 +117,14 @@ export default function ProfessorProfileForm({
   // New payment
   const now = new Date();
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const pendingInvoices = useMemo(
+    () => invoices.filter((invoice) => invoice.status === 'PENDING'),
+    [invoices]
+  );
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(
+    pendingInvoices[0]?.id ?? ''
+  );
   const [newMonth, setNewMonth] = useState(String(now.getMonth() + 1));
   const [newYear, setNewYear] = useState(String(now.getFullYear()));
   const [newAmount, setNewAmount] = useState(
@@ -120,12 +143,17 @@ export default function ProfessorProfileForm({
   const createPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setPaymentError('');
+    if (!selectedInvoiceId) {
+      setPaymentError('SeleccionÃ¡ una factura pendiente para aprobar.');
+      return;
+    }
     setPaymentSaving(true);
     try {
       const res = await fetch(`/api/professors/${professorId}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          invoiceId: selectedInvoiceId,
           periodMonth: Number(newMonth),
           periodYear: Number(newYear),
           amount: newAmountCents,
@@ -135,7 +163,16 @@ export default function ProfessorProfileForm({
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? 'No se pudo crear el pago');
       setPayments((prev) => [body.payment as Payment, ...prev]);
+      setInvoices((prev) =>
+        prev.map((invoice) =>
+          invoice.id === selectedInvoiceId
+            ? { ...invoice, status: 'APPROVED' }
+            : invoice
+        )
+      );
+      setSelectedInvoiceId('');
       setNewNotes('');
+      router.refresh();
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : 'Error al crear');
     } finally {
@@ -161,6 +198,16 @@ export default function ProfessorProfileForm({
           : p
       )
     );
+    if (body.payment.invoice?.id) {
+      setInvoices((prev) =>
+        prev.map((invoice) =>
+          invoice.id === body.payment.invoice.id
+            ? { ...invoice, status: body.payment.invoice.status }
+            : invoice
+        )
+      );
+    }
+    router.refresh();
   };
 
   const deletePayment = async (paymentId: string) => {
@@ -168,7 +215,18 @@ export default function ProfessorProfileForm({
       method: 'DELETE',
     });
     if (!res.ok) return;
+    const payment = payments.find((p) => p.id === paymentId);
     setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    if (payment?.invoice?.id) {
+      setInvoices((prev) =>
+        prev.map((invoice) =>
+          invoice.id === payment.invoice?.id
+            ? { ...invoice, status: 'PENDING' }
+            : invoice
+        )
+      );
+    }
+    router.refresh();
   };
 
   return (
@@ -270,10 +328,42 @@ export default function ProfessorProfileForm({
         </form>
       </section>
 
-      {/* New Payment */}
+      {/* Invoice approval */}
       <section className="rounded-xl border p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Registrar pago</h3>
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">Aprobar factura</h3>
+          <p className="text-sm text-muted-foreground">
+            ContadurÃ­a aprueba una factura cargada por el profesor. TesorerÃ­a
+            marca la transferencia desde el historial.
+          </p>
+        </div>
         <form onSubmit={createPayment} className="space-y-4">
+          <label className="space-y-1 text-sm block">
+            <span className="font-medium">Factura pendiente</span>
+            <select
+              value={selectedInvoiceId}
+              onChange={(e) => setSelectedInvoiceId(e.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={pendingInvoices.length === 0}
+              required
+            >
+              <option value="">Seleccionar factura</option>
+              {pendingInvoices.map((invoice) => (
+                <option key={invoice.id} value={invoice.id}>
+                  {invoice.originalName} -{' '}
+                  {new Date(invoice.createdAt).toLocaleDateString('es-AR')}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {pendingInvoices.length === 0 && (
+            <p className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+              No hay facturas pendientes. El profesor tiene que cargar una
+              factura antes de que contadurÃ­a pueda aprobar el pago.
+            </p>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="space-y-1 text-sm">
               <span className="font-medium">Mes</span>
@@ -339,8 +429,11 @@ export default function ProfessorProfileForm({
             <p className="text-sm text-destructive">{paymentError}</p>
           )}
 
-          <Button type="submit" disabled={paymentSaving}>
-            {paymentSaving ? 'Registrando...' : 'Registrar pago'}
+          <Button
+            type="submit"
+            disabled={paymentSaving || pendingInvoices.length === 0}
+          >
+            {paymentSaving ? 'Aprobando...' : 'Aprobar factura'}
           </Button>
         </form>
       </section>
@@ -360,7 +453,7 @@ export default function ProfessorProfileForm({
                   <th className="px-4 py-3 text-left">Período</th>
                   <th className="px-4 py-3 text-right">Monto</th>
                   <th className="px-4 py-3 text-left">Estado</th>
-                  <th className="px-4 py-3 text-left">Fecha pago</th>
+                  <th className="px-4 py-3 text-left">Fecha transferencia</th>
                   <th className="px-4 py-3 text-left">Notas</th>
                   <th className="px-4 py-3 text-left">Registrado por</th>
                   <th className="px-4 py-3"></th>
@@ -410,7 +503,7 @@ export default function ProfessorProfileForm({
                               updatePaymentStatus(payment.id, 'PAID')
                             }
                           >
-                            Marcar pagado
+                            Transferido
                           </Button>
                         )}
                         {payment.status === 'PAID' && (
@@ -480,11 +573,11 @@ export default function ProfessorProfileForm({
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
     PENDING: {
-      label: 'Pendiente',
-      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      label: 'Aprobada',
+      className: 'bg-sky-100 text-sky-700 border-sky-200',
     },
     PAID: {
-      label: 'Pagado',
+      label: 'Transferido',
       className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     },
     CANCELLED: {

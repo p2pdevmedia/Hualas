@@ -100,7 +100,7 @@ route, update this file in the same change.
 - `/my-activities` -> `src/app/my-activities/page.tsx`
   - Member and professor activity view.
 - `/my-payments` -> `src/app/my-payments/page.tsx`
-  - Professor self-view for banking data, invoices, and payment history.
+  - Professor self-view for banking data, invoice upload/status, and payment history.
 - `/chat` -> `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`.
 - `/notifications` -> `src/app/notifications/page.tsx`
@@ -131,6 +131,7 @@ require active `COUNTER` or `ADMIN`.
 - `/accounting/payments` -> `src/app/accounting/payments/page.tsx`
 - `/accounting/professors` -> `src/app/accounting/professors/page.tsx`
 - `/accounting/professors/[id]` -> `src/app/accounting/professors/[id]/page.tsx`
+  - Professor banking profile, invoice approval, and transfer tracking.
 - `/accounting/reports` -> `src/app/accounting/reports/page.tsx`
 
 ### Admin
@@ -307,8 +308,10 @@ Native iPhone and Android clients use bearer-token auth through these
 
 - `GET, PUT` `/api/professors/[id]/profile` -> `src/app/api/professors/[id]/profile/route.ts`
 - `GET, POST` `/api/professors/[id]/payments` -> `src/app/api/professors/[id]/payments/route.ts`
+  - `POST` approves a pending professor invoice and creates the linked payment record.
 - `GET, POST` `/api/professors/[id]/invoices` -> `src/app/api/professors/[id]/invoices/route.ts`
 - `PATCH, DELETE` `/api/professor-payments/[paymentId]` -> `src/app/api/professor-payments/[paymentId]/route.ts`
+  - `PATCH` marks an approved professor payment as transferred and syncs the invoice status.
 - `DELETE` `/api/professor-invoices/[invoiceId]` -> `src/app/api/professor-invoices/[invoiceId]/route.ts`
 - `GET` `/api/professor-invoices/[invoiceId]/file` -> `src/app/api/professor-invoices/[invoiceId]/file/route.ts`
 

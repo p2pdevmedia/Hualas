@@ -907,6 +907,8 @@ model ProfessorPayment {
   id                 String                 @id @default(cuid())
   professorProfileId String
   professorProfile   ProfessorProfile       @relation(fields: [professorProfileId], references: [id], onDelete: Cascade)
+  invoiceId          String?                @unique
+  invoice            ProfessorInvoice?      @relation("ProfessorInvoicePayment", fields: [invoiceId], references: [id], onDelete: SetNull)
   periodMonth        Int
   periodYear         Int
   amount             Int
@@ -924,21 +926,32 @@ model ProfessorPayment {
 }
 
 model ProfessorInvoice {
-  id           String   @id @default(cuid())
-  professorId  String
-  professor    User     @relation("ProfessorInvoices", fields: [professorId], references: [id], onDelete: Cascade)
-  originalName String
-  contentType  String
-  size         Int
-  blobUrl      String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String                 @id @default(cuid())
+  professorId   String
+  professor     User                   @relation("ProfessorInvoices", fields: [professorId], references: [id], onDelete: Cascade)
+  originalName  String
+  contentType   String
+  size          Int
+  blobUrl       String
+  status        ProfessorInvoiceStatus @default(PENDING)
+  approvedAt    DateTime?
+  transferredAt DateTime?
+  payment       ProfessorPayment?      @relation("ProfessorInvoicePayment")
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 
   @@index([professorId, createdAt])
+  @@index([status, createdAt])
 }
 
 enum ProfessorPaymentStatus {
   PENDING
   PAID
   CANCELLED
+}
+
+enum ProfessorInvoiceStatus {
+  PENDING
+  APPROVED
+  TRANSFERRED
 }

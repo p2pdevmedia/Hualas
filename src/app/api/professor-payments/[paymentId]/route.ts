@@ -15,6 +15,18 @@ const patchSchema = z.object({
   notes: z.string().max(500).optional().nullable(),
 });
 
+const paymentInclude = {
+  createdBy: { select: { id: true, name: true, lastName: true } },
+  invoice: {
+    select: {
+      id: true,
+      status: true,
+      approvedAt: true,
+      transferredAt: true,
+    },
+  },
+};
+
 export async function PATCH(
   req: Request,
   { params }: { params: { paymentId: string } }
@@ -48,14 +60,41 @@ export async function PATCH(
         ? new Date(parsed.data.paidAt)
         : new Date()
       : null;
+  const invoiceStatus =
+    parsed.data.status === 'PAID'
+      ? 'TRANSFERRED'
+      : parsed.data.status === 'PENDING'
+        ? 'APPROVED'
+        : 'PENDING';
 
-  const payment = await prisma.professorPayment.update({
-    where: { id: params.paymentId },
-    data: {
-      status: parsed.data.status,
-      paidAt,
-      notes: parsed.data.notes ?? existing.notes,
-    },
+  const payment = await prisma.$transaction(async (tx) => {
+    const updated = await tx.professorPayment.update({
+      where: { id: params.paymentId },
+      data: {
+        status: parsed.data.status,
+        paidAt,
+        notes: parsed.data.notes ?? existing.notes,
+      },
+      include: paymentInclude,
+    });
+
+    if (existing.invoiceId) {
+      await tx.professorInvoice.update({
+        where: { id: existing.invoiceId },
+        data: {
+          status: invoiceStatus,
+          transferredAt: parsed.data.status === 'PAID' ? paidAt : null,
+          approvedAt:
+            parsed.data.status === 'CANCELLED'
+              ? null
+              : (updated.invoice?.approvedAt ?? new Date()),
+        },
+      });
+    }
+
+    return updated.invoice
+      ? { ...updated, invoice: { ...updated.invoice, status: invoiceStatus } }
+      : updated;
   });
 
   if (parsed.data.status === 'PAID' && existing.status !== 'PAID') {
@@ -88,6 +127,19 @@ export async function DELETE(
     return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
   }
 
-  await prisma.professorPayment.delete({ where: { id: params.paymentId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.professorPayment.delete({ where: { id: params.paymentId } });
+
+    if (existing.invoiceId) {
+      await tx.professorInvoice.update({
+        where: { id: existing.invoiceId },
+        data: {
+          status: 'PENDING',
+          approvedAt: null,
+          transferredAt: null,
+        },
+      });
+    }
+  });
   return NextResponse.json({ ok: true });
 }
