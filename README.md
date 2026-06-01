@@ -4,7 +4,7 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 ## Development
 
-1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Google OAuth client credentials if using Google sign-in, Mercadopago token and Pinata JWT for IPFS uploads).
+1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Google OAuth client credentials if using Google sign-in, Mercadopago token, Pinata JWT for IPFS uploads, and `BLOB_READ_WRITE_TOKEN` for private file uploads).
 2. Install dependencies with `pnpm install`.
 3. Generate the Prisma client: `pnpm prisma:generate`.
 4. Start the dev server: `pnpm dev`.
@@ -35,6 +35,7 @@ the exact command and reason in the final response.
 - The production build generates Prisma Client and compiles Next.js.
 - Apply pending Prisma migrations separately with `pnpm db:migrate:deploy` before or after deploy, using the intended target database.
 - Make sure `DATABASE_URL` points to the target database when running migrations.
+- Configure `BLOB_READ_WRITE_TOKEN` in Vercel for private Blob uploads such as profile photos, receipts, activity media, news media, and professor invoices.
 - If a deployment is already serving an older schema, run `pnpm db:migrate:deploy` once against that database and redeploy.
 
 ## Google OAuth on Vercel

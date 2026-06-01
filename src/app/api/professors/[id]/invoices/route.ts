@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { del, put } from '@vercel/blob';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
@@ -14,6 +14,10 @@ const ALLOWED_CONTENT_TYPES = new Set([
   'image/png',
   'image/webp',
 ]);
+const BLOB_CONFIGURATION_ERROR =
+  'El almacenamiento de facturas no está configurado. Falta configurar BLOB_READ_WRITE_TOKEN.';
+const BLOB_UPLOAD_ERROR =
+  'No se pudo guardar la factura en el almacenamiento. Revisá la configuración de Vercel Blob.';
 
 function getSafeExtension(fileName: string, contentType: string) {
   const ext = fileName.includes('.')
@@ -55,7 +59,8 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  const role = (session?.user as any)?.role;
+  const role =
+    (session?.user as any)?.activeRole ?? (session?.user as any)?.role;
 
   if (!userId) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -96,7 +101,8 @@ export async function POST(
 ) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  const role = (session?.user as any)?.role;
+  const role =
+    (session?.user as any)?.activeRole ?? (session?.user as any)?.role;
 
   if (!userId || role !== 'PROFESSOR' || userId !== params.id) {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
@@ -141,22 +147,44 @@ export async function POST(
     );
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error(
+      '[professor-invoices] BLOB_READ_WRITE_TOKEN is not configured'
+    );
+    return NextResponse.json(
+      { error: BLOB_CONFIGURATION_ERROR },
+      { status: 503 }
+    );
+  }
+
   const ext = getSafeExtension(file.name, file.type);
   const pathname = `professor-invoices/${params.id}/${crypto.randomUUID()}${ext}`;
-  const blob = await put(pathname, file, {
-    access: 'private',
-    contentType: file.type,
-  });
-
-  const invoice = await prisma.professorInvoice.create({
-    data: {
-      professorId: params.id,
-      originalName: file.name || `factura${ext}`,
+  let blob: Awaited<ReturnType<typeof put>>;
+  try {
+    blob = await put(pathname, file, {
+      access: 'private',
       contentType: file.type,
-      size: file.size,
-      blobUrl: blob.url,
-    },
-  });
+    });
+  } catch (err) {
+    console.error('[professor-invoices] failed to upload invoice blob', err);
+    return NextResponse.json({ error: BLOB_UPLOAD_ERROR }, { status: 502 });
+  }
+
+  let invoice;
+  try {
+    invoice = await prisma.professorInvoice.create({
+      data: {
+        professorId: params.id,
+        originalName: file.name || `factura${ext}`,
+        contentType: file.type,
+        size: file.size,
+        blobUrl: blob.url,
+      },
+    });
+  } catch (err) {
+    await del(blob.url).catch(() => undefined);
+    throw err;
+  }
 
   await notifyProfessorInvoiceCreated(invoice.id);
 

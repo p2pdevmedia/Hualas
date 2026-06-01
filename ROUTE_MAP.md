@@ -312,6 +312,7 @@ Native iPhone and Android clients use bearer-token auth through these
 - `GET, POST` `/api/professors/[id]/payments` -> `src/app/api/professors/[id]/payments/route.ts`
   - `POST` approves a pending professor invoice and creates the linked payment record.
 - `GET, POST` `/api/professors/[id]/invoices` -> `src/app/api/professors/[id]/invoices/route.ts`
+  - Professor invoice uploads require `BLOB_READ_WRITE_TOKEN` for private Vercel Blob storage.
 - `PATCH, DELETE` `/api/professor-payments/[paymentId]` -> `src/app/api/professor-payments/[paymentId]/route.ts`
   - `PATCH` marks an approved professor payment as transferred and syncs the invoice status.
 - `DELETE` `/api/professor-invoices/[invoiceId]` -> `src/app/api/professor-invoices/[invoiceId]/route.ts`

@@ -31,7 +31,8 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  const role = (session?.user as any)?.role;
+  const role =
+    (session?.user as any)?.activeRole ?? (session?.user as any)?.role;
   if (!userId)
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
@@ -62,7 +63,8 @@ export async function POST(
 ) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  const role = (session?.user as any)?.role;
+  const role =
+    (session?.user as any)?.activeRole ?? (session?.user as any)?.role;
   if (!userId || !isAccountingRole(role)) {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
   }

@@ -177,45 +177,49 @@ export default async function AccountingDashboardPage({
         status: 'PENDING',
       },
     }),
-    prisma.professorPayment.findMany({
-      where: {
-        status: 'PAID',
-        paidAt: {
-          gte: monthStart,
-          lte: monthEnd,
+    prisma.professorPayment
+      .findMany({
+        where: {
+          status: 'PAID',
+          paidAt: {
+            gte: monthStart,
+            lte: monthEnd,
+          },
         },
-      },
-    }).catch((error) => {
-      if (isPendingAccountingDashboardMigrationError(error)) {
-        professorPaymentsUnavailable = true;
-        console.error(
-          'Professor payment totals are unavailable. Run the pending Prisma migrations.',
-          error
-        );
-        return [];
-      }
+      })
+      .catch((error) => {
+        if (isPendingAccountingDashboardMigrationError(error)) {
+          professorPaymentsUnavailable = true;
+          console.error(
+            'Professor payment totals are unavailable. Run the pending Prisma migrations.',
+            error
+          );
+          return [];
+        }
 
-      throw error;
-    }),
-    prisma.accountingMonthClose.findUnique({
-      where: {
-        periodYear_periodMonth: {
-          periodYear: now.getFullYear(),
-          periodMonth: now.getMonth() + 1,
+        throw error;
+      }),
+    prisma.accountingMonthClose
+      .findUnique({
+        where: {
+          periodYear_periodMonth: {
+            periodYear: now.getFullYear(),
+            periodMonth: now.getMonth() + 1,
+          },
         },
-      },
-    }).catch((error) => {
-      if (isPendingAccountingDashboardMigrationError(error)) {
-        monthCloseUnavailable = true;
-        console.error(
-          'Accounting month close data is unavailable. Run the pending Prisma migrations.',
-          error
-        );
-        return null;
-      }
+      })
+      .catch((error) => {
+        if (isPendingAccountingDashboardMigrationError(error)) {
+          monthCloseUnavailable = true;
+          console.error(
+            'Accounting month close data is unavailable. Run the pending Prisma migrations.',
+            error
+          );
+          return null;
+        }
 
-      throw error;
-    }),
+        throw error;
+      }),
   ]);
 
   const manualIncome = approvedManualPayments
