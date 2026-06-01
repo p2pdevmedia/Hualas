@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
@@ -10,7 +11,6 @@ import {
   getAccountingUserProfileHref,
   formatPersonName,
   getAccountingPaymentDate,
-  isAccountingRole,
   movementTypeClass,
   movementTypeLabel,
 } from '@/lib/accounting';
@@ -34,6 +34,13 @@ function startOfMonth(date: Date) {
 
 function endOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function isPendingAccountingDashboardMigrationError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    ['P2021', 'P2022'].includes(error.code)
+  );
 }
 
 type RecentAccountingEntry = {
@@ -63,6 +70,8 @@ export default async function AccountingDashboardPage({
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+  let professorPaymentsUnavailable = false;
+  let monthCloseUnavailable = false;
 
   const [
     monthMovements,
@@ -176,6 +185,17 @@ export default async function AccountingDashboardPage({
           lte: monthEnd,
         },
       },
+    }).catch((error) => {
+      if (isPendingAccountingDashboardMigrationError(error)) {
+        professorPaymentsUnavailable = true;
+        console.error(
+          'Professor payment totals are unavailable. Run the pending Prisma migrations.',
+          error
+        );
+        return [];
+      }
+
+      throw error;
     }),
     prisma.accountingMonthClose.findUnique({
       where: {
@@ -184,6 +204,17 @@ export default async function AccountingDashboardPage({
           periodMonth: now.getMonth() + 1,
         },
       },
+    }).catch((error) => {
+      if (isPendingAccountingDashboardMigrationError(error)) {
+        monthCloseUnavailable = true;
+        console.error(
+          'Accounting month close data is unavailable. Run the pending Prisma migrations.',
+          error
+        );
+        return null;
+      }
+
+      throw error;
     }),
   ]);
 
@@ -306,6 +337,21 @@ export default async function AccountingDashboardPage({
     .slice(0, 10);
   return (
     <div className="space-y-6">
+      {(professorPaymentsUnavailable || monthCloseUnavailable) && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Algunos datos nuevos de contaduria todavia no estan disponibles en
+          esta base de datos. El resumen se muestra sin{' '}
+          {professorPaymentsUnavailable
+            ? 'honorarios de profesores'
+            : 'cierres mensuales'}
+          {professorPaymentsUnavailable && monthCloseUnavailable
+            ? ' ni cierres mensuales'
+            : ''}
+          . Aplica las migraciones pendientes para habilitar el calculo
+          completo.
+        </div>
+      )}
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           {
@@ -316,7 +362,9 @@ export default async function AccountingDashboardPage({
           {
             label: 'Egresos del mes',
             value: formatAmount(totalExpense),
-            helper: 'Movimientos manuales y honorarios de profesores',
+            helper: professorPaymentsUnavailable
+              ? 'Movimientos manuales; honorarios no disponibles'
+              : 'Movimientos manuales y honorarios de profesores',
           },
           {
             label: 'Balance neto',
