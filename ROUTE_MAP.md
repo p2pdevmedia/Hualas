@@ -101,6 +101,8 @@ route, update this file in the same change.
   - Member and professor activity view.
 - `/my-payments` -> `src/app/my-payments/page.tsx`
   - Professor self-view for banking data, invoice upload/status, and payment history.
+  - Invoice upload requires selecting one assigned activity; when there is only
+    one assigned activity, it is preselected.
 - `/chat` -> `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`.
 - `/notifications` -> `src/app/notifications/page.tsx`
@@ -128,6 +130,8 @@ require active `COUNTER` or `ADMIN`.
 - `/accounting/movements/new` -> `src/app/accounting/movements/new/page.tsx`
 - `/accounting/movements/[id]/edit` -> `src/app/accounting/movements/[id]/edit/page.tsx`
 - `/accounting/movements/activities` -> `src/app/accounting/movements/activities/page.tsx`
+  - Activity cashbox. Shows participant income, manual activity expenses, and
+    professor honorarios linked through professor invoice/payment activity.
 - `/accounting/payments` -> `src/app/accounting/payments/page.tsx`
 - `/accounting/professors` -> `src/app/accounting/professors/page.tsx`
 - `/accounting/professors/[id]` -> `src/app/accounting/professors/[id]/page.tsx`
@@ -136,6 +140,8 @@ require active `COUNTER` or `ADMIN`.
     table, not as a standalone form above payment history.
   - Multiple pending invoices can be approved for the same professor and
     month; the invoice is the unique approval unit, not the month.
+  - Professor invoice approval copies the invoice activity onto the professor
+    payment so transferred honorarios can be reconciled by activity.
   - Renders banking/profile data even if professor invoice migrations are still
     pending; invoice actions show a migration warning until the DB is updated.
 - `/accounting/reports` -> `src/app/accounting/reports/page.tsx`

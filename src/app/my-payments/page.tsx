@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
 import type { ProfessorInvoice } from '@prisma/client';
 import ProfessorInvoicesPanel from '@/components/accounting/professor-invoices-panel';
+import { getProfessorAssignedActivityOptions } from '@/lib/professor-activities';
 import MyPaymentsClient from './my-payments-client';
 
 export default async function MyPaymentsPage() {
@@ -24,12 +25,21 @@ export default async function MyPaymentsPage() {
     },
   });
 
-  let invoices: ProfessorInvoice[] = [];
+  let invoices: Array<
+    ProfessorInvoice & { activity: { id: string; name: string } | null }
+  > = [];
+  let activityOptions: Awaited<
+    ReturnType<typeof getProfessorAssignedActivityOptions>
+  > = [];
   try {
-    invoices = await prisma.professorInvoice.findMany({
-      where: { professorId: userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    [invoices, activityOptions] = await Promise.all([
+      prisma.professorInvoice.findMany({
+        where: { professorId: userId },
+        orderBy: { createdAt: 'desc' },
+        include: { activity: { select: { id: true, name: true } } },
+      }),
+      getProfessorAssignedActivityOptions(userId),
+    ]);
   } catch (err) {
     console.error('[my-payments] failed to load professor invoices', err);
   }
@@ -56,6 +66,8 @@ export default async function MyPaymentsPage() {
 
   const invoiceRows = invoices.map((invoice) => ({
     id: invoice.id,
+    activityId: invoice.activityId,
+    activityName: invoice.activity?.name ?? null,
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,
@@ -84,6 +96,10 @@ export default async function MyPaymentsPage() {
       <ProfessorInvoicesPanel
         professorId={userId}
         initialInvoices={invoiceRows}
+        activityOptions={activityOptions.map((activity) => ({
+          id: activity.id,
+          name: activity.name,
+        }))}
         canUpload={true}
         canDelete={true}
         title="Mis facturas"

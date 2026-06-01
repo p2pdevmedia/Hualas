@@ -70,6 +70,7 @@ describe('professor payment invoice flow', () => {
     mockProfessorInvoiceFindUnique.mockResolvedValue({
       id: 'invoice_1',
       professorId: 'professor_1',
+      activityId: 'activity_1',
       status: 'PENDING',
     });
     mockProfessorPaymentCreate.mockResolvedValue({
@@ -101,6 +102,7 @@ describe('professor payment invoice flow', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           invoiceId: 'invoice_1',
+          activityId: 'activity_1',
           status: 'PENDING',
           createdById: 'counter_1',
         }),
@@ -121,6 +123,7 @@ describe('professor payment invoice flow', () => {
     mockProfessorInvoiceFindUnique.mockResolvedValue({
       id: 'invoice_2',
       professorId: 'professor_1',
+      activityId: 'activity_1',
       status: 'PENDING',
     });
     mockProfessorPaymentCreate.mockRejectedValue({
@@ -147,6 +150,36 @@ describe('professor payment invoice flow', () => {
 
     expect(response.status).toBe(409);
     expect(body.error).toContain('migraciones pendientes');
+  });
+
+  it('rejects approving a legacy invoice without activity', async () => {
+    const { POST } = await import('@/app/api/professors/[id]/payments/route');
+    mockProfessorProfileFindUnique.mockResolvedValue({ id: 'profile_1' });
+    mockProfessorInvoiceFindUnique.mockResolvedValue({
+      id: 'legacy_invoice',
+      professorId: 'professor_1',
+      activityId: null,
+      status: 'PENDING',
+    });
+
+    const response = await POST(
+      new Request('http://test.local', {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceId: 'legacy_invoice',
+          periodMonth: 5,
+          periodYear: 2026,
+          amount: 100000,
+        }),
+      }),
+      { params: { id: 'professor_1' } }
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain('actividad');
+    expect(mockProfessorPaymentCreate).not.toHaveBeenCalled();
+    expect(mockProfessorInvoiceUpdate).not.toHaveBeenCalled();
   });
 
   it('marks the linked invoice as transferred when payment is paid', async () => {

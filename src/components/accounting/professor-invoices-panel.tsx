@@ -22,6 +22,8 @@ const MONTHS = [
 
 type ProfessorInvoice = {
   id: string;
+  activityId?: string | null;
+  activityName?: string | null;
   originalName: string;
   contentType: string;
   size: number;
@@ -32,9 +34,15 @@ type ProfessorInvoice = {
   fileUrl: string;
 };
 
+type ActivityOption = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   professorId: string;
   initialInvoices: ProfessorInvoice[];
+  activityOptions?: ActivityOption[];
   canUpload?: boolean;
   canDelete?: boolean;
   canApprove?: boolean;
@@ -96,6 +104,7 @@ function InvoiceStatusBadge({
 export default function ProfessorInvoicesPanel({
   professorId,
   initialInvoices,
+  activityOptions = [],
   canUpload = false,
   canDelete = false,
   canApprove = false,
@@ -113,6 +122,9 @@ export default function ProfessorInvoicesPanel({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deletingId, setDeletingId] = useState('');
+  const [selectedActivityId, setSelectedActivityId] = useState(
+    activityOptions.length === 1 ? activityOptions[0].id : ''
+  );
   const [approvalInvoiceId, setApprovalInvoiceId] = useState('');
   const [approvalMonth, setApprovalMonth] = useState(
     String(now.getMonth() + 1)
@@ -129,6 +141,17 @@ export default function ProfessorInvoicesPanel({
     setInvoices(initialInvoices);
   }, [initialInvoices]);
 
+  useEffect(() => {
+    if (activityOptions.length === 1) {
+      setSelectedActivityId(activityOptions[0].id);
+      return;
+    }
+
+    setSelectedActivityId((current) =>
+      activityOptions.some((activity) => activity.id === current) ? current : ''
+    );
+  }, [activityOptions]);
+
   const approvalAmountCents = (() => {
     const pesos = Number(approvalAmount);
     return Number.isFinite(pesos) ? Math.round(pesos * 100) : 0;
@@ -143,8 +166,15 @@ export default function ProfessorInvoicesPanel({
       return;
     }
 
+    if (!selectedActivityId) {
+      setError('Seleccioná la actividad de la factura.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('activityId', selectedActivityId);
     setUploading(true);
 
     try {
@@ -264,14 +294,47 @@ export default function ProfessorInvoicesPanel({
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         {canUpload && (
-          <Button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="shrink-0"
-          >
-            {uploading ? 'Subiendo...' : 'Subir factura'}
-          </Button>
+          <div className="flex flex-col gap-2 sm:min-w-[260px]">
+            <label className="space-y-1 text-sm">
+              <span className="font-medium">Actividad</span>
+              <select
+                value={selectedActivityId}
+                onChange={(e) => setSelectedActivityId(e.target.value)}
+                disabled={uploading || activityOptions.length === 0}
+                className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                required
+              >
+                {activityOptions.length === 0 ? (
+                  <option value="">Sin actividades asignadas</option>
+                ) : (
+                  <>
+                    {activityOptions.length > 1 && (
+                      <option value="">Seleccionar actividad</option>
+                    )}
+                    {activityOptions.map((activity) => (
+                      <option key={activity.id} value={activity.id}>
+                        {activity.name}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </label>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!selectedActivityId) {
+                  setError('Seleccioná la actividad de la factura.');
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              disabled={uploading || activityOptions.length === 0}
+              className="shrink-0"
+            >
+              {uploading ? 'Subiendo...' : 'Subir factura'}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -309,6 +372,7 @@ export default function ProfessorInvoicesPanel({
             <thead className="border-b bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left">Archivo</th>
+                <th className="px-4 py-3 text-left">Actividad</th>
                 <th className="px-4 py-3 text-left">Tipo</th>
                 <th className="px-4 py-3 text-left">Estado</th>
                 <th className="px-4 py-3 text-left">Tamaño</th>
@@ -322,6 +386,9 @@ export default function ProfessorInvoicesPanel({
                   <tr className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3 font-medium max-w-[260px] truncate">
                       {invoice.originalName}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[220px] truncate">
+                      {invoice.activityName ?? 'Sin actividad'}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {invoice.contentType === 'application/pdf'
@@ -383,7 +450,7 @@ export default function ProfessorInvoicesPanel({
                         key={`${invoice.id}-approval`}
                         className="bg-muted/10"
                       >
-                        <td colSpan={6} className="px-4 py-4">
+                        <td colSpan={7} className="px-4 py-4">
                           <form
                             onSubmit={(e) => approveInvoice(e, invoice)}
                             className="space-y-4"

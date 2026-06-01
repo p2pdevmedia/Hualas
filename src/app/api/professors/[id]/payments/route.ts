@@ -18,6 +18,7 @@ const paymentInclude = {
   invoice: {
     select: {
       id: true,
+      activityId: true,
       status: true,
       approvedAt: true,
       transferredAt: true,
@@ -112,7 +113,7 @@ export async function POST(
 
   const invoice = await prisma.professorInvoice.findUnique({
     where: { id: parsed.data.invoiceId },
-    select: { id: true, professorId: true, status: true },
+    select: { id: true, professorId: true, activityId: true, status: true },
   });
 
   if (!invoice || invoice.professorId !== params.id) {
@@ -129,12 +130,23 @@ export async function POST(
     );
   }
 
+  if (!invoice.activityId) {
+    return NextResponse.json(
+      {
+        error:
+          'La factura no tiene actividad asociada. Pedile al profesor que la vuelva a subir seleccionando una actividad.',
+      },
+      { status: 409 }
+    );
+  }
+
   try {
     const payment = await prisma.$transaction(async (tx) => {
       const created = await tx.professorPayment.create({
         data: {
           professorProfileId: profile.id,
           invoiceId: invoice.id,
+          activityId: invoice.activityId,
           periodMonth: parsed.data.periodMonth,
           periodYear: parsed.data.periodYear,
           amount: parsed.data.amount,

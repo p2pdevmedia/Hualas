@@ -19,6 +19,7 @@ function isPendingProfessorInvoiceMigrationError(error: unknown) {
       message.includes('ProfessorInvoice') ||
       message.includes('ProfessorPayment') ||
       message.includes('invoiceId') ||
+      message.includes('activityId') ||
       message.includes('approvedAt') ||
       message.includes('transferredAt')
     );
@@ -81,6 +82,8 @@ export default async function ProfessorAccountingDetailPage({
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        activityId: true,
+        activity: { select: { id: true, name: true } },
         originalName: true,
         contentType: true,
         size: true,
@@ -128,6 +131,8 @@ export default async function ProfessorAccountingDetailPage({
 
   const invoices = professorInvoices.map((invoice) => ({
     id: invoice.id,
+    activityId: invoice.activityId,
+    activityName: invoice.activity?.name ?? null,
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,

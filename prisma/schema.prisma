@@ -178,6 +178,8 @@ model Activity {
   createdAt           DateTime                     @default(now())
   orderItems          OrderItem[]
   accountingMovements AccountingMovement[]
+  professorInvoices   ProfessorInvoice[]
+  professorPayments   ProfessorPayment[]
 }
 
 model ActivityMedia {
@@ -909,6 +911,8 @@ model ProfessorPayment {
   professorProfile   ProfessorProfile       @relation(fields: [professorProfileId], references: [id], onDelete: Cascade)
   invoiceId          String?                @unique
   invoice            ProfessorInvoice?      @relation("ProfessorInvoicePayment", fields: [invoiceId], references: [id], onDelete: SetNull)
+  activityId         String?
+  activity           Activity?              @relation(fields: [activityId], references: [id], onDelete: SetNull)
   periodMonth        Int
   periodYear         Int
   amount             Int
@@ -921,6 +925,7 @@ model ProfessorPayment {
   updatedAt          DateTime               @updatedAt
 
   @@index([professorProfileId])
+  @@index([activityId, status])
   @@index([professorProfileId, periodYear, periodMonth])
   @@index([status, periodMonth, periodYear])
 }
@@ -929,6 +934,8 @@ model ProfessorInvoice {
   id            String                 @id @default(cuid())
   professorId   String
   professor     User                   @relation("ProfessorInvoices", fields: [professorId], references: [id], onDelete: Cascade)
+  activityId    String?
+  activity      Activity?              @relation(fields: [activityId], references: [id], onDelete: SetNull)
   originalName  String
   contentType   String
   size          Int
@@ -941,6 +948,7 @@ model ProfessorInvoice {
   updatedAt     DateTime               @updatedAt
 
   @@index([professorId, createdAt])
+  @@index([activityId, status])
   @@index([status, createdAt])
 }
 

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProfessorPaymentStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -49,6 +49,16 @@ type ActivityPayment = Prisma.ActivityParticipantPaymentGetPayload<{
 
 type ActivityExpense = Prisma.AccountingMovementGetPayload<{
   include: {
+    createdBy: { select: { name: true; lastName: true } };
+  };
+}>;
+
+type ActivityProfessorExpense = Prisma.ProfessorPaymentGetPayload<{
+  include: {
+    professorProfile: {
+      include: { user: { select: { name: true; lastName: true } } };
+    };
+    invoice: { select: { originalName: true } };
     createdBy: { select: { name: true; lastName: true } };
   };
 }>;
@@ -119,8 +129,8 @@ async function getActivitySummary(activityId: string) {
       COALESCE(payments."monthlyPaymentCount", 0)::int AS "monthlyPaymentCount",
       COALESCE(payments."sessionPaymentCount", 0)::int AS "sessionPaymentCount",
       COALESCE(payments."totalCollected", 0)::double precision AS "totalCollected",
-      COALESCE(expenses."totalExpenses", 0)::double precision AS "totalExpenses",
-      (COALESCE(payments."totalCollected", 0) - COALESCE(expenses."totalExpenses", 0))::double precision AS "availableBalance",
+      (COALESCE(expenses."totalExpenses", 0) + COALESCE(professor_expenses."totalProfessorExpenses", 0))::double precision AS "totalExpenses",
+      (COALESCE(payments."totalCollected", 0) - COALESCE(expenses."totalExpenses", 0) - COALESCE(professor_expenses."totalProfessorExpenses", 0))::double precision AS "availableBalance",
       payments."lastPaidAt" AS "lastPaidAt"
     FROM "Activity" a
     LEFT JOIN (
@@ -151,6 +161,15 @@ async function getActivitySummary(activityId: string) {
         AND am."activityId" IS NOT NULL
       GROUP BY am."activityId"
     ) expenses ON expenses."activityId" = a."id"
+    LEFT JOIN (
+      SELECT
+        pp."activityId",
+        SUM(pp."amount") AS "totalProfessorExpenses"
+      FROM "ProfessorPayment" pp
+      WHERE pp."status" = 'PAID'
+        AND pp."activityId" IS NOT NULL
+      GROUP BY pp."activityId"
+    ) professor_expenses ON professor_expenses."activityId" = a."id"
     WHERE a."id" = ${activityId}
     LIMIT 1
   `;
@@ -221,18 +240,66 @@ export default async function ActivityMovementsPage({
       })
     : [];
 
-  const expenses: ActivityExpense[] = selectedActivity
-    ? await prisma.accountingMovement.findMany({
-        where: {
-          activityId: selectedActivity.id,
-          type: 'EXPENSE',
-        },
-        include: {
-          createdBy: { select: { name: true, lastName: true } },
-        },
-        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-      })
-    : [];
+  const [expenses, professorExpenses]: [
+    ActivityExpense[],
+    ActivityProfessorExpense[],
+  ] = selectedActivity
+    ? await Promise.all([
+        prisma.accountingMovement.findMany({
+          where: {
+            activityId: selectedActivity.id,
+            type: 'EXPENSE',
+          },
+          include: {
+            createdBy: { select: { name: true, lastName: true } },
+          },
+          orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        }),
+        prisma.professorPayment.findMany({
+          where: {
+            activityId: selectedActivity.id,
+            status: {
+              in: [ProfessorPaymentStatus.PENDING, ProfessorPaymentStatus.PAID],
+            },
+          },
+          include: {
+            professorProfile: {
+              include: {
+                user: { select: { name: true, lastName: true } },
+              },
+            },
+            invoice: { select: { originalName: true } },
+            createdBy: { select: { name: true, lastName: true } },
+          },
+          orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }],
+        }),
+      ])
+    : [[], []];
+
+  const expenseRows = [
+    ...expenses.map((expense) => ({
+      id: `movement:${expense.id}`,
+      date: expense.date,
+      category: expense.category,
+      description: expense.description,
+      receipt: expense.receiptNumber ?? '—',
+      createdBy: formatPersonName(expense.createdBy),
+      amount: expense.amount,
+    })),
+    ...professorExpenses.map((payment) => ({
+      id: `professor:${payment.id}`,
+      date: payment.paidAt ?? payment.createdAt,
+      category: 'Honorarios profesores',
+      description: `${formatPersonName(payment.professorProfile.user)} · ${String(payment.periodMonth).padStart(2, '0')}/${payment.periodYear} · ${
+        payment.status === ProfessorPaymentStatus.PAID
+          ? 'Transferida'
+          : 'Aprobada'
+      }`,
+      receipt: payment.invoice?.originalName ?? 'Factura',
+      createdBy: formatPersonName(payment.createdBy),
+      amount: payment.amount,
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const activityGroups = selectedActivity
     ? await prisma.activityGroup.findMany({
@@ -478,7 +545,7 @@ export default async function ActivityMovementsPage({
                   href={`/accounting/movements/activities?activityId=${selectedActivity.id}${selectedGroupId ? `&groupId=${selectedGroupId}` : ''}&tab=expenses`}
                   prefetch={true}
                 >
-                  Egresos ({expenses.length})
+                  Egresos ({expenseRows.length})
                 </Link>
               </Button>
             </div>
@@ -556,7 +623,7 @@ export default async function ActivityMovementsPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {expenses.length === 0 ? (
+                    {expenseRows.length === 0 ? (
                       <tr>
                         <td
                           colSpan={6}
@@ -566,19 +633,15 @@ export default async function ActivityMovementsPage({
                         </td>
                       </tr>
                     ) : (
-                      expenses.map((expense) => (
+                      expenseRows.map((expense) => (
                         <tr key={expense.id} className="align-top">
                           <td className="px-4 py-3">
                             {formatAccountingDate(expense.date)}
                           </td>
                           <td className="px-4 py-3">{expense.category}</td>
                           <td className="px-4 py-3">{expense.description}</td>
-                          <td className="px-4 py-3">
-                            {expense.receiptNumber ?? '—'}
-                          </td>
-                          <td className="px-4 py-3">
-                            {formatPersonName(expense.createdBy)}
-                          </td>
+                          <td className="px-4 py-3">{expense.receipt}</td>
+                          <td className="px-4 py-3">{expense.createdBy}</td>
                           <td className="px-4 py-3 font-semibold">
                             {formatAmount(expense.amount)}
                           </td>

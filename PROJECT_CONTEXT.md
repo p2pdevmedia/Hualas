@@ -119,7 +119,7 @@ Database integrity notes:
 - Capacity must be checked before registering a participant.
 - Activity registration may be for the logged-in user or one of their children.
 - Accounting includes social fees, draft orders, order items, manual movements, Mercado Pago payments, manual payment approval/rejection, professor invoices/payments, and month-close snapshots.
-- Professor payment workflow starts from a professor-uploaded invoice. Accounting approves the invoice with period and amount from the pending invoice status in `/accounting/professors/[id]`, then treasury marks the linked payment as transferred. A professor can have multiple approved invoices/payments for the same month. Professors see invoice states as pending, approved, or transferred in `/my-payments`.
+- Professor payment workflow starts from a professor-uploaded invoice tied to one of the professor's assigned activities. Accounting approves the invoice with period and amount from the pending invoice status in `/accounting/professors/[id]`, then treasury marks the linked payment as transferred. A professor can have multiple approved invoices/payments for the same month. Professor payments copy the invoice activity so transferred honorarios appear as activity cashbox expenses in `/accounting/movements/activities`. Professors see invoice states as pending, approved, or transferred in `/my-payments`.
 - Private file uploads, including professor invoices, require Vercel Blob storage through `BLOB_READ_WRITE_TOKEN`.
 
 ## Development Rules

@@ -6,6 +6,7 @@ import { isAccountingRole } from '@/lib/accounting';
 import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
 import { prisma } from '@/lib/prisma';
 import { notifyProfessorInvoiceCreated } from '@/lib/notifications/notification-service';
+import { findProfessorAssignedActivity } from '@/lib/professor-activities';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -39,9 +40,13 @@ function serializeInvoice(invoice: {
   approvedAt: Date | null;
   transferredAt: Date | null;
   createdAt: Date;
+  activityId?: string | null;
+  activity?: { id: string; name: string } | null;
 }) {
   return {
     id: invoice.id,
+    activityId: invoice.activityId ?? null,
+    activityName: invoice.activity?.name ?? null,
     originalName: invoice.originalName,
     contentType: invoice.contentType,
     size: invoice.size,
@@ -90,6 +95,7 @@ export async function GET(
   const invoices = await prisma.professorInvoice.findMany({
     where: { professorId: params.id },
     orderBy: { createdAt: 'desc' },
+    include: { activity: { select: { id: true, name: true } } },
   });
 
   return NextResponse.json({ invoices: invoices.map(serializeInvoice) });
@@ -125,11 +131,30 @@ export async function POST(
 
   const formData = await req.formData();
   const file = formData.get('file');
+  const activityId = formData.get('activityId');
 
   if (!(file instanceof File)) {
     return NextResponse.json(
       { error: 'No se recibió ningún archivo' },
       { status: 400 }
+    );
+  }
+
+  if (typeof activityId !== 'string' || activityId.trim().length === 0) {
+    return NextResponse.json(
+      { error: 'Seleccioná la actividad de la factura' },
+      { status: 400 }
+    );
+  }
+
+  const activity = await findProfessorAssignedActivity(
+    params.id,
+    activityId.trim()
+  );
+  if (!activity) {
+    return NextResponse.json(
+      { error: 'No podés subir facturas para esa actividad' },
+      { status: 403 }
     );
   }
 
@@ -175,11 +200,13 @@ export async function POST(
     invoice = await prisma.professorInvoice.create({
       data: {
         professorId: params.id,
+        activityId: activity.id,
         originalName: file.name || `factura${ext}`,
         contentType: file.type,
         size: file.size,
         blobUrl: blob.url,
       },
+      include: { activity: { select: { id: true, name: true } } },
     });
   } catch (err) {
     await del(blob.url).catch(() => undefined);
