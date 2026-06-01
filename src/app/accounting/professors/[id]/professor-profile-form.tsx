@@ -57,6 +57,7 @@ type Props = {
   } | null;
   payments: Payment[];
   invoices: Invoice[];
+  invoiceApprovalDisabled?: boolean;
 };
 
 export default function ProfessorProfileForm({
@@ -64,6 +65,7 @@ export default function ProfessorProfileForm({
   profile,
   payments: initialPayments,
   invoices: initialInvoices,
+  invoiceApprovalDisabled = false,
 }: Props) {
   const router = useRouter();
 
@@ -143,6 +145,12 @@ export default function ProfessorProfileForm({
   const createPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setPaymentError('');
+    if (invoiceApprovalDisabled) {
+      setPaymentError(
+        'Aplica las migraciones pendientes antes de aprobar facturas.'
+      );
+      return;
+    }
     if (!selectedInvoiceId) {
       setPaymentError('SeleccionÃ¡ una factura pendiente para aprobar.');
       return;
@@ -337,6 +345,12 @@ export default function ProfessorProfileForm({
             marca la transferencia desde el historial.
           </p>
         </div>
+        {invoiceApprovalDisabled && (
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            La aprobacion de facturas queda deshabilitada hasta aplicar las
+            migraciones pendientes de profesores.
+          </p>
+        )}
         <form onSubmit={createPayment} className="space-y-4">
           <label className="space-y-1 text-sm block">
             <span className="font-medium">Factura pendiente</span>
@@ -344,7 +358,7 @@ export default function ProfessorProfileForm({
               value={selectedInvoiceId}
               onChange={(e) => setSelectedInvoiceId(e.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              disabled={pendingInvoices.length === 0}
+              disabled={invoiceApprovalDisabled || pendingInvoices.length === 0}
               required
             >
               <option value="">Seleccionar factura</option>
@@ -431,7 +445,11 @@ export default function ProfessorProfileForm({
 
           <Button
             type="submit"
-            disabled={paymentSaving || pendingInvoices.length === 0}
+            disabled={
+              invoiceApprovalDisabled ||
+              paymentSaving ||
+              pendingInvoices.length === 0
+            }
           >
             {paymentSaving ? 'Aprobando...' : 'Aprobar factura'}
           </Button>

@@ -132,6 +132,8 @@ require active `COUNTER` or `ADMIN`.
 - `/accounting/professors` -> `src/app/accounting/professors/page.tsx`
 - `/accounting/professors/[id]` -> `src/app/accounting/professors/[id]/page.tsx`
   - Professor banking profile, invoice approval, and transfer tracking.
+  - Renders banking/profile data even if professor invoice migrations are still
+    pending; invoice actions show a migration warning until the DB is updated.
 - `/accounting/reports` -> `src/app/accounting/reports/page.tsx`
 
 ### Admin

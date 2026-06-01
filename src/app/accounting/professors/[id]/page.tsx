@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Prisma } from '@prisma/client';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
@@ -7,6 +8,24 @@ import { formatPersonName } from '@/lib/accounting';
 import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
 import ProfessorInvoicesPanel from '@/components/accounting/professor-invoices-panel';
 import ProfessorProfileForm from './professor-profile-form';
+
+function isPendingProfessorInvoiceMigrationError(error: unknown) {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    ['P2021', 'P2022'].includes(error.code)
+  ) {
+    const message = error.message;
+    return (
+      message.includes('ProfessorInvoice') ||
+      message.includes('ProfessorPayment') ||
+      message.includes('invoiceId') ||
+      message.includes('approvedAt') ||
+      message.includes('transferredAt')
+    );
+  }
+
+  return false;
+}
 
 export default async function ProfessorAccountingDetailPage({
   params,
@@ -28,30 +47,61 @@ export default async function ProfessorAccountingDetailPage({
       email: true,
       phone: true,
       professorProfile: {
-        include: {
+        select: {
+          monthlySalary: true,
+          bankName: true,
+          cbu: true,
+          alias: true,
+          cuit: true,
+          notes: true,
           payments: {
             orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
-            include: {
+            select: {
+              id: true,
+              periodMonth: true,
+              periodYear: true,
+              amount: true,
+              status: true,
+              paidAt: true,
+              notes: true,
               createdBy: { select: { id: true, name: true, lastName: true } },
-              invoice: {
-                select: {
-                  id: true,
-                  status: true,
-                  approvedAt: true,
-                  transferredAt: true,
-                },
-              },
             },
           },
         },
-      },
-      professorInvoices: {
-        orderBy: { createdAt: 'desc' },
       },
     },
   });
 
   if (!professor) notFound();
+
+  let invoiceLoadWarning = false;
+  const professorInvoices = await prisma.professorInvoice
+    .findMany({
+      where: { professorId: professor.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        originalName: true,
+        contentType: true,
+        size: true,
+        status: true,
+        approvedAt: true,
+        transferredAt: true,
+        createdAt: true,
+      },
+    })
+    .catch((error) => {
+      if (isPendingProfessorInvoiceMigrationError(error)) {
+        invoiceLoadWarning = true;
+        console.error(
+          'Professor invoice data is unavailable. Run the pending Prisma migrations.',
+          error
+        );
+        return [];
+      }
+
+      throw error;
+    });
 
   const profile = professor.professorProfile
     ? {
@@ -73,17 +123,10 @@ export default async function ProfessorAccountingDetailPage({
     paidAt: p.paidAt?.toISOString() ?? null,
     notes: p.notes,
     createdBy: p.createdBy,
-    invoice: p.invoice
-      ? {
-          id: p.invoice.id,
-          status: p.invoice.status,
-          approvedAt: p.invoice.approvedAt?.toISOString() ?? null,
-          transferredAt: p.invoice.transferredAt?.toISOString() ?? null,
-        }
-      : null,
+    invoice: null,
   }));
 
-  const invoices = professor.professorInvoices.map((invoice) => ({
+  const invoices = professorInvoices.map((invoice) => ({
     id: invoice.id,
     originalName: invoice.originalName,
     contentType: invoice.contentType,
@@ -118,12 +161,21 @@ export default async function ProfessorAccountingDetailPage({
         profile={profile}
         payments={payments}
         invoices={invoices}
+        invoiceApprovalDisabled={invoiceLoadWarning}
       />
+
+      {invoiceLoadWarning && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Las facturas todavia no estan disponibles en esta base de datos.
+          Aplica las migraciones pendientes para habilitar la aprobacion y
+          consulta de facturas de profesores.
+        </div>
+      )}
 
       <ProfessorInvoicesPanel
         professorId={professor.id}
         initialInvoices={invoices}
-        canDelete={true}
+        canDelete={!invoiceLoadWarning}
         title="Facturas"
         description="Facturas cargadas por el profesor desde Mis pagos."
         emptyMessage="El profesor todavía no cargó facturas."
