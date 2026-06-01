@@ -134,6 +134,8 @@ require active `COUNTER` or `ADMIN`.
   - Professor banking profile, invoice approval, and transfer tracking.
   - Invoice approval is opened from each pending invoice status in the invoice
     table, not as a standalone form above payment history.
+  - Multiple pending invoices can be approved for the same professor and
+    month; the invoice is the unique approval unit, not the month.
   - Renders banking/profile data even if professor invoice migrations are still
     pending; invoice actions show a migration warning until the DB is updated.
 - `/accounting/reports` -> `src/app/accounting/reports/page.tsx`

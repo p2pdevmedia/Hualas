@@ -3,6 +3,7 @@ import { PrismaClient, ProfessorPaymentStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const CREATED_BY_ID = 'cmom4i58m00003qf8z0jx15w1'; // Ivan Müller (SUPER_ADMIN)
+const IMPORT_NOTES = 'Importado desde planilla enero-febrero 2026';
 
 const paymentsData: {
   userId: string;
@@ -355,14 +356,15 @@ async function main() {
       },
     });
 
-    // Create payment (skip if already exists)
-    const existing = await prisma.professorPayment.findUnique({
+    // Create payment (skip exact imported row if already exists)
+    const existing = await prisma.professorPayment.findFirst({
       where: {
-        professorProfileId_periodMonth_periodYear: {
-          professorProfileId: profile.id,
-          periodMonth: p.month,
-          periodYear: p.year,
-        },
+        professorProfileId: profile.id,
+        periodMonth: p.month,
+        periodYear: p.year,
+        amount: p.amount,
+        createdById: CREATED_BY_ID,
+        notes: IMPORT_NOTES,
       },
     });
 
@@ -380,7 +382,7 @@ async function main() {
         amount: p.amount,
         status: ProfessorPaymentStatus.PAID,
         paidAt: new Date(p.year, p.month - 1, 28),
-        notes: 'Importado desde planilla enero-febrero 2026',
+        notes: IMPORT_NOTES,
         createdById: CREATED_BY_ID,
       },
     });

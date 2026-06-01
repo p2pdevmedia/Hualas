@@ -2,6 +2,9 @@
  * @jest-environment node
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 const mockGetServerSession = jest.fn();
 const mockTransaction = jest.fn();
 const mockProfessorProfileFindUnique = jest.fn();
@@ -112,6 +115,40 @@ describe('professor payment invoice flow', () => {
     expect(body.payment.invoice.status).toBe('APPROVED');
   });
 
+  it('reports pending migrations when the legacy monthly unique index still exists', async () => {
+    const { POST } = await import('@/app/api/professors/[id]/payments/route');
+    mockProfessorProfileFindUnique.mockResolvedValue({ id: 'profile_1' });
+    mockProfessorInvoiceFindUnique.mockResolvedValue({
+      id: 'invoice_2',
+      professorId: 'professor_1',
+      status: 'PENDING',
+    });
+    mockProfessorPaymentCreate.mockRejectedValue({
+      code: 'P2002',
+      meta: {
+        target:
+          'ProfessorPayment_professorProfileId_periodMonth_periodYear_key',
+      },
+    });
+
+    const response = await POST(
+      new Request('http://test.local', {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceId: 'invoice_2',
+          periodMonth: 5,
+          periodYear: 2026,
+          amount: 100000,
+        }),
+      }),
+      { params: { id: 'professor_1' } }
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain('migraciones pendientes');
+  });
+
   it('marks the linked invoice as transferred when payment is paid', async () => {
     const { PATCH } =
       await import('@/app/api/professor-payments/[paymentId]/route');
@@ -153,5 +190,20 @@ describe('professor payment invoice flow', () => {
       })
     );
     expect(body.payment.invoice.status).toBe('TRANSFERRED');
+  });
+
+  it('allows multiple professor payments for the same professor and period', () => {
+    const schema = fs.readFileSync(
+      path.join(process.cwd(), 'prisma/schema.prisma'),
+      'utf8'
+    );
+    const paymentModel = schema.match(
+      /model ProfessorPayment \{[\s\S]*?\n\}/
+    )?.[0];
+
+    expect(paymentModel).toBeDefined();
+    expect(paymentModel).not.toContain(
+      '@@unique([professorProfileId, periodMonth, periodYear])'
+    );
   });
 });

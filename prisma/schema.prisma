@@ -920,8 +920,8 @@ model ProfessorPayment {
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
-  @@unique([professorProfileId, periodMonth, periodYear])
   @@index([professorProfileId])
+  @@index([professorProfileId, periodYear, periodMonth])
   @@index([status, periodMonth, periodYear])
 }
 

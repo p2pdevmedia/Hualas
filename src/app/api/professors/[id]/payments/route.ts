@@ -25,6 +25,27 @@ const paymentInclude = {
   },
 };
 
+function getUniqueConstraintTarget(err: unknown) {
+  if (
+    typeof err !== 'object' ||
+    err === null ||
+    !('code' in err) ||
+    err.code !== 'P2002'
+  ) {
+    return null;
+  }
+
+  const meta = 'meta' in err ? err.meta : null;
+  if (typeof meta !== 'object' || meta === null || !('target' in meta)) {
+    return [];
+  }
+
+  const target = meta.target;
+  if (Array.isArray(target)) return target.map(String);
+  if (typeof target === 'string') return [target];
+  return [];
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } }
@@ -140,16 +161,22 @@ export async function POST(
 
     return NextResponse.json({ payment }, { status: 201 });
   } catch (err) {
-    if (
-      typeof err === 'object' &&
-      err !== null &&
-      'code' in err &&
-      err.code === 'P2002'
-    ) {
+    const uniqueTarget = getUniqueConstraintTarget(err);
+    if (uniqueTarget) {
+      const uniqueTargetLabel = uniqueTarget.join(' ');
+      const isLegacyPeriodConstraint =
+        (uniqueTarget.includes('professorProfileId') &&
+          uniqueTarget.includes('periodMonth') &&
+          uniqueTarget.includes('periodYear')) ||
+        uniqueTargetLabel.includes(
+          'ProfessorPayment_professorProfileId_periodMonth_periodYear_key'
+        );
+
       return NextResponse.json(
         {
-          error:
-            'Ya existe un pago registrado para ese profesor en ese período.',
+          error: isLegacyPeriodConstraint
+            ? 'La base de datos todavía tiene la restricción antigua de un pago por período. Aplicá las migraciones pendientes.'
+            : 'La factura ya tiene un pago asociado.',
         },
         { status: 409 }
       );
