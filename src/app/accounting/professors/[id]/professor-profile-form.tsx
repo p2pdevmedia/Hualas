@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { formatAmount, getAccountingUserProfileHref } from '@/lib/accounting';
@@ -38,13 +38,6 @@ type Payment = {
   } | null;
 };
 
-type Invoice = {
-  id: string;
-  originalName: string;
-  status: string;
-  createdAt: string;
-};
-
 type Props = {
   professorId: string;
   profile: {
@@ -56,16 +49,12 @@ type Props = {
     notes: string | null;
   } | null;
   payments: Payment[];
-  invoices: Invoice[];
-  invoiceApprovalDisabled?: boolean;
 };
 
 export default function ProfessorProfileForm({
   professorId,
   profile,
   payments: initialPayments,
-  invoices: initialInvoices,
-  invoiceApprovalDisabled = false,
 }: Props) {
   const router = useRouter();
 
@@ -116,77 +105,12 @@ export default function ProfessorProfileForm({
     }
   };
 
-  // New payment
-  const now = new Date();
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
-  const pendingInvoices = useMemo(
-    () => invoices.filter((invoice) => invoice.status === 'PENDING'),
-    [invoices]
-  );
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState(
-    pendingInvoices[0]?.id ?? ''
-  );
-  const [newMonth, setNewMonth] = useState(String(now.getMonth() + 1));
-  const [newYear, setNewYear] = useState(String(now.getFullYear()));
-  const [newAmount, setNewAmount] = useState(
-    profile ? (profile.monthlySalary / 100).toString() : ''
-  );
-  const [newNotes, setNewNotes] = useState('');
-  const [paymentSaving, setPaymentSaving] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
   const [confirmDeletePaymentId, setConfirmDeletePaymentId] = useState('');
 
-  const newAmountCents = useMemo(() => {
-    const p = Number(newAmount);
-    return Number.isFinite(p) ? Math.round(p * 100) : 0;
-  }, [newAmount]);
-
-  const createPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPaymentError('');
-    if (invoiceApprovalDisabled) {
-      setPaymentError(
-        'Aplica las migraciones pendientes antes de aprobar facturas.'
-      );
-      return;
-    }
-    if (!selectedInvoiceId) {
-      setPaymentError('SeleccionÃ¡ una factura pendiente para aprobar.');
-      return;
-    }
-    setPaymentSaving(true);
-    try {
-      const res = await fetch(`/api/professors/${professorId}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: selectedInvoiceId,
-          periodMonth: Number(newMonth),
-          periodYear: Number(newYear),
-          amount: newAmountCents,
-          notes: newNotes.trim() || null,
-        }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? 'No se pudo crear el pago');
-      setPayments((prev) => [body.payment as Payment, ...prev]);
-      setInvoices((prev) =>
-        prev.map((invoice) =>
-          invoice.id === selectedInvoiceId
-            ? { ...invoice, status: 'APPROVED' }
-            : invoice
-        )
-      );
-      setSelectedInvoiceId('');
-      setNewNotes('');
-      router.refresh();
-    } catch (err) {
-      setPaymentError(err instanceof Error ? err.message : 'Error al crear');
-    } finally {
-      setPaymentSaving(false);
-    }
-  };
+  useEffect(() => {
+    setPayments(initialPayments);
+  }, [initialPayments]);
 
   const updatePaymentStatus = async (
     paymentId: string,
@@ -206,15 +130,6 @@ export default function ProfessorProfileForm({
           : p
       )
     );
-    if (body.payment.invoice?.id) {
-      setInvoices((prev) =>
-        prev.map((invoice) =>
-          invoice.id === body.payment.invoice.id
-            ? { ...invoice, status: body.payment.invoice.status }
-            : invoice
-        )
-      );
-    }
     router.refresh();
   };
 
@@ -223,17 +138,7 @@ export default function ProfessorProfileForm({
       method: 'DELETE',
     });
     if (!res.ok) return;
-    const payment = payments.find((p) => p.id === paymentId);
     setPayments((prev) => prev.filter((p) => p.id !== paymentId));
-    if (payment?.invoice?.id) {
-      setInvoices((prev) =>
-        prev.map((invoice) =>
-          invoice.id === payment.invoice?.id
-            ? { ...invoice, status: 'PENDING' }
-            : invoice
-        )
-      );
-    }
     router.refresh();
   };
 
@@ -332,126 +237,6 @@ export default function ProfessorProfileForm({
 
           <Button type="submit" disabled={profileSaving}>
             {profileSaving ? 'Guardando...' : 'Guardar datos'}
-          </Button>
-        </form>
-      </section>
-
-      {/* Invoice approval */}
-      <section className="rounded-xl border p-6 space-y-4">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Aprobar factura</h3>
-          <p className="text-sm text-muted-foreground">
-            ContadurÃ­a aprueba una factura cargada por el profesor. TesorerÃ­a
-            marca la transferencia desde el historial.
-          </p>
-        </div>
-        {invoiceApprovalDisabled && (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            La aprobacion de facturas queda deshabilitada hasta aplicar las
-            migraciones pendientes de profesores.
-          </p>
-        )}
-        <form onSubmit={createPayment} className="space-y-4">
-          <label className="space-y-1 text-sm block">
-            <span className="font-medium">Factura pendiente</span>
-            <select
-              value={selectedInvoiceId}
-              onChange={(e) => setSelectedInvoiceId(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              disabled={invoiceApprovalDisabled || pendingInvoices.length === 0}
-              required
-            >
-              <option value="">Seleccionar factura</option>
-              {pendingInvoices.map((invoice) => (
-                <option key={invoice.id} value={invoice.id}>
-                  {invoice.originalName} -{' '}
-                  {new Date(invoice.createdAt).toLocaleDateString('es-AR')}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {pendingInvoices.length === 0 && (
-            <p className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-              No hay facturas pendientes. El profesor tiene que cargar una
-              factura antes de que contadurÃ­a pueda aprobar el pago.
-            </p>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Mes</span>
-              <select
-                value={newMonth}
-                onChange={(e) => setNewMonth(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Año</span>
-              <input
-                type="number"
-                min="2020"
-                max="2100"
-                value={newYear}
-                onChange={(e) => setNewYear(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
-            </label>
-
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Monto (pesos)</span>
-              <input
-                type="number"
-                min="1"
-                step="0.01"
-                value={newAmount}
-                onChange={(e) => setNewAmount(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
-              {newAmountCents > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {formatAmount(newAmountCents)}
-                </span>
-              )}
-            </label>
-          </div>
-
-          <label className="space-y-1 text-sm block">
-            <span className="font-medium">Notas</span>
-            <input
-              type="text"
-              value={newNotes}
-              onChange={(e) => setNewNotes(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Opcional"
-              maxLength={500}
-            />
-          </label>
-
-          {paymentError && (
-            <p className="text-sm text-destructive">{paymentError}</p>
-          )}
-
-          <Button
-            type="submit"
-            disabled={
-              invoiceApprovalDisabled ||
-              paymentSaving ||
-              pendingInvoices.length === 0
-            }
-          >
-            {paymentSaving ? 'Aprobando...' : 'Aprobar factura'}
           </Button>
         </form>
       </section>

@@ -160,8 +160,6 @@ export default async function ProfessorAccountingDetailPage({
         professorId={professor.id}
         profile={profile}
         payments={payments}
-        invoices={invoices}
-        invoiceApprovalDisabled={invoiceLoadWarning}
       />
 
       {invoiceLoadWarning && (
@@ -176,6 +174,9 @@ export default async function ProfessorAccountingDetailPage({
         professorId={professor.id}
         initialInvoices={invoices}
         canDelete={!invoiceLoadWarning}
+        canApprove={!invoiceLoadWarning}
+        approvalDisabled={invoiceLoadWarning}
+        defaultApprovalAmount={profile?.monthlySalary ?? 0}
         title="Facturas"
         description="Facturas cargadas por el profesor desde Mis pagos."
         emptyMessage="El profesor todavía no cargó facturas."
