@@ -11,6 +11,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
+import {
+  buildAccountingMovementReceiptUrl,
+  buildProfessorInvoiceFileUrl,
+} from '@/lib/blob-urls';
+import ReceiptPreviewLink from '@/components/accounting/receipt-preview-link';
 import MovementTabs from '../movement-tabs';
 
 type SearchParams = {
@@ -58,7 +63,7 @@ type ActivityProfessorExpense = Prisma.ProfessorPaymentGetPayload<{
     professorProfile: {
       include: { user: { select: { name: true; lastName: true } } };
     };
-    invoice: { select: { originalName: true } };
+    invoice: { select: { id: true; originalName: true } };
     createdBy: { select: { name: true; lastName: true } };
   };
 }>;
@@ -268,7 +273,7 @@ export default async function ActivityMovementsPage({
                 user: { select: { name: true, lastName: true } },
               },
             },
-            invoice: { select: { originalName: true } },
+            invoice: { select: { id: true, originalName: true } },
             createdBy: { select: { name: true, lastName: true } },
           },
           orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }],
@@ -283,6 +288,10 @@ export default async function ActivityMovementsPage({
       category: expense.category,
       description: expense.description,
       receipt: expense.receiptNumber ?? '—',
+      receiptHref: expense.receiptImage
+        ? buildAccountingMovementReceiptUrl(expense.id)
+        : null,
+      receiptTitle: `Comprobante de ${expense.category}`,
       createdBy: formatPersonName(expense.createdBy),
       amount: expense.amount,
     })),
@@ -296,6 +305,10 @@ export default async function ActivityMovementsPage({
           : 'Aprobada'
       }`,
       receipt: payment.invoice?.originalName ?? 'Factura',
+      receiptHref: payment.invoice
+        ? buildProfessorInvoiceFileUrl(payment.invoice.id)
+        : null,
+      receiptTitle: `Factura de ${formatPersonName(payment.professorProfile.user)}`,
       createdBy: formatPersonName(payment.createdBy),
       amount: payment.amount,
     })),
@@ -640,7 +653,13 @@ export default async function ActivityMovementsPage({
                           </td>
                           <td className="px-4 py-3">{expense.category}</td>
                           <td className="px-4 py-3">{expense.description}</td>
-                          <td className="px-4 py-3">{expense.receipt}</td>
+                          <td className="px-4 py-3">
+                            <ReceiptPreviewLink
+                              label={expense.receipt}
+                              href={expense.receiptHref}
+                              title={expense.receiptTitle}
+                            />
+                          </td>
                           <td className="px-4 py-3">{expense.createdBy}</td>
                           <td className="px-4 py-3 font-semibold">
                             {formatAmount(expense.amount)}

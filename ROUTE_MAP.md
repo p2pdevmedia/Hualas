@@ -134,6 +134,9 @@ require active `COUNTER` or `ADMIN`.
 - `/accounting/movements/activities` -> `src/app/accounting/movements/activities/page.tsx`
   - Activity cashbox. Shows participant income, manual activity expenses, and
     professor honorarios linked through professor invoice/payment activity.
+  - The expenses tab renders clickable receipts with an in-page modal preview
+    via `src/components/accounting/receipt-preview-link.tsx` when a receipt or
+    professor invoice file exists.
 - `/accounting/payments` -> `src/app/accounting/payments/page.tsx`
 - `/accounting/professors` -> `src/app/accounting/professors/page.tsx`
 - `/accounting/professors/[id]` -> `src/app/accounting/professors/[id]/page.tsx`
