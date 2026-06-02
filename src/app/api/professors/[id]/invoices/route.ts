@@ -9,40 +9,64 @@ import { notifyProfessorInvoiceCreated } from '@/lib/notifications/notification-
 import { findProfessorAssignedActivity } from '@/lib/professor-activities';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_CONTENT_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-  'image/heif',
-  'image/heic-sequence',
-  'image/heif-sequence',
+const CONTENT_TYPE_TO_EXTENSION = new Map([
+  ['application/pdf', '.pdf'],
+  ['image/jpeg', '.jpg'],
+  ['image/jpg', '.jpg'],
+  ['image/png', '.png'],
+  ['image/webp', '.webp'],
+  ['image/heic', '.heic'],
+  ['image/heif', '.heif'],
+  ['image/heic-sequence', '.heic'],
+  ['image/heif-sequence', '.heif'],
+]);
+const EXTENSION_TO_CONTENT_TYPE = new Map([
+  ['.pdf', 'application/pdf'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.jpe', 'image/jpeg'],
+  ['.jfif', 'image/jpeg'],
+  ['.png', 'image/png'],
+  ['.webp', 'image/webp'],
+  ['.heic', 'image/heic'],
+  ['.heif', 'image/heif'],
 ]);
 const BLOB_CONFIGURATION_ERROR =
   'El almacenamiento de facturas no está configurado. Falta configurar BLOB_READ_WRITE_TOKEN.';
 const BLOB_UPLOAD_ERROR =
   'No se pudo guardar la factura en el almacenamiento. Revisá la configuración de Vercel Blob.';
 
-function getSafeExtension(fileName: string, contentType: string) {
-  const ext = fileName.includes('.')
+function getFileExtension(fileName: string) {
+  return fileName.includes('.')
     ? fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
     : '';
+}
+
+function normalizeInvoiceContentType(file: File) {
+  const contentType = file.type.toLowerCase();
+  if (contentType === 'image/jpg') return 'image/jpeg';
+  if (CONTENT_TYPE_TO_EXTENSION.has(contentType)) return contentType;
+
+  const inferredType = EXTENSION_TO_CONTENT_TYPE.get(
+    getFileExtension(file.name)
+  );
   if (
-    ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'].includes(ext)
+    inferredType &&
+    (!contentType ||
+      contentType === 'application/octet-stream' ||
+      contentType === 'binary/octet-stream' ||
+      contentType.startsWith('image/'))
   ) {
-    return ext;
+    return inferredType;
   }
-  if (contentType === 'application/pdf') return '.pdf';
-  if (contentType === 'image/png') return '.png';
-  if (contentType === 'image/webp') return '.webp';
-  if (contentType === 'image/heic' || contentType === 'image/heic-sequence') {
-    return '.heic';
-  }
-  if (contentType === 'image/heif' || contentType === 'image/heif-sequence') {
-    return '.heif';
-  }
-  return '.jpg';
+
+  return null;
+}
+
+function getSafeExtension(fileName: string, contentType: string) {
+  const ext = getFileExtension(fileName);
+  if (EXTENSION_TO_CONTENT_TYPE.get(ext) === contentType) return ext;
+  return CONTENT_TYPE_TO_EXTENSION.get(contentType) ?? '.jpg';
 }
 
 function serializeInvoice(invoice: {
@@ -172,7 +196,8 @@ export async function POST(
     );
   }
 
-  if (!ALLOWED_CONTENT_TYPES.has(file.type)) {
+  const invoiceContentType = normalizeInvoiceContentType(file);
+  if (!invoiceContentType) {
     return NextResponse.json(
       { error: 'La factura debe ser PDF, JPG, PNG, WebP, HEIC o HEIF' },
       { status: 400 }
@@ -196,13 +221,13 @@ export async function POST(
     );
   }
 
-  const ext = getSafeExtension(file.name, file.type);
+  const ext = getSafeExtension(file.name, invoiceContentType);
   const pathname = `professor-invoices/${params.id}/${crypto.randomUUID()}${ext}`;
   let blob: Awaited<ReturnType<typeof put>>;
   try {
     blob = await put(pathname, file, {
       access: 'private',
-      contentType: file.type,
+      contentType: invoiceContentType,
     });
   } catch (err) {
     console.error('[professor-invoices] failed to upload invoice blob', err);
@@ -216,7 +241,7 @@ export async function POST(
         professorId: params.id,
         activityId: activity.id,
         originalName: file.name || `factura${ext}`,
-        contentType: file.type,
+        contentType: invoiceContentType,
         size: file.size,
         blobUrl: blob.url,
       },

@@ -166,6 +166,72 @@ describe('professor invoice uploads', () => {
     );
   });
 
+  it('accepts Samsung Galaxy JPG photos that report image/jpg', async () => {
+    const { POST } = await import('@/app/api/professors/[id]/invoices/route');
+
+    const response = await POST(
+      invoiceRequest(
+        new File(['jpg'], 'factura-samsung.jpg', {
+          type: 'image/jpg',
+        })
+      ),
+      {
+        params: { id: 'professor_1' },
+      }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockBlobPut).toHaveBeenCalledWith(
+      expect.stringMatching(/^professor-invoices\/professor_1\/.+\.jpg$/),
+      expect.any(File),
+      expect.objectContaining({
+        access: 'private',
+        contentType: 'image/jpeg',
+      })
+    );
+    expect(mockProfessorInvoiceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contentType: 'image/jpeg',
+          originalName: 'factura-samsung.jpg',
+        }),
+      })
+    );
+  });
+
+  it('accepts Android gallery JPG photos with generic file content type', async () => {
+    const { POST } = await import('@/app/api/professors/[id]/invoices/route');
+
+    const response = await POST(
+      invoiceRequest(
+        new File(['jpg'], 'factura-galeria.jpg', {
+          type: 'application/octet-stream',
+        })
+      ),
+      {
+        params: { id: 'professor_1' },
+      }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockBlobPut).toHaveBeenCalledWith(
+      expect.stringMatching(/^professor-invoices\/professor_1\/.+\.jpg$/),
+      expect.any(File),
+      expect.objectContaining({
+        access: 'private',
+        contentType: 'image/jpeg',
+      })
+    );
+    expect(mockProfessorInvoiceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contentType: 'image/jpeg',
+          originalName: 'factura-galeria.jpg',
+        }),
+      })
+    );
+  });
+
   it('requires selecting an assigned activity before uploading', async () => {
     const { POST } = await import('@/app/api/professors/[id]/invoices/route');
 

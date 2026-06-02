@@ -104,7 +104,8 @@ route, update this file in the same change.
   - Invoice upload requires selecting one assigned activity; when there is only
     one assigned activity, it is preselected.
   - Invoice upload accepts PDFs and mobile gallery images, including HEIC/HEIF
-    photos from iOS.
+    photos from iOS and Samsung/Android JPEGs that report `image/jpg` or a
+    generic file content type.
 - `/chat` -> `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`.
 - `/notifications` -> `src/app/notifications/page.tsx`
