@@ -26,8 +26,9 @@ route, update this file in the same change.
     `public/documentos/pequenos-habitantes-de-la-tierra.pdf` and the
     client-side book viewer in
     `src/app/habitantes-de-la-tierra/documentary-book-viewer.tsx`.
-  - The viewer renders one page at a time, preloads the next PDF page, and lets
-    visitors click the right or left half of the page to advance or go back.
+  - The viewer renders one page at a time, loads all PDF pages into its cache
+    when the document opens, and lets visitors click the right or left half of
+    the page to advance or go back.
 - `/documental-pequenos-habitantes` -> `src/app/documental-pequenos-habitantes/page.tsx`
   - Permanent redirect to `/habitantes-de-la-tierra` for older links.
 - `/faq` -> `src/app/faq/page.tsx`

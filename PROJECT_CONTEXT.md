@@ -104,9 +104,9 @@ Database integrity notes:
 - Public users can see the home/contact pages and auth pages.
 - Public users can open `/habitantes-de-la-tierra` from the home page to read
   the local `Pequeños habitantes de la tierra` PDF as a one-page-at-a-time
-  book viewer. The viewer preloads the next page and supports page turns from
-  the arrow buttons, keyboard arrows, and clicks on the right or left half of
-  the visible page.
+  book viewer. The viewer loads all PDF pages into its cache when the document
+  opens and supports page turns from the arrow buttons, keyboard arrows, and
+  clicks on the right or left half of the visible page.
 - Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - Logged-in professors and admins assign registered users to activity groups.

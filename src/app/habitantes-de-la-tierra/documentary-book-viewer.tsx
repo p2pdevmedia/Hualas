@@ -221,14 +221,19 @@ export function DocumentaryBookViewer({ pdfUrl }: DocumentaryBookViewerProps) {
   );
 
   useEffect(() => {
-    if (loadState.status !== 'ready' || currentPage >= loadState.pageCount) {
+    if (loadState.status !== 'ready') {
       return;
     }
 
-    loadPage(currentPage + 1).catch(() => {
-      pageCacheRef.current.delete(currentPage + 1);
+    Array.from(
+      { length: loadState.pageCount },
+      (_, index) => index + 1
+    ).forEach((pageNumber) => {
+      loadPage(pageNumber).catch(() => {
+        pageCacheRef.current.delete(pageNumber);
+      });
     });
-  }, [currentPage, loadPage, loadState]);
+  }, [loadPage, loadState]);
 
   const progressLabel = useMemo(() => {
     if (loadState.status === 'loading') {

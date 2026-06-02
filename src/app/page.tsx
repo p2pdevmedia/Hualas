@@ -186,7 +186,6 @@ const mapEmbedUrl =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47685.15!2d-71.3586!3d-40.1569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9610be21a87b3b29%3A0x3f3d5fc3f3da0c0!2sSan%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n!5e0!3m2!1ses!2sar!4v1';
 
 const documentaryYoutubeId = 'r2-qBpH6FHg';
-const documentaryYoutubeUrl = `https://www.youtube.com/watch?v=${documentaryYoutubeId}`;
 const documentaryYoutubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${documentaryYoutubeId}`;
 const documentaryPageUrl = '/habitantes-de-la-tierra';
 export default async function Home() {
@@ -569,14 +568,6 @@ export default async function Home() {
               >
                 Ver más
               </Link>
-              <a
-                href={documentaryYoutubeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex rounded-md border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
-              >
-                Abrir video
-              </a>
             </div>
           </div>
 

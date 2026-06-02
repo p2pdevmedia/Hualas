@@ -123,6 +123,27 @@ describe('DocumentaryBookViewer', () => {
     expect(mockPdf.getPage).toHaveBeenCalledWith(1);
   });
 
+  it('loads every PDF page as soon as the document is ready', async () => {
+    mockPdf = createMockPdf(4);
+    mockGetDocument.mockReturnValue({
+      promise: Promise.resolve(mockPdf),
+      destroy: jest.fn(),
+    });
+
+    await act(async () => {
+      root.render(
+        <DocumentaryBookViewer pdfUrl="/documentos/pequenos-habitantes-de-la-tierra.pdf" />
+      );
+    });
+    await flushPromises();
+
+    expect(container.textContent).toContain('Página 1 de 4');
+    expect(mockPdf.getPage).toHaveBeenCalledTimes(4);
+    expect(
+      mockPdf.getPage.mock.calls.map(([pageNumber]) => pageNumber)
+    ).toEqual([1, 2, 3, 4]);
+  });
+
   it('uses page halves for next and previous navigation', async () => {
     await act(async () => {
       root.render(
