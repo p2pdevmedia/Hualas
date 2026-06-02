@@ -125,6 +125,9 @@ All `/accounting/*` pages are guarded by `src/app/accounting/layout.tsx` and
 require active `COUNTER` or `ADMIN`.
 
 - `/accounting` -> `src/app/accounting/page.tsx`
+  - Accounting dashboard summary. The unified movements table includes manual
+    movements, manual payments, Mercado Pago payments, and transferred
+    professor invoices via `src/lib/accounting-dashboard.ts`.
 - `/accounting/social-fee` -> `src/app/accounting/social-fee/page.tsx`
 - `/accounting/debt-by-family` -> `src/app/accounting/debt-by-family/page.tsx`
 - `/accounting/manual-payments` -> `src/app/accounting/manual-payments/page.tsx`

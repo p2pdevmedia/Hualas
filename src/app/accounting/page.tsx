@@ -26,6 +26,10 @@ import {
   buildManualPaymentHistoryActionHref,
   manualPaymentHistoryStatusLabel,
 } from '@/lib/accounting-manual-payment-history';
+import {
+  buildProfessorPaymentDashboardEntries,
+  type RecentAccountingEntry,
+} from '@/lib/accounting-dashboard';
 import MonthCloseButton from './month-close-button';
 
 function startOfMonth(date: Date) {
@@ -42,22 +46,6 @@ function isPendingAccountingDashboardMigrationError(error: unknown) {
     ['P2021', 'P2022'].includes(error.code)
   );
 }
-
-type RecentAccountingEntry = {
-  id: string;
-  date: Date;
-  origin: 'MOVEMENT' | 'MANUAL_PAYMENT' | 'MP_PAYMENT';
-  type: 'INCOME' | 'EXPENSE';
-  category: string;
-  description: string;
-  amount: number;
-  receiptLabel: string | null;
-  receiptHref: string | null;
-  actionLabel: string;
-  actionHref: string;
-  personHref?: string | null;
-  paymentStatus?: string | null;
-};
 
 export default async function AccountingDashboardPage({
   searchParams,
@@ -82,6 +70,7 @@ export default async function AccountingDashboardPage({
     verifiedManualPaymentsCount,
     pendingManualPaymentsCount,
     monthProfessorPayments,
+    recentProfessorPayments,
     currentMonthClose,
   ] = await Promise.all([
     prisma.accountingMovement.findMany({
@@ -192,6 +181,37 @@ export default async function AccountingDashboardPage({
           professorPaymentsUnavailable = true;
           console.error(
             'Professor payment totals are unavailable. Run the pending Prisma migrations.',
+            error
+          );
+          return [];
+        }
+
+        throw error;
+      }),
+    prisma.professorPayment
+      .findMany({
+        where: {
+          status: 'PAID',
+          paidAt: { not: null },
+          invoice: { is: { status: 'TRANSFERRED' } },
+        },
+        orderBy: [{ paidAt: 'desc' }, { updatedAt: 'desc' }],
+        take: 10,
+        include: {
+          professorProfile: {
+            include: {
+              user: { select: { id: true, name: true, lastName: true } },
+            },
+          },
+          invoice: { select: { id: true, originalName: true } },
+          activity: { select: { name: true } },
+        },
+      })
+      .catch((error) => {
+        if (isPendingAccountingDashboardMigrationError(error)) {
+          professorPaymentsUnavailable = true;
+          console.error(
+            'Recent professor payment movements are unavailable. Run the pending Prisma migrations.',
             error
           );
           return [];
@@ -323,11 +343,15 @@ export default async function AccountingDashboardPage({
         : getAccountingUserProfileHref(payment.user.id),
     })
   );
+  const recentProfessorPaymentEntries = buildProfessorPaymentDashboardEntries(
+    recentProfessorPayments
+  );
   const searchTerm = searchParams?.q?.trim() ?? '';
   const recentAccountingEntries: RecentAccountingEntry[] = [
     ...recentMovementEntries,
     ...recentManualPaymentEntries,
     ...recentMpPaymentEntries,
+    ...recentProfessorPaymentEntries,
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .filter((entry) =>
@@ -444,8 +468,8 @@ export default async function AccountingDashboardPage({
                 Movimientos
               </h2>
               <p className="text-sm text-muted-foreground">
-                Movimientos manuales, pagos manuales y pagos MP en una sola
-                vista.
+                Movimientos manuales, pagos manuales, pagos MP y facturas de
+                profesores transferidas en una sola vista.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -506,7 +530,9 @@ export default async function AccountingDashboardPage({
                           ? 'Movimiento manual'
                           : entry.origin === 'MANUAL_PAYMENT'
                             ? 'Pago manual'
-                            : 'Mercado Pago'}
+                            : entry.origin === 'MP_PAYMENT'
+                              ? 'Mercado Pago'
+                              : 'Factura profesor'}
                       </td>
                       <td className="py-3 pr-4">
                         <span
