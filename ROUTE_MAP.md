@@ -139,6 +139,10 @@ require active `COUNTER` or `ADMIN`.
     professor invoice file exists.
 - `/accounting/payments` -> `src/app/accounting/payments/page.tsx`
 - `/accounting/professors` -> `src/app/accounting/professors/page.tsx`
+  - Professor accounting list. Search uses
+    `src/app/accounting/professors/professor-search.tsx` to update the `q`
+    query param as each letter is typed, refreshing results without requiring a
+    submit button.
 - `/accounting/professors/[id]` -> `src/app/accounting/professors/[id]/page.tsx`
   - Professor banking profile, invoice approval, and transfer tracking.
   - Invoice approval is opened from each pending invoice status in the invoice

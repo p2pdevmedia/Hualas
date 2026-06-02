@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import PersonLink from '@/components/accounting/person-link';
 import { buildAccountingSimilarityCondition } from '@/lib/accounting-search';
+import ProfessorSearch from './professor-search';
 
 type SearchParams = {
   q?: string;
@@ -106,23 +107,7 @@ export default async function ProfessorsAccountingPage({
           </p>
         </div>
       </div>
-      <form className="rounded-2xl border bg-card p-4 shadow-sm">
-        <label className="space-y-1 text-sm">
-          <span className="font-medium">Buscar</span>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Nombre, apellido, actividad o mail"
-              className="w-full rounded-md border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <Button type="submit" variant="outline">
-              Buscar
-            </Button>
-          </div>
-        </label>
-      </form>
+      <ProfessorSearch initialQuery={q} />
 
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-sm">
