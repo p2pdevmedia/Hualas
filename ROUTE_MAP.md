@@ -103,6 +103,8 @@ route, update this file in the same change.
   - Professor self-view for banking data, invoice upload/status, and payment history.
   - Invoice upload requires selecting one assigned activity; when there is only
     one assigned activity, it is preselected.
+  - Invoice upload accepts PDFs and mobile gallery images, including HEIC/HEIF
+    photos from iOS.
 - `/chat` -> `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`.
 - `/notifications` -> `src/app/notifications/page.tsx`

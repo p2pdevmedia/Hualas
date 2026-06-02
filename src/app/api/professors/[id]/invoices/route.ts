@@ -14,6 +14,10 @@ const ALLOWED_CONTENT_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
 ]);
 const BLOB_CONFIGURATION_ERROR =
   'El almacenamiento de facturas no está configurado. Falta configurar BLOB_READ_WRITE_TOKEN.';
@@ -24,10 +28,20 @@ function getSafeExtension(fileName: string, contentType: string) {
   const ext = fileName.includes('.')
     ? fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
     : '';
-  if (['.pdf', '.jpg', '.jpeg', '.png', '.webp'].includes(ext)) return ext;
+  if (
+    ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'].includes(ext)
+  ) {
+    return ext;
+  }
   if (contentType === 'application/pdf') return '.pdf';
   if (contentType === 'image/png') return '.png';
   if (contentType === 'image/webp') return '.webp';
+  if (contentType === 'image/heic' || contentType === 'image/heic-sequence') {
+    return '.heic';
+  }
+  if (contentType === 'image/heif' || contentType === 'image/heif-sequence') {
+    return '.heif';
+  }
   return '.jpg';
 }
 
@@ -160,7 +174,7 @@ export async function POST(
 
   if (!ALLOWED_CONTENT_TYPES.has(file.type)) {
     return NextResponse.json(
-      { error: 'La factura debe ser PDF, JPG, PNG o WebP' },
+      { error: 'La factura debe ser PDF, JPG, PNG, WebP, HEIC o HEIF' },
       { status: 400 }
     );
   }

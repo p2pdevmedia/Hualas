@@ -342,7 +342,7 @@ export default function ProfessorInvoicesPanel({
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf,image/jpeg,image/png,image/webp"
+          accept="application/pdf,image/*"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];

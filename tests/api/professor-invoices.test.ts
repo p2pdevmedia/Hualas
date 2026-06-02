@@ -133,6 +133,39 @@ describe('professor invoice uploads', () => {
     expect(body.invoice.activityName).toBe('Escalada adultos');
   });
 
+  it('accepts HEIC gallery photos as invoice images', async () => {
+    const { POST } = await import('@/app/api/professors/[id]/invoices/route');
+
+    const response = await POST(
+      invoiceRequest(
+        new File(['heic'], 'factura.heic', {
+          type: 'image/heic',
+        })
+      ),
+      {
+        params: { id: 'professor_1' },
+      }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockBlobPut).toHaveBeenCalledWith(
+      expect.stringMatching(/^professor-invoices\/professor_1\/.+\.heic$/),
+      expect.any(File),
+      expect.objectContaining({
+        access: 'private',
+        contentType: 'image/heic',
+      })
+    );
+    expect(mockProfessorInvoiceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contentType: 'image/heic',
+          originalName: 'factura.heic',
+        }),
+      })
+    );
+  });
+
   it('requires selecting an assigned activity before uploading', async () => {
     const { POST } = await import('@/app/api/professors/[id]/invoices/route');
 
