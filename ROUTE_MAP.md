@@ -20,8 +20,16 @@ route, update this file in the same change.
   - Android APK download page. Static APK: `public/downloads/hualas-mobile.apk`.
 - `/contact` -> `src/app/contact/page.tsx`
   - Related component: `src/app/contact/contact-form.tsx`.
+- `/habitantes-de-la-tierra` -> `src/app/habitantes-de-la-tierra/page.tsx`
+  - Public visual story page for `Pequeños habitantes de la tierra`.
+  - Uses the local PDF asset
+    `public/documentos/pequenos-habitantes-de-la-tierra.pdf` and the
+    client-side book viewer in
+    `src/app/habitantes-de-la-tierra/documentary-book-viewer.tsx`.
+  - The viewer renders one page at a time, preloads the next PDF page, and lets
+    visitors click the right or left half of the page to advance or go back.
 - `/documental-pequenos-habitantes` -> `src/app/documental-pequenos-habitantes/page.tsx`
-  - Documentary detail page and book/PDF viewer.
+  - Permanent redirect to `/habitantes-de-la-tierra` for older links.
 - `/faq` -> `src/app/faq/page.tsx`
   - Public/help page with role, activity, and payment flow guidance.
 - `/privacy-policy` -> `src/app/privacy-policy/page.tsx`
@@ -355,10 +363,6 @@ Native iPhone and Android clients use bearer-token auth through these
 ### Mercado Pago API
 
 - `GET, POST` `/api/mercadopago/notifications` -> `src/app/api/mercadopago/notifications/route.ts`
-
-### Public / Content API
-
-- `GET` `/api/documental-pequenos-habitantes/pdf` -> `src/app/api/documental-pequenos-habitantes/pdf/route.ts`
 
 ---
 

@@ -19,6 +19,8 @@ The application helps club operators manage:
 - notifications and mobile push devices
 - professor banking data, invoices, and payments
 - site branding and public information
+- public visual story content, including the local PDF/book viewer for
+  `Pequeños habitantes de la tierra` at `/habitantes-de-la-tierra`
 
 ## Stack
 
@@ -100,6 +102,11 @@ Database integrity notes:
 ## Access Rules
 
 - Public users can see the home/contact pages and auth pages.
+- Public users can open `/habitantes-de-la-tierra` from the home page to read
+  the local `Pequeños habitantes de la tierra` PDF as a one-page-at-a-time
+  book viewer. The viewer preloads the next page and supports page turns from
+  the arrow buttons, keyboard arrows, and clicks on the right or left half of
+  the visible page.
 - Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - Logged-in professors and admins assign registered users to activity groups.

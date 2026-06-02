@@ -188,8 +188,7 @@ const mapEmbedUrl =
 const documentaryYoutubeId = 'r2-qBpH6FHg';
 const documentaryYoutubeUrl = `https://www.youtube.com/watch?v=${documentaryYoutubeId}`;
 const documentaryYoutubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${documentaryYoutubeId}`;
-const documentaryPdfFileId = '1xEVM3yeRTx1fCKqcqwGGn_pEFXWIBHIp';
-const documentaryPdfUrl = `https://drive.google.com/file/d/${documentaryPdfFileId}/view?usp=sharing`;
+const documentaryPageUrl = '/habitantes-de-la-tierra';
 export default async function Home() {
   let activities: Awaited<
     ReturnType<typeof listActivitiesWithParticipantCount>
@@ -564,14 +563,12 @@ export default async function Home() {
               que habitamos.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a
-                href={documentaryPdfUrl}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                href={documentaryPageUrl}
                 className="inline-flex rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
                 Ver más
-              </a>
+              </Link>
               <a
                 href={documentaryYoutubeUrl}
                 target="_blank"

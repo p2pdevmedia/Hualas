@@ -51,3 +51,37 @@
     font-family: var(--font-heading);
   }
 }
+
+@keyframes pageTurnNext {
+  0% {
+    transform: rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+
+  45% {
+    transform: rotateY(-16deg) translateX(10px);
+    filter: brightness(0.94);
+  }
+
+  100% {
+    transform: rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes pageTurnPrevious {
+  0% {
+    transform: rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+
+  45% {
+    transform: rotateY(16deg) translateX(-10px);
+    filter: brightness(0.94);
+  }
+
+  100% {
+    transform: rotateY(0deg) translateX(0);
+    filter: brightness(1);
+  }
+}

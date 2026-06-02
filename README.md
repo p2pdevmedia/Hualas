@@ -13,6 +13,10 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 `pnpm dev` and `pnpm build` run `scripts/copy-pdf-worker.mjs` before Next.js so
 the documentary PDF viewer has the worker asset it expects.
 
+The public visual story page `/habitantes-de-la-tierra` serves the documentary
+PDF from `public/documentos/pequenos-habitantes-de-la-tierra.pdf`; it should not
+depend on Google Drive at runtime.
+
 ## Native Apps
 
 - iPhone: native SwiftUI app in `iphone/HualasMobile`; setup is in `iphone/README.md`.
