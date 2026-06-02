@@ -23,7 +23,7 @@ describe('ReceiptPreviewLink', () => {
     container.remove();
   });
 
-  it('opens the receipt inside a modal preview', () => {
+  it('opens the receipt in a new browser tab', () => {
     act(() => {
       root.render(
         <ReceiptPreviewLink
@@ -34,26 +34,16 @@ describe('ReceiptPreviewLink', () => {
       );
     });
 
-    const button = container.querySelector<HTMLButtonElement>('button');
-    expect(button?.textContent).toContain('Factura junio');
-
-    act(() => {
-      button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    const dialog = container.querySelector('[role="dialog"]');
-    const iframe = container.querySelector<HTMLIFrameElement>('iframe');
-    const externalLink =
-      container.querySelector<HTMLAnchorElement>('a[target="_blank"]');
-
-    expect(dialog).not.toBeNull();
-    expect(iframe?.getAttribute('src')).toBe(
+    const link = container.querySelector<HTMLAnchorElement>('a');
+    expect(link?.textContent).toContain('Factura junio');
+    expect(link?.getAttribute('href')).toBe(
       '/api/accounting/movements/movement_1/receipt'
     );
-    expect(iframe?.getAttribute('title')).toBe('Comprobante de egreso');
-    expect(externalLink?.getAttribute('href')).toBe(
-      '/api/accounting/movements/movement_1/receipt'
-    );
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toBe('noreferrer');
+    expect(link?.getAttribute('aria-label')).toBe('Comprobante de egreso');
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector('iframe')).toBeNull();
   });
 
   it('renders plain text when the receipt has no preview file', () => {
@@ -61,7 +51,7 @@ describe('ReceiptPreviewLink', () => {
       root.render(<ReceiptPreviewLink label="R-001" title="Comprobante" />);
     });
 
-    expect(container.querySelector('button')).toBeNull();
+    expect(container.querySelector('a')).toBeNull();
     expect(container.textContent).toContain('R-001');
   });
 });
