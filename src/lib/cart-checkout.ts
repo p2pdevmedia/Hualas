@@ -559,9 +559,7 @@ export async function buildCartQuote({
     });
     participantByKey.set(getSocialFeeParticipantKey(participant), {
       participant,
-      label:
-        item.targetLabel ??
-        (childId ? 'Hijo/a seleccionado' : 'Titular'),
+      label: item.targetLabel ?? (childId ? 'Hijo/a seleccionado' : 'Titular'),
     });
   }
 

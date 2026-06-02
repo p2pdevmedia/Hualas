@@ -34,21 +34,24 @@ export async function GET(req: Request) {
             notes: profile.notes,
           }
         : null,
-      payments: profile?.payments.map((payment) => ({
-        id: payment.id,
-        kind: 'PROFESSOR',
-        periodMonth: payment.periodMonth,
-        periodYear: payment.periodYear,
-        amount: payment.amount,
-        amountLabel: formatAmount(payment.amount),
-        status: payment.status,
-        paidAt: formatMobileDate(payment.paidAt),
-        notes: payment.notes,
-      })) ?? [],
+      payments:
+        profile?.payments.map((payment) => ({
+          id: payment.id,
+          kind: 'PROFESSOR',
+          periodMonth: payment.periodMonth,
+          periodYear: payment.periodYear,
+          amount: payment.amount,
+          amountLabel: formatAmount(payment.amount),
+          status: payment.status,
+          paidAt: formatMobileDate(payment.paidAt),
+          notes: payment.notes,
+        })) ?? [],
     });
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(session.userId);
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
+    session.userId
+  );
   const [activityPayments, manualPayments] = await Promise.all([
     prisma.activityParticipant.findMany({
       where: {
@@ -112,8 +115,11 @@ export async function GET(req: Request) {
         id: payment.id,
         kind: 'MANUAL_TRANSFER',
         status: payment.status,
-        date: formatMobileDate(payment.paidAt ?? payment.updatedAt ?? payment.createdAt),
-        title: activityNames.length > 0 ? activityNames.join(', ') : 'Sin actividad',
+        date: formatMobileDate(
+          payment.paidAt ?? payment.updatedAt ?? payment.createdAt
+        ),
+        title:
+          activityNames.length > 0 ? activityNames.join(', ') : 'Sin actividad',
         subtitle: null,
         reference: null,
         amount: payment.amount,

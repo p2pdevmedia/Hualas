@@ -2,10 +2,7 @@ import { compare } from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import {
-  createMobileSession,
-  getMobileAllowedRoles,
-} from '@/lib/mobile-auth';
+import { createMobileSession, getMobileAllowedRoles } from '@/lib/mobile-auth';
 import { loginSchema } from '@/lib/validations/auth';
 
 const mobileLoginSchema = loginSchema.extend({
@@ -34,12 +31,18 @@ export async function POST(req: Request) {
   });
 
   if (!user || !user.password || !user.isActive) {
-    return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Credenciales inválidas' },
+      { status: 401 }
+    );
   }
 
   const passwordMatches = await compare(parsed.data.password, user.password);
   if (!passwordMatches) {
-    return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Credenciales inválidas' },
+      { status: 401 }
+    );
   }
 
   const allowedRoles = getMobileAllowedRoles(user);

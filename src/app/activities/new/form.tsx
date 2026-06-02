@@ -246,7 +246,9 @@ export default function CreateActivityForm({
                 );
               }
               if (!draft.groupTempId) {
-                throw new Error(`Seleccioná un grupo en la sesión ${index + 1}`);
+                throw new Error(
+                  `Seleccioná un grupo en la sesión ${index + 1}`
+                );
               }
 
               return {

@@ -76,9 +76,11 @@ describe('mobile profile route', () => {
       socialFeeActive: true,
     });
 
-    const response = await GET(new Request('http://localhost/api/mobile/profile', {
-      headers: { authorization: 'Bearer token' },
-    }));
+    const response = await GET(
+      new Request('http://localhost/api/mobile/profile', {
+        headers: { authorization: 'Bearer token' },
+      })
+    );
 
     expect(response.status).toBe(200);
     const payload = await response.json();

@@ -303,8 +303,7 @@ export default function ChatClient() {
       activeRole === 'COUNTER';
     const isProfessor =
       roles.includes('PROFESSOR') || activeRole === 'PROFESSOR';
-    const isMember =
-      roles.includes('MEMBER') || activeRole === 'MEMBER';
+    const isMember = roles.includes('MEMBER') || activeRole === 'MEMBER';
     if (canMessageAnyUser || (!isProfessor && !isMember)) {
       setProfessorContext(null);
       return;

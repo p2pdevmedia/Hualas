@@ -6,14 +6,18 @@ jest.mock('bcrypt', () => ({
   compare: jest.fn(),
 }));
 
-const mockMobileSessionCreate = jest.fn().mockImplementation(async ({ data }: { data: { userId: string; appRole: string } }) => ({
-  id: 'mobile_session_1',
-  userId: data.userId,
-  appRole: data.appRole,
-  expiresAt: new Date('2026-06-01T00:00:00.000Z'),
-  createdAt: new Date('2026-05-07T00:00:00.000Z'),
-  lastUsedAt: new Date('2026-05-07T00:00:00.000Z'),
-}));
+const mockMobileSessionCreate = jest
+  .fn()
+  .mockImplementation(
+    async ({ data }: { data: { userId: string; appRole: string } }) => ({
+      id: 'mobile_session_1',
+      userId: data.userId,
+      appRole: data.appRole,
+      expiresAt: new Date('2026-06-01T00:00:00.000Z'),
+      createdAt: new Date('2026-05-07T00:00:00.000Z'),
+      lastUsedAt: new Date('2026-05-07T00:00:00.000Z'),
+    })
+  );
 
 const mockUserUpdate = jest.fn().mockResolvedValue({});
 const mockAuditCreate = jest.fn().mockResolvedValue({});

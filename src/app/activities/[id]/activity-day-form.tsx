@@ -77,9 +77,7 @@ export default function ActivityDayForm({
   redirectOnSave,
 }: ActivityDayFormProps) {
   const router = useRouter();
-  const [date, setDate] = useState(
-    buildInitialState(initialValues).date
-  );
+  const [date, setDate] = useState(buildInitialState(initialValues).date);
   const [schedule, setSchedule] = useState(
     buildInitialState(initialValues).schedule
   );

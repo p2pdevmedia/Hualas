@@ -494,7 +494,8 @@ async function main() {
           ],
           ...(status === 'REJECTED'
             ? {
-                accountantComments: 'El comprobante no permite verificar el monto.',
+                accountantComments:
+                  'El comprobante no permite verificar el monto.',
                 reviewedAt: atDay(13, 16).toISOString(),
                 reviewedBy: 'Florencia Cuentas',
               }
@@ -583,7 +584,13 @@ async function main() {
     }),
   ]);
 
-  async function createSocialFeeOrder({ responsible, status, month, year, paidAt }) {
+  async function createSocialFeeOrder({
+    responsible,
+    status,
+    month,
+    year,
+    paidAt,
+  }) {
     const total = pesos(18000);
     const order = await prisma.order.create({
       data: {

@@ -12,7 +12,10 @@ import {
 } from '@/lib/mercadopago';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
-import { checkChildProfile, checkUserProfile } from '@/lib/participant-profile-check';
+import {
+  checkChildProfile,
+  checkUserProfile,
+} from '@/lib/participant-profile-check';
 import { prisma } from '@/lib/prisma';
 
 type CartItem = {
@@ -102,7 +105,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
     }
 
-    paymentMethod = (payload as { paymentMethod?: unknown } | null)?.paymentMethod;
+    paymentMethod = (payload as { paymentMethod?: unknown } | null)
+      ?.paymentMethod;
     items = Array.isArray((payload as { items?: unknown } | null)?.items)
       ? ((payload as { items: CartItem[] }).items ?? [])
       : [];

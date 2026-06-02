@@ -46,9 +46,7 @@ export default function ContactForm() {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center py-12 space-y-3">
         <div className="text-4xl">✉</div>
-        <h3 className="font-heading text-xl font-semibold">
-          Email preparado
-        </h3>
+        <h3 className="font-heading text-xl font-semibold">Email preparado</h3>
         <p className="text-sm text-muted-foreground font-body">
           Se abrió tu aplicación de correo para enviarlo a {CLUB_CONTACT_EMAIL}.
         </p>

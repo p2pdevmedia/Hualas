@@ -148,9 +148,8 @@ async function main() {
   }
 
   const deleted = await prisma.$transaction(async (tx) => {
-    const deletedActivityDayAttendances = await tx.activityDayAttendance.deleteMany(
-      {}
-    );
+    const deletedActivityDayAttendances =
+      await tx.activityDayAttendance.deleteMany({});
 
     const deletedActivityGroupMembers = await tx.activityGroupMember.deleteMany(
       {}
@@ -212,10 +211,8 @@ async function main() {
     JSON.stringify(
       {
         deleted: {
-          activityDayAttendances:
-            deleted.deletedActivityDayAttendances.count,
-          activityParticipantReports:
-            deleted.deletedActivityParticipantReports,
+          activityDayAttendances: deleted.deletedActivityDayAttendances.count,
+          activityParticipantReports: deleted.deletedActivityParticipantReports,
           activityGroupMembers: deleted.deletedActivityGroupMembers.count,
           activityParticipantPayments:
             deleted.deletedActivityParticipantPayments.count,

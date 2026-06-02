@@ -55,12 +55,18 @@ jest.mock('mercadopago', () => {
 
 jest.mock('@/lib/family-access', () => ({
   getAccessibleChildOwnerIds: jest.fn().mockResolvedValue(['user_1']),
-  getAccessibleChildrenWhere: jest.fn().mockResolvedValue({ userId: { in: ['user_1'] } }),
+  getAccessibleChildrenWhere: jest
+    .fn()
+    .mockResolvedValue({ userId: { in: ['user_1'] } }),
 }));
 
 jest.mock('@/lib/participant-profile-check', () => ({
-  checkUserProfile: jest.fn().mockReturnValue({ valid: true, missingFields: [] }),
-  checkChildProfile: jest.fn().mockReturnValue({ valid: true, missingFields: [] }),
+  checkUserProfile: jest
+    .fn()
+    .mockReturnValue({ valid: true, missingFields: [] }),
+  checkChildProfile: jest
+    .fn()
+    .mockReturnValue({ valid: true, missingFields: [] }),
 }));
 
 jest.mock('@/lib/prisma', () => ({
@@ -85,12 +91,8 @@ import { buildCartQuote } from '@/lib/cart-checkout';
 import { createManualPaymentCheckout } from '@/lib/services/manual-payment-service';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
-import {
-  POST as mobileCartCheckoutPOST,
-} from '@/app/api/mobile/activities/cart/checkout/route';
-import {
-  POST as mobileCartQuotePOST,
-} from '@/app/api/mobile/activities/cart/quote/route';
+import { POST as mobileCartCheckoutPOST } from '@/app/api/mobile/activities/cart/checkout/route';
+import { POST as mobileCartQuotePOST } from '@/app/api/mobile/activities/cart/quote/route';
 import { GET as mobileAvailableActivitiesGET } from '@/app/api/mobile/activities/available/route';
 
 const mockGetMobileSessionFromRequest =

@@ -49,8 +49,12 @@ export async function GET(_req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const groups = await familyGroupService.getFamilyGroupsForUser(session.userId);
-  const familyGroup = (groups.find((group) => group.responsibleUserId === session.userId) ??
+  const groups = await familyGroupService.getFamilyGroupsForUser(
+    session.userId
+  );
+  const familyGroup = (groups.find(
+    (group) => group.responsibleUserId === session.userId
+  ) ??
     groups[0] ??
     null) as FamilyGroupWithMembers | null;
 
@@ -234,7 +238,11 @@ function serializeFamilyGroup(group: FamilyGroupWithMembers) {
     members: group.members.map((member) => ({
       id: member.id,
       memberId: member.memberId,
-      name: formatDisplayName(member.member.name, member.member.lastName, member.member.email),
+      name: formatDisplayName(
+        member.member.name,
+        member.member.lastName,
+        member.member.email
+      ),
       email: member.member.email,
       relationship: member.relationship,
       isPaymentResponsible: member.isPaymentResponsible,
@@ -247,8 +255,10 @@ function formatDisplayName(
   lastName: string | null,
   email: string
 ) {
-  return [name, lastName]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .join(' ')
-    .trim() || email;
+  return (
+    [name, lastName]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .join(' ')
+      .trim() || email
+  );
 }

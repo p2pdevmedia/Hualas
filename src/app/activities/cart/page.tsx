@@ -213,13 +213,11 @@ export default function ActivitiesCartPage() {
       {items.length === 0 ? (
         <div className="grid gap-6 py-8 lg:grid-cols-[1fr_420px] lg:items-start">
           <div className="rounded-xl border bg-muted/30 p-6 text-left">
-            <h2 className="text-lg font-semibold">
-              Solo cuota social mensual
-            </h2>
+            <h2 className="text-lg font-semibold">Solo cuota social mensual</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Este camino es para asociarte al club sin elegir una actividad en
-              este momento. Si después querés participar en una propuesta,
-              podés volver a la agenda y sumarla por separado.
+              este momento. Si después querés participar en una propuesta, podés
+              volver a la agenda y sumarla por separado.
             </p>
             <label className="mt-5 block space-y-2 text-sm">
               <span className="font-medium">Meses a pagar</span>
@@ -275,7 +273,7 @@ export default function ActivitiesCartPage() {
                     </span>
                   </div>
                 ))}
-                {quote.mercadoPagoFeeLines.map((line, index) => (
+                {quote.mercadoPagoFeeLines.map((line, index) =>
                   paymentMethod === 'MERCADO_PAGO' ? (
                     <div
                       key={`empty-mp-fee-${index}`}
@@ -287,7 +285,7 @@ export default function ActivitiesCartPage() {
                       </span>
                     </div>
                   ) : null
-                ))}
+                )}
                 <div className="border-t pt-4">
                   <PaymentMethodSelector
                     value={paymentMethod}

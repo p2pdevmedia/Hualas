@@ -145,7 +145,10 @@ export async function getMobileMemberChatContacts(
 
   if (familyGroup) {
     const familyUserIds = new Set<string>();
-    if (familyGroup.responsibleUserId && familyGroup.responsibleUserId !== userId) {
+    if (
+      familyGroup.responsibleUserId &&
+      familyGroup.responsibleUserId !== userId
+    ) {
       familyUserIds.add(familyGroup.responsibleUserId);
     }
 
@@ -215,9 +218,13 @@ export async function getMobileMemberChatContacts(
   >();
 
   for (const activity of parentContext.activities) {
-    const participantNames = activity.participants.map((participant) => participant.label);
+    const participantNames = activity.participants.map(
+      (participant) => participant.label
+    );
     const detailSummary = [
-      participantNames.length > 0 ? participantNames.join(', ') : 'Sin participante',
+      participantNames.length > 0
+        ? participantNames.join(', ')
+        : 'Sin participante',
       activity.name,
       formatActivityRange(activity.date, activity.endDate),
     ]
@@ -257,7 +264,10 @@ export async function getMobileMemberChatContacts(
     .sort(sortByLabel);
 
   const staffContacts = staffUsers.map((user) =>
-    buildContact(user, user.email ?? user.phone ?? 'Administración / contaduría')
+    buildContact(
+      user,
+      user.email ?? user.phone ?? 'Administración / contaduría'
+    )
   );
 
   const allowedRecipientIds = Array.from(

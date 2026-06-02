@@ -475,7 +475,6 @@ export default async function ProfessorStudentsPage() {
           summary
         );
       }
-
     }
 
     for (const professor of group.professors) {

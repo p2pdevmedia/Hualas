@@ -22,7 +22,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(session.userId);
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
+    session.userId
+  );
   const children = await prisma.child.findMany({
     where: { userId: { in: accessibleChildOwnerIds } },
     select: mobileChildSelect,

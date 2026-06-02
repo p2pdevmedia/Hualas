@@ -28,11 +28,20 @@ agents:
 
   mobile:
     model: coder
-    wakeWhen: [iphone, ios, swiftui, android, kotlin, mobile, api/mobile, apns, fcm]
+    wakeWhen:
+      [iphone, ios, swiftui, android, kotlin, mobile, api/mobile, apns, fcm]
 
   accounting:
     model: coder
-    wakeWhen: [accounting, payments, manual payments, social fee, professor payments, orders]
+    wakeWhen:
+      [
+        accounting,
+        payments,
+        manual payments,
+        social fee,
+        professor payments,
+        orders,
+      ]
 
   database:
     model: strong

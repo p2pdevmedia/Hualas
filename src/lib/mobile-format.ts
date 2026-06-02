@@ -3,7 +3,10 @@ export function formatFullName(person?: {
   lastName?: string | null;
 }) {
   if (!person) return 'Sin nombre';
-  return [person.name, person.lastName].filter(Boolean).join(' ').trim() || 'Sin nombre';
+  return (
+    [person.name, person.lastName].filter(Boolean).join(' ').trim() ||
+    'Sin nombre'
+  );
 }
 
 export function formatMobileDate(value: Date | string | null | undefined) {

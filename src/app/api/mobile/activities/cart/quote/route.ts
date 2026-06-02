@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
-import { buildCartQuote, buildCartQuoteErrorResponse } from '@/lib/cart-checkout';
+import {
+  buildCartQuote,
+  buildCartQuoteErrorResponse,
+} from '@/lib/cart-checkout';
 
 type CartItem = {
   activityId: string;

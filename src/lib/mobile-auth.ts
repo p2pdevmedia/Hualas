@@ -134,17 +134,17 @@ export async function getMobileSessionFromRequest(req: Request) {
       expiresAt: true,
       lastUsedAt: true,
       revokedAt: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            lastName: true,
-            profilePhoto: true,
-            birthDate: true,
-            role: true,
-            activeRole: true,
-            isActive: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          lastName: true,
+          profilePhoto: true,
+          birthDate: true,
+          role: true,
+          activeRole: true,
+          isActive: true,
           roleAssignments: {
             select: { role: true },
           },

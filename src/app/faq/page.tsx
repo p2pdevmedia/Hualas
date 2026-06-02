@@ -97,8 +97,7 @@ Solo necesitas un correo electrónico válido y una contraseña segura.`,
         },
         {
           question: `¿Qué puedo hacer como ${responsibleLabel}?`,
-          answer:
-            `Como ${responsibleLabel}, podés cargar tus datos, sumar hijos/as al grupo familiar, agregar otro tutor/a responsable, inscribir participantes en actividades y consultar pagos o avisos del club.`,
+          answer: `Como ${responsibleLabel}, podés cargar tus datos, sumar hijos/as al grupo familiar, agregar otro tutor/a responsable, inscribir participantes en actividades y consultar pagos o avisos del club.`,
         },
         {
           question: '¿Qué información debo proporcionar al registrarme?',

@@ -19,59 +19,64 @@ export async function GET(req: Request) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [assignments, upcomingDays, unreadCount, recentNews] = await Promise.all([
-      prisma.activityProfessor.findMany({
-        where: { userId: session.userId },
-        select: {
-          activityId: true,
-          activity: {
-            select: {
-              id: true,
-              name: true,
-              date: true,
-              endDate: true,
-              frequency: true,
-              groups: { select: { id: true } },
-            },
-          },
-        },
-        orderBy: { activity: { date: 'asc' } },
-      }),
-      prisma.activityDay.findMany({
-        where: {
-          OR: [
-            {
-              activityGroup: {
-                professors: { some: { userId: session.userId } },
+    const [assignments, upcomingDays, unreadCount, recentNews] =
+      await Promise.all([
+        prisma.activityProfessor.findMany({
+          where: { userId: session.userId },
+          select: {
+            activityId: true,
+            activity: {
+              select: {
+                id: true,
+                name: true,
+                date: true,
+                endDate: true,
+                frequency: true,
+                groups: { select: { id: true } },
               },
             },
-            {
-              activityGroupId: null,
-              activity: { professors: { some: { userId: session.userId } } },
-            },
-          ],
-          date: { gte: today },
-        },
-        select: {
-          id: true,
-          date: true,
-          schedule: true,
-          geoLocation: true,
-          cancelled: true,
-          activity: { select: { id: true, name: true } },
-          activityGroup: { select: { name: true } },
-        },
-        orderBy: { date: 'asc' },
-        take: 6,
-      }),
-      prisma.notification.count({ where: { userId: session.userId, readAt: null } }),
-      loadRecentMobileNews(
-        session.userId,
-        session.appRole as 'MEMBER' | 'PROFESSOR'
-      ),
-    ]);
+          },
+          orderBy: { activity: { date: 'asc' } },
+        }),
+        prisma.activityDay.findMany({
+          where: {
+            OR: [
+              {
+                activityGroup: {
+                  professors: { some: { userId: session.userId } },
+                },
+              },
+              {
+                activityGroupId: null,
+                activity: { professors: { some: { userId: session.userId } } },
+              },
+            ],
+            date: { gte: today },
+          },
+          select: {
+            id: true,
+            date: true,
+            schedule: true,
+            geoLocation: true,
+            cancelled: true,
+            activity: { select: { id: true, name: true } },
+            activityGroup: { select: { name: true } },
+          },
+          orderBy: { date: 'asc' },
+          take: 6,
+        }),
+        prisma.notification.count({
+          where: { userId: session.userId, readAt: null },
+        }),
+        loadRecentMobileNews(
+          session.userId,
+          session.appRole as 'MEMBER' | 'PROFESSOR'
+        ),
+      ]);
 
-    const activityIds = [...new Set(assignments.map((item) => item.activity.id))];
+    const activityIds = [
+      ...new Set(assignments.map((item) => item.activity.id)),
+    ];
     const [groupCount, pendingAttendanceCount] = await Promise.all([
       prisma.activityGroup.count({
         where: { activityId: { in: activityIds } },
@@ -135,56 +140,62 @@ export async function GET(req: Request) {
     });
   }
 
-  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(session.userId);
-  const [children, participations, unreadCount, recentNews] = await Promise.all([
-    prisma.child.findMany({
-      where: { userId: { in: accessibleChildOwnerIds } },
-      select: {
-        id: true,
-        name: true,
-        lastName: true,
-        birthDate: true,
-        profilePhoto: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    }),
-    prisma.activityParticipant.findMany({
-      where: {
-        OR: [
-          { userId: session.userId },
-          { child: { userId: { in: accessibleChildOwnerIds } } },
-        ],
-      },
-      select: {
-        id: true,
-        childId: true,
-        userId: true,
-        activity: {
-          select: {
-            id: true,
-            name: true,
-            date: true,
-            endDate: true,
-            frequency: true,
-            price: true,
+  const accessibleChildOwnerIds = await getAccessibleChildOwnerIds(
+    session.userId
+  );
+  const [children, participations, unreadCount, recentNews] = await Promise.all(
+    [
+      prisma.child.findMany({
+        where: { userId: { in: accessibleChildOwnerIds } },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          birthDate: true,
+          profilePhoto: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.activityParticipant.findMany({
+        where: {
+          OR: [
+            { userId: session.userId },
+            { child: { userId: { in: accessibleChildOwnerIds } } },
+          ],
+        },
+        select: {
+          id: true,
+          childId: true,
+          userId: true,
+          activity: {
+            select: {
+              id: true,
+              name: true,
+              date: true,
+              endDate: true,
+              frequency: true,
+              price: true,
+            },
+          },
+          child: { select: { id: true, name: true, lastName: true } },
+          groupMembership: {
+            select: {
+              activityGroupId: true,
+              activityGroup: { select: { name: true } },
+            },
           },
         },
-        child: { select: { id: true, name: true, lastName: true } },
-        groupMembership: {
-          select: {
-            activityGroupId: true,
-            activityGroup: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { activity: { date: 'asc' } },
-    }),
-    prisma.notification.count({ where: { userId: session.userId, readAt: null } }),
-    loadRecentMobileNews(
-      session.userId,
-      session.appRole as 'MEMBER' | 'PROFESSOR'
-    ),
-  ]);
+        orderBy: { activity: { date: 'asc' } },
+      }),
+      prisma.notification.count({
+        where: { userId: session.userId, readAt: null },
+      }),
+      loadRecentMobileNews(
+        session.userId,
+        session.appRole as 'MEMBER' | 'PROFESSOR'
+      ),
+    ]
+  );
 
   const activityIds = [...new Set(participations.map((p) => p.activity.id))];
   const upcomingDays = activityIds.length

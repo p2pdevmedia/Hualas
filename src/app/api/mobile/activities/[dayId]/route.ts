@@ -139,8 +139,8 @@ export async function GET(
     session.appRole !== 'MEMBER'
       ? false
       : day.activityGroupId === null
-      ? true
-      : activityScope.groupIds.has(day.activityGroupId);
+        ? true
+        : activityScope.groupIds.has(day.activityGroupId);
 
   if (session.appRole === 'PROFESSOR' && !canSeeActivity) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -160,8 +160,8 @@ export async function GET(
             ? `${attendance.activityParticipant.child.name}${attendance.activityParticipant.child.lastName ? ` ${attendance.activityParticipant.child.lastName}` : ''}`
             : `${attendance.activityParticipant.user.name ?? 'Sin nombre'}${attendance.activityParticipant.user.lastName ? ` ${attendance.activityParticipant.user.lastName}` : ''}`,
           groupName:
-            attendance.activityParticipant.groupMembership?.activityGroup?.name ??
-            null,
+            attendance.activityParticipant.groupMembership?.activityGroup
+              ?.name ?? null,
           attendance: {
             status: attendance.status,
             confirmedAt: attendance.confirmedAt
@@ -181,8 +181,7 @@ export async function GET(
             label: participant.child
               ? `${participant.child.name}${participant.child.lastName ? ` ${participant.child.lastName}` : ''}`
               : `${participant.user.name ?? 'Sin nombre'}${participant.user.lastName ? ` ${participant.user.lastName}` : ''}`,
-            groupName:
-              participant.groupMembership?.activityGroup?.name ?? null,
+            groupName: participant.groupMembership?.activityGroup?.name ?? null,
             attendance: {
               status: attendance?.status ?? 'PENDING',
               confirmedAt: attendance?.confirmedAt
@@ -207,13 +206,13 @@ export async function GET(
       activity: day.activity,
       groupName: day.activityGroup?.name ?? null,
     },
-    professors: (
-      day.activityGroup?.professors ?? day.activity.professors
-    ).map((assignment) => ({
-      id: assignment.userId,
-      label: `${assignment.user.name ?? 'Sin nombre'}${assignment.user.lastName ? ` ${assignment.user.lastName}` : ''}`,
-      phone: assignment.user.phone,
-    })),
+    professors: (day.activityGroup?.professors ?? day.activity.professors).map(
+      (assignment) => ({
+        id: assignment.userId,
+        label: `${assignment.user.name ?? 'Sin nombre'}${assignment.user.lastName ? ` ${assignment.user.lastName}` : ''}`,
+        phone: assignment.user.phone,
+      })
+    ),
     participants,
   });
 }

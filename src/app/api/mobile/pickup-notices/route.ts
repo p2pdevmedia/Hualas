@@ -7,12 +7,14 @@ import { prisma } from '@/lib/prisma';
 import { createPickupNoticeBaseSchema } from '@/lib/validations/pickup-notice';
 import { notifyPickupNoticeCreated } from '@/lib/notifications/notification-service';
 
-const createMobilePickupNoticeSchema = createPickupNoticeBaseSchema.extend({
-  activityDayId: z.string().min(1, 'Activity day is required'),
-}).refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
-  message: 'Either select a person or enter a name',
-  path: ['alternatePersonUserId'],
-});
+const createMobilePickupNoticeSchema = createPickupNoticeBaseSchema
+  .extend({
+    activityDayId: z.string().min(1, 'Activity day is required'),
+  })
+  .refine((data) => data.alternatePersonUserId || data.alternatePersonName, {
+    message: 'Either select a person or enter a name',
+    path: ['alternatePersonUserId'],
+  });
 
 function formatActivityDayLabel(day: {
   date: Date;

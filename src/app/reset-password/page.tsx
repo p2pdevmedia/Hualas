@@ -70,9 +70,7 @@ export default function ResetPasswordPage() {
           ) : (
             <Form onSubmit={submit} className="space-y-4">
               <label className="space-y-1 text-sm block">
-                <span className="text-muted-foreground">
-                  Nueva contraseña
-                </span>
+                <span className="text-muted-foreground">Nueva contraseña</span>
                 <div className="relative">
                   <input
                     className="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"

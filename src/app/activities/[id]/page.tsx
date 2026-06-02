@@ -311,7 +311,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     !activityProfessors.some((prof) => prof.userId === session?.user.id) &&
     !activityGroups.some((group: any) =>
       group.professors.some(
-        (assignment: { userId: string }) => assignment.userId === session?.user.id
+        (assignment: { userId: string }) =>
+          assignment.userId === session?.user.id
       )
     )
   ) {
@@ -658,8 +659,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                         assignment.userId === session?.user.id
                     ) ??
                     activityProfessors.some(
-                    (assignment: { userId: string }) =>
-                      assignment.userId === session?.user.id
+                      (assignment: { userId: string }) =>
+                        assignment.userId === session?.user.id
                     )
                   );
                 }

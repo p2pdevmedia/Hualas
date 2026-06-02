@@ -40,17 +40,20 @@ describe('POST /api/activities/[id]/groups', () => {
       professors: [{ userId: 'professor-1' }, { userId: 'professor-2' }],
     });
 
-    const req = new Request('http://localhost/api/activities/activity-1/groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Grupo A',
-        capacity: 12,
-        minAge: 8,
-        maxAge: 12,
-        professorIds: [],
-      }),
-    });
+    const req = new Request(
+      'http://localhost/api/activities/activity-1/groups',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Grupo A',
+          capacity: 12,
+          minAge: 8,
+          maxAge: 12,
+          professorIds: [],
+        }),
+      }
+    );
 
     const res = await POST(req, { params: { id: 'activity-1' } });
     const json = await res.json();

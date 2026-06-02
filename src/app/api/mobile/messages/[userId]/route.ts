@@ -6,26 +6,33 @@ import { formatFullName } from '@/lib/mobile-format';
 import { prisma } from '@/lib/prisma';
 import { notifyChatMessage } from '@/lib/notifications/notification-service';
 
-async function sharedActivityBetweenUsers(senderId: string, recipientId: string) {
-  const [senderParticipantActivities, senderProfessorActivities, recipientParticipantActivities, recipientProfessorActivities] =
-    await Promise.all([
-      prisma.activityParticipant.findMany({
-        where: { userId: senderId },
-        select: { activityId: true },
-      }),
-      prisma.activityProfessor.findMany({
-        where: { userId: senderId },
-        select: { activityId: true },
-      }),
-      prisma.activityParticipant.findMany({
-        where: { userId: recipientId },
-        select: { activityId: true },
-      }),
-      prisma.activityProfessor.findMany({
-        where: { userId: recipientId },
-        select: { activityId: true },
-      }),
-    ]);
+async function sharedActivityBetweenUsers(
+  senderId: string,
+  recipientId: string
+) {
+  const [
+    senderParticipantActivities,
+    senderProfessorActivities,
+    recipientParticipantActivities,
+    recipientProfessorActivities,
+  ] = await Promise.all([
+    prisma.activityParticipant.findMany({
+      where: { userId: senderId },
+      select: { activityId: true },
+    }),
+    prisma.activityProfessor.findMany({
+      where: { userId: senderId },
+      select: { activityId: true },
+    }),
+    prisma.activityParticipant.findMany({
+      where: { userId: recipientId },
+      select: { activityId: true },
+    }),
+    prisma.activityProfessor.findMany({
+      where: { userId: recipientId },
+      select: { activityId: true },
+    }),
+  ]);
 
   const senderActivities = new Set([
     ...senderParticipantActivities.map((item) => item.activityId),
@@ -45,11 +52,14 @@ async function sharedActivityBetweenUsers(senderId: string, recipientId: string)
   return false;
 }
 
-async function canMessageUser(input: {
-  senderId: string;
-  senderRole: string;
-  appRole: string;
-}, recipientId: string) {
+async function canMessageUser(
+  input: {
+    senderId: string;
+    senderRole: string;
+    appRole: string;
+  },
+  recipientId: string
+) {
   const { senderId, senderRole, appRole } = input;
   if (senderId === recipientId) return false;
   const recipient = await prisma.user.findUnique({
@@ -177,9 +187,10 @@ export async function GET(
     },
   });
 
-  const peer = conversation.participants
-    .map((participant) => participant.user)
-    .find((user) => user.id !== session.userId) ??
+  const peer =
+    conversation.participants
+      .map((participant) => participant.user)
+      .find((user) => user.id !== session.userId) ??
     conversation.participants[0]?.user ??
     null;
 

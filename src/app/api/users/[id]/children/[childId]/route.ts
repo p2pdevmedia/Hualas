@@ -58,7 +58,11 @@ export async function PUT(
       birthDate: (() => {
         if (!data.birthDate) return null;
         const d = new Date(data.birthDate);
-        return isNaN(d.getTime()) || d.getFullYear() > 2100 || d.getFullYear() < 1900 ? null : d;
+        return isNaN(d.getTime()) ||
+          d.getFullYear() > 2100 ||
+          d.getFullYear() < 1900
+          ? null
+          : d;
       })(),
       address: data.address,
       gender: data.gender,
