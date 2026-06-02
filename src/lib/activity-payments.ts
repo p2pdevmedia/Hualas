@@ -13,6 +13,8 @@ type RegisterActivityParticipantPaymentInput = {
   amount?: number;
   paymentReference: string;
   paidAt?: Date | string | null;
+  periodMonth?: number | null;
+  periodYear?: number | null;
 };
 
 function getPaidAt(value?: Date | string | null) {
@@ -79,7 +81,9 @@ export async function registerActivityParticipantPayment(
   const amount = input.amount ?? Number(activity.price);
 
   if (activity.activityType === ActivityType.ANNUAL) {
-    const { periodMonth, periodYear } = getMonthlyPeriod(paidAt);
+    const paidAtPeriod = getMonthlyPeriod(paidAt);
+    const periodMonth = input.periodMonth ?? paidAtPeriod.periodMonth;
+    const periodYear = input.periodYear ?? paidAtPeriod.periodYear;
 
     return db.activityParticipantPayment.upsert({
       where: {

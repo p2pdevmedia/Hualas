@@ -158,7 +158,7 @@ export default function ManualPaymentForm({
 
       setSuccess(
         socialFeeOnly
-          ? 'Pago enviado. Tu comprobante de cuota social quedó pendiente de revisión.'
+          ? 'Pago enviado. Tu comprobante quedó pendiente de revisión.'
           : 'Pago enviado. Tu inscripción quedó registrada y el comprobante quedó pendiente de revisión.'
       );
       setFile(null);
@@ -191,7 +191,7 @@ export default function ManualPaymentForm({
         <h3 className="text-lg font-semibold">Transferencia manual</h3>
         <p className="text-sm text-muted-foreground">
           {socialFeeOnly
-            ? 'Subí el comprobante y dejamos el pago de cuota social pendiente de revisión.'
+            ? 'Subí el comprobante y dejamos los pagos pendientes en revisión.'
             : 'Subí el comprobante y dejamos la inscripción registrada al instante.'}
         </p>
       </div>
@@ -286,7 +286,7 @@ export default function ManualPaymentForm({
           <Input value={formatAmount(totalAmount)} readOnly />
           <p className="text-xs text-muted-foreground">
             {socialFeeOnly
-              ? 'Se registra el total pendiente de cuota social.'
+              ? 'Se registra el total pendiente del mes.'
               : 'Se registra el total del checkout con la cuota social incluida, si corresponde.'}
           </p>
         </label>

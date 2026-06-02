@@ -1,4 +1,5 @@
 import type { Prisma, PaymentStatus } from '@prisma/client';
+import type { ActivityMonthlyPaymentLine } from '@/lib/cart-checkout';
 
 export const MANUAL_PAYMENT_MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const MANUAL_PAYMENT_ACCEPTED_MIME_TYPES = [
@@ -49,6 +50,7 @@ export type ManualPaymentRawData = {
     year: number;
     amount: number;
   }>;
+  activityMonthlyPaymentLines?: ActivityMonthlyPaymentLine[];
   validatedItems?: Array<{
     activityId: string;
     target?: string;
@@ -215,6 +217,79 @@ export function getManualPaymentRawData(
         )
     : undefined;
 
+  const activityMonthlyPaymentLines = Array.isArray(
+    rawData.activityMonthlyPaymentLines
+  )
+    ? rawData.activityMonthlyPaymentLines
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') return null;
+          const activityParticipantId =
+            typeof (entry as { activityParticipantId?: unknown })
+              .activityParticipantId === 'string'
+              ? (entry as { activityParticipantId: string })
+                  .activityParticipantId
+              : null;
+          const activityId =
+            typeof (entry as { activityId?: unknown }).activityId === 'string'
+              ? (entry as { activityId: string }).activityId
+              : null;
+          const activityName =
+            typeof (entry as { activityName?: unknown }).activityName ===
+            'string'
+              ? (entry as { activityName: string }).activityName
+              : 'Actividad';
+          const userId =
+            typeof (entry as { userId?: unknown }).userId === 'string'
+              ? (entry as { userId: string }).userId
+              : null;
+          const periodMonth = Number(
+            (entry as { periodMonth?: unknown }).periodMonth
+          );
+          const periodYear = Number(
+            (entry as { periodYear?: unknown }).periodYear
+          );
+          const amount = Number((entry as { amount?: unknown }).amount);
+          if (
+            !activityParticipantId ||
+            !activityId ||
+            !userId ||
+            !Number.isInteger(periodMonth) ||
+            periodMonth < 1 ||
+            periodMonth > 12 ||
+            !Number.isInteger(periodYear) ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+          ) {
+            return null;
+          }
+          const childId = (entry as { childId?: unknown }).childId;
+          const targetLabel =
+            typeof (entry as { targetLabel?: unknown }).targetLabel === 'string'
+              ? (entry as { targetLabel: string }).targetLabel
+              : typeof childId === 'string'
+                ? 'Hijo/a'
+                : 'Titular';
+          const label =
+            typeof (entry as { label?: unknown }).label === 'string'
+              ? (entry as { label: string }).label
+              : `${activityName} - ${targetLabel}`;
+
+          return {
+            activityParticipantId,
+            activityId,
+            activityName,
+            userId,
+            childId: typeof childId === 'string' ? childId : null,
+            targetLabel,
+            amount: Math.round(amount),
+            periodMonth,
+            periodYear,
+            label,
+          };
+        })
+        .filter((entry): entry is ActivityMonthlyPaymentLine => Boolean(entry))
+    : undefined;
+
   const reviews = Array.isArray(rawData.reviews)
     ? rawData.reviews
         .map((entry) => {
@@ -289,6 +364,7 @@ export function getManualPaymentRawData(
         : undefined,
     socialFeeParticipants,
     socialFeePaymentLines,
+    activityMonthlyPaymentLines,
     validatedItems,
     reviews,
   };
@@ -340,6 +416,7 @@ export function createManualPaymentRawData(input: {
     year: number;
     amount: number;
   }>;
+  activityMonthlyPaymentLines?: ActivityMonthlyPaymentLine[];
   validatedItems?: Array<{
     activityId: string;
     target?: string;
@@ -359,6 +436,7 @@ export function createManualPaymentRawData(input: {
     familyDiscountAmount: input.familyDiscountAmount ?? 0,
     socialFeeParticipants: input.socialFeeParticipants ?? [],
     socialFeePaymentLines: input.socialFeePaymentLines ?? [],
+    activityMonthlyPaymentLines: input.activityMonthlyPaymentLines ?? [],
     validatedItems: input.validatedItems ?? [],
     reviews: [
       {

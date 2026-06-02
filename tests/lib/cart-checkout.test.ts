@@ -24,6 +24,7 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 jest.mock('@/lib/social-fee', () => ({
+  getCurrentSocialFeePeriod: jest.fn(() => ({ month: 5, year: 2026 })),
   getSocialFeeAmount: jest.fn(),
   getSocialFeePeriods: jest.fn(() => [{ month: 5, year: 2026 }]),
   hasSocialFeeForPeriod: jest.fn(),

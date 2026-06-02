@@ -121,6 +121,10 @@ Database integrity notes:
 
 - Activity checkout uses Mercado Pago.
 - Activity checkout also supports manual transfer proof flows for review.
+- The activity cart quotes pending monthly payments for active `ANNUAL`
+  activity participants in the current month, alongside pending social fee
+  lines. The yellow member notices on home and `/my-activities` link to the
+  cart and list both kinds of monthly debt.
 - Approved Mercado Pago payments create or update `ActivityParticipant` records.
 - Approved manual payments can also create or update payment/participant state depending on the flow.
 - Capacity must be checked before registering a participant.

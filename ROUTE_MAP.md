@@ -2,7 +2,7 @@
 
 This file maps the current Next.js App Router surface.
 
-Last audited: 2026-05-26.
+Last audited: 2026-06-02.
 
 Use this before changing pages or API routes. If you add, move, or delete a
 route, update this file in the same change.
@@ -60,7 +60,8 @@ route, update this file in the same change.
 - `/activities/join/[id]` -> `src/app/activities/join/[id]/page.tsx`
   - Public/member join landing page.
 - `/activities/cart` -> `src/app/activities/cart/page.tsx`
-  - Member activity inscription cart.
+  - Member activity cart. Quotes new inscriptions, pending social fees, and
+    current-month payments owed for active `ANNUAL` activity participants.
 - `/activities/[id]/groups/[groupId]` -> `src/app/activities/[id]/groups/[groupId]/page.tsx`
   - Activity group detail and member management.
 - `/activities/[id]/groups/[groupId]/edit` -> `src/app/activities/[id]/groups/[groupId]/edit/page.tsx`
@@ -242,7 +243,13 @@ Methods below come from the current `route.ts` exports.
 - `POST` `/api/activities/[id]/groups` -> `src/app/api/activities/[id]/groups/route.ts`
 - `POST` `/api/activities/cart/available` -> `src/app/api/activities/cart/available/route.ts`
 - `POST` `/api/activities/cart/quote` -> `src/app/api/activities/cart/quote/route.ts`
+  - Returns `activityMonthlyPaymentLines` and
+    `totalActivityMonthlyPaymentAmount` when active annual activity
+    participants owe the current month.
 - `POST` `/api/activities/cart/checkout` -> `src/app/api/activities/cart/checkout/route.ts`
+  - Persists quoted monthly activity payment lines through Mercado Pago
+    metadata or manual transfer raw data so approval registers the correct
+    `ActivityParticipantPayment` period.
 - `PUT, PATCH, DELETE` `/api/activity-days/[dayId]` -> `src/app/api/activity-days/[dayId]/route.ts`
 - `PATCH` `/api/activity-days/[dayId]/attendance` -> `src/app/api/activity-days/[dayId]/attendance/route.ts`
 - `PATCH` `/api/activity-days/[dayId]/cancel` -> `src/app/api/activity-days/[dayId]/cancel/route.ts`
@@ -270,7 +277,10 @@ Native iPhone and Android clients use bearer-token auth through these
 - `GET` `/api/mobile/activities/[dayId]` -> `src/app/api/mobile/activities/[dayId]/route.ts`
 - `GET` `/api/mobile/activities/available` -> `src/app/api/mobile/activities/available/route.ts`
 - `POST` `/api/mobile/activities/cart/quote` -> `src/app/api/mobile/activities/cart/quote/route.ts`
+  - Includes pending `activityMonthlyPaymentLines` for current-month annual
+    activity debt.
 - `POST` `/api/mobile/activities/cart/checkout` -> `src/app/api/mobile/activities/cart/checkout/route.ts`
+  - Carries monthly activity payment metadata into the shared checkout flow.
 - `GET` `/api/mobile/news` -> `src/app/api/mobile/news/route.ts`
 - `POST` `/api/mobile/news/read` -> `src/app/api/mobile/news/read/route.ts`
 - `GET` `/api/mobile/messages` -> `src/app/api/mobile/messages/route.ts`

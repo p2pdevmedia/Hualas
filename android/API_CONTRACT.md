@@ -37,6 +37,20 @@ This document maps the current mobile backend routes to the Android app scope.
 | POST   | `/api/mobile/activities/cart/quote`    | MEMBER            | Activities    | Quote activity registration before checkout.      |
 | POST   | `/api/mobile/activities/cart/checkout` | MEMBER            | Activities    | Create checkout and open returned URL externally. |
 
+`POST /api/mobile/activities/cart/quote` also returns current-month annual
+activity debt when already-registered participants have no
+`ActivityParticipantPayment` for the period:
+
+- `activityMonthlyPaymentLines`: list of pending monthly activity lines. Each
+  line includes `activityParticipantId`, `activityId`, `activityName`,
+  `userId`, `childId`, `targetLabel`, `amount`, `periodMonth`, `periodYear`,
+  and `label`.
+- `totalActivityMonthlyPaymentAmount`: cent-based total for those pending
+  activity lines.
+
+The checkout endpoint carries those quoted lines through Mercado Pago/manual
+payment metadata so approval registers the exact monthly period.
+
 ## Member
 
 | Method | Path                                        | Role   | Android owner  | Purpose                                               |

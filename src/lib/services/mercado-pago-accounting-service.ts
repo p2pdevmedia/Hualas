@@ -1,6 +1,7 @@
 import { BillableConceptCode } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { familyGroupService } from '@/lib/services/family-group-service';
+import type { ActivityMonthlyPaymentLine } from '@/lib/cart-checkout';
 
 type MercadoPagoReference = {
   activityId: string;
@@ -22,6 +23,7 @@ type MercadoPagoMetadata = {
   familyDiscountAmount?: unknown;
   shouldChargeSocialFee?: unknown;
   socialFeeParticipants?: unknown;
+  activityMonthlyPaymentLines?: unknown;
 };
 
 export type MercadoPagoPaymentInput = {
@@ -141,6 +143,7 @@ export async function syncMercadoPagoApprovedPayment(input: {
   userId: string;
   socialFeeAmount: number;
   socialFeeParticipantCount: number;
+  activityMonthlyPaymentLines?: ActivityMonthlyPaymentLine[];
   familyDiscountAmount?: number;
 }) {
   const paymentId = input.payment.id?.toString();
@@ -155,12 +158,18 @@ export async function syncMercadoPagoApprovedPayment(input: {
     Number(input.socialFeeAmount ?? 0) || 0,
     0
   );
-  const canSyncSocialFeeOnly =
+  const activityMonthlyPaymentLines =
+    input.activityMonthlyPaymentLines?.filter((line) => line.amount > 0) ?? [];
+  const totalActivityMonthlyPaymentAmount = activityMonthlyPaymentLines.reduce(
+    (sum, line) => sum + line.amount,
+    0
+  );
+  const canSyncWithoutReferences =
     references.length === 0 &&
     Boolean(input.userId) &&
-    normalizedSocialFeeAmount > 0 &&
-    input.socialFeeParticipantCount > 0;
-  if (references.length === 0 && !canSyncSocialFeeOnly) {
+    (totalActivityMonthlyPaymentAmount > 0 ||
+      (normalizedSocialFeeAmount > 0 && input.socialFeeParticipantCount > 0));
+  if (references.length === 0 && !canSyncWithoutReferences) {
     return null;
   }
 
@@ -171,7 +180,10 @@ export async function syncMercadoPagoApprovedPayment(input: {
   const created = !existingPayment;
 
   const activityIds = [
-    ...new Set(references.map((reference) => reference.activityId)),
+    ...new Set([
+      ...references.map((reference) => reference.activityId),
+      ...activityMonthlyPaymentLines.map((line) => line.activityId),
+    ]),
   ];
   const [user, activities, conceptIds] = await Promise.all([
     prisma.user.findUnique({
@@ -223,19 +235,19 @@ export async function syncMercadoPagoApprovedPayment(input: {
     0
   );
   const socialFeeAmount = normalizedSocialFeeAmount;
+  const referenceActivityAmount = references.reduce((sum, reference) => {
+    const activity = activityById.get(reference.activityId);
+    return sum + (activity ? Number(activity.price) : 0);
+  }, 0);
   const mpFeeBase =
-    references.reduce((sum, reference) => {
-      const activity = activityById.get(reference.activityId);
-      return sum + (activity ? Number(activity.price) : 0);
-    }, 0) -
+    referenceActivityAmount +
+    totalActivityMonthlyPaymentAmount -
     familyDiscountAmount +
     socialFeeAmount * input.socialFeeParticipantCount;
   const mpFeeAmount = Math.max(Math.round(mpFeeBase * 0.1), 0);
   const orderSubtotal =
-    references.reduce((sum, reference) => {
-      const activity = activityById.get(reference.activityId);
-      return sum + (activity ? Number(activity.price) : 0);
-    }, 0) +
+    referenceActivityAmount +
+    totalActivityMonthlyPaymentAmount +
     socialFeeAmount * input.socialFeeParticipantCount;
   const orderTotal = orderSubtotal - familyDiscountAmount + mpFeeAmount;
   const orderId = `mp-order:${paymentId}`;
@@ -324,6 +336,29 @@ export async function syncMercadoPagoApprovedPayment(input: {
       } else {
         await tx.orderItem.create({ data: itemData });
       }
+    }
+
+    for (const line of activityMonthlyPaymentLines) {
+      const activity = activityById.get(line.activityId);
+      if (!activity) {
+        continue;
+      }
+
+      await tx.orderItem.create({
+        data: {
+          orderId,
+          memberId: line.childId ? null : line.userId,
+          activityId: line.activityId,
+          billableConceptId: conceptIds.activityFeeConceptId,
+          description: activity.name || line.activityName,
+          quantity: 1,
+          unitPrice: line.amount,
+          total: line.amount,
+          periodMonth: line.periodMonth,
+          periodYear: line.periodYear,
+          status: 'PAID',
+        },
+      });
     }
 
     if (familyDiscountAmount > 0) {

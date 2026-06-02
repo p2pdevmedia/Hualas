@@ -14,6 +14,7 @@ import {
 import { listActivitiesWithParticipantCount } from '@/lib/activities/activity-records';
 import { formatAmount } from '@/lib/accounting';
 import { authOptions } from '@/lib/auth';
+import { buildCartQuote } from '@/lib/cart-checkout';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { prisma } from '@/lib/prisma';
 import HomeActivitiesSlider, {
@@ -263,8 +264,29 @@ export default async function Home() {
     isMemberSession && session?.user.id
       ? await getMemberHomeSummary(session.user.id)
       : null;
+  const pendingPaymentQuote =
+    isMemberSession && session?.user.id
+      ? await buildCartQuote({
+          userId: session.user.id,
+          items: [],
+          socialFeeOnly: true,
+        }).catch(() => null)
+      : null;
+  const pendingActivityPaymentCount =
+    pendingPaymentQuote?.activityMonthlyPaymentLines.length ?? 0;
+  const pendingSocialFeeCount = pendingPaymentQuote?.socialFeeLines.length ?? 0;
   const showMemberSpace = (memberHomeSummary?.activityCount ?? 0) > 0;
-  const hasPendingSocialFee = (memberHomeSummary?.unpaidAdultCount ?? 0) > 0;
+  const hasInactiveSocialFee = (memberHomeSummary?.unpaidAdultCount ?? 0) > 0;
+  const hasPendingCartPayments = (pendingPaymentQuote?.totalAmount ?? 0) > 0;
+  const hasPendingPayments = hasPendingCartPayments || hasInactiveSocialFee;
+  const pendingPaymentDescription =
+    pendingActivityPaymentCount > 0 && pendingSocialFeeCount > 0
+      ? `${pendingActivityPaymentCount} actividad${pendingActivityPaymentCount === 1 ? '' : 'es'} y ${pendingSocialFeeCount} cuota${pendingSocialFeeCount === 1 ? '' : 's'} social${pendingSocialFeeCount === 1 ? '' : 'es'} pendiente${pendingActivityPaymentCount + pendingSocialFeeCount === 1 ? '' : 's'}.`
+      : pendingActivityPaymentCount > 0
+        ? `${pendingActivityPaymentCount} actividad${pendingActivityPaymentCount === 1 ? '' : 'es'} mensual${pendingActivityPaymentCount === 1 ? '' : 'es'} pendiente${pendingActivityPaymentCount === 1 ? '' : 's'}.`
+        : pendingSocialFeeCount > 0
+          ? `${pendingSocialFeeCount} cuota${pendingSocialFeeCount === 1 ? '' : 's'} social${pendingSocialFeeCount === 1 ? '' : 'es'} pendiente${pendingSocialFeeCount === 1 ? '' : 's'}.`
+          : `${memberHomeSummary?.unpaidAdultCount ?? 1} integrante pendiente de cuota social.`;
 
   return (
     <>
@@ -346,12 +368,12 @@ export default async function Home() {
               <Link
                 href="/activities/cart"
                 className={`group rounded-lg border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${
-                  hasPendingSocialFee ? 'border-amber-300 bg-amber-50/70' : ''
+                  hasPendingPayments ? 'border-amber-300 bg-amber-50/70' : ''
                 }`}
               >
                 <span
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition group-hover:bg-primary group-hover:text-primary-foreground ${
-                    hasPendingSocialFee
+                    hasPendingPayments
                       ? 'bg-amber-100 text-amber-700'
                       : 'bg-primary/10 text-primary'
                   }`}
@@ -359,11 +381,11 @@ export default async function Home() {
                   <CreditCard className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h2 className="mt-4 text-xl font-semibold">
-                  {hasPendingSocialFee ? 'Asociate al club' : 'Cuota social'}
+                  {hasPendingPayments ? 'Pagos pendientes' : 'Cuota social'}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {hasPendingSocialFee
-                    ? `${memberHomeSummary?.unpaidAdultCount ?? 1} integrante pendiente de cuota social.`
+                  {hasPendingPayments
+                    ? pendingPaymentDescription
                     : 'Tu grupo familiar no muestra adultos pendientes de cuota social.'}
                 </p>
               </Link>
@@ -384,18 +406,50 @@ export default async function Home() {
               </Link>
             </div>
 
-            {hasPendingSocialFee && (
+            {hasPendingPayments && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p>
-                    Hay integrantes con cuota social pendiente. Podés
-                    regularizarla desde el carrito de actividades.
-                  </p>
+                  <div className="space-y-2">
+                    <p>
+                      Hay pagos pendientes del mes. Podés regularizarlos desde
+                      el carrito de actividades.
+                    </p>
+                    {pendingPaymentQuote && hasPendingCartPayments ? (
+                      <ul className="space-y-1">
+                        {pendingPaymentQuote.activityMonthlyPaymentLines
+                          .slice(0, 3)
+                          .map((line) => (
+                            <li
+                              key={`${line.activityParticipantId}:${line.periodYear}-${line.periodMonth}`}
+                            >
+                              {line.label} · {formatAmount(line.amount)}
+                            </li>
+                          ))}
+                        {pendingPaymentQuote.socialFeeLines
+                          .slice(
+                            0,
+                            Math.max(
+                              0,
+                              3 -
+                                pendingPaymentQuote.activityMonthlyPaymentLines
+                                  .length
+                            )
+                          )
+                          .map((line) => (
+                            <li
+                              key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${line.periodYear}-${line.periodMonth}`}
+                            >
+                              {line.label} · {formatAmount(line.amount)}
+                            </li>
+                          ))}
+                      </ul>
+                    ) : null}
+                  </div>
                   <Link
                     href="/activities/cart"
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
                   >
-                    Pagar cuota social
+                    Pagar pendientes
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </div>

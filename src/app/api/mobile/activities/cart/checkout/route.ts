@@ -4,6 +4,7 @@ import { createManualPaymentCheckout } from '@/lib/services/manual-payment-servi
 import {
   buildCartQuote,
   buildCartQuoteErrorResponse,
+  serializeActivityMonthlyPaymentLines,
   toMercadoPagoItems,
 } from '@/lib/cart-checkout';
 import {
@@ -202,7 +203,7 @@ export async function POST(req: Request) {
 
   if (items.length === 0 && quote.totalAmount <= 0) {
     return NextResponse.json(
-      { error: 'No hay cuota social pendiente para pagar.' },
+      { error: 'No hay pagos pendientes para este mes.' },
       { status: 400 }
     );
   }
@@ -287,6 +288,9 @@ export async function POST(req: Request) {
         environment,
         socialFeeAmount: quote.socialFeeAmount,
         familyDiscountAmount: quote.totalDiscountAmount,
+        activityMonthlyPaymentLines: serializeActivityMonthlyPaymentLines(
+          quote.activityMonthlyPaymentLines
+        ),
         socialFeeParticipants: JSON.stringify(quote.socialFeeParticipants),
         socialFeePaymentLines: JSON.stringify(quote.socialFeePaymentLines),
       },

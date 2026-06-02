@@ -44,6 +44,7 @@ export function collectPaymentDetailChildIds(rawData: ManualPaymentRawData) {
     ...(rawData.validatedItems ?? []).map((item) =>
       item.target && item.target !== 'self' ? item.target : null
     ),
+    ...(rawData.activityMonthlyPaymentLines ?? []).map((line) => line.childId),
     ...(rawData.socialFeeParticipants ?? []).map(
       (participant) => participant.childId
     ),
@@ -64,6 +65,16 @@ export function buildPaymentDetailLines({
   childNameById: Map<string, string>;
 }) {
   const validatedItems = rawData.validatedItems ?? [];
+  const activitySources = [
+    ...validatedItems.map((item) => ({
+      target: item.target,
+      targetLabel: item.targetLabel,
+    })),
+    ...(rawData.activityMonthlyPaymentLines ?? []).map((line) => ({
+      target: line.childId ?? 'self',
+      targetLabel: line.targetLabel,
+    })),
+  ];
   const activityItems = orderItems.filter(
     (item) => item.billableConcept.code === 'ACTIVITY_FEE'
   );
@@ -72,12 +83,12 @@ export function buildPaymentDetailLines({
   );
 
   const activityLines = activityItems.map((item, index) => {
-    const source = validatedItems[index];
+    const source = activitySources[index];
     const childId =
       source?.target && source.target !== 'self' ? source.target : null;
     const participantName = childId
       ? (childNameById.get(childId) ?? source?.targetLabel ?? 'Menor')
-      : selfName;
+      : (source?.targetLabel ?? selfName);
 
     return {
       id: `activity-${index}`,

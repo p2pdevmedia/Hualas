@@ -191,17 +191,27 @@ function mapPaymentToReview(
   const rawData = getManualPaymentRawData(payment.rawData);
   const reviews = getManualPaymentReviews(payment.rawData);
   const validatedItems = rawData.validatedItems ?? [];
+  const activitySources = [
+    ...validatedItems.map((item) => ({
+      target: item.target,
+      targetLabel: item.targetLabel,
+    })),
+    ...(rawData.activityMonthlyPaymentLines ?? []).map((line) => ({
+      target: line.childId ?? 'self',
+      targetLabel: line.targetLabel,
+    })),
+  ];
   const activities = payment.order.items
     .filter((item) => item.billableConcept.code === 'ACTIVITY_FEE')
     .map((item, index) => {
       const activity = item.activity;
       const fallbackName = item.description?.trim() || 'Sin actividad';
-      const source = validatedItems[index];
+      const source = activitySources[index];
       const targetId =
         source?.target && source.target !== 'self' ? source.target : null;
       const participantName = targetId
         ? (childNameById.get(targetId) ?? source?.targetLabel ?? 'Menor')
-        : 'Titular';
+        : (source?.targetLabel ?? 'Titular');
 
       return {
         id: activity?.id ?? `${payment.id}:${index}`,
@@ -306,6 +316,7 @@ export async function listManualPayments({
                   responsibleName: true,
                   responsibleEmail: true,
                   items: {
+                    orderBy: { createdAt: 'asc' },
                     select: {
                       description: true,
                       billableConcept: {
@@ -333,13 +344,19 @@ export async function listManualPayments({
       : [];
   const childIds = Array.from(
     new Set(
-      payments.flatMap((payment) =>
-        (getManualPaymentRawData(payment.rawData).validatedItems ?? [])
-          .map((item) =>
-            item.target && item.target !== 'self' ? item.target : null
-          )
-          .filter((target): target is string => Boolean(target))
-      )
+      payments.flatMap((payment) => {
+        const rawData = getManualPaymentRawData(payment.rawData);
+        return [
+          ...(rawData.validatedItems ?? [])
+            .map((item) =>
+              item.target && item.target !== 'self' ? item.target : null
+            )
+            .filter((target): target is string => Boolean(target)),
+          ...(rawData.activityMonthlyPaymentLines ?? [])
+            .map((line) => line.childId)
+            .filter((target): target is string => Boolean(target)),
+        ];
+      })
     )
   );
   const childNameById = new Map<string, string>();
@@ -379,6 +396,7 @@ export async function getManualPaymentById(id: string) {
           responsibleName: true,
           responsibleEmail: true,
           items: {
+            orderBy: { createdAt: 'asc' },
             select: {
               description: true,
               billableConcept: {
@@ -405,9 +423,16 @@ export async function getManualPaymentById(id: string) {
   }
 
   const rawData = getManualPaymentRawData(payment.rawData);
-  const childIds = (rawData.validatedItems ?? [])
-    .map((item) => (item.target && item.target !== 'self' ? item.target : null))
-    .filter((target): target is string => Boolean(target));
+  const childIds = [
+    ...(rawData.validatedItems ?? [])
+      .map((item) =>
+        item.target && item.target !== 'self' ? item.target : null
+      )
+      .filter((target): target is string => Boolean(target)),
+    ...(rawData.activityMonthlyPaymentLines ?? [])
+      .map((line) => line.childId)
+      .filter((target): target is string => Boolean(target)),
+  ];
   const childNameById = new Map<string, string>();
   if (childIds.length > 0) {
     const children = await prisma.child.findMany({
@@ -463,7 +488,9 @@ export async function createManualPaymentCheckout(input: {
         const now = new Date();
         const period = currentPeriod();
         const subtotal =
-          input.quote.totalActivityAmount + input.quote.totalSocialFeeAmount;
+          input.quote.totalActivityAmount +
+          input.quote.totalActivityMonthlyPaymentAmount +
+          input.quote.totalSocialFeeAmount;
         const order = await tx.order.create({
           data: {
             familyGroupId: familyGroup.id,
@@ -543,6 +570,23 @@ export async function createManualPaymentCheckout(input: {
           }
         }
 
+        for (const line of input.quote.activityMonthlyPaymentLines) {
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              memberId: line.childId ? null : line.userId,
+              activityId: line.activityId,
+              billableConceptId: activityFeeConceptId,
+              description: line.activityName,
+              quantity: 1,
+              unitPrice: line.amount,
+              total: line.amount,
+              periodMonth: line.periodMonth,
+              periodYear: line.periodYear,
+            },
+          });
+        }
+
         if (input.quote.totalDiscountAmount > 0) {
           await tx.orderItem.create({
             data: {
@@ -610,6 +654,8 @@ export async function createManualPaymentCheckout(input: {
               familyDiscountAmount: input.quote.totalDiscountAmount,
               socialFeeParticipants: input.quote.socialFeeParticipants,
               socialFeePaymentLines: input.quote.socialFeePaymentLines,
+              activityMonthlyPaymentLines:
+                input.quote.activityMonthlyPaymentLines,
               validatedItems: input.quote.validatedItems,
             }),
           },
@@ -694,6 +740,7 @@ export async function approveManualPayment({
   const socialFeeParticipants = rawData.socialFeeParticipants ?? [];
   const socialFeeAmount = rawData.socialFeeAmount ?? 0;
   const socialFeePaymentLines = rawData.socialFeePaymentLines ?? [];
+  const activityMonthlyPaymentLines = rawData.activityMonthlyPaymentLines ?? [];
 
   if (socialFeePaymentLines.length > 0) {
     for (const line of socialFeePaymentLines) {
@@ -725,6 +772,20 @@ export async function approveManualPayment({
   }
 
   const validatedItems = rawData.validatedItems ?? [];
+  for (const line of activityMonthlyPaymentLines) {
+    await registerActivityParticipantPayment({
+      activityParticipantId: line.activityParticipantId,
+      activityId: line.activityId,
+      userId: line.userId,
+      childId: line.childId,
+      amount: line.amount,
+      paymentReference: updatedPayment.id,
+      paidAt: updatedPayment.paidAt ?? now,
+      periodMonth: line.periodMonth,
+      periodYear: line.periodYear,
+    });
+  }
+
   for (const item of validatedItems) {
     const childId = item.target && item.target !== 'self' ? item.target : null;
     const participantKey = getActivityParticipantKey(

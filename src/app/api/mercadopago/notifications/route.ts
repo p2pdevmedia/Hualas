@@ -17,6 +17,7 @@ import {
   parseMercadoPagoReferences,
   syncMercadoPagoApprovedPayment,
 } from '@/lib/services/mercado-pago-accounting-service';
+import { parseActivityMonthlyPaymentLines } from '@/lib/cart-checkout';
 import {
   getMercadoPagoWebhookSecret,
   verifyMercadoPagoWebhookSignature,
@@ -248,6 +249,9 @@ export async function POST(req: NextRequest) {
     }
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
+    const activityMonthlyPaymentLines = parseActivityMonthlyPaymentLines(
+      payment.metadata?.activityMonthlyPaymentLines
+    );
     const socialFeePaymentLines = parseSocialFeePaymentLines(
       payment.metadata?.socialFeePaymentLines
     );
@@ -269,6 +273,23 @@ export async function POST(req: NextRequest) {
               })
             )
           : [];
+
+    const paidAt = new Date(
+      payment.date_approved || payment.date_created || new Date()
+    );
+    for (const line of activityMonthlyPaymentLines) {
+      await registerActivityParticipantPayment({
+        activityParticipantId: line.activityParticipantId,
+        activityId: line.activityId,
+        userId: line.userId,
+        childId: line.childId,
+        amount: line.amount,
+        paymentReference: payment.id?.toString() ?? id.toString(),
+        paidAt,
+        periodMonth: line.periodMonth,
+        periodYear: line.periodYear,
+      });
+    }
 
     if (socialFeePaymentLines.length > 0) {
       for (const line of socialFeePaymentLines) {
@@ -306,6 +327,7 @@ export async function POST(req: NextRequest) {
       socialFeeAmount,
       socialFeeParticipantCount:
         socialFeePaymentLines.length || participantsToRegister.length,
+      activityMonthlyPaymentLines,
       familyDiscountAmount: Number(payment.metadata?.familyDiscountAmount ?? 0),
     });
 

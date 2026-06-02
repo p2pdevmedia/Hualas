@@ -154,10 +154,12 @@ data class CartItemRequest(
 @Serializable
 data class CartQuoteResponse(
     val activityLines: List<CartLineDto> = emptyList(),
+    val activityMonthlyPaymentLines: List<CartLineDto> = emptyList(),
     val discountLines: List<CartLineDto> = emptyList(),
     val socialFeeLines: List<CartLineDto> = emptyList(),
     val mercadoPagoFeeLines: List<CartLineDto> = emptyList(),
     val totalActivityAmount: Double,
+    val totalActivityMonthlyPaymentAmount: Double = 0.0,
     val totalDiscountAmount: Double,
     val totalSocialFeeAmount: Double,
     val totalMercadoPagoFeeAmount: Double,

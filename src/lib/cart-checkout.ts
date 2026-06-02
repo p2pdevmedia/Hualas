@@ -6,6 +6,7 @@ import {
   getAccessibleChildrenWhere,
 } from '@/lib/family-access';
 import {
+  getCurrentSocialFeePeriod,
   getSocialFeeAmount,
   getSocialFeePeriods,
   hasSocialFeeForPeriod,
@@ -32,6 +33,19 @@ type ActivitySummary = {
   activityDayLabel?: string;
 };
 
+export type ActivityMonthlyPaymentLine = {
+  activityParticipantId: string;
+  activityId: string;
+  activityName: string;
+  userId: string;
+  childId: string | null;
+  targetLabel: string;
+  amount: number;
+  periodMonth: number;
+  periodYear: number;
+  label: string;
+};
+
 type SocialFeeSummary = {
   participant: SocialFeeParticipant;
   amount: number;
@@ -52,10 +66,12 @@ type MercadoPagoFeeLine = {
 
 export type CartQuote = {
   activityLines: ActivitySummary[];
+  activityMonthlyPaymentLines: ActivityMonthlyPaymentLine[];
   discountLines: DiscountSummary[];
   socialFeeLines: SocialFeeSummary[];
   mercadoPagoFeeLines: MercadoPagoFeeLine[];
   totalActivityAmount: number;
+  totalActivityMonthlyPaymentAmount: number;
   totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalMercadoPagoFeeAmount: number;
@@ -129,6 +145,13 @@ function formatSocialFeePeriod({ month, year }: SocialFeePeriod) {
   }).format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
+function getPeriodBounds({ month, year }: SocialFeePeriod) {
+  return {
+    start: new Date(Date.UTC(year, month - 1, 1)),
+    nextStart: new Date(Date.UTC(year, month, 1)),
+  };
+}
+
 async function getActiveSocialFeeParticipants(userId: string) {
   const ownerIds = await getAccessibleChildOwnerIds(userId);
   const activeUsers = await prisma.user.findMany({
@@ -168,6 +191,80 @@ async function getActiveSocialFeeParticipants(userId: string) {
   }
 
   return participants;
+}
+
+async function getPendingActivityMonthlyPaymentLines(
+  userId: string
+): Promise<ActivityMonthlyPaymentLine[]> {
+  const ownerIds = await getAccessibleChildOwnerIds(userId);
+  const period = getCurrentSocialFeePeriod();
+  const periodBounds = getPeriodBounds(period);
+  const participants = await prisma.activityParticipant.findMany({
+    where: {
+      status: 'ACTIVE',
+      OR: [
+        { childId: null, userId: { in: ownerIds } },
+        { childId: { not: null }, child: { userId: { in: ownerIds } } },
+      ],
+      activity: {
+        activityType: 'ANNUAL',
+        date: { lt: periodBounds.nextStart },
+        endDate: { gte: periodBounds.start },
+      },
+    },
+    select: {
+      id: true,
+      userId: true,
+      childId: true,
+      user: { select: { name: true, lastName: true } },
+      child: { select: { name: true, lastName: true } },
+      activity: { select: { id: true, name: true, price: true } },
+      payments: {
+        where: {
+          paymentType: 'MONTHLY',
+          periodMonth: period.month,
+          periodYear: period.year,
+        },
+        select: { id: true },
+        take: 1,
+      },
+    },
+    orderBy: [{ activity: { name: 'asc' } }, { id: 'asc' }],
+  });
+
+  return participants
+    .filter(
+      (participant) =>
+        participant.payments.length === 0 &&
+        Number(participant.activity.price) > 0
+    )
+    .map((participant) => {
+      const targetLabel = participant.child
+        ? formatParticipantName(
+            participant.child.name,
+            participant.child.lastName,
+            'Hijo/a'
+          )
+        : formatParticipantName(
+            participant.user.name,
+            participant.user.lastName,
+            'Titular'
+          );
+      const periodLabel = formatSocialFeePeriod(period);
+
+      return {
+        activityParticipantId: participant.id,
+        activityId: participant.activity.id,
+        activityName: participant.activity.name,
+        userId: participant.userId,
+        childId: participant.childId,
+        targetLabel,
+        amount: Number(participant.activity.price),
+        periodMonth: period.month,
+        periodYear: period.year,
+        label: `${participant.activity.name} - ${targetLabel} - ${periodLabel}`,
+      };
+    });
 }
 
 export async function buildCartQuote({
@@ -387,8 +484,6 @@ export async function buildCartQuote({
     }
   }
 
-  const distinctChildIds = new Set(childTargets);
-
   const participantKeys = items.map((item) =>
     getActivityParticipantKey(
       item.activityId,
@@ -529,15 +624,29 @@ export async function buildCartQuote({
     };
   });
 
-  const childActivityAmount = items.reduce((sum, item) => {
-    const childId = normalizeTarget(item.target);
-    if (!childId) {
-      return sum;
-    }
+  const activityMonthlyPaymentLines =
+    await getPendingActivityMonthlyPaymentLines(userId);
 
-    const activity = activityById.get(item.activityId);
-    return sum + (activity ? Number(activity.price) : 0);
-  }, 0);
+  const distinctChildIds = new Set(childTargets);
+  for (const line of activityMonthlyPaymentLines) {
+    if (line.childId) {
+      distinctChildIds.add(line.childId);
+    }
+  }
+
+  const childActivityAmount =
+    items.reduce((sum, item) => {
+      const childId = normalizeTarget(item.target);
+      if (!childId) {
+        return sum;
+      }
+
+      const activity = activityById.get(item.activityId);
+      return sum + (activity ? Number(activity.price) : 0);
+    }, 0) +
+    activityMonthlyPaymentLines.reduce((sum, line) => {
+      return sum + (line.childId ? line.amount : 0);
+    }, 0);
 
   const totalDiscountAmount =
     distinctChildIds.size >= 2 ? Math.round(childActivityAmount * 0.1) : 0;
@@ -633,13 +742,20 @@ export async function buildCartQuote({
     (sum, line) => sum + line.amount,
     0
   );
+  const totalActivityMonthlyPaymentAmount = activityMonthlyPaymentLines.reduce(
+    (sum, line) => sum + line.amount,
+    0
+  );
   const totalSocialFeeAmount = socialFeeLines.reduce(
     (sum, line) => sum + line.amount,
     0
   );
 
   const totalAmount =
-    totalActivityAmount - totalDiscountAmount + totalSocialFeeAmount;
+    totalActivityAmount +
+    totalActivityMonthlyPaymentAmount -
+    totalDiscountAmount +
+    totalSocialFeeAmount;
   const totalMercadoPagoFeeAmount = Math.round(totalAmount * 0.1);
   const mercadoPagoFeeLines: MercadoPagoFeeLine[] =
     totalMercadoPagoFeeAmount > 0
@@ -653,10 +769,12 @@ export async function buildCartQuote({
 
   return {
     activityLines,
+    activityMonthlyPaymentLines,
     discountLines,
     socialFeeLines,
     mercadoPagoFeeLines,
     totalActivityAmount,
+    totalActivityMonthlyPaymentAmount,
     totalDiscountAmount,
     totalSocialFeeAmount,
     totalMercadoPagoFeeAmount,
@@ -681,6 +799,98 @@ export function buildCartQuoteErrorResponse(error: unknown) {
   return null;
 }
 
+export function serializeActivityMonthlyPaymentLines(
+  lines: ActivityMonthlyPaymentLine[]
+) {
+  return JSON.stringify(lines);
+}
+
+export function parseActivityMonthlyPaymentLines(
+  value: unknown
+): ActivityMonthlyPaymentLine[] {
+  if (typeof value !== 'string' || !value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const activityParticipantId =
+          typeof (entry as { activityParticipantId?: unknown })
+            .activityParticipantId === 'string'
+            ? (entry as { activityParticipantId: string }).activityParticipantId
+            : null;
+        const activityId =
+          typeof (entry as { activityId?: unknown }).activityId === 'string'
+            ? (entry as { activityId: string }).activityId
+            : null;
+        const activityName =
+          typeof (entry as { activityName?: unknown }).activityName === 'string'
+            ? (entry as { activityName: string }).activityName
+            : 'Actividad';
+        const userId =
+          typeof (entry as { userId?: unknown }).userId === 'string'
+            ? (entry as { userId: string }).userId
+            : null;
+        const periodMonth = Number(
+          (entry as { periodMonth?: unknown }).periodMonth
+        );
+        const periodYear = Number(
+          (entry as { periodYear?: unknown }).periodYear
+        );
+        const amount = Number((entry as { amount?: unknown }).amount);
+        if (
+          !activityParticipantId ||
+          !activityId ||
+          !userId ||
+          !Number.isInteger(periodMonth) ||
+          periodMonth < 1 ||
+          periodMonth > 12 ||
+          !Number.isInteger(periodYear) ||
+          periodYear < 2000 ||
+          !Number.isFinite(amount) ||
+          amount <= 0
+        ) {
+          return null;
+        }
+
+        const childId = (entry as { childId?: unknown }).childId;
+        const targetLabel =
+          typeof (entry as { targetLabel?: unknown }).targetLabel === 'string'
+            ? (entry as { targetLabel: string }).targetLabel
+            : typeof childId === 'string'
+              ? 'Hijo/a'
+              : 'Titular';
+        const label =
+          typeof (entry as { label?: unknown }).label === 'string'
+            ? (entry as { label: string }).label
+            : `${activityName} - ${targetLabel}`;
+
+        return {
+          activityParticipantId,
+          activityId,
+          activityName,
+          userId,
+          childId: typeof childId === 'string' ? childId : null,
+          targetLabel,
+          amount: Math.round(amount),
+          periodMonth,
+          periodYear,
+          label,
+        };
+      })
+      .filter((entry): entry is ActivityMonthlyPaymentLine => Boolean(entry));
+  } catch {
+    return [];
+  }
+}
+
 export function toMercadoPagoItems(quote: CartQuote) {
   const activityItems = quote.activityLines.map((line) => ({
     id: line.id,
@@ -690,6 +900,17 @@ export function toMercadoPagoItems(quote: CartQuote) {
     currency_id: 'ARS' as const,
     category_id: 'services' as const,
   }));
+
+  const activityMonthlyPaymentItems = quote.activityMonthlyPaymentLines.map(
+    (line) => ({
+      id: `activity-monthly:${line.activityParticipantId}:${line.periodYear}-${line.periodMonth}`,
+      title: line.label,
+      quantity: 1,
+      unit_price: centsToPesos(line.amount),
+      currency_id: 'ARS' as const,
+      category_id: 'services' as const,
+    })
+  );
 
   const socialFeeItems = quote.socialFeeLines.map((line) => ({
     id: `social-fee:${line.participant.userId}:${line.participant.childId ?? 'self'}:${line.periodYear}-${line.periodMonth}`,
@@ -718,5 +939,11 @@ export function toMercadoPagoItems(quote: CartQuote) {
     category_id: 'services' as const,
   }));
 
-  return [...activityItems, ...discountItems, ...socialFeeItems, ...feeItems];
+  return [
+    ...activityItems,
+    ...activityMonthlyPaymentItems,
+    ...discountItems,
+    ...socialFeeItems,
+    ...feeItems,
+  ];
 }

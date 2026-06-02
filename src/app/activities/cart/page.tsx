@@ -18,6 +18,18 @@ type QuoteResponse = {
     targetLabel: string;
     activityDayLabel?: string;
   }>;
+  activityMonthlyPaymentLines: Array<{
+    activityParticipantId: string;
+    activityId: string;
+    activityName: string;
+    userId: string;
+    childId: string | null;
+    targetLabel: string;
+    amount: number;
+    periodMonth: number;
+    periodYear: number;
+    label: string;
+  }>;
   discountLines: Array<{
     amount: number;
     label: string;
@@ -37,6 +49,7 @@ type QuoteResponse = {
     label: string;
   }>;
   totalActivityAmount: number;
+  totalActivityMonthlyPaymentAmount: number;
   totalDiscountAmount: number;
   totalSocialFeeAmount: number;
   totalMercadoPagoFeeAmount: number;
@@ -188,6 +201,8 @@ export default function ActivitiesCartPage() {
 
   const canCheckout =
     !!quote && !quoteLoading && !submitting && quote.totalAmount > 0;
+  const emptyCartTitle =
+    items.length === 0 ? 'Pagos del mes' : 'Carrito de actividades';
   const manualItems = items.map((item) => ({
     activityId: item.activityId,
     target: item.target === 'self' ? 'self' : item.target,
@@ -200,12 +215,10 @@ export default function ActivitiesCartPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">
-          {items.length === 0 ? 'Asociate al club' : 'Carrito de actividades'}
-        </h1>
+        <h1 className="text-2xl font-semibold">{emptyCartTitle}</h1>
         <p className="text-sm text-muted-foreground">
           {items.length === 0
-            ? 'Pagá solo la cuota social mensual para asociarte al club, sin inscribirte ahora en actividades.'
+            ? 'Pagá la cuota social y las actividades mensuales pendientes de tu grupo familiar.'
             : 'El total incluye automáticamente la cuota social si corresponde y aplica descuento familiar cuando hay dos hijos o más.'}
         </p>
       </header>
@@ -213,14 +226,15 @@ export default function ActivitiesCartPage() {
       {items.length === 0 ? (
         <div className="grid gap-6 py-8 lg:grid-cols-[1fr_420px] lg:items-start">
           <div className="rounded-xl border bg-muted/30 p-6 text-left">
-            <h2 className="text-lg font-semibold">Solo cuota social mensual</h2>
+            <h2 className="text-lg font-semibold">Pagos pendientes</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Este camino es para asociarte al club sin elegir una actividad en
-              este momento. Si después querés participar en una propuesta, podés
-              volver a la agenda y sumarla por separado.
+              Este camino es para regularizar la cuota social y las actividades
+              anuales que vuelven a pagarse este mes. Si después querés sumar
+              una propuesta nueva, podés volver a la agenda y agregarla por
+              separado.
             </p>
             <label className="mt-5 block space-y-2 text-sm">
-              <span className="font-medium">Meses a pagar</span>
+              <span className="font-medium">Meses de cuota social a pagar</span>
               <select
                 value={socialFeeMonths}
                 onChange={(event) =>
@@ -237,7 +251,8 @@ export default function ActivitiesCartPage() {
                 )}
               </select>
               <span className="block text-xs text-muted-foreground">
-                Podés adelantar cuotas futuras y dejar varios meses cubiertos.
+                Podés adelantar cuotas sociales futuras. Las actividades
+                pendientes se calculan para el mes actual.
               </span>
             </label>
             <Link
@@ -250,18 +265,28 @@ export default function ActivitiesCartPage() {
 
           {quoteLoading ? (
             <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-              Buscando cuota social pendiente...
+              Buscando pagos pendientes...
             </p>
-          ) : quote && quote.totalSocialFeeAmount > 0 ? (
+          ) : quote && quote.totalAmount > 0 ? (
             <section className="rounded-xl border bg-card p-5 text-left shadow-sm">
               <div className="space-y-2">
-                <h2 className="text-lg font-semibold">Cuota social</h2>
+                <h2 className="text-lg font-semibold">Resumen de pagos</h2>
                 <p className="text-sm text-muted-foreground">
-                  Tenés cuota social pendiente para los integrantes listados
-                  abajo.
+                  Tenés pagos pendientes para los conceptos listados abajo.
                 </p>
               </div>
               <div className="mt-4 space-y-2 text-sm">
+                {quote.activityMonthlyPaymentLines.map((line) => (
+                  <div
+                    key={`${line.activityParticipantId}:${line.periodYear}-${line.periodMonth}`}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <span>{line.label}</span>
+                    <span className="font-medium">
+                      {formatAmount(line.amount)}
+                    </span>
+                  </div>
+                ))}
                 {quote.socialFeeLines.map((line, index) => (
                   <div
                     key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${index}`}
@@ -310,14 +335,14 @@ export default function ActivitiesCartPage() {
                   onClick={handleCheckout}
                   disabled={!canCheckout}
                 >
-                  {submitting ? 'Procesando...' : 'Pagar solo cuota social'}
+                  {submitting ? 'Procesando...' : 'Pagar pendientes'}
                 </Button>
               ) : (
                 <ManualPaymentForm
                   endpoint="/api/activities/cart/checkout"
                   items={[]}
                   totalAmount={quote.totalAmount}
-                  activitySummary="Vas a subir un comprobante para pagar solo la cuota social."
+                  activitySummary="Vas a subir un comprobante para regularizar los pagos pendientes del mes."
                   socialFeeOnly
                   socialFeeMonths={socialFeeMonths}
                   embedded
@@ -326,7 +351,7 @@ export default function ActivitiesCartPage() {
             </section>
           ) : (
             <p className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
-              No hay cuota social pendiente para pagar.
+              No hay pagos pendientes para este mes.
             </p>
           )}
 
@@ -418,11 +443,25 @@ export default function ActivitiesCartPage() {
                         </span>
                       </div>
                     ))}
+                    {quote.activityMonthlyPaymentLines.map((line) => (
+                      <div
+                        key={`${line.activityParticipantId}:${line.periodYear}-${line.periodMonth}`}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <span>{line.label}</span>
+                        <span className="font-medium">
+                          {formatAmount(line.amount)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <span>Subtotal actividades</span>
                     <span className="font-medium">
-                      {formatAmount(quote.totalActivityAmount)}
+                      {formatAmount(
+                        quote.totalActivityAmount +
+                          quote.totalActivityMonthlyPaymentAmount
+                      )}
                     </span>
                   </div>
                   {quote.discountLines.map((line, index) => (
@@ -472,36 +511,70 @@ export default function ActivitiesCartPage() {
               )}
             </div>
 
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">Cuota social</h2>
-              {quoteLoading ? null : quote?.socialFeeLines.length ? (
-                <ul className="space-y-2 text-sm">
-                  {quote.socialFeeLines.map((line, index) => (
-                    <li
-                      key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${index}`}
-                      className="rounded-md border bg-muted/20 p-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{line.label}</p>
-                          <p className="text-muted-foreground">
-                            {line.participant.childId
-                              ? 'Se suma por el hijo inscripto.'
-                              : 'Se suma por el titular inscripto.'}
-                          </p>
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">Pagos del mes</h2>
+                {quoteLoading ? null : quote?.activityMonthlyPaymentLines
+                    .length ? (
+                  <ul className="space-y-2 text-sm">
+                    {quote.activityMonthlyPaymentLines.map((line) => (
+                      <li
+                        key={`${line.activityParticipantId}:${line.periodYear}-${line.periodMonth}`}
+                        className="rounded-md border bg-muted/20 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{line.activityName}</p>
+                            <p className="text-muted-foreground">
+                              {line.targetLabel} - {line.periodMonth}/
+                              {line.periodYear}
+                            </p>
+                          </div>
+                          <span className="font-semibold">
+                            {formatAmount(line.amount)}
+                          </span>
                         </div>
-                        <span className="font-semibold">
-                          {formatAmount(line.amount)}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No corresponde agregar cuota social para este carrito.
-                </p>
-              )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No hay actividades mensuales pendientes para este mes.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">Cuota social</h2>
+                {quoteLoading ? null : quote?.socialFeeLines.length ? (
+                  <ul className="space-y-2 text-sm">
+                    {quote.socialFeeLines.map((line, index) => (
+                      <li
+                        key={`${line.participant.userId}:${line.participant.childId ?? 'self'}:${index}`}
+                        className="rounded-md border bg-muted/20 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{line.label}</p>
+                            <p className="text-muted-foreground">
+                              {line.participant.childId
+                                ? 'Se suma por el hijo inscripto.'
+                                : 'Se suma por el titular inscripto.'}
+                            </p>
+                          </div>
+                          <span className="font-semibold">
+                            {formatAmount(line.amount)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No corresponde agregar cuota social para este carrito.
+                  </p>
+                )}
+              </div>
             </div>
           </section>
 

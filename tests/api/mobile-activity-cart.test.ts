@@ -9,6 +9,7 @@ jest.mock('@/lib/mobile-auth', () => ({
 jest.mock('@/lib/cart-checkout', () => ({
   buildCartQuote: jest.fn(),
   buildCartQuoteErrorResponse: jest.fn().mockReturnValue(null),
+  serializeActivityMonthlyPaymentLines: jest.fn().mockReturnValue('[]'),
   toMercadoPagoItems: jest.fn().mockReturnValue([
     {
       id: 'activity_1',
@@ -131,10 +132,12 @@ const QUOTE = {
       activityDayLabel: null,
     },
   ],
+  activityMonthlyPaymentLines: [],
   discountLines: [],
   socialFeeLines: [],
   mercadoPagoFeeLines: [],
   totalActivityAmount: 5000,
+  totalActivityMonthlyPaymentAmount: 0,
   totalDiscountAmount: 0,
   totalSocialFeeAmount: 0,
   totalMercadoPagoFeeAmount: 0,
@@ -142,6 +145,8 @@ const QUOTE = {
   totalAmountWithMercadoPagoFee: 5000,
   socialFeeAmount: 0,
   socialFeeParticipants: [],
+  socialFeePaymentLines: [],
+  socialFeeMonths: 1,
   validatedItems: [
     {
       activityId: 'activity_1',

@@ -53,10 +53,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       activityLines: quote.activityLines,
+      activityMonthlyPaymentLines: quote.activityMonthlyPaymentLines,
       discountLines: quote.discountLines,
       socialFeeLines: quote.socialFeeLines,
       mercadoPagoFeeLines: quote.mercadoPagoFeeLines,
       totalActivityAmount: quote.totalActivityAmount,
+      totalActivityMonthlyPaymentAmount:
+        quote.totalActivityMonthlyPaymentAmount,
       totalDiscountAmount: quote.totalDiscountAmount,
       totalSocialFeeAmount: quote.totalSocialFeeAmount,
       totalMercadoPagoFeeAmount: quote.totalMercadoPagoFeeAmount,

@@ -106,6 +106,7 @@ function baseQuote(overrides: Partial<CartQuote> = {}): CartQuote {
     activityLines: [
       { id: ACTIVITY_ID, name: 'Kayak', amount: 5000, targetLabel: 'Para mí' },
     ],
+    activityMonthlyPaymentLines: [],
     discountLines: [],
     socialFeeLines: [],
     mercadoPagoFeeLines: [
@@ -115,6 +116,7 @@ function baseQuote(overrides: Partial<CartQuote> = {}): CartQuote {
       },
     ],
     totalActivityAmount: 5000,
+    totalActivityMonthlyPaymentAmount: 0,
     totalDiscountAmount: 0,
     totalSocialFeeAmount: 0,
     totalMercadoPagoFeeAmount: 500,

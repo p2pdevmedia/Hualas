@@ -83,6 +83,18 @@ export type ManualPaymentSummary = {
       year: number;
       amount: number;
     }>;
+    activityMonthlyPaymentLines?: Array<{
+      activityParticipantId: string;
+      activityId: string;
+      activityName: string;
+      userId: string;
+      childId: string | null;
+      targetLabel: string;
+      amount: number;
+      periodMonth: number;
+      periodYear: number;
+      label: string;
+    }>;
     validatedItems?: Array<{
       activityId: string;
       target?: string;
