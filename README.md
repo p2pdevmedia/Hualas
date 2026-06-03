@@ -4,7 +4,7 @@ Full-stack application for Club Hualas built with Next.js 14, Prisma and Postgre
 
 ## Development
 
-1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, Google OAuth client credentials if using Google sign-in, Mercadopago token, Pinata JWT for IPFS uploads, and `BLOB_READ_WRITE_TOKEN` for private file uploads).
+1. Copy `.env.example` to `.env` and set the values (database connection, NextAuth secret, canonical `APP_BASE_URL`, Google OAuth client credentials if using Google sign-in, Mercadopago token, Pinata JWT for IPFS uploads, and `BLOB_READ_WRITE_TOKEN` for private file uploads).
 2. Install dependencies with `pnpm install`.
 3. Generate the Prisma client: `pnpm prisma:generate`.
 4. Start the dev server: `pnpm dev`.
@@ -40,6 +40,7 @@ the exact command and reason in the final response.
 - Apply pending Prisma migrations separately with `pnpm db:migrate:deploy` before or after deploy, using the intended target database.
 - Make sure `DATABASE_URL` points to the target database when running migrations.
 - Configure `BLOB_READ_WRITE_TOKEN` in Vercel for private Blob uploads such as profile photos, receipts, activity media, news media, and professor invoices.
+- File uploads are validated server-side by magic bytes before private Blob writes; spoofed image/SVG content is rejected even if the browser reports an image MIME type.
 - If a deployment is already serving an older schema, run `pnpm db:migrate:deploy` once against that database and redeploy.
 
 ## Google OAuth on Vercel
@@ -57,6 +58,8 @@ the exact command and reason in the final response.
 - `MP_ENVIRONMENT=testing` usa `MP_PUBLIC_KEY` y `MP_ACCESS_TOKEN`.
 - `MP_ENVIRONMENT=production` usa `MERCADOPAGO_PUBLIC_KEY` y `MERCADOPAGO_ACCESS_TOKEN`.
 - Webhooks: `MP_WEBHOOK_SECRET` para testing y `MERCADOPAGO_WEBHOOK_SECRET` para production. Usar la clave secreta generada en Mercado Pago > Tus integraciones > Webhooks.
+- `APP_BASE_URL` debe apuntar al origen canónico público de la app, por ejemplo `https://hualas.vercel.app`. Mercado Pago usa este valor para construir URLs en vez de confiar en el `Host` del request.
+- `MP_RETURN_URL_BASE` permite separar la base de retorno si hace falta; `MP_NOTIFICATION_URL` permite fijar un webhook absoluto. Si no se configuran, se usa `APP_BASE_URL`.
 
 ### Opciones de Checkout Pro
 

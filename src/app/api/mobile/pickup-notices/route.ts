@@ -183,12 +183,20 @@ export async function POST(req: Request) {
       where: {
         activityId: activityDay.activityId,
         childId: data.childId,
+        status: 'ACTIVE',
+        ...(activityDay.activityGroupId
+          ? {
+              groupMembership: {
+                activityGroupId: activityDay.activityGroupId,
+              },
+            }
+          : {}),
       },
     });
 
     if (!childEnrolled) {
       return NextResponse.json(
-        { error: 'Ese hijo no está inscripto en esta actividad.' },
+        { error: 'Ese hijo no está inscripto en ese grupo de actividad.' },
         { status: 400 }
       );
     }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { cookies, headers } from 'next/headers';
 import { getToken } from 'next-auth/jwt';
+import { redactAuditValue } from '@/lib/security/audit-redaction';
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -41,13 +42,15 @@ function shouldSkipAudit(model: string, operation: string) {
   return AUDIT_EXCLUDED_OPERATIONS.has(`${model}:${operation}`);
 }
 
-function toJsonString<T>(value: T): string | null {
+function toJsonString<T>(value: T, model?: string): string | null {
   if (value === undefined) {
     return null;
   }
 
-  return JSON.stringify(value, (_key, currentValue) =>
-    typeof currentValue === 'bigint' ? currentValue.toString() : currentValue
+  return JSON.stringify(
+    redactAuditValue(value, { model }),
+    (_key, currentValue) =>
+      typeof currentValue === 'bigint' ? currentValue.toString() : currentValue
   );
 }
 
@@ -143,9 +146,9 @@ export const prisma = basePrisma.$extends({
         const result = await query(args);
 
         try {
-          const beforeJson = toJsonString(before);
-          const afterJson = toJsonString(result);
-          const argsJson = toJsonString(args);
+          const beforeJson = toJsonString(before, model);
+          const afterJson = toJsonString(result, model);
+          const argsJson = toJsonString(args, model);
           const recordId = toRecordId(result, args);
           const userId = await getAuditUserId();
 

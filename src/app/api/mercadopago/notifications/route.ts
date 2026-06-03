@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -27,6 +26,7 @@ import {
   notifyActivityPaymentApproved,
   notifyActivityCapacityFull,
 } from '@/lib/notifications/notification-service';
+import { finalizePaidActivityEnrollment } from '@/lib/services/activity-enrollment-finalization';
 
 export async function POST(req: NextRequest) {
   const url = new URL(req.url);
@@ -109,134 +109,39 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const activity = await prisma.activity.findUnique({
-        where: { id: activityId },
-        select: {
-          groups: {
-            select: {
-              id: true,
-              capacity: true,
-              _count: { select: { members: true } },
-            },
-          },
-          participants: {
-            where: { status: 'ACTIVE' },
-            select: {
-              id: true,
-            },
-          },
-          price: true,
-        },
-      });
-
-      if (!activity) {
-        continue;
-      }
-
-      const selectedGroup = groupId
-        ? activity.groups.find((group) => group.id === groupId)
-        : null;
-
       const participantChildId = childId || null;
-      const participantKey = getActivityParticipantKey(
-        activityId,
-        userId,
-        participantChildId
-      );
-      const existingParticipant = await prisma.activityParticipant.findUnique({
-        where: {
-          participantKey,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const activityCapacity =
-        activity.groups.length === 0 ||
-        activity.groups.some((g) => g.capacity == null)
-          ? null
-          : activity.groups.reduce((sum, g) => sum + (g.capacity as number), 0);
-
-      if (
-        activityCapacity != null &&
-        !existingParticipant &&
-        activity.participants.length >= activityCapacity
-      ) {
-        console.warn(
-          `[mercadopago] Activity ${activityId} reached capacity, skipping participant upsert`
-        );
-        continue;
-      }
-
-      if (
-        selectedGroup?.capacity != null &&
-        !existingParticipant &&
-        selectedGroup._count.members >= selectedGroup.capacity
-      ) {
-        console.warn(
-          `[mercadopago] Group ${selectedGroup.id} reached capacity, skipping participant upsert`
-        );
-        continue;
-      }
-
       const receipt = payment.id?.toString();
       const date = payment.date_approved || payment.date_created || new Date();
-      const participantData = {
-        participantKey,
-        receipt,
-        receiptDate: new Date(date),
-        status: 'ACTIVE' as const,
-        withdrawnAt: null,
-      };
-
-      const participant = await prisma.activityParticipant.upsert({
-        where: {
-          participantKey,
-        },
-        create: {
-          activityId,
-          userId,
-          childId: participantChildId,
-          ...participantData,
-        },
-        update: participantData,
-        select: { id: true },
-      });
-
-      if (selectedGroup) {
-        await prisma.activityGroupMember.upsert({
-          where: { activityParticipantId: participant.id },
-          create: {
-            activityGroupId: selectedGroup.id,
-            activityParticipantId: participant.id,
-          },
-          update: { activityGroupId: selectedGroup.id },
-        });
-      }
-
-      await registerActivityParticipantPayment({
-        activityParticipantId: participant.id,
+      const enrollment = await finalizePaidActivityEnrollment({
         activityId,
         userId,
         childId: participantChildId,
         groupId,
         activityDayId,
-        amount: Number(activity.price),
         paymentReference: payment.id?.toString() ?? id.toString(),
-        paidAt: participantData.receiptDate,
+        paidAt: date,
+        receipt,
+        receiptDate: date,
       });
 
-      if (!existingParticipant) {
-        notifyActivityPaymentApproved(participant.id).catch((err) =>
+      if (enrollment.status === 'skipped') {
+        console.warn(
+          `[mercadopago] Skipping participant upsert for activity ${activityId}: ${enrollment.reason}`
+        );
+        continue;
+      }
+
+      if (enrollment.created) {
+        notifyActivityPaymentApproved(enrollment.participant.id).catch((err) =>
           console.error(
             '[notifications] notifyActivityPaymentApproved failed',
             err
           )
         );
         if (
-          activityCapacity != null &&
-          activity.participants.length + 1 >= activityCapacity
+          enrollment.activityCapacity != null &&
+          enrollment.activeParticipantCountBefore + 1 >=
+            enrollment.activityCapacity
         ) {
           notifyActivityCapacityFull(activityId).catch((err) =>
             console.error(

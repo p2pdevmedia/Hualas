@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import { otherFamilyAdultLabel } from '@/lib/family-labels';
 import { isActiveAdmin, isActiveMember, isActiveProfessor } from '@/lib/roles';
+import { professorScopedActivityDayWhere } from '@/lib/professor-access';
 
 export default async function PickupNoticesPage() {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,8 @@ export default async function PickupNoticesPage() {
   }
 
   const isMember = isActiveMember(session);
-  const isProfessor = isActiveProfessor(session) || isActiveAdmin(session);
+  const isAdmin = isActiveAdmin(session);
+  const isProfessor = isActiveProfessor(session);
 
   let where: any = { deletedAt: null };
   let accessibleChildIds: string[] = [];
@@ -35,19 +37,12 @@ export default async function PickupNoticesPage() {
         { childId: { in: accessibleChildIds } },
       ],
     };
+  } else if (isAdmin) {
+    where = { deletedAt: null };
   } else if (isProfessor) {
-    const professorActivities = await prisma.activityProfessor.findMany({
-      where: { userId: (session.user as any).id },
-      select: { activityId: true },
-    });
-
-    const activityIds = professorActivities.map((ap) => ap.activityId);
-
     where = {
       deletedAt: null,
-      activityDay: {
-        activityId: { in: activityIds },
-      },
+      activityDay: professorScopedActivityDayWhere((session.user as any).id),
     };
   }
 

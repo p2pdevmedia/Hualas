@@ -4,6 +4,7 @@ import {
   getManualPaymentReviews,
   paymentStatusLabel,
   validateManualPaymentFile,
+  validateManualPaymentFileContent,
 } from '../manual-payments';
 import {
   buildAccountingMovementReceiptUrl,
@@ -12,8 +13,32 @@ import {
 
 describe('manual payment helpers', () => {
   it('validates accepted proof files', () => {
-    const file = new File(['content'], 'proof.png', { type: 'image/png' });
+    const file = new File(
+      [Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+      'proof.png',
+      { type: 'image/png' }
+    );
     expect(validateManualPaymentFile(file)).toBeNull();
+  });
+
+  it('validates proof file magic bytes before upload', async () => {
+    const validPdf = new File(['%PDF-1.4'], 'proof.pdf', {
+      type: 'application/pdf',
+    });
+    await expect(validateManualPaymentFileContent(validPdf)).resolves.toEqual({
+      ok: true,
+      file: { kind: 'pdf', contentType: 'application/pdf', extension: '.pdf' },
+    });
+
+    const spoofedPng = new File(['<svg></svg>'], 'proof.png', {
+      type: 'image/png',
+    });
+    await expect(validateManualPaymentFileContent(spoofedPng)).resolves.toEqual(
+      {
+        ok: false,
+        error: 'El comprobante no coincide con un PNG, JPG o PDF válido',
+      }
+    );
   });
 
   it('rejects unsupported proof file types', () => {

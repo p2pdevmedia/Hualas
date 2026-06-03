@@ -3,8 +3,12 @@ import { ActivityMediaType } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { extensionFor } from '@/lib/image-utils';
 import { prisma } from '@/lib/prisma';
+import {
+  SAFE_IMAGE_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 80 * 1024 * 1024;
@@ -23,9 +27,7 @@ function getMediaType(file: File): ActivityMediaType | null {
   return null;
 }
 
-function mediaExtensionFor(file: File) {
-  if (file.type.startsWith('image/')) return extensionFor(file);
-
+function videoExtensionFor(file: File) {
   const videoExtensions: Record<string, string> = {
     'video/mp4': '.mp4',
     'video/webm': '.webm',
@@ -68,6 +70,20 @@ export async function POST(
   if (!isAdminSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const userId = (session as { user?: { id?: string } } | null)?.user?.id;
+  const rate = checkRateLimit(`upload:activity-media:${userId ?? 'unknown'}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas subidas. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
+  }
 
   const formData = await req.formData();
   const files = formData
@@ -93,6 +109,13 @@ export async function POST(
     );
   }
 
+  const preparedFiles: Array<{
+    file: File;
+    mediaType: ActivityMediaType;
+    contentType: string;
+    extension: string;
+  }> = [];
+
   for (const file of files) {
     const mediaType = getMediaType(file);
     if (!mediaType) {
@@ -114,6 +137,30 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    if (mediaType === 'IMAGE') {
+      const validation = await validateFileSignature(
+        file,
+        SAFE_IMAGE_SIGNATURE_KINDS,
+        'Cada imagen debe ser JPG, PNG, GIF o WebP válida'
+      );
+      if (!validation.ok) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      preparedFiles.push({
+        file,
+        mediaType,
+        contentType: validation.file.contentType,
+        extension: validation.file.extension,
+      });
+    } else {
+      preparedFiles.push({
+        file,
+        mediaType,
+        contentType: file.type,
+        extension: videoExtensionFor(file),
+      });
+    }
   }
 
   const lastMedia = await prisma.activityMedia.findFirst({
@@ -127,12 +174,12 @@ export async function POST(
 
   try {
     const created = [];
-    for (const file of files) {
-      const mediaType = getMediaType(file)!;
-      const pathname = `activity-media/${params.id}/${crypto.randomUUID()}${mediaExtensionFor(file)}`;
+    for (const prepared of preparedFiles) {
+      const { contentType, extension, file, mediaType } = prepared;
+      const pathname = `activity-media/${params.id}/${crypto.randomUUID()}${extension}`;
       const blob = await put(pathname, file, {
         access: 'private',
-        contentType: file.type,
+        contentType,
       });
       uploadedBlobUrls.push(blob.url);
 
@@ -142,7 +189,7 @@ export async function POST(
           url: blob.url,
           type: mediaType,
           fileName: file.name || null,
-          contentType: file.type || null,
+          contentType,
           sortOrder: nextSortOrder++,
         },
         select: {

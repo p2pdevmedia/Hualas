@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getClientIp } from '@/lib/security/rate-limit';
 
 const RESET_TOKEN_TTL_MINUTES = 30;
 
@@ -9,6 +10,20 @@ function hashToken(token: string) {
 }
 
 export async function POST(request: Request) {
+  const rate = checkRateLimit(`password-reset:${getClientIp(request)}`, {
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
+  }
+
   const body = (await request.json().catch(() => ({}))) as { email?: string };
   const email = body.email?.trim().toLowerCase();
 

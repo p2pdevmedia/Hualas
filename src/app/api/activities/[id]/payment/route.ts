@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { prisma } from '@/lib/prisma';
-import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMercadoPagoCredentials } from '@/lib/mercadopago';
 import {
@@ -16,6 +14,7 @@ import {
 } from '@/lib/services/mercado-pago-accounting-service';
 import { notifyOrderPaymentApproved } from '@/lib/notifications/notification-service';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import { finalizePaidActivityEnrollment } from '@/lib/services/activity-enrollment-finalization';
 
 function metadataValue(
   metadata: Record<string, unknown> | null | undefined,
@@ -149,14 +148,8 @@ export async function POST(
       );
     }
 
-    const participantKey = getActivityParticipantKey(
-      params.id,
-      userId,
-      participantChildId
-    );
     const receipt = payment.id?.toString() ?? null;
     const date = payment.date_approved || payment.date_created || new Date();
-    const receiptDate = new Date(date);
 
     await prisma.mercadoPagoNotification.create({
       data: {
@@ -170,37 +163,24 @@ export async function POST(
       },
     });
 
-    const participant = await prisma.activityParticipant.upsert({
-      where: {
-        participantKey,
-      },
-      create: {
-        activityId: params.id,
-        userId,
-        childId: participantChildId,
-        participantKey,
-        receipt,
-        receiptDate,
-        status: 'ACTIVE',
-        withdrawnAt: null,
-      },
-      update: {
-        receipt,
-        receiptDate,
-        status: 'ACTIVE',
-        withdrawnAt: null,
-      },
-      select: { id: true },
-    });
-
-    await registerActivityParticipantPayment({
-      activityParticipantId: participant.id,
+    const enrollment = await finalizePaidActivityEnrollment({
       activityId: params.id,
       userId,
       childId: participantChildId,
+      groupId: matchingReference.groupId,
+      activityDayId: matchingReference.activityDayId,
       paymentReference: payment.id?.toString() ?? paymentId,
-      paidAt: receiptDate,
+      paidAt: date,
+      receipt,
+      receiptDate: date,
     });
+
+    if (enrollment.status === 'skipped') {
+      return NextResponse.json(
+        { error: 'La actividad ya no tiene cupo disponible.' },
+        { status: 409 }
+      );
+    }
 
     const socialFeeAmount = Number(payment.metadata?.socialFeeAmount ?? 0);
     const participants = parseSocialFeeParticipants(

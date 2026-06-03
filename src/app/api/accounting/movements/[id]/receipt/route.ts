@@ -5,6 +5,11 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAccountingRole } from '@/lib/accounting';
 import { buildAccountingMovementReceiptUrl } from '@/lib/blob-urls';
+import {
+  SAFE_IMAGE_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 async function streamMovementReceipt(id: string) {
   const movement = await prisma.accountingMovement.findUnique({
@@ -52,6 +57,23 @@ export async function POST(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const rate = checkRateLimit(
+    `upload:accounting-receipt:${(session?.user as any)?.id ?? 'unknown'}`,
+    {
+      limit: 20,
+      windowMs: 60_000,
+    }
+  );
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many uploads. Try again shortly.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get('file');
 
@@ -71,14 +93,21 @@ export async function POST(
     );
   }
 
-  const ext = file.name.includes('.')
-    ? file.name.slice(file.name.lastIndexOf('.'))
-    : '.jpg';
+  const validation = await validateFileSignature(
+    file,
+    SAFE_IMAGE_SIGNATURE_KINDS,
+    'File must be a valid JPG, PNG, GIF, or WebP image'
+  );
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const ext = validation.file.extension;
   const pathname = `accounting/receipts/${params.id}/${crypto.randomUUID()}${ext}`;
 
   const blob = await put(pathname, file, {
     access: 'private',
-    contentType: file.type,
+    contentType: validation.file.contentType,
   });
 
   await prisma.accountingMovement.update({

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { canProfessorAccessParticipant } from '@/lib/professor-access';
 
 export default async function ActivityParticipantFamilyPage({
   params,
@@ -56,12 +57,12 @@ export default async function ActivityParticipantFamilyPage({
   }
 
   if (role === 'PROFESSOR') {
-    const assignment = await prisma.activityProfessor.findFirst({
-      where: { activityId: params.id, userId: session.user.id },
-      select: { id: true },
-    });
+    const hasAccess = await canProfessorAccessParticipant(
+      session.user.id,
+      participant.id
+    );
 
-    if (!assignment) redirect('/');
+    if (!hasAccess) redirect('/');
   }
 
   const fullName =

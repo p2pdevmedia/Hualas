@@ -7,6 +7,11 @@ import { buildProfessorInvoiceFileUrl } from '@/lib/blob-urls';
 import { prisma } from '@/lib/prisma';
 import { notifyProfessorInvoiceCreated } from '@/lib/notifications/notification-service';
 import { findProfessorAssignedActivity } from '@/lib/professor-activities';
+import {
+  PROFESSOR_INVOICE_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const CONTENT_TYPE_TO_EXTENSION = new Map([
@@ -152,6 +157,20 @@ export async function POST(
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
   }
 
+  const rate = checkRateLimit(`upload:professor-invoice:${userId}`, {
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas subidas. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
+  }
+
   const professor = await prisma.user.findFirst({
     where: {
       id: params.id,
@@ -196,20 +215,23 @@ export async function POST(
     );
   }
 
-  const invoiceContentType = normalizeInvoiceContentType(file);
-  if (!invoiceContentType) {
-    return NextResponse.json(
-      { error: 'La factura debe ser PDF, JPG, PNG, WebP, HEIC o HEIF' },
-      { status: 400 }
-    );
-  }
-
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
       { error: 'La factura debe pesar menos de 10 MB' },
       { status: 400 }
     );
   }
+
+  const validation = await validateFileSignature(
+    file,
+    PROFESSOR_INVOICE_SIGNATURE_KINDS,
+    'La factura debe ser PDF, JPG, PNG, WebP, HEIC o HEIF válida'
+  );
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const invoiceContentType = validation.file.contentType;
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     console.error(

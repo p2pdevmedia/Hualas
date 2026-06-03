@@ -50,6 +50,9 @@ activity debt when already-registered participants have no
 
 The checkout endpoint carries those quoted lines through Mercado Pago/manual
 payment metadata so approval registers the exact monthly period.
+Manual-transfer checkout returns a pending payment/order only; the user does
+not receive active activity access until accounting approves the manual payment.
+Rejected manual payments cancel the linked order/items.
 
 ## Member
 
@@ -94,3 +97,10 @@ payment metadata so approval registers the exact monthly period.
 - Treat `403` as a role/permission mismatch and show a role-aware forbidden state.
 - Do not call admin, accounting admin, or NextAuth cookie routes from Android.
 - Use Spanish user-facing errors and empty states.
+- Photo uploads must send real JPG, PNG, GIF, or WebP image bytes; SVG or
+  spoofed files are rejected with `400`.
+- Pickup-notice options for group-specific days are returned only when the
+  selected child/user is an active participant in that same group.
+- `GET /api/mobile/professor/students?groupId=...` is scoped to groups assigned
+  to the professor; arbitrary group IDs return no cross-group data.
+- Rate-limited endpoints may return `429` with `Retry-After`.

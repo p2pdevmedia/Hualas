@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { hash } from 'bcrypt';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { blocksSuperAdminTarget } from '@/lib/admin-user-protection';
 
 export async function POST(
   req: Request,
@@ -15,6 +16,10 @@ export async function POST(
     (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (await blocksSuperAdminTarget(session, params.id)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const newPassword = randomBytes(6).toString('base64url');

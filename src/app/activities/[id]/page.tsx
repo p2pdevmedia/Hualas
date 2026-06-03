@@ -22,11 +22,33 @@ type ActivityDetail = Prisma.ActivityGetPayload<{
   include: {
     participants: {
       include: {
-        user: true;
-        child: true;
+        user: {
+          select: {
+            id: true;
+            name: true;
+            lastName: true;
+            email: true;
+            phone: true;
+            birthDate: true;
+          };
+        };
+        child: {
+          select: {
+            id: true;
+            userId: true;
+            name: true;
+            lastName: true;
+            birthDate: true;
+          };
+        };
         payments: {
           include: {
             activityDay: true;
+          };
+        };
+        groupMembership: {
+          select: {
+            activityGroupId: true;
           };
         };
       };
@@ -99,17 +121,21 @@ function transformAttendanceList(
   },
   participantsMap: Map<string, ActivityParticipantDetail>
 ) {
-  return day.attendances.map((attendance) => {
-    const participant = participantsMap.get(attendance.activityParticipantId);
-    return {
-      activityParticipantId: attendance.activityParticipantId,
-      status: attendance.status,
-      participantName: participant
-        ? getParticipantName(participant)
-        : 'Unknown',
-      registeredUserId: participant?.user.id || '',
-    };
-  });
+  return day.attendances
+    .map((attendance) => {
+      const participant = participantsMap.get(attendance.activityParticipantId);
+      if (!participant) return null;
+
+      return {
+        activityParticipantId: attendance.activityParticipantId,
+        status: attendance.status,
+        participantName: getParticipantName(participant),
+        registeredUserId: participant.user.id,
+      };
+    })
+    .filter((attendance): attendance is NonNullable<typeof attendance> =>
+      Boolean(attendance)
+    );
 }
 
 export default async function ActivityPage({ params }: ActivityPageProps) {
@@ -141,8 +167,25 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       .findMany({
         where: { activityId: activity.id },
         include: {
-          user: true,
-          child: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              birthDate: true,
+            },
+          },
+          child: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              lastName: true,
+              birthDate: true,
+            },
+          },
           payments: {
             orderBy: [
               { periodYear: 'desc' },
@@ -319,19 +362,56 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     redirect('/');
   }
 
-  // Create a map of participants for quick lookup
-  const activeParticipants = participants.filter(
+  const activityProfessorIds = activityProfessors.map(
+    (assignment: { userId: string }) => assignment.userId
+  );
+  const professorAssignedGroupIds = new Set(
+    isProfessor && session?.user.id
+      ? activityGroups
+          .filter((group: any) =>
+            group.professors.some(
+              (assignment: { userId: string }) =>
+                assignment.userId === session.user.id
+            )
+          )
+          .map((group: any) => group.id)
+      : []
+  );
+  const canProfessorUseActivityFallback =
+    isProfessor &&
+    session?.user.id &&
+    activityProfessorIds.includes(session.user.id);
+
+  const allActiveParticipants = participants.filter(
     (participant) => participant.status === 'ACTIVE'
   );
-  const participantsMap = new Map(participants.map((p) => [p.id, p]));
+  const activeParticipants =
+    isProfessor && !isAdmin
+      ? allActiveParticipants.filter((participant) => {
+          const groupId = participant.groupMembership?.activityGroupId ?? null;
+          return groupId
+            ? professorAssignedGroupIds.has(groupId)
+            : canProfessorUseActivityFallback;
+        })
+      : allActiveParticipants;
+  const participantsMap = new Map(activeParticipants.map((p) => [p.id, p]));
 
   // Create a map of pickup notices by dayId
   const pickupNoticesMap = new Map(
     pickupNoticesByDay.map((day: any) => [day.id, day.pickupNotices])
   );
 
+  const visibleDays =
+    isProfessor && !isAdmin
+      ? days.filter((day: any) =>
+          day.activityGroupId
+            ? professorAssignedGroupIds.has(day.activityGroupId)
+            : canProfessorUseActivityFallback
+        )
+      : days;
+
   // Transform days data to include attendanceList and pickupNotices
-  const daysWithAttendance = days.map((day) => ({
+  const daysWithAttendance = visibleDays.map((day) => ({
     ...day,
     attendanceList: transformAttendanceList(day, participantsMap),
     pickupNotices: pickupNoticesMap.get(day.id) || [],
@@ -351,10 +431,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           year: 'numeric',
         })}`
   }`;
-  const enrolledCount = activeParticipants.length;
-  const activityProfessorIds = activityProfessors.map(
-    (assignment: { userId: string }) => assignment.userId
-  );
+  const enrolledCount = allActiveParticipants.length;
   const activityGroupById = new Map(
     activityGroups.map((group: any) => [group.id, group.name])
   );

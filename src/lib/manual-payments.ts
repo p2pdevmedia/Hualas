@@ -1,10 +1,15 @@
 import type { Prisma, PaymentStatus } from '@prisma/client';
 import type { ActivityMonthlyPaymentLine } from '@/lib/cart-checkout';
+import {
+  MANUAL_PAYMENT_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
 
 export const MANUAL_PAYMENT_MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const MANUAL_PAYMENT_ACCEPTED_MIME_TYPES = [
   'image/png',
   'image/jpeg',
+  'image/jpg',
   'application/pdf',
 ] as const;
 
@@ -78,6 +83,19 @@ export function validateManualPaymentFile(file: File) {
   }
 
   return null;
+}
+
+export async function validateManualPaymentFileContent(file: File) {
+  const validationError = validateManualPaymentFile(file);
+  if (validationError) {
+    return { ok: false as const, error: validationError };
+  }
+
+  return validateFileSignature(
+    file,
+    MANUAL_PAYMENT_SIGNATURE_KINDS,
+    'El comprobante no coincide con un PNG, JPG o PDF válido'
+  );
 }
 
 function asObject(value: Prisma.JsonValue | null | undefined) {

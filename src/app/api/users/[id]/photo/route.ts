@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { canViewUserProfilePhoto } from '@/lib/user-photo-access';
 
 export async function GET(
   req: Request,
@@ -11,6 +12,10 @@ export async function GET(
   const session = await getServerSession(authOptions);
   if (!session) {
     return new NextResponse(null, { status: 401 });
+  }
+
+  if (!(await canViewUserProfilePhoto(session, params.id))) {
+    return new NextResponse(null, { status: 403 });
   }
 
   const user = await prisma.user.findUnique({

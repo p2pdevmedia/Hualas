@@ -39,6 +39,12 @@ jest.mock('@/lib/mercadopago', () => ({
     accessToken: 'access-token',
     environment: 'testing',
   }),
+  getMercadoPagoNotificationUrl: jest
+    .fn()
+    .mockReturnValue('https://hualas.example/api/mercadopago/notifications'),
+  getMercadoPagoReturnBaseUrl: jest
+    .fn()
+    .mockReturnValue('https://hualas.example'),
 }));
 
 jest.mock('mercadopago', () => {

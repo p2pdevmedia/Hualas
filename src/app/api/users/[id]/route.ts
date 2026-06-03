@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { userUpdateSchema } from '@/lib/validations/user';
 import { hasAdminCapability, hasSuperAdminCapability } from '@/lib/roles';
+import { blocksSuperAdminTarget } from '@/lib/admin-user-protection';
 import type { Role } from '@prisma/client';
 
 export async function PATCH(
@@ -19,6 +20,10 @@ export async function PATCH(
   }
 
   const data = userUpdateSchema.parse(await req.json());
+  if ((await blocksSuperAdminTarget(session, params.id)) && !data.roles) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const roleUpdateRequested =
     data.role !== undefined || data.roles !== undefined;
   // Role management is available from the admin users list. SUPER_ADMIN stays
@@ -186,6 +191,10 @@ export async function DELETE(
     (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (await blocksSuperAdminTarget(session, params.id)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   await prisma.user.delete({ where: { id: params.id } });

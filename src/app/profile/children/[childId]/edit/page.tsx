@@ -28,7 +28,6 @@ export default async function EditChildPage({
         in: await getAccessibleChildOwnerIds((session.user as any).id),
       },
     },
-    include: { user: true },
   });
 
   if (!child) {

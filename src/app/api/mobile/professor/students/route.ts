@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { formatFullName, formatMobileDateOnly } from '@/lib/mobile-format';
 import { prisma } from '@/lib/prisma';
+import { professorScopedActivityParticipantWhere } from '@/lib/professor-access';
 
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
@@ -19,18 +20,21 @@ export async function GET(req: Request) {
   const students = await prisma.activityParticipant.findMany({
     where: {
       status: 'ACTIVE',
-      groupMembership: {
-        activityGroup: {
-          professors: { some: { userId: session.userId } },
-        },
-      },
-      ...(groupId
-        ? {
-            groupMembership: {
-              activityGroupId: groupId,
-            },
-          }
-        : {}),
+      AND: [
+        professorScopedActivityParticipantWhere(session.userId),
+        ...(groupId
+          ? [
+              {
+                groupMembership: {
+                  activityGroupId: groupId,
+                  activityGroup: {
+                    professors: { some: { userId: session.userId } },
+                  },
+                },
+              },
+            ]
+          : []),
+      ],
     },
     select: {
       id: true,

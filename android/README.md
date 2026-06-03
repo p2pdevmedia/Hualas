@@ -78,6 +78,14 @@ Android push registration must send `platform: "Android"` to:
 POST /api/mobile/devices
 ```
 
+Mobile checkout and media notes:
+
+- Manual-transfer checkout creates pending access only; activity access appears
+  after accounting approval.
+- Profile/child photo uploads must contain real JPG, PNG, GIF, or WebP bytes.
+  Spoofed image/SVG content is rejected server-side.
+- Professor student/group screens are scoped to the professor's assigned groups.
+
 ## First Implementation Milestones
 
 1. Project shell and Material 3 theme.

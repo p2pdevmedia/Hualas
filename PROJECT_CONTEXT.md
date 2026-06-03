@@ -109,29 +109,53 @@ Database integrity notes:
   clicks on the right or left half of the visible page.
 - Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
+- Professor access to students, participants, attendance, pickup notices, and
+  activity days is scoped through `ActivityGroupProfessor` for grouped days and
+  falls back to `ActivityProfessor` only for ungrouped activity/day records.
 - Logged-in professors and admins assign registered users to activity groups.
 - Logged-in professors and admins can open a group detail view to review members and add or remove participants from that group.
 - Activity days can be restricted to a single group; attendance confirmation is blocked for participants outside that group.
 - `COUNTER` and active `ADMIN` can access accounting.
 - `ADMIN` and `SUPER_ADMIN` capabilities can manage activities, users, and forms through the active `ADMIN` profile.
 - `SUPER_ADMIN` capability gates audit log and admin notification pages.
+- Editing, deleting, or resetting a `SUPER_ADMIN` account requires an active
+  `SUPER_ADMIN` capability; regular admins cannot mutate those accounts.
 - Users can have multiple capabilities; page visibility follows `activeRole` and role switching.
+- Cookie-authenticated API mutations require a same-origin `Origin` header.
+  `/api/mobile/*` continues to use bearer tokens and is not subject to the
+  cookie CSRF check.
+- Public professor profiles intentionally omit private banking data and private
+  notes. User profile photos are served through authorized proxy routes only.
 
 ## Payment Rules
 
 - Activity checkout uses Mercado Pago.
-- Activity checkout also supports manual transfer proof flows for review.
+- Activity checkout also supports manual transfer proof flows for review, but
+  pending manual transfers do not create active activity access.
 - The activity cart quotes pending monthly payments for active `ANNUAL`
   activity participants in the current month, alongside pending social fee
   lines. The yellow member notices on home and `/my-activities` link to the
   cart and list both kinds of monthly debt.
-- Approved Mercado Pago payments create or update `ActivityParticipant` records.
-- Approved manual payments can also create or update payment/participant state depending on the flow.
-- Capacity must be checked before registering a participant.
+- Approved Mercado Pago payments and approved manual payments create or update
+  `ActivityParticipant` records through the shared transactional finalization
+  helper in `src/lib/services/activity-enrollment-finalization.ts`.
+- Manual payment rejection cancels the linked order and order items.
+- Capacity must be re-checked inside the enrollment finalization transaction
+  before registering a participant.
 - Activity registration may be for the logged-in user or one of their children.
+- Mercado Pago return and notification URLs come from canonical configured
+  origins (`APP_BASE_URL`, `MP_RETURN_URL_BASE`, `MP_NOTIFICATION_URL`) rather
+  than request `Host` headers.
 - Accounting includes social fees, draft orders, order items, manual movements, Mercado Pago payments, manual payment approval/rejection, professor invoices/payments, transferred professor invoice movements in the accounting dashboard, activity cashbox receipt links, and month-close snapshots.
 - Professor payment workflow starts from a professor-uploaded invoice tied to one of the professor's assigned activities. Invoice upload accepts PDF and common mobile gallery image formats including JPG, PNG, WebP, HEIC, and HEIF. Android/Samsung JPEG uploads are accepted even when the browser reports `image/jpg` or a generic file content type with a `.jpg`/`.jpeg` filename. Accounting approves the invoice with period and amount from the pending invoice status in `/accounting/professors/[id]`, then treasury marks the linked payment as transferred. A professor can have multiple approved invoices/payments for the same month. Professor payments copy the invoice activity so transferred honorarios appear as activity cashbox expenses in `/accounting/movements/activities`. Professors see invoice states as pending, approved, or transferred in `/my-payments`.
-- Private file uploads, including professor invoices, require Vercel Blob storage through `BLOB_READ_WRITE_TOKEN`.
+- Private file uploads, including profile photos, child photos, manual payment
+  proofs, accounting receipts, activity images/media, news media, and professor
+  invoices, require Vercel Blob storage through `BLOB_READ_WRITE_TOKEN`.
+- Server upload handlers validate file magic bytes for images/PDFs before
+  writing to Blob and apply best-effort in-memory rate limiting to sensitive
+  auth, checkout, and upload routes.
+- `DbAuditLog` redacts passwords, tokens, medical fields, payment raw data,
+  mobile tokens, and message bodies before storing before/after/args JSON.
 
 ## Development Rules
 

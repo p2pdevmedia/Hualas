@@ -74,6 +74,10 @@ The app expects these endpoints:
 
 The iPhone app caches the activities calendar summary, the sessions for each day, and the detail for each session locally. Pull-to-refresh forces a fresh fetch.
 The chat screen also exposes a member-only "Nuevo chat" picker that lists tutors, professors linked to family participants, and club admin/accounting contacts.
+Manual-transfer checkout creates pending access only; activity access appears
+after accounting approval. Profile and child photo uploads must contain real
+JPG, PNG, GIF, or WebP bytes, and professor student/group data is scoped to the
+professor's assigned groups.
 
 ## Xcode setup
 

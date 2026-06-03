@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth';
 import {
   getMercadoPagoCheckoutSettings,
   getMercadoPagoCredentials,
+  getMercadoPagoNotificationUrl,
+  getMercadoPagoReturnBaseUrl,
 } from '@/lib/mercadopago';
 import {
   buildCartQuote,
@@ -19,6 +21,7 @@ import {
   checkChildProfile,
 } from '@/lib/participant-profile-check';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 function buildProfileIncompleteResponse(message: string) {
   return NextResponse.json(
@@ -44,17 +47,24 @@ function isManualPaymentMethod(value: unknown) {
   return typeof value === 'string' && value === 'MANUAL_TRANSFER';
 }
 
-function getAppUrl(req: Request) {
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-  const proto = req.headers.get('x-forwarded-proto') || 'https';
-  if (host) return `${proto}://${host}`;
-  return new URL(req.url).origin;
-}
-
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const userId = (session.user as { id: string }).id;
+  const rate = checkRateLimit(`checkout:${userId}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
   }
 
   const contentType = req.headers.get('content-type') ?? '';
@@ -104,8 +114,6 @@ export async function POST(req: Request) {
       (payload as { socialFeeMonths?: unknown } | null)?.socialFeeMonths ?? 1
     );
   }
-
-  const userId = (session.user as { id: string }).id;
 
   // Validate participant profiles before checkout
   {
@@ -207,13 +215,7 @@ export async function POST(req: Request) {
     try {
       const result = await createManualPaymentCheckout({
         user: {
-          id: (
-            session.user as {
-              id: string;
-              email?: string | null;
-              name?: string | null;
-            }
-          ).id,
+          id: userId,
           email: session.user?.email ?? null,
           name: session.user?.name ?? null,
         },
@@ -255,11 +257,10 @@ export async function POST(req: Request) {
 
   const client = new MercadoPagoConfig({ accessToken });
   const checkoutSettings = getMercadoPagoCheckoutSettings();
-  const appUrl = getAppUrl(req);
-  const base = `${appUrl}/activities/cart`;
+  const base = `${getMercadoPagoReturnBaseUrl()}/activities/cart`;
   const refs = quote.validatedItems.map(
     (item) =>
-      `${item.activityId}:${(session.user as { id: string }).id}:${
+      `${item.activityId}:${userId}:${
         item.target && item.target !== 'self' ? item.target : ''
       }:${item.groupId ?? ''}:${item.activityDayId ?? ''}`
   );
@@ -271,13 +272,11 @@ export async function POST(req: Request) {
       back_urls: { success: base, failure: base, pending: base },
       auto_return: checkoutSettings.autoReturn,
       binary_mode: checkoutSettings.binaryMode,
-      notification_url:
-        process.env.MP_NOTIFICATION_URL?.trim() ||
-        `${appUrl}/api/mercadopago/notifications`,
+      notification_url: getMercadoPagoNotificationUrl(),
       metadata: {
         mode: 'cart',
         refs,
-        userId: (session.user as { id: string }).id,
+        userId,
         environment,
         socialFeeAmount: quote.socialFeeAmount,
         familyDiscountAmount: quote.totalDiscountAmount,

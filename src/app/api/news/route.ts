@@ -5,6 +5,11 @@ import { NewsMediaType, NewsScope } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { notifyNewsCreated } from '@/lib/notifications/notification-service';
+import {
+  SAFE_IMAGE_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const MAX_MEDIA_FILES = 6;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
@@ -28,6 +33,17 @@ function extensionForFile(file: File) {
   return subtype ? `.${subtype.replace(/[^a-z0-9]/gi, '').toLowerCase()}` : '';
 }
 
+function videoExtensionForFile(file: File) {
+  const videoExtensions: Record<string, string> = {
+    'video/mp4': '.mp4',
+    'video/quicktime': '.mov',
+    'video/webm': '.webm',
+    'video/x-msvideo': '.avi',
+  };
+
+  return (videoExtensions[file.type] ?? extensionForFile(file)) || '.mp4';
+}
+
 function mediaTypeFor(file: File): NewsMediaType | null {
   if (file.type.startsWith('image/')) return 'IMAGE';
   if (file.type.startsWith('video/')) return 'VIDEO';
@@ -38,6 +54,20 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !isAdminSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rate = checkRateLimit(`upload:news:${session.user.id}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas subidas. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
   }
 
   const formData = await req.formData();
@@ -97,6 +127,13 @@ export async function POST(req: Request) {
     }
   }
 
+  const preparedFiles: Array<{
+    file: File;
+    contentType: string;
+    extension: string;
+    type: NewsMediaType;
+  }> = [];
+
   for (const file of files) {
     const type = mediaTypeFor(file);
     if (!type) {
@@ -117,6 +154,30 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    if (type === 'IMAGE') {
+      const validation = await validateFileSignature(
+        file,
+        SAFE_IMAGE_SIGNATURE_KINDS,
+        'Cada imagen debe ser JPG, PNG, GIF o WebP válida'
+      );
+      if (!validation.ok) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      preparedFiles.push({
+        file,
+        contentType: validation.file.contentType,
+        extension: validation.file.extension,
+        type,
+      });
+    } else {
+      preparedFiles.push({
+        file,
+        contentType: file.type,
+        extension: videoExtensionForFile(file),
+        type,
+      });
+    }
   }
 
   const uploaded: Array<{
@@ -127,17 +188,16 @@ export async function POST(req: Request) {
   }> = [];
 
   try {
-    for (const file of files) {
-      const type = mediaTypeFor(file);
-      if (!type) continue;
-      const pathname = `news/${crypto.randomUUID()}${extensionForFile(file)}`;
+    for (const prepared of preparedFiles) {
+      const { contentType, extension, file, type } = prepared;
+      const pathname = `news/${crypto.randomUUID()}${extension}`;
       const blob = await put(pathname, file, {
         access: 'private',
-        contentType: file.type,
+        contentType,
       });
       uploaded.push({
         url: blob.url,
-        mimeType: file.type,
+        mimeType: contentType,
         type,
         fileName: file.name,
       });

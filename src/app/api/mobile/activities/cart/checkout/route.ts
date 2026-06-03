@@ -10,6 +10,8 @@ import {
 import {
   getMercadoPagoCheckoutSettings,
   getMercadoPagoCredentials,
+  getMercadoPagoNotificationUrl,
+  getMercadoPagoReturnBaseUrl,
 } from '@/lib/mercadopago';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
@@ -18,6 +20,7 @@ import {
   checkUserProfile,
 } from '@/lib/participant-profile-check';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 type CartItem = {
   activityId: string;
@@ -30,20 +33,6 @@ type CartItem = {
 
 function isManualPaymentMethod(value: unknown) {
   return typeof value === 'string' && value === 'MANUAL_TRANSFER';
-}
-
-function getAppUrl(req: Request) {
-  const forwardedProto = req.headers.get('x-forwarded-proto');
-  const forwardedHost =
-    req.headers.get('x-forwarded-host') || req.headers.get('host');
-  if (forwardedHost) {
-    return `${forwardedProto || 'https'}://${forwardedHost}`.replace(/\/$/, '');
-  }
-
-  const configuredUrl = process.env.NEXTAUTH_URL?.trim();
-  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-
-  return new URL(req.url).origin.replace(/\/$/, '');
 }
 
 function buildProfileIncompleteResponse(message: string) {
@@ -67,6 +56,19 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: 'Solo los socios pueden inscribirse en actividades.' },
       { status: 403 }
+    );
+  }
+  const rate = checkRateLimit(`mobile-checkout:${session.userId}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
     );
   }
 
@@ -261,8 +263,7 @@ export async function POST(req: Request) {
 
   const client = new MercadoPagoConfig({ accessToken });
   const checkoutSettings = getMercadoPagoCheckoutSettings();
-  const appUrl = getAppUrl(req);
-  const base = `${appUrl}/activities/cart`;
+  const base = `${getMercadoPagoReturnBaseUrl()}/activities/cart`;
 
   const refs = quote.validatedItems.map(
     (item) =>
@@ -278,9 +279,7 @@ export async function POST(req: Request) {
       back_urls: { success: base, failure: base, pending: base },
       auto_return: checkoutSettings.autoReturn,
       binary_mode: checkoutSettings.binaryMode,
-      notification_url:
-        process.env.MP_NOTIFICATION_URL?.trim() ||
-        `${appUrl}/api/mercadopago/notifications`,
+      notification_url: getMercadoPagoNotificationUrl(),
       metadata: {
         mode: 'cart',
         refs,

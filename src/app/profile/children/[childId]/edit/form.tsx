@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import type { Child, User } from '@prisma/client';
+import type { Child } from '@prisma/client';
 
 interface ChildEditFormProps {
-  child: Child & { user: User };
+  child: Child;
   returnTo: string;
 }
 

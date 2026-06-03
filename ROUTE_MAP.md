@@ -2,7 +2,7 @@
 
 This file maps the current Next.js App Router surface.
 
-Last audited: 2026-06-02.
+Last audited: 2026-06-03.
 
 Use this before changing pages or API routes. If you add, move, or delete a
 route, update this file in the same change.
@@ -37,6 +37,8 @@ route, update this file in the same change.
   - Privacy policy page.
 - `/professors/[id]` -> `src/app/professors/[id]/page.tsx`
   - Public professor profile.
+  - Does not expose professor banking data, CUIT, private notes, or private
+    observations.
 
 ### Auth
 
@@ -55,6 +57,8 @@ route, update this file in the same change.
   - Admin create activity form.
 - `/activities/[id]` -> `src/app/activities/[id]/page.tsx`
   - Activity detail used from admin/professor/member contexts.
+  - Professor views are scoped to assigned groups/days and do not expose
+    participants outside the professor's assignment.
 - `/activities/[id]/edit` -> `src/app/activities/[id]/edit/page.tsx`
   - Admin edit activity form.
 - `/activities/join/[id]` -> `src/app/activities/join/[id]/page.tsx`
@@ -99,6 +103,8 @@ route, update this file in the same change.
 - `/profile/children/new` -> `src/app/profile/children/new/page.tsx`
 - `/profile/children/[childId]` -> `src/app/profile/children/[childId]/page.tsx`
 - `/profile/children/[childId]/edit` -> `src/app/profile/children/[childId]/edit/page.tsx`
+  - Loads the child record only; it must not serialize the owning `User` row to
+    the client form.
 - `/profile/children/add-tutor` -> `src/app/profile/children/add-tutor/page.tsx`
 - `/profile/payments` -> `src/app/profile/payments/page.tsx`
   - Member payment history.
@@ -116,6 +122,7 @@ route, update this file in the same change.
   - Invoice upload accepts PDFs and mobile gallery images, including HEIC/HEIF
     photos from iOS and Samsung/Android JPEGs that report `image/jpg` or a
     generic file content type.
+  - The API validates invoice magic bytes before storing the private Blob.
 - `/chat` -> `src/app/chat/page.tsx`
   - Related client: `src/app/chat/chat-client.tsx`.
 - `/notifications` -> `src/app/notifications/page.tsx`
@@ -218,13 +225,19 @@ Methods below come from the current `route.ts` exports.
 - `GET, POST` `/api/users/[id]/children` -> `src/app/api/users/[id]/children/route.ts`
 - `PUT, DELETE` `/api/users/[id]/children/[childId]` -> `src/app/api/users/[id]/children/[childId]/route.ts`
 - `GET` `/api/users/[id]/photo` -> `src/app/api/users/[id]/photo/route.ts`
+  - Private Blob proxy. Access is limited to self, active admin/super-admin,
+    authorized family context, or a professor assigned to that user/child.
 - `POST` `/api/users/[id]/reset-password` -> `src/app/api/users/[id]/reset-password/route.ts`
 - `PATCH` `/api/profile` -> `src/app/api/profile/route.ts`
 - `POST` `/api/profile/active-role` -> `src/app/api/profile/active-role/route.ts`
 - `GET, POST` `/api/profile/photo` -> `src/app/api/profile/photo/route.ts`
+  - Uploads are private Blob writes with image magic-byte validation and rate
+    limiting.
 - `GET, POST` `/api/children` -> `src/app/api/children/route.ts`
 - `PUT, DELETE` `/api/children/[id]` -> `src/app/api/children/[id]/route.ts`
 - `GET, POST` `/api/children/[id]/photo` -> `src/app/api/children/[id]/photo/route.ts`
+  - Uploads are private Blob writes with image magic-byte validation and rate
+    limiting.
 - `GET` `/api/family-groups/[id]` -> `src/app/api/family-groups/[id]/route.ts`
 - `GET, POST, DELETE` `/api/family-groups/[id]/members` -> `src/app/api/family-groups/[id]/members/route.ts`
 
@@ -233,10 +246,18 @@ Methods below come from the current `route.ts` exports.
 - `POST` `/api/activities` -> `src/app/api/activities/route.ts`
 - `PUT, DELETE` `/api/activities/[id]` -> `src/app/api/activities/[id]/route.ts`
 - `GET, POST` `/api/activities/[id]/checkout` -> `src/app/api/activities/[id]/checkout/route.ts`
+  - Manual-transfer POST creates a pending payment/order without active
+    participant access. Both Mercado Pago and manual approval use canonical
+    configured URLs/helpers and checkout rate limiting.
 - `POST` `/api/activities/[id]/payment` -> `src/app/api/activities/[id]/payment/route.ts`
+  - Mercado Pago return confirmation uses the shared transactional enrollment
+    finalizer and re-checks capacity before activating access.
 - `POST` `/api/activities/[id]/withdraw` -> `src/app/api/activities/[id]/withdraw/route.ts`
 - `GET, POST, DELETE` `/api/activities/[id]/image` -> `src/app/api/activities/[id]/image/route.ts`
+  - Upload validates image magic bytes and rejects spoofed/SVG content.
 - `GET, POST` `/api/activities/[id]/media` -> `src/app/api/activities/[id]/media/route.ts`
+  - Image uploads validate magic bytes before Blob writes; video uploads keep
+    MIME/size checks.
 - `GET, DELETE` `/api/activities/[id]/media/[mediaId]` -> `src/app/api/activities/[id]/media/[mediaId]/route.ts`
 - `POST` `/api/activities/[id]/days` -> `src/app/api/activities/[id]/days/route.ts`
 - `POST` `/api/activities/[id]/days/[dayId]/reports` -> `src/app/api/activities/[id]/days/[dayId]/reports/route.ts`
@@ -250,10 +271,13 @@ Methods below come from the current `route.ts` exports.
   - Persists quoted monthly activity payment lines through Mercado Pago
     metadata or manual transfer raw data so approval registers the correct
     `ActivityParticipantPayment` period.
+  - Manual-transfer checkout stays pending without active participant access.
 - `PUT, PATCH, DELETE` `/api/activity-days/[dayId]` -> `src/app/api/activity-days/[dayId]/route.ts`
 - `PATCH` `/api/activity-days/[dayId]/attendance` -> `src/app/api/activity-days/[dayId]/attendance/route.ts`
 - `PATCH` `/api/activity-days/[dayId]/cancel` -> `src/app/api/activity-days/[dayId]/cancel/route.ts`
 - `GET, POST` `/api/activity-days/[dayId]/pickup-notices` -> `src/app/api/activity-days/[dayId]/pickup-notices/route.ts`
+  - Group-specific days require the child/user to have an active participant in
+    the same activity group.
 - `PATCH, DELETE` `/api/activity-groups/[groupId]` -> `src/app/api/activity-groups/[groupId]/route.ts`
 - `POST, DELETE` `/api/activity-groups/[groupId]/members` -> `src/app/api/activity-groups/[groupId]/members/route.ts`
 
@@ -269,9 +293,11 @@ Native iPhone and Android clients use bearer-token auth through these
 - `GET` `/api/mobile/home` -> `src/app/api/mobile/home/route.ts`
 - `GET, PATCH` `/api/mobile/profile` -> `src/app/api/mobile/profile/route.ts`
 - `GET, POST` `/api/mobile/profile/photo` -> `src/app/api/mobile/profile/photo/route.ts`
+  - Upload validates image magic bytes and rate-limits writes.
 - `GET, POST` `/api/mobile/children` -> `src/app/api/mobile/children/route.ts`
 - `GET, PUT` `/api/mobile/children/[id]` -> `src/app/api/mobile/children/[id]/route.ts`
 - `GET, POST` `/api/mobile/children/[id]/photo` -> `src/app/api/mobile/children/[id]/photo/route.ts`
+  - Upload validates image magic bytes and rate-limits writes.
 - `GET, POST, DELETE` `/api/mobile/family-groups/current/members` -> `src/app/api/mobile/family-groups/current/members/route.ts`
 - `GET` `/api/mobile/activities` -> `src/app/api/mobile/activities/route.ts`
 - `GET` `/api/mobile/activities/[dayId]` -> `src/app/api/mobile/activities/[dayId]/route.ts`
@@ -281,6 +307,8 @@ Native iPhone and Android clients use bearer-token auth through these
     activity debt.
 - `POST` `/api/mobile/activities/cart/checkout` -> `src/app/api/mobile/activities/cart/checkout/route.ts`
   - Carries monthly activity payment metadata into the shared checkout flow.
+  - Manual-transfer checkout remains pending without active access until
+    accounting approval.
 - `GET` `/api/mobile/news` -> `src/app/api/mobile/news/route.ts`
 - `POST` `/api/mobile/news/read` -> `src/app/api/mobile/news/read/route.ts`
 - `GET` `/api/mobile/messages` -> `src/app/api/mobile/messages/route.ts`
@@ -292,12 +320,16 @@ Native iPhone and Android clients use bearer-token auth through these
 - `GET` `/api/mobile/payments` -> `src/app/api/mobile/payments/route.ts`
 - `GET, POST` `/api/mobile/pickup-notices` -> `src/app/api/mobile/pickup-notices/route.ts`
 - `GET` `/api/mobile/pickup-notices/options` -> `src/app/api/mobile/pickup-notices/options/route.ts`
+  - Group-specific activity days are returned only when the child/user is an
+    active participant of the same group.
 - `PUT, DELETE` `/api/mobile/pickup-notices/[noticeId]` -> `src/app/api/mobile/pickup-notices/[noticeId]/route.ts`
 - `GET` `/api/mobile/professor/attendance` -> `src/app/api/mobile/professor/attendance/route.ts`
 - `GET, PATCH` `/api/mobile/professor/attendance/[dayId]` -> `src/app/api/mobile/professor/attendance/[dayId]/route.ts`
 - `GET` `/api/mobile/professor/groups` -> `src/app/api/mobile/professor/groups/route.ts`
 - `GET` `/api/mobile/professor/groups/[groupId]` -> `src/app/api/mobile/professor/groups/[groupId]/route.ts`
 - `GET` `/api/mobile/professor/students` -> `src/app/api/mobile/professor/students/route.ts`
+  - Optional `groupId` filters stay inside the professor's assigned group
+    scope; professor cannot use arbitrary group IDs.
 
 ### Messaging API
 
@@ -309,6 +341,8 @@ Native iPhone and Android clients use bearer-token auth through these
 ### News API
 
 - `POST` `/api/news` -> `src/app/api/news/route.ts`
+  - Image media validates magic bytes before Blob writes; video media keeps
+    MIME/size checks.
 - `PUT` `/api/news/[id]` -> `src/app/api/news/[id]/route.ts`
 - `GET` `/api/news/[id]/media` -> `src/app/api/news/[id]/media/route.ts`
 - `POST` `/api/news/read` -> `src/app/api/news/read/route.ts`
@@ -332,12 +366,16 @@ Native iPhone and Android clients use bearer-token auth through these
 - `GET, POST` `/api/accounting/movements` -> `src/app/api/accounting/movements/route.ts`
 - `PUT, DELETE` `/api/accounting/movements/[id]` -> `src/app/api/accounting/movements/[id]/route.ts`
 - `GET, POST` `/api/accounting/movements/[id]/receipt` -> `src/app/api/accounting/movements/[id]/receipt/route.ts`
+  - Receipt upload validates image magic bytes before Blob writes.
 - `GET` `/api/accounting/reports` -> `src/app/api/accounting/reports/route.ts`
 - `GET, PATCH` `/api/accounting/social-fee` -> `src/app/api/accounting/social-fee/route.ts`
 - `GET, POST` `/api/accounting/month-close` -> `src/app/api/accounting/month-close/route.ts`
 - `GET` `/api/accounting/manual-payments` -> `src/app/api/accounting/manual-payments/route.ts`
 - `POST` `/api/accounting/manual-payments/[id]/approve` -> `src/app/api/accounting/manual-payments/[id]/approve/route.ts`
+  - Approval activates participants through
+    `src/lib/services/activity-enrollment-finalization.ts`.
 - `POST` `/api/accounting/manual-payments/[id]/reject` -> `src/app/api/accounting/manual-payments/[id]/reject/route.ts`
+  - Rejection cancels the linked order and order items.
 - `GET` `/api/accounting/manual-payments/[id]/receipt` -> `src/app/api/accounting/manual-payments/[id]/receipt/route.ts`
 - `GET` `/api/billing/concepts` -> `src/app/api/billing/concepts/route.ts`
 - `POST` `/api/orders/draft` -> `src/app/api/orders/draft/route.ts`
@@ -355,6 +393,7 @@ Native iPhone and Android clients use bearer-token auth through these
   - `POST` approves a pending professor invoice and creates the linked payment record.
 - `GET, POST` `/api/professors/[id]/invoices` -> `src/app/api/professors/[id]/invoices/route.ts`
   - Professor invoice uploads require `BLOB_READ_WRITE_TOKEN` for private Vercel Blob storage.
+  - Upload validates PDF/JPG/PNG/WebP/HEIC/HEIF magic bytes.
 - `PATCH, DELETE` `/api/professor-payments/[paymentId]` -> `src/app/api/professor-payments/[paymentId]/route.ts`
   - `PATCH` marks an approved professor payment as transferred and syncs the invoice status.
 - `DELETE` `/api/professor-invoices/[invoiceId]` -> `src/app/api/professor-invoices/[invoiceId]/route.ts`
@@ -374,6 +413,8 @@ Native iPhone and Android clients use bearer-token auth through these
 ### Mercado Pago API
 
 - `GET, POST` `/api/mercadopago/notifications` -> `src/app/api/mercadopago/notifications/route.ts`
+  - Webhook signature is required. Approved payments activate participants
+    through the shared transactional enrollment finalizer and re-check capacity.
 
 ---
 
@@ -403,6 +444,10 @@ Native iPhone and Android clients use bearer-token auth through these
 - Route/page guards: `src/lib/role-guards.tsx`
 - Mercado Pago helpers: `src/lib/mercadopago.ts`
 - Mercado Pago webhook logic: `src/lib/mercadopago-webhooks.ts`
+- Paid enrollment finalizer: `src/lib/services/activity-enrollment-finalization.ts`
+- Professor access scopes: `src/lib/professor-access.ts`
+- User photo access scopes: `src/lib/user-photo-access.ts`
+- Security helpers: `src/lib/security/`
 - Mobile auth helpers: `src/lib/mobile-auth.ts`
 - Notifications: `src/lib/notifications/`
 - Shared UI components: `src/components/ui/`
@@ -418,12 +463,16 @@ Native iPhone and Android clients use bearer-token auth through these
 - Logged-in `PROFESSOR` users can access `/my-activities`,
   `/professor/students`, assigned groups, attendance-related activity day
   views, professor payments, chat, news, and notifications.
+  Professor data is group/day scoped through `ActivityGroupProfessor` for
+  grouped records and `ActivityProfessor` for ungrouped records.
 - `COUNTER` and active `ADMIN` users can access `/accounting/*`.
 - Active `ADMIN` users can access `/admin/*`, activities management, forms, and
   users.
 - `SUPER_ADMIN` is a capability used inside active `ADMIN`; it gates admin
   notifications and audit log.
 - Role switching uses `User.activeRole` plus `UserRoleAssignment` capabilities.
+- Cookie-authenticated unsafe `/api/*` mutations require same-origin `Origin`;
+  `/api/mobile/*` uses bearer-token auth.
 
 ## Maintenance
 

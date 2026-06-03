@@ -33,6 +33,28 @@ function toArray(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function normalizeOrigin(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).toString().replace(/\/$/, '');
+  } catch {
+    return null;
+  }
+}
+
 export function getMercadoPagoEnvironment(): MercadoPagoEnvironment {
   return normalizeEnvironment(process.env.MP_ENVIRONMENT);
 }
@@ -71,6 +93,29 @@ export function getMercadoPagoCheckoutSettings(): MercadoPagoCheckoutSettings {
     excludedPaymentMethodIds: toArray(process.env.MP_EXCLUDED_PAYMENT_METHODS),
     excludedPaymentTypeIds: toArray(process.env.MP_EXCLUDED_PAYMENT_TYPES),
   };
+}
+
+export function getCanonicalAppUrl() {
+  return (
+    normalizeOrigin(process.env.APP_BASE_URL) ||
+    normalizeOrigin(process.env.NEXTAUTH_URL) ||
+    (process.env.NODE_ENV === 'production' ? null : 'http://localhost:3000')
+  );
+}
+
+export function getMercadoPagoReturnBaseUrl() {
+  return (
+    normalizeUrl(process.env.MP_RETURN_URL_BASE) ||
+    getCanonicalAppUrl() ||
+    'http://localhost:3000'
+  );
+}
+
+export function getMercadoPagoNotificationUrl() {
+  return (
+    normalizeUrl(process.env.MP_NOTIFICATION_URL) ||
+    `${getCanonicalAppUrl() || 'http://localhost:3000'}/api/mercadopago/notifications`
+  );
 }
 
 export function isMercadoPagoTestingEnvironment() {

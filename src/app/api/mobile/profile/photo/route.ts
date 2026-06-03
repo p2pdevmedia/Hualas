@@ -2,24 +2,11 @@ import { del, get, put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { getMobileSessionFromRequest } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
-
-function extensionFor(file: File) {
-  const mimeToExt: Record<string, string> = {
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
-    'image/gif': '.gif',
-    'image/avif': '.avif',
-    'image/heic': '.heic',
-    'image/heif': '.heif',
-  };
-
-  const fallback = file.name.includes('.')
-    ? file.name.slice(file.name.lastIndexOf('.'))
-    : '';
-  return mimeToExt[file.type] ?? (fallback || '.jpg');
-}
+import {
+  SAFE_IMAGE_SIGNATURE_KINDS,
+  validateFileSignature,
+} from '@/lib/security/file-signatures';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 export async function GET(req: Request) {
   const session = await getMobileSessionFromRequest(req);
@@ -53,6 +40,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rate = checkRateLimit(`mobile-upload:profile:${session.userId}`, {
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas subidas. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
+  }
+
   const formData = await req.formData();
   const file = formData.get('photo');
 
@@ -77,15 +78,24 @@ export async function POST(req: Request) {
     );
   }
 
+  const validation = await validateFileSignature(
+    file,
+    SAFE_IMAGE_SIGNATURE_KINDS,
+    'El archivo debe ser una imagen JPG, PNG, GIF o WebP válida'
+  );
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
   const currentUser = await prisma.user.findUnique({
     where: { id: session.userId },
     select: { profilePhoto: true },
   });
 
-  const pathname = `profile-photos/${session.userId}/${crypto.randomUUID()}${extensionFor(file)}`;
+  const pathname = `profile-photos/${session.userId}/${crypto.randomUUID()}${validation.file.extension}`;
   const blob = await put(pathname, file, {
     access: 'private',
-    contentType: file.type,
+    contentType: validation.file.contentType,
   });
 
   try {

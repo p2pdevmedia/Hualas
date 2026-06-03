@@ -41,7 +41,17 @@ export const familyGroupService = {
   getMembersForFamilyGroup: (familyGroupId: string) =>
     prisma.familyGroupMember.findMany({
       where: { familyGroupId },
-      include: { member: true },
+      select: {
+        id: true,
+        familyGroupId: true,
+        memberId: true,
+        relationship: true,
+        isPaymentResponsible: true,
+        createdAt: true,
+        member: {
+          select: { id: true, name: true, lastName: true, email: true },
+        },
+      },
     }),
   getOrCreateFamilyGroupByResponsible: async (responsibleUser: {
     id: string;

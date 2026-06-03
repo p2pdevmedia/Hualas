@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
+import { professorScopedActivityParticipantWhere } from '@/lib/professor-access';
 
 export default async function ProfessorParentProfilePage({
   params,
@@ -19,20 +20,18 @@ export default async function ProfessorParentProfilePage({
 
   const professorId = session.user.id;
 
-  const professorActivityIds = await prisma.activityProfessor
-    .findMany({ where: { userId: professorId }, select: { activityId: true } })
-    .then((rows) => rows.map((r) => r.activityId));
-
-  if (professorActivityIds.length === 0) notFound();
-
-  // Verify access: this user or one of their children is in a group of one of the professor's activities
-  const accessCheck = await prisma.activityGroupMember.findFirst({
+  // Verify access: this user or one of their children is assigned to this
+  // professor through a group, or through an ungrouped assigned activity.
+  const accessCheck = await prisma.activityParticipant.findFirst({
     where: {
-      activityGroup: { activityId: { in: professorActivityIds } },
-      activityParticipant: {
-        OR: [{ userId: params.userId }, { child: { userId: params.userId } }],
-      },
+      AND: [
+        {
+          OR: [{ userId: params.userId }, { child: { userId: params.userId } }],
+        },
+        professorScopedActivityParticipantWhere(professorId),
+      ],
     },
+    select: { id: true },
   });
 
   if (!accessCheck) notFound();
@@ -62,9 +61,7 @@ export default async function ProfessorParentProfilePage({
       activityParticipants: {
         where: {
           childId: null,
-          groupMembership: {
-            activityGroup: { activityId: { in: professorActivityIds } },
-          },
+          ...professorScopedActivityParticipantWhere(professorId),
         },
         include: {
           activity: { select: { id: true, name: true } },
@@ -104,9 +101,7 @@ export default async function ProfessorParentProfilePage({
       userId: { in: childOwnerIds },
       activityParticipants: {
         some: {
-          groupMembership: {
-            activityGroup: { activityId: { in: professorActivityIds } },
-          },
+          ...professorScopedActivityParticipantWhere(professorId),
         },
       },
     },
@@ -117,9 +112,7 @@ export default async function ProfessorParentProfilePage({
       birthDate: true,
       activityParticipants: {
         where: {
-          groupMembership: {
-            activityGroup: { activityId: { in: professorActivityIds } },
-          },
+          ...professorScopedActivityParticipantWhere(professorId),
         },
         include: {
           activity: { select: { id: true, name: true } },

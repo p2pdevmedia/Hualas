@@ -5,28 +5,35 @@ import GoogleProvider from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
 import type { Role } from '@prisma/client';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 async function loadRoleState(userId: string): Promise<{
   roles: Role[];
   activeRole: Role;
+  isActive: boolean;
 }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      isActive: true,
       activeRole: true,
       roleAssignments: { select: { role: true } },
     },
   });
 
+  if (!user?.isActive) {
+    return { roles: [], activeRole: 'MEMBER', isActive: false };
+  }
+
   // MEMBER is implicit: every user can act as a parent/member without an
   // explicit assignment. Elevated roles come from UserRoleAssignment rows.
-  const elevated = user?.roleAssignments.map((a) => a.role) ?? [];
+  const elevated = user.roleAssignments.map((a) => a.role);
   const roles = Array.from(new Set<Role>(['MEMBER', ...elevated]));
   const activeRole: Role =
-    user?.activeRole && roles.includes(user.activeRole)
+    user.activeRole && roles.includes(user.activeRole)
       ? user.activeRole
       : 'MEMBER';
-  return { roles, activeRole };
+  return { roles, activeRole, isActive: true };
 }
 
 export const authOptions: NextAuthOptions = {
@@ -44,6 +51,12 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         const email = credentials.email.toLowerCase();
+        const rate = checkRateLimit(`login:${email}`, {
+          limit: 10,
+          windowMs: 60_000,
+        });
+        if (!rate.allowed) return null;
+
         const user = await prisma.user.findUnique({
           where: { email },
         });
@@ -130,14 +143,16 @@ export const authOptions: NextAuthOptions = {
         token.roles = state.roles;
         token.activeRole = state.activeRole;
         token.role = state.activeRole;
+        token.isActive = state.isActive;
       }
-      // Refresh roles + activeRole from DB whenever the client requests an
-      // update (e.g. after switching active profile).
-      if (trigger === 'update' && token.sub) {
+      // Refresh roles + activeRole from DB on every JWT access so web sessions
+      // honor role removals and user deactivation without waiting for sign-out.
+      if (token.sub) {
         const state = await loadRoleState(token.sub);
         token.roles = state.roles;
         token.activeRole = state.activeRole;
         token.role = state.activeRole;
+        token.isActive = state.isActive;
         if (session && (session as any).updatedAt) {
           token.updatedAt = (session as any).updatedAt;
         }
@@ -146,6 +161,10 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
+        if (token.isActive === false) {
+          return null as any;
+        }
+
         (session.user as any).id = token.sub;
         (session.user as any).roles = token.roles ?? ['MEMBER'];
         (session.user as any).activeRole = token.activeRole ?? 'MEMBER';

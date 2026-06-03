@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { professorScopedActivityParticipantWhere } from '@/lib/professor-access';
 
 export default async function ProfessorChildProfilePage({
   params,
@@ -17,21 +18,28 @@ export default async function ProfessorChildProfilePage({
 
   const professorId = session.user.id;
 
-  const professorActivityIds = await prisma.activityProfessor
-    .findMany({ where: { userId: professorId }, select: { activityId: true } })
-    .then((rows) => rows.map((r) => r.activityId));
-
-  if (professorActivityIds.length === 0) notFound();
-
-  // Verify professor has access to this child (child is in a group of one of professor's activities)
+  // Verify professor has access to this child through an assigned group, or
+  // through an ungrouped activity where the professor is assigned.
   const accessCheck = await prisma.activityGroupMember.findFirst({
     where: {
-      activityGroup: { activityId: { in: professorActivityIds } },
-      activityParticipant: { childId: params.childId },
+      activityParticipant: {
+        childId: params.childId,
+        ...professorScopedActivityParticipantWhere(professorId),
+      },
     },
   });
 
-  if (!accessCheck) notFound();
+  const ungroupedAccessCheck =
+    accessCheck ??
+    (await prisma.activityParticipant.findFirst({
+      where: {
+        childId: params.childId,
+        ...professorScopedActivityParticipantWhere(professorId),
+      },
+      select: { id: true },
+    }));
+
+  if (!ungroupedAccessCheck) notFound();
 
   const child = await prisma.child.findUnique({
     where: { id: params.childId },
@@ -48,9 +56,7 @@ export default async function ProfessorChildProfilePage({
       },
       activityParticipants: {
         where: {
-          groupMembership: {
-            activityGroup: { activityId: { in: professorActivityIds } },
-          },
+          ...professorScopedActivityParticipantWhere(professorId),
         },
         include: {
           activity: { select: { id: true, name: true } },

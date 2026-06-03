@@ -13,6 +13,13 @@ const mockActivityFindFirst = jest.fn();
 const mockProfessorInvoiceCreate = jest.fn();
 const mockNotifyProfessorInvoiceCreated = jest.fn();
 
+const pdfBytes = '%PDF-1.4';
+const jpegBytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xdb, 0x00]);
+const heicBytes = Uint8Array.from([
+  0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00,
+  0x00, 0x00, 0x00,
+]);
+
 jest.mock('next-auth', () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
@@ -46,7 +53,7 @@ jest.mock('@/lib/notifications/notification-service', () => ({
 }));
 
 function invoiceRequest(
-  file = new File(['pdf'], 'factura.pdf', {
+  file = new File([pdfBytes], 'factura.pdf', {
     type: 'application/pdf',
   }),
   activityId: string | null = 'activity_1'
@@ -138,7 +145,7 @@ describe('professor invoice uploads', () => {
 
     const response = await POST(
       invoiceRequest(
-        new File(['heic'], 'factura.heic', {
+        new File([heicBytes], 'factura.heic', {
           type: 'image/heic',
         })
       ),
@@ -171,7 +178,7 @@ describe('professor invoice uploads', () => {
 
     const response = await POST(
       invoiceRequest(
-        new File(['jpg'], 'factura-samsung.jpg', {
+        new File([jpegBytes], 'factura-samsung.jpg', {
           type: 'image/jpg',
         })
       ),
@@ -204,7 +211,7 @@ describe('professor invoice uploads', () => {
 
     const response = await POST(
       invoiceRequest(
-        new File(['jpg'], 'factura-galeria.jpg', {
+        new File([jpegBytes], 'factura-galeria.jpg', {
           type: 'application/octet-stream',
         })
       ),

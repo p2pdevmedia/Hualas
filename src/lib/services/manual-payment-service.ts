@@ -1,10 +1,10 @@
 import { del, put } from '@vercel/blob';
 import { BillableConceptCode, PaymentStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { getActivityParticipantKey } from '@/lib/activity-participants';
 import { registerActivityParticipantPayment } from '@/lib/activity-payments';
 import { registerSocialFeePayment } from '@/lib/social-fee';
 import { familyGroupService } from '@/lib/services/family-group-service';
+import { finalizePaidActivityEnrollment } from '@/lib/services/activity-enrollment-finalization';
 import {
   appendManualPaymentReview,
   createManualPaymentRawData,
@@ -12,7 +12,7 @@ import {
   getManualPaymentRawData,
   paymentStatusClass,
   paymentStatusLabel,
-  validateManualPaymentFile,
+  validateManualPaymentFileContent,
   type ManualPaymentReviewEntry,
 } from '@/lib/manual-payments';
 import type { CartQuote } from '@/lib/cart-checkout';
@@ -80,6 +80,13 @@ type PaymentIdRow = {
 type CountRow = {
   count: number;
 };
+
+class ManualPaymentApprovalBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ManualPaymentApprovalBlockedError';
+  }
+}
 
 function currentPeriod() {
   const now = new Date();
@@ -457,9 +464,9 @@ export async function createManualPaymentCheckout(input: {
   quote: CartQuote;
   proofFile: File;
 }) {
-  const validationError = validateManualPaymentFile(input.proofFile);
-  if (validationError) {
-    return { error: validationError, status: 400 as const };
+  const validation = await validateManualPaymentFileContent(input.proofFile);
+  if (!validation.ok) {
+    return { error: validation.error, status: 400 as const };
   }
 
   const paymentId = crypto.randomUUID();
@@ -469,7 +476,7 @@ export async function createManualPaymentCheckout(input: {
   );
   const uploadedFile = await put(uploadPath, input.proofFile, {
     access: 'private',
-    contentType: input.proofFile.type,
+    contentType: validation.file.contentType,
   });
 
   try {
@@ -531,43 +538,6 @@ export async function createManualPaymentCheckout(input: {
               periodYear: period.year,
             },
           });
-
-          const participantKey = getActivityParticipantKey(
-            item.id,
-            input.user.id,
-            source?.target && source.target !== 'self' ? source.target : null
-          );
-
-          const participant = await tx.activityParticipant.upsert({
-            where: { participantKey },
-            create: {
-              activityId: item.id,
-              userId: input.user.id,
-              childId:
-                source?.target && source.target !== 'self'
-                  ? source.target
-                  : null,
-              participantKey,
-              status: 'ACTIVE',
-              withdrawnAt: null,
-            },
-            update: {
-              status: 'ACTIVE',
-              withdrawnAt: null,
-            },
-            select: { id: true },
-          });
-
-          if (source?.groupId) {
-            await tx.activityGroupMember.upsert({
-              where: { activityParticipantId: participant.id },
-              create: {
-                activityGroupId: source.groupId,
-                activityParticipantId: participant.id,
-              },
-              update: { activityGroupId: source.groupId },
-            });
-          }
         }
 
         for (const line of input.quote.activityMonthlyPaymentLines) {
@@ -648,8 +618,7 @@ export async function createManualPaymentCheckout(input: {
               uploadedBy: input.user.email?.trim() || 'unknown',
               uploadedAt: now,
               proofFileName: input.proofFile.name || 'proof',
-              proofContentType:
-                input.proofFile.type || 'application/octet-stream',
+              proofContentType: validation.file.contentType,
               socialFeeAmount: input.quote.socialFeeAmount,
               familyDiscountAmount: input.quote.totalDiscountAmount,
               socialFeeParticipants: input.quote.socialFeeParticipants,
@@ -710,31 +679,70 @@ export async function approveManualPayment({
   }
 
   const now = new Date();
-  const updatedPayment = await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: payment.orderId },
-      data: { status: 'PAID', paidAt: now },
-    });
+  const pendingRawData = getManualPaymentRawData(payment.rawData);
+  const pendingValidatedItems = pendingRawData.validatedItems ?? [];
+  let updatedPayment;
+  try {
+    updatedPayment = await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: payment.orderId },
+        data: { status: 'PAID', paidAt: now },
+      });
 
-    await tx.orderItem.updateMany({
-      where: { orderId: payment.orderId },
-      data: { status: 'PAID' },
-    });
+      await tx.orderItem.updateMany({
+        where: { orderId: payment.orderId },
+        data: { status: 'PAID' },
+      });
 
-    return tx.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'APPROVED',
-        paidAt: now,
-        rawData: appendManualPaymentReview(payment.rawData, {
-          action: 'approved',
-          by: reviewer.email ?? reviewer.name ?? 'admin',
-          at: now.toISOString(),
-          result: 'approved',
-        }),
-      },
+      const approvedPayment = await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'APPROVED',
+          paidAt: now,
+          rawData: appendManualPaymentReview(payment.rawData, {
+            action: 'approved',
+            by: reviewer.email ?? reviewer.name ?? 'admin',
+            at: now.toISOString(),
+            result: 'approved',
+          }),
+        },
+      });
+
+      for (const item of pendingValidatedItems) {
+        const childId =
+          item.target && item.target !== 'self' ? item.target : null;
+        const result = await finalizePaidActivityEnrollment(
+          {
+            activityId: item.activityId,
+            userId: payment.order.responsibleUserId ?? reviewer.id,
+            childId,
+            groupId: item.groupId,
+            activityDayId: item.activityDayId,
+            paymentReference: approvedPayment.id,
+            paidAt: approvedPayment.paidAt ?? now,
+            receipt: approvedPayment.id,
+            receiptDate: approvedPayment.paidAt ?? now,
+          },
+          tx
+        );
+
+        if (result.status !== 'enrolled') {
+          throw new ManualPaymentApprovalBlockedError(
+            result.reason === 'group_full'
+              ? 'El grupo ya no tiene cupo disponible.'
+              : 'La actividad ya no tiene cupo disponible.'
+          );
+        }
+      }
+
+      return approvedPayment;
     });
-  });
+  } catch (error) {
+    if (error instanceof ManualPaymentApprovalBlockedError) {
+      return { error: error.message, status: 409 as const };
+    }
+    throw error;
+  }
 
   const rawData = getManualPaymentRawData(updatedPayment.rawData);
   const socialFeeParticipants = rawData.socialFeeParticipants ?? [];
@@ -771,7 +779,6 @@ export async function approveManualPayment({
     }
   }
 
-  const validatedItems = rawData.validatedItems ?? [];
   for (const line of activityMonthlyPaymentLines) {
     await registerActivityParticipantPayment({
       activityParticipantId: line.activityParticipantId,
@@ -783,42 +790,6 @@ export async function approveManualPayment({
       paidAt: updatedPayment.paidAt ?? now,
       periodMonth: line.periodMonth,
       periodYear: line.periodYear,
-    });
-  }
-
-  for (const item of validatedItems) {
-    const childId = item.target && item.target !== 'self' ? item.target : null;
-    const participantKey = getActivityParticipantKey(
-      item.activityId,
-      payment.order.responsibleUserId ?? reviewer.id,
-      childId
-    );
-    const participant = await prisma.activityParticipant.upsert({
-      where: { participantKey },
-      create: {
-        activityId: item.activityId,
-        userId: payment.order.responsibleUserId ?? reviewer.id,
-        childId,
-        participantKey,
-        status: 'ACTIVE',
-        withdrawnAt: null,
-      },
-      update: {
-        status: 'ACTIVE',
-        withdrawnAt: null,
-      },
-      select: { id: true },
-    });
-
-    await registerActivityParticipantPayment({
-      activityParticipantId: participant.id,
-      activityId: item.activityId,
-      userId: payment.order.responsibleUserId ?? reviewer.id,
-      childId,
-      groupId: item.groupId,
-      activityDayId: item.activityDayId,
-      paymentReference: updatedPayment.id,
-      paidAt: updatedPayment.paidAt ?? now,
     });
   }
 
@@ -855,18 +826,30 @@ export async function rejectManualPayment({
   }
 
   const now = new Date();
-  const updatedPayment = await prisma.payment.update({
-    where: { id: payment.id },
-    data: {
-      status: 'REJECTED',
-      rawData: appendManualPaymentReview(payment.rawData, {
-        action: 'rejected',
-        by: reviewer.email ?? reviewer.name ?? 'admin',
-        at: now.toISOString(),
-        result: 'rejected',
-        comment: comment?.trim() || undefined,
-      }),
-    },
+  const updatedPayment = await prisma.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: payment.orderId },
+      data: { status: 'CANCELLED' },
+    });
+
+    await tx.orderItem.updateMany({
+      where: { orderId: payment.orderId },
+      data: { status: 'CANCELLED' },
+    });
+
+    return tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'REJECTED',
+        rawData: appendManualPaymentReview(payment.rawData, {
+          action: 'rejected',
+          by: reviewer.email ?? reviewer.name ?? 'admin',
+          at: now.toISOString(),
+          result: 'rejected',
+          comment: comment?.trim() || undefined,
+        }),
+      },
+    });
   });
 
   notifyManualPaymentRejected(updatedPayment.id);

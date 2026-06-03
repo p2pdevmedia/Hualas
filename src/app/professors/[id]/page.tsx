@@ -29,16 +29,6 @@ export default async function ProfessorPublicProfilePage({
       phone: true,
       profilePhoto: true,
       updatedAt: true,
-      observations: true,
-      professorProfile: {
-        select: {
-          bankName: true,
-          alias: true,
-          cbu: true,
-          cuit: true,
-          notes: true,
-        },
-      },
     },
   });
 
@@ -98,40 +88,6 @@ export default async function ProfessorPublicProfilePage({
             </p>
           )}
         </div>
-
-        {professor.observations && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Observaciones
-            </p>
-            <p className="text-sm text-foreground">{professor.observations}</p>
-          </div>
-        )}
-
-        {professor.professorProfile && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Datos profesionales
-            </p>
-            <div className="grid gap-2 text-sm rounded-xl border bg-muted/20 p-4">
-              {professor.professorProfile.bankName && (
-                <p>Banco: {professor.professorProfile.bankName}</p>
-              )}
-              {professor.professorProfile.alias && (
-                <p>Alias: {professor.professorProfile.alias}</p>
-              )}
-              {professor.professorProfile.cbu && (
-                <p>CBU: {professor.professorProfile.cbu}</p>
-              )}
-              {professor.professorProfile.cuit && (
-                <p>CUIT: {professor.professorProfile.cuit}</p>
-              )}
-              {professor.professorProfile.notes && (
-                <p>Notas: {professor.professorProfile.notes}</p>
-              )}
-            </div>
-          </div>
-        )}
 
         <div className="flex flex-wrap gap-3">
           <Link

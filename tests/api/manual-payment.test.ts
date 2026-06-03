@@ -13,6 +13,10 @@ jest.mock('@vercel/blob', () => ({
 
 jest.mock('@/lib/manual-payments', () => ({
   validateManualPaymentFile: jest.fn().mockReturnValue(null),
+  validateManualPaymentFileContent: jest.fn().mockResolvedValue({
+    ok: true,
+    file: { contentType: 'application/pdf', extension: '.pdf' },
+  }),
   createManualPaymentRawData: jest.fn().mockReturnValue({}),
   getManualPaymentRawData: jest.fn().mockReturnValue({}),
   getManualPaymentReviews: jest.fn().mockReturnValue([]),
@@ -310,10 +314,13 @@ describe('createManualPaymentCheckout', () => {
   });
 
   it('retorna error si el archivo de comprobante no es válido', async () => {
-    const { validateManualPaymentFile } = require('@/lib/manual-payments');
-    (validateManualPaymentFile as jest.Mock).mockReturnValueOnce(
-      'Formato no permitido'
-    );
+    const {
+      validateManualPaymentFileContent,
+    } = require('@/lib/manual-payments');
+    (validateManualPaymentFileContent as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      error: 'Formato no permitido',
+    });
 
     const result = await createManualPaymentCheckout({
       user: USER,

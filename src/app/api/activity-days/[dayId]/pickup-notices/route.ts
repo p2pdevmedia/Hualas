@@ -64,12 +64,20 @@ export async function POST(
       where: {
         activityId: activityDay.activityId,
         childId: data.childId,
+        status: 'ACTIVE',
+        ...(activityDay.activityGroupId
+          ? {
+              groupMembership: {
+                activityGroupId: activityDay.activityGroupId,
+              },
+            }
+          : {}),
       },
     });
 
     if (!childEnrolled) {
       return NextResponse.json(
-        { error: 'Child is not enrolled in this activity' },
+        { error: 'Child is not enrolled in this activity day group' },
         { status: 400 }
       );
     }

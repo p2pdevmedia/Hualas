@@ -67,27 +67,54 @@ export async function GET(req: Request) {
   });
 
   const childIds = children.map((child) => child.id);
-  const activityDays = childIds.length
-    ? await prisma.activityDay.findMany({
+  const eligibleParticipants = childIds.length
+    ? await prisma.activityParticipant.findMany({
         where: {
-          date: { gt: now },
-          cancelled: false,
-          activity: {
-            participants: {
-              some: {
-                childId: {
-                  in: childIds,
-                },
-              },
-            },
+          childId: { in: childIds },
+          status: 'ACTIVE',
+        },
+        select: {
+          activityId: true,
+          groupMembership: {
+            select: { activityGroupId: true },
           },
         },
-        include: {
-          activity: true,
-        },
-        orderBy: {
-          date: 'asc',
-        },
+      })
+    : [];
+  const eligibleActivityIds = Array.from(
+    new Set(eligibleParticipants.map((participant) => participant.activityId))
+  );
+  const eligibleGroupIdsByActivityId = new Map<string, Set<string>>();
+  for (const participant of eligibleParticipants) {
+    const groupId = participant.groupMembership?.activityGroupId;
+    if (!groupId) continue;
+    const groupIds =
+      eligibleGroupIdsByActivityId.get(participant.activityId) ??
+      new Set<string>();
+    groupIds.add(groupId);
+    eligibleGroupIdsByActivityId.set(participant.activityId, groupIds);
+  }
+
+  const activityDays = eligibleActivityIds.length
+    ? (
+        await prisma.activityDay.findMany({
+          where: {
+            date: { gt: now },
+            cancelled: false,
+            activityId: { in: eligibleActivityIds },
+          },
+          include: {
+            activity: true,
+          },
+          orderBy: {
+            date: 'asc',
+          },
+        })
+      ).filter((day) => {
+        if (!day.activityGroupId) return true;
+        return eligibleGroupIdsByActivityId
+          .get(day.activityId)
+          ?.has(day.activityGroupId);
       })
     : [];
 

@@ -6,6 +6,8 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import {
   getMercadoPagoCheckoutSettings,
   getMercadoPagoCredentials,
+  getMercadoPagoNotificationUrl,
+  getMercadoPagoReturnBaseUrl,
 } from '@/lib/mercadopago';
 import {
   getSocialFeeAmount,
@@ -21,6 +23,7 @@ import {
 } from '@/lib/participant-profile-check';
 import { getAccessibleChildrenWhere } from '@/lib/family-access';
 import { centsToPesos } from '@/lib/accounting';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 type CheckoutItem = {
   activityId: string;
@@ -50,20 +53,6 @@ async function buildSingleActivityQuote(
   });
 }
 
-function getAppUrl(req: Request) {
-  const forwardedProto = req.headers.get('x-forwarded-proto');
-  const forwardedHost =
-    req.headers.get('x-forwarded-host') || req.headers.get('host');
-  if (forwardedHost) {
-    return `${forwardedProto || 'https'}://${forwardedHost}`.replace(/\/$/, '');
-  }
-
-  const configuredUrl = process.env.NEXTAUTH_URL?.trim();
-  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-
-  return new URL(req.url).origin.replace(/\/$/, '');
-}
-
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -77,6 +66,19 @@ export async function GET(
     return NextResponse.json(
       { error: 'Solo los miembros pueden inscribirse en actividades.' },
       { status: 403 }
+    );
+  }
+  const rate = checkRateLimit(`checkout:${(session.user as any).id}`, {
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
     );
   }
 
@@ -229,13 +231,10 @@ export async function GET(
       .filter(Boolean)
       .join(':');
 
-    const appUrl = getAppUrl(req);
-    const returnBase = process.env.MP_RETURN_URL_BASE?.trim() || appUrl;
+    const returnBase = getMercadoPagoReturnBaseUrl();
     const base = `${returnBase}/activities/${activity.id}`;
     const successUrl = childId ? `${base}?childId=${childId}` : base;
-    const notificationUrl =
-      process.env.MP_NOTIFICATION_URL?.trim() ||
-      `${appUrl}/api/mercadopago/notifications`;
+    const notificationUrl = getMercadoPagoNotificationUrl();
 
     const preference = new Preference(client);
     const items = [
@@ -358,6 +357,23 @@ export async function POST(
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rate = checkRateLimit(
+    `checkout:${(session.user as { id: string }).id}`,
+    {
+      limit: 20,
+      windowMs: 60_000,
+    }
+  );
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Probá de nuevo en unos segundos.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfterSeconds) },
+      }
+    );
   }
 
   const contentType = req.headers.get('content-type') ?? '';

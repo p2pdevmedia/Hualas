@@ -23,6 +23,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import * as blob from '@vercel/blob';
 
+const jpegBytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xdb, 0x00]);
+
 describe('POST /api/activities/[id]/image', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -117,7 +119,7 @@ describe('POST /api/activities/[id]/image', () => {
     (prisma.activity.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
     const formData = new FormData();
-    const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+    const file = new File([jpegBytes], 'test.jpg', { type: 'image/jpeg' });
     formData.append('image', file);
 
     const req = new Request('http://localhost/api/activities/123/image', {
@@ -127,6 +129,27 @@ describe('POST /api/activities/[id]/image', () => {
 
     const res = await POST(req, { params: { id: '123' } });
     expect(res.status).toBe(404);
+  });
+
+  it('returns 400 if image content is spoofed', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce({
+      user: { id: 'user1', role: 'ADMIN' },
+    });
+
+    const formData = new FormData();
+    const file = new File(['<svg><script>alert(1)</script></svg>'], 'x.png', {
+      type: 'image/png',
+    });
+    formData.append('image', file);
+
+    const req = new Request('http://localhost/api/activities/123/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const res = await POST(req, { params: { id: '123' } });
+    expect(res.status).toBe(400);
+    expect(blob.put).not.toHaveBeenCalled();
   });
 
   it('successfully uploads image to blob and updates activity', async () => {
@@ -146,7 +169,7 @@ describe('POST /api/activities/[id]/image', () => {
     });
 
     const formData = new FormData();
-    const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+    const file = new File([jpegBytes], 'test.jpg', { type: 'image/jpeg' });
     formData.append('image', file);
 
     const req = new Request('http://localhost/api/activities/123/image', {
@@ -179,7 +202,7 @@ describe('POST /api/activities/[id]/image', () => {
     });
 
     const formData = new FormData();
-    const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+    const file = new File([jpegBytes], 'test.jpg', { type: 'image/jpeg' });
     formData.append('image', file);
 
     const req = new Request('http://localhost/api/activities/123/image', {
