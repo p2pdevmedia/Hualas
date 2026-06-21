@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import type { Child } from '@prisma/client';
@@ -15,6 +16,12 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(child.name);
   const [lastName, setLastName] = useState(child.lastName ?? '');
+  const [documentFrontPhoto, setDocumentFrontPhoto] = useState(
+    child.documentFrontPhoto ?? ''
+  );
+  const [documentBackPhoto, setDocumentBackPhoto] = useState(
+    child.documentBackPhoto ?? ''
+  );
   const [birthDate, setBirthDate] = useState(
     child.birthDate ? child.birthDate.toISOString().split('T')[0] : ''
   );
@@ -42,10 +49,43 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
   const [bloodGroup, setBloodGroup] = useState(child.bloodGroup ?? '');
   const [primaryDoctor, setPrimaryDoctor] = useState(child.primaryDoctor ?? '');
   const [doctorPhone, setDoctorPhone] = useState(child.doctorPhone ?? '');
+  const [doctorCertificate, setDoctorCertificate] = useState(
+    child.doctorCertificate ?? ''
+  );
   const [observations, setObservations] = useState(child.observations ?? '');
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+
+  const toDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const image = new window.Image();
+      image.onload = () => {
+        const maxSize = 1280;
+        const scale = Math.min(
+          maxSize / image.width,
+          maxSize / image.height,
+          1
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(image.src);
+          reject(new Error('No se pudo procesar la imagen'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(image.src);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(image.src);
+        reject(new Error('No se pudo leer la imagen'));
+      };
+      image.src = URL.createObjectURL(file);
+    });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,6 +98,8 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
         body: JSON.stringify({
           name,
           lastName,
+          documentFrontPhoto,
+          documentBackPhoto,
           birthDate: birthDate || null,
           documentType,
           documentNumber,
@@ -73,6 +115,7 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
           bloodGroup,
           primaryDoctor,
           doctorPhone,
+          doctorCertificate: doctorCertificate || undefined,
           observations,
         }),
       });
@@ -139,6 +182,67 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
           onChange={(e) => setDocumentNumber(e.target.value)}
         />
       </label>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Foto delantera DNI</span>
+            <input
+              className={inputClass}
+              type="file"
+              accept="image/*"
+              required={!documentFrontPhoto}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setDocumentFrontPhoto(await toDataUrl(file));
+              }}
+            />
+          </label>
+          {documentFrontPhoto && (
+            <div className="rounded-lg border bg-muted/20 p-2">
+              <div className="relative h-44 w-full overflow-hidden rounded-md">
+                <NextImage
+                  src={documentFrontPhoto}
+                  alt="Foto delantera actual del documento"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="space-y-2">
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Foto trasera DNI</span>
+            <input
+              className={inputClass}
+              type="file"
+              accept="image/*"
+              required={!documentBackPhoto}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setDocumentBackPhoto(await toDataUrl(file));
+              }}
+            />
+          </label>
+          {documentBackPhoto && (
+            <div className="rounded-lg border bg-muted/20 p-2">
+              <div className="relative h-44 w-full overflow-hidden rounded-md">
+                <NextImage
+                  src={documentBackPhoto}
+                  alt="Foto trasera actual del documento"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <label className="space-y-1 text-sm">
         <span className="text-muted-foreground">Fecha de nacimiento</span>
@@ -277,6 +381,37 @@ export default function ChildEditForm({ child, returnTo }: ChildEditFormProps) {
             onChange={(e) => setDoctorPhone(e.target.value)}
           />
         </label>
+        <label className="space-y-1 text-sm block">
+          <span className="text-muted-foreground">Certificado médico</span>
+          <input
+            className={inputClass}
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setDoctorCertificate(await toDataUrl(file));
+            }}
+          />
+        </label>
+        {doctorCertificate && (
+          <div className="space-y-2">
+            <span className="text-sm text-muted-foreground">
+              Certificado actual
+            </span>
+            <div className="rounded-lg border bg-muted/20 p-2">
+              <div className="relative h-56 w-full overflow-hidden rounded-md bg-background">
+                <NextImage
+                  src={doctorCertificate}
+                  alt="Certificado médico actual"
+                  fill
+                  unoptimized
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        )}
         <label className="space-y-1 text-sm block">
           <span className="text-muted-foreground">Observaciones</span>
           <textarea

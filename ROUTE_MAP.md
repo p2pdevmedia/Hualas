@@ -107,6 +107,9 @@ route, update this file in the same change.
   - Detail view shows the full captured child profile with empty-state
     placeholders and the medical certificate image/link when it was uploaded.
 - `/profile/children/[childId]/edit` -> `src/app/profile/children/[childId]/edit/page.tsx`
+  - Mirrors the captured child profile fields used on creation, including DNI
+    front/back photos and the medical certificate, so parents can review and
+    replace the full record from the edit screen.
   - Loads the child record only; it must not serialize the owning `User` row to
     the client form.
 - `/profile/children/add-tutor` -> `src/app/profile/children/add-tutor/page.tsx`

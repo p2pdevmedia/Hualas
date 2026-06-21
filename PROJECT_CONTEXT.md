@@ -122,6 +122,9 @@ Database integrity notes:
   required. Child detail pages show the full captured profile, including
   empty-state placeholders for fields that were not filled and the uploaded
   certificate image when available.
+- Child editing at `/profile/children/[childId]/edit` mirrors the creation
+  fields for the captured profile, including the DNI front/back photos and the
+  medical certificate, so parents can review or replace the complete record.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - Professor access to students, participants, attendance, pickup notices, and
   activity days is scoped through `ActivityGroupProfessor` for grouped days and
