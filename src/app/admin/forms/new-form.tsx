@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 
@@ -13,7 +12,6 @@ type Field = {
 };
 
 export default function NewForm() {
-  const router = useRouter();
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
   const [error, setError] = useState('');
@@ -67,8 +65,7 @@ export default function NewForm() {
         body: JSON.stringify({ title, fields }),
       });
       if (!res.ok) throw new Error('Request failed');
-      setSuccess('Formulario guardado');
-      router.push('/admin/forms');
+      window.location.href = '/admin/forms';
     } catch (e) {
       setError('No se pudo guardar el formulario');
     } finally {

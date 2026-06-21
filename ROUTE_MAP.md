@@ -203,10 +203,12 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
   - The listing is force-dynamic and is revalidated after create/edit/delete
     so it reflects saved values immediately.
 - `/admin/forms/new` -> `src/app/admin/forms/new/page.tsx`
-  - On successful save, the form redirects back to `/admin/forms`, matching
-    the edit flow.
+  - On successful save, the form returns to `/admin/forms` with a full
+    navigation so the new form appears immediately in the list.
 - `/admin/forms/[id]` -> `src/app/admin/forms/[id]/page.tsx`
 - `/admin/forms/[id]/edit` -> `src/app/admin/forms/[id]/edit/page.tsx`
+  - On successful save, the edit flow returns to `/admin/forms` with a full
+    navigation so the updated values appear immediately in the list.
 - `/admin/notifications` -> `src/app/admin/notifications/page.tsx`
   - `SUPER_ADMIN` capability only.
 - `/admin/audit-log` -> `src/app/admin/audit-log/page.tsx`
