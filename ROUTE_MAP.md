@@ -194,6 +194,8 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
 - `/admin/users` -> `src/app/admin/users/page.tsx`
   - Search matches name, last name, full name, and email with fuzzy
     similarity, and the list includes an activity filter.
+  - Super Admin actions in the per-user menu include a shortcut to that user's
+    audit trail at `/admin/audit-log/user/[id]`.
 - `/admin/users/new` -> `src/app/admin/users/new/page.tsx`
 - `/admin/users/[id]` -> `src/app/admin/users/[id]/page.tsx`
 - `/admin/users/[id]/view` -> `src/app/admin/users/[id]/view/page.tsx`
@@ -218,6 +220,9 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
   - `SUPER_ADMIN` capability only.
 - `/admin/audit-log` -> `src/app/admin/audit-log/page.tsx`
   - `SUPER_ADMIN` capability only.
+- `/admin/audit-log/user/[id]` -> `src/app/admin/audit-log/user/[id]/page.tsx`
+  - `SUPER_ADMIN` capability only.
+  - Shows the audit trail for a single user using the exact user id filter.
 
 ### Forms
 

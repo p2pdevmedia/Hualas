@@ -328,6 +328,14 @@ export default function UsersList({
                       >
                         {t.childEnrollment}
                       </Link>
+                      {canManageSuperAdmin && (
+                        <Link
+                          href={`/admin/audit-log/user/${u.id}`}
+                          className={menuItemClass}
+                        >
+                          Ver auditoría
+                        </Link>
+                      )}
                       <button
                         type="button"
                         onClick={() => resetPassword(u.id)}

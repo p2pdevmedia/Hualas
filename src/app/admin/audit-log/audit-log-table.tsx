@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 
 interface AuditLog {
@@ -28,6 +29,13 @@ interface ApiResponse {
     >;
   };
 }
+
+type AuditLogTableProps = {
+  initialUser?: {
+    id: string;
+    label: string;
+  };
+};
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -157,7 +165,7 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   return `${log.model} ${log.action} por ${actor}.`;
 }
 
-export default function AuditLogTable() {
+export default function AuditLogTable({ initialUser }: AuditLogTableProps) {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [page, setPage] = useState(1);
   const [model, setModel] = useState('');
@@ -165,13 +173,18 @@ export default function AuditLogTable() {
   const [user, setUser] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialUserId = initialUser?.id ?? '';
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
     if (model) params.set('model', model);
     if (action) params.set('action', action);
-    if (user) params.set('user', user);
+    if (initialUserId) {
+      params.set('userId', initialUserId);
+    } else if (user) {
+      params.set('user', user);
+    }
 
     fetch(`/api/admin/audit-log?${params}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -180,12 +193,20 @@ export default function AuditLogTable() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, model, action, user]);
+  }, [page, model, action, user, initialUserId]);
 
   const totalPages = data ? Math.ceil(data.total / data.pageSize) : 1;
 
   return (
     <div className="space-y-4">
+      {initialUser ? (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm">
+          <div className="font-medium">Auditoría de {initialUser.label}</div>
+          <div className="text-muted-foreground">
+            Filtrado por usuario exacto.
+          </div>
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-3">
         <input
           type="text"
@@ -207,16 +228,25 @@ export default function AuditLogTable() {
           }}
           className="rounded-md border px-3 py-1.5 text-sm"
         />
-        <input
-          type="text"
-          placeholder="Filtrar por nombre, apellido o email"
-          value={user}
-          onChange={(e) => {
-            setUser(e.target.value);
-            setPage(1);
-          }}
-          className="min-w-[260px] rounded-md border px-3 py-1.5 text-sm"
-        />
+        {initialUser ? (
+          <Link
+            href="/admin/audit-log"
+            className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+          >
+            Ver auditoría completa
+          </Link>
+        ) : (
+          <input
+            type="text"
+            placeholder="Filtrar por nombre, apellido o email"
+            value={user}
+            onChange={(e) => {
+              setUser(e.target.value);
+              setPage(1);
+            }}
+            className="min-w-[260px] rounded-md border px-3 py-1.5 text-sm"
+          />
+        )}
       </div>
 
       {loading && <p className="text-sm text-muted-foreground">Cargando...</p>}

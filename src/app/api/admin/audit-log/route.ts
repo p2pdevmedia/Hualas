@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
   const model = getString(searchParams.get('model'));
   const action = getString(searchParams.get('action'));
   const user = getString(searchParams.get('user'));
+  const userId = getString(searchParams.get('userId'));
   const userTokens = getSearchTokens(user);
 
   const matchedUserIds = userTokens.length
@@ -75,6 +76,13 @@ export async function GET(req: NextRequest) {
                 contains: action,
                 mode: Prisma.QueryMode.insensitive,
               },
+            },
+          ]
+        : []),
+      ...(userId
+        ? [
+            {
+              OR: [{ userId }, { model: 'User', recordId: userId }],
             },
           ]
         : []),
