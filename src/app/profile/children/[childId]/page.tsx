@@ -10,6 +10,10 @@ import { gateActiveRole } from '@/lib/role-guards';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { formatAmount } from '@/lib/accounting';
 
+function renderTextValue(value: string | null | undefined) {
+  return value?.trim() ? value : 'No informado';
+}
+
 export default async function ViewMyChildPage({
   params,
 }: {
@@ -92,35 +96,31 @@ export default async function ViewMyChildPage({
       {/* Información Personal */}
       <ChildInfoSection title="Información Personal">
         <div className="grid grid-cols-2 gap-4 text-sm">
-          {child.name && (
-            <div>
-              <span className="font-medium block text-foreground">Nombre</span>
-              <span className="text-muted-foreground">{child.name}</span>
-            </div>
-          )}
-          {child.lastName && (
-            <div>
-              <span className="font-medium block text-foreground">
-                Apellido
-              </span>
-              <span className="text-muted-foreground">{child.lastName}</span>
-            </div>
-          )}
-          {child.birthDate && (
-            <div>
-              <span className="font-medium block text-foreground">
-                Fecha de Nacimiento
-              </span>
-              <span className="text-muted-foreground">
-                {child.birthDate.toLocaleDateString('es-AR')}
-              </span>
-            </div>
-          )}
-          {child.gender && (
-            <div>
-              <span className="font-medium block text-foreground">Género</span>
-              <span className="text-muted-foreground">
-                {child.gender === 'FEMALE'
+          <div>
+            <span className="font-medium block text-foreground">Nombre</span>
+            <span className="text-muted-foreground">{child.name}</span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">Apellido</span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.lastName)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Fecha de Nacimiento
+            </span>
+            <span className="text-muted-foreground">
+              {child.birthDate
+                ? child.birthDate.toLocaleDateString('es-AR')
+                : 'No informado'}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">Género</span>
+            <span className="text-muted-foreground">
+              {child.gender
+                ? child.gender === 'FEMALE'
                   ? 'Femenino'
                   : child.gender === 'MALE'
                     ? 'Masculino'
@@ -128,239 +128,200 @@ export default async function ViewMyChildPage({
                       ? 'No Binario'
                       : child.gender === 'UNDISCLOSED'
                         ? 'Prefiero no decirlo'
-                        : 'Otro'}
-              </span>
-            </div>
-          )}
-          {child.nationality && (
-            <div>
-              <span className="font-medium block text-foreground">
-                Nacionalidad
-              </span>
-              <span className="text-muted-foreground">{child.nationality}</span>
-            </div>
-          )}
-          {child.maritalStatus && (
-            <div>
-              <span className="font-medium block text-foreground">
-                Estado Civil
-              </span>
-              <span className="text-muted-foreground">
-                {child.maritalStatus}
-              </span>
-            </div>
-          )}
-          {child.address && (
-            <div className="col-span-2">
-              <span className="font-medium block text-foreground">
-                Domicilio
-              </span>
-              <span className="text-muted-foreground">{child.address}</span>
-            </div>
-          )}
+                        : 'Otro'
+                : 'No informado'}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Nacionalidad
+            </span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.nationality)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Estado Civil
+            </span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.maritalStatus)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">Domicilio</span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.address)}
+            </span>
+          </div>
         </div>
       </ChildInfoSection>
 
       {/* Documentación */}
-      {(child.documentType ||
-        child.documentNumber ||
-        child.documentFrontPhoto ||
-        child.documentBackPhoto) && (
-        <ChildInfoSection title="Documentación">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {child.documentType && (
-                <div>
-                  <span className="font-medium block text-foreground">
-                    Tipo de Documento
-                  </span>
-                  <span className="text-muted-foreground">
-                    {child.documentType}
-                  </span>
-                </div>
-              )}
-              {child.documentNumber && (
-                <div>
-                  <span className="font-medium block text-foreground">
-                    Número
-                  </span>
-                  <span className="text-muted-foreground">
-                    {child.documentNumber}
-                  </span>
-                </div>
-              )}
+      <ChildInfoSection title="Documentación">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium block text-foreground">
+                Tipo de Documento
+              </span>
+              <span className="text-muted-foreground">
+                {renderTextValue(child.documentType)}
+              </span>
             </div>
-
-            {/* Document Photos */}
-            <div className="grid grid-cols-2 gap-4">
-              {child.documentFrontPhoto && (
-                <div>
-                  <span className="font-medium block text-foreground text-sm mb-2">
-                    Foto Delantera
-                  </span>
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src={child.documentFrontPhoto}
-                      alt="Foto delantera del documento"
-                      fill
-                      className="rounded-lg border border-border object-cover"
-                    />
-                  </div>
-                </div>
-              )}
-              {child.documentBackPhoto && (
-                <div>
-                  <span className="font-medium block text-foreground text-sm mb-2">
-                    Foto Trasera
-                  </span>
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src={child.documentBackPhoto}
-                      alt="Foto trasera del documento"
-                      fill
-                      className="rounded-lg border border-border object-cover"
-                    />
-                  </div>
-                </div>
-              )}
+            <div>
+              <span className="font-medium block text-foreground">Número</span>
+              <span className="text-muted-foreground">
+                {renderTextValue(child.documentNumber)}
+              </span>
             </div>
           </div>
-        </ChildInfoSection>
-      )}
 
-      {/* Ficha Médica */}
-      {[
-        child.allergies,
-        child.regularMedication,
-        child.relevantDiseases,
-        child.previousInjuries,
-        child.physicalRestrictions,
-        child.bloodGroup,
-        child.primaryDoctor,
-        child.doctorPhone,
-        child.doctorCertificate,
-        child.observations,
-      ].some(Boolean) && (
-        <ChildInfoSection title="Ficha Médica">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            {child.allergies && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Alergias
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.allergies}
-                </span>
-              </div>
-            )}
-            {child.regularMedication && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Medicación Habitual
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.regularMedication}
-                </span>
-              </div>
-            )}
-            {child.relevantDiseases && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Enfermedades Relevantes
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.relevantDiseases}
-                </span>
-              </div>
-            )}
-            {child.previousInjuries && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Lesiones Previas
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.previousInjuries}
-                </span>
-              </div>
-            )}
-            {child.physicalRestrictions && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Restricciones Físicas
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.physicalRestrictions}
-                </span>
-              </div>
-            )}
-            {child.bloodGroup && (
-              <div>
-                <span className="font-medium block text-foreground">
-                  Grupo Sanguíneo
-                </span>
-                <span className="text-muted-foreground">
-                  {child.bloodGroup}
-                </span>
-              </div>
-            )}
-            {child.primaryDoctor && (
-              <div>
-                <span className="font-medium block text-foreground">
-                  Médico de Cabecera
-                </span>
-                <span className="text-muted-foreground">
-                  {child.primaryDoctor}
-                </span>
-              </div>
-            )}
-            {child.doctorPhone && (
-              <div>
-                <span className="font-medium block text-foreground">
-                  Teléfono Médico
-                </span>
-                <span className="text-muted-foreground">
-                  {child.doctorPhone}
-                </span>
-              </div>
-            )}
-            {child.doctorCertificate && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Certificado Médico
-                </span>
-                <div className="mt-2 overflow-hidden rounded-lg border bg-background">
-                  <a
-                    href={child.doctorCertificate}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-sm text-primary underline underline-offset-4"
-                  >
-                    Abrir certificado en tamaño completo
-                  </a>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <span className="font-medium block text-foreground text-sm mb-2">
+                Foto Delantera
+              </span>
+              {child.documentFrontPhoto ? (
+                <div className="relative h-64 w-full">
                   <Image
-                    src={child.doctorCertificate}
-                    alt="Certificado médico"
-                    width={1200}
-                    height={1600}
-                    unoptimized
-                    className="mt-2 h-auto w-full object-contain"
+                    src={child.documentFrontPhoto}
+                    alt="Foto delantera del documento"
+                    fill
+                    className="rounded-lg border border-border object-cover"
                   />
                 </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+                  No cargada
+                </div>
+              )}
+            </div>
+            <div>
+              <span className="font-medium block text-foreground text-sm mb-2">
+                Foto Trasera
+              </span>
+              {child.documentBackPhoto ? (
+                <div className="relative h-64 w-full">
+                  <Image
+                    src={child.documentBackPhoto}
+                    alt="Foto trasera del documento"
+                    fill
+                    className="rounded-lg border border-border object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+                  No cargada
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </ChildInfoSection>
+
+      {/* Ficha Médica */}
+      <ChildInfoSection title="Ficha Médica">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">Alergias</span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.allergies)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Medicación Habitual
+            </span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.regularMedication)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Enfermedades Relevantes
+            </span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.relevantDiseases)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Lesiones Previas
+            </span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.previousInjuries)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Restricciones Físicas
+            </span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.physicalRestrictions)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Grupo Sanguíneo
+            </span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.bloodGroup)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Médico de Cabecera
+            </span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.primaryDoctor)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium block text-foreground">
+              Teléfono Médico
+            </span>
+            <span className="text-muted-foreground">
+              {renderTextValue(child.doctorPhone)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Certificado Médico
+            </span>
+            {child.doctorCertificate ? (
+              <div className="mt-2 overflow-hidden rounded-lg border bg-background">
+                <a
+                  href={child.doctorCertificate}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-sm text-primary underline underline-offset-4"
+                >
+                  Abrir certificado en tamaño completo
+                </a>
+                <Image
+                  src={child.doctorCertificate}
+                  alt="Certificado médico"
+                  width={1200}
+                  height={1600}
+                  unoptimized
+                  className="mt-2 h-auto w-full object-contain"
+                />
               </div>
-            )}
-            {child.observations && (
-              <div className="col-span-2">
-                <span className="font-medium block text-foreground">
-                  Observaciones
-                </span>
-                <span className="text-muted-foreground whitespace-pre-wrap">
-                  {child.observations}
-                </span>
-              </div>
+            ) : (
+              <span className="text-muted-foreground">No cargado</span>
             )}
           </div>
-        </ChildInfoSection>
-      )}
+          <div className="col-span-2">
+            <span className="font-medium block text-foreground">
+              Observaciones
+            </span>
+            <span className="text-muted-foreground whitespace-pre-wrap">
+              {renderTextValue(child.observations)}
+            </span>
+          </div>
+        </div>
+      </ChildInfoSection>
 
       {/* Actividades - Active/Upcoming */}
       {activeActivities.length > 0 && (

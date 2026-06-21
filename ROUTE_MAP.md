@@ -101,9 +101,11 @@ route, update this file in the same change.
     - `src/app/profile/profile-photo-upload.tsx`
 - `/profile/children` -> `src/app/profile/children/page.tsx`
 - `/profile/children/new` -> `src/app/profile/children/new/page.tsx`
-  - Child registration form requires all fields except the medical certificate.
+  - Child registration form requires the full profile payload; inside
+    `Ficha médica`, only the medical certificate upload is required.
 - `/profile/children/[childId]` -> `src/app/profile/children/[childId]/page.tsx`
-  - Detail view shows the medical certificate image/link when it was uploaded.
+  - Detail view shows the full captured child profile with empty-state
+    placeholders and the medical certificate image/link when it was uploaded.
 - `/profile/children/[childId]/edit` -> `src/app/profile/children/[childId]/edit/page.tsx`
   - Loads the child record only; it must not serialize the owning `User` row to
     the client form.

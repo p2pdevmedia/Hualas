@@ -109,8 +109,10 @@ Database integrity notes:
   clicks on the right or left half of the visible page.
 - Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
 - Child registration at `/profile/children/new` requires the full profile
-  payload; only the medical certificate remains optional. Child detail pages
-  show the uploaded certificate image when available.
+  payload, but inside `Ficha médica` only the medical certificate upload is
+  required. Child detail pages show the full captured profile, including
+  empty-state placeholders for fields that were not filled and the uploaded
+  certificate image when available.
 - Logged-in professors can access `my-activities`, manage activity days for assigned activities, and see their assigned activities alongside enrollments.
 - Professor access to students, participants, attendance, pickup notices, and
   activity days is scoped through `ActivityGroupProfessor` for grouped days and
