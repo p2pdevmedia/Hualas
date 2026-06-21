@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 
@@ -12,10 +13,12 @@ type Field = {
 };
 
 export default function NewForm() {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const inputClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
@@ -56,6 +59,7 @@ export default function NewForm() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSaving(true);
     try {
       const res = await fetch('/api/forms', {
         method: 'POST',
@@ -64,10 +68,11 @@ export default function NewForm() {
       });
       if (!res.ok) throw new Error('Request failed');
       setSuccess('Formulario guardado');
-      setTitle('');
-      setFields([]);
+      router.push('/admin/forms');
     } catch (e) {
       setError('No se pudo guardar el formulario');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -157,8 +162,8 @@ export default function NewForm() {
 
       {error && <p className="text-destructive text-sm">{error}</p>}
       {success && <p className="text-success text-sm">{success}</p>}
-      <Button type="submit" className="w-full">
-        Guardar formulario
+      <Button type="submit" className="w-full" disabled={saving}>
+        {saving ? 'Guardando...' : 'Guardar formulario'}
       </Button>
     </Form>
   );

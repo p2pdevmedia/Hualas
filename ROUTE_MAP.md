@@ -200,7 +200,11 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
 - `/admin/forms` -> `src/app/admin/forms/page.tsx`
   - Deletion is handled by `src/app/api/forms/[id]/route.ts` and removes the
     form together with its fields and responses.
+  - The listing is force-dynamic and is revalidated after create/edit/delete
+    so it reflects saved values immediately.
 - `/admin/forms/new` -> `src/app/admin/forms/new/page.tsx`
+  - On successful save, the form redirects back to `/admin/forms`, matching
+    the edit flow.
 - `/admin/forms/[id]` -> `src/app/admin/forms/[id]/page.tsx`
 - `/admin/forms/[id]/edit` -> `src/app/admin/forms/[id]/edit/page.tsx`
 - `/admin/notifications` -> `src/app/admin/notifications/page.tsx`

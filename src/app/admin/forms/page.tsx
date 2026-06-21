@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import FormList from './form-list';
 
+export const dynamic = 'force-dynamic';
+
 export default async function FormsPage() {
   const session = await getServerSession(authOptions);
   // Auth gating happens in the parent /admin layout.

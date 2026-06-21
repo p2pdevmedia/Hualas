@@ -75,6 +75,8 @@ Important models:
 - `Form`, `FormField`, `FormResponse`: custom admin forms.
   - Admin form deletion removes the form together with its fields and
     responses through the `/api/forms/[id]` delete flow.
+  - Admin form create and edit flows revalidate `/admin/forms` so the listing
+    reflects saved values immediately after navigation.
 - `Conversation`, `Message`: internal chat.
 - `News`, `NewsMedia`, `NewsReadReceipt`: institutional news, media, and read state.
 - `Notification`, `NotificationPreference`, `PushAlertSubscription`: in-app and web push notifications.

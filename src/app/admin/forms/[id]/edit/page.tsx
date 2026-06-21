@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import EditForm from './edit-form';
 
+export const dynamic = 'force-dynamic';
+
 export default async function EditFormPage({
   params,
 }: {
