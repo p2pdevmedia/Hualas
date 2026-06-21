@@ -252,9 +252,6 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
   return (
     <Form onSubmit={handleSubmit} className="space-y-4">
-      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-        Todos los campos son obligatorios, salvo el certificado médico.
-      </p>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="child-name" className={labelClass}>
