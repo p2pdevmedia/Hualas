@@ -161,7 +161,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
   const labelClass = 'text-sm font-medium text-foreground';
   const inputModeClass =
-    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+    'w-full rounded-md border bg-background px-3 py-2 text-sm text-black placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
   const nationalityIsCommon = SOUTH_AMERICA_NATIONALITIES.includes(nationality);
   const requiredMark = <span className="text-destructive">*</span>;
 
@@ -505,72 +505,67 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-allergies" className={labelClass}>
-            Alergias {requiredMark}
+            Alergias
           </label>
           <textarea
             id="child-allergies"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={allergies}
             onChange={(e) => setAllergies(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-medication" className={labelClass}>
-            Medicación habitual {requiredMark}
+            Medicación habitual
           </label>
           <textarea
             id="child-medication"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={regularMedication}
             onChange={(e) => setRegularMedication(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-diseases" className={labelClass}>
-            Enfermedades relevantes {requiredMark}
+            Enfermedades relevantes
           </label>
           <textarea
             id="child-diseases"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={relevantDiseases}
             onChange={(e) => setRelevantDiseases(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-injuries" className={labelClass}>
-            Lesiones previas {requiredMark}
+            Lesiones previas
           </label>
           <textarea
             id="child-injuries"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={previousInjuries}
             onChange={(e) => setPreviousInjuries(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-restrictions" className={labelClass}>
-            Restricciones físicas {requiredMark}
+            Restricciones físicas
           </label>
           <textarea
             id="child-restrictions"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={physicalRestrictions}
             onChange={(e) => setPhysicalRestrictions(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-blood-group" className={labelClass}>
-            Grupo sanguíneo {requiredMark}
+            Grupo sanguíneo
           </label>
           <input
             id="child-blood-group"
@@ -579,13 +574,12 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="off"
             value={bloodGroup}
             onChange={(e) => setBloodGroup(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-doctor" className={labelClass}>
-            Médico de cabecera {requiredMark}
+            Médico de cabecera
           </label>
           <input
             id="child-doctor"
@@ -594,13 +588,12 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="off"
             value={primaryDoctor}
             onChange={(e) => setPrimaryDoctor(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-doctor-phone" className={labelClass}>
-            Teléfono médico {requiredMark}
+            Teléfono médico
           </label>
           <input
             id="child-doctor-phone"
@@ -610,19 +603,19 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="tel"
             value={doctorPhone}
             onChange={(e) => setDoctorPhone(e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="child-doctor-cert" className={labelClass}>
-            Certificado del médico (imagen)
+            Certificado del médico (imagen) {requiredMark}
           </label>
           <input
             id="child-doctor-cert"
             className={inputClass}
             type="file"
             accept="image/*"
+            required
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -633,14 +626,13 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-observations" className={labelClass}>
-            Observaciones {requiredMark}
+            Observaciones
           </label>
           <textarea
             id="child-observations"
             className={`${inputClass} min-h-[72px] resize-y`}
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
-            required
           />
         </div>
       </div>
