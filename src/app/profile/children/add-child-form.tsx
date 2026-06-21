@@ -163,6 +163,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
   const inputModeClass =
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
   const nationalityIsCommon = SOUTH_AMERICA_NATIONALITIES.includes(nationality);
+  const requiredMark = <span className="text-destructive">*</span>;
 
   const toDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -257,7 +258,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="child-name" className={labelClass}>
-            Nombre
+            Nombre {requiredMark}
           </label>
           <input
             id="child-name"
@@ -271,7 +272,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
         </div>
         <div className="space-y-1">
           <label htmlFor="child-last-name" className={labelClass}>
-            Apellido
+            Apellido {requiredMark}
           </label>
           <input
             id="child-last-name"
@@ -287,7 +288,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-document-type" className={labelClass}>
-          Tipo de documento
+          Tipo de documento {requiredMark}
         </label>
         <select
           id="child-document-type"
@@ -307,7 +308,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-document-number" className={labelClass}>
-          Número / Código
+          Número / Código {requiredMark}
         </label>
         <input
           id="child-document-number"
@@ -323,7 +324,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <label htmlFor="child-doc-front" className={labelClass}>
-            Foto delantera DNI
+            Foto delantera DNI {requiredMark}
           </label>
           <input
             id="child-doc-front"
@@ -340,7 +341,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
         </div>
         <div className="space-y-1">
           <label htmlFor="child-doc-back" className={labelClass}>
-            Foto trasera DNI
+            Foto trasera DNI {requiredMark}
           </label>
           <input
             id="child-doc-back"
@@ -359,7 +360,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-birth-date" className={labelClass}>
-          Fecha de nacimiento
+          Fecha de nacimiento {requiredMark}
         </label>
         <input
           id="child-birth-date"
@@ -375,7 +376,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-address" className={labelClass}>
-          Domicilio
+          Domicilio {requiredMark}
         </label>
         <input
           id="child-address"
@@ -400,7 +401,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-gender" className={labelClass}>
-          Género
+          Género {requiredMark}
         </label>
         <select
           id="child-gender"
@@ -422,7 +423,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-nationality" className={labelClass}>
-          Nacionalidad
+          Nacionalidad {requiredMark}
         </label>
         <select
           id="child-nationality"
@@ -475,7 +476,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
       <div className="space-y-1">
         <label htmlFor="child-marital-status" className={labelClass}>
-          Estado Civil
+          Estado Civil {requiredMark}
         </label>
         <input
           id="child-marital-status"
@@ -498,7 +499,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
         />
         <span>
           Declaro, bajo carácter de declaración jurada, que soy padre, madre o
-          tutor legal del menor que estoy registrando.
+          tutor legal del menor que estoy registrando. {requiredMark}
         </span>
       </label>
 
@@ -507,7 +508,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-allergies" className={labelClass}>
-            Alergias
+            Alergias {requiredMark}
           </label>
           <textarea
             id="child-allergies"
@@ -520,7 +521,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-medication" className={labelClass}>
-            Medicación habitual
+            Medicación habitual {requiredMark}
           </label>
           <textarea
             id="child-medication"
@@ -533,7 +534,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-diseases" className={labelClass}>
-            Enfermedades relevantes
+            Enfermedades relevantes {requiredMark}
           </label>
           <textarea
             id="child-diseases"
@@ -546,7 +547,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-injuries" className={labelClass}>
-            Lesiones previas
+            Lesiones previas {requiredMark}
           </label>
           <textarea
             id="child-injuries"
@@ -559,7 +560,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-restrictions" className={labelClass}>
-            Restricciones físicas
+            Restricciones físicas {requiredMark}
           </label>
           <textarea
             id="child-restrictions"
@@ -572,7 +573,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-blood-group" className={labelClass}>
-            Grupo sanguíneo
+            Grupo sanguíneo {requiredMark}
           </label>
           <input
             id="child-blood-group"
@@ -587,7 +588,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-doctor" className={labelClass}>
-            Médico de cabecera
+            Médico de cabecera {requiredMark}
           </label>
           <input
             id="child-doctor"
@@ -602,7 +603,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-doctor-phone" className={labelClass}>
-            Teléfono médico
+            Teléfono médico {requiredMark}
           </label>
           <input
             id="child-doctor-phone"
@@ -635,7 +636,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
         <div className="space-y-1">
           <label htmlFor="child-observations" className={labelClass}>
-            Observaciones
+            Observaciones {requiredMark}
           </label>
           <textarea
             id="child-observations"
