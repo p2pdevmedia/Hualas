@@ -29,20 +29,6 @@ export default async function CreatePickupNoticePage() {
     },
   });
 
-  const rawUsers = await prisma.user.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      lastName: true,
-    },
-  });
-
-  const users = rawUsers.map((u) => ({
-    id: u.id,
-    name: formatFullName(u),
-  }));
-
   const now = new Date();
   const childIds = children.map((c) => c.id);
   const activeParticipants =
@@ -189,7 +175,6 @@ export default async function CreatePickupNoticePage() {
           id: child.id,
           name: formatFullName(child),
         }))}
-        users={users}
       />
     </div>
   );

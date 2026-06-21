@@ -117,7 +117,7 @@ route, update this file in the same change.
 - `/profile/pickup-notices` -> `src/app/profile/pickup-notices/page.tsx`
 - `/profile/pickup-notices/new` -> `src/app/profile/pickup-notices/new/page.tsx`
   - Creation uses a 4-step wizard in this order: child, activity, enabled day/
-    schedule, then who will pick up.
+    schedule, then who will pick up by typing the name.
   - Related component: `src/app/profile/pickup-notices/new/pickup-notice-wizard.tsx`
 - `/profile/pickup-notices/[noticeId]/edit` -> `src/app/profile/pickup-notices/[noticeId]/edit/page.tsx`
 - `/my-activities` -> `src/app/my-activities/page.tsx`

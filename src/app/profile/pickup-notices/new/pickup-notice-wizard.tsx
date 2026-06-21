@@ -3,18 +3,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface Child {
-  id: string;
-  name: string;
-}
-
-interface User {
   id: string;
   name: string;
 }
@@ -32,7 +26,6 @@ interface ActivityDay {
 
 interface PickupNoticeWizardProps {
   childrenList: Child[];
-  users: User[];
   activityDays: ActivityDay[];
 }
 
@@ -56,20 +49,17 @@ function formatSummaryDate(value: string) {
 
 export default function PickupNoticeWizard({
   childrenList,
-  users,
   activityDays,
 }: PickupNoticeWizardProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState<StepId>(0);
   const [loading, setLoading] = useState(false);
-  const [usePersonField, setUsePersonField] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedChildId, setSelectedChildId] = useState('');
   const [selectedActivityId, setSelectedActivityId] = useState('');
   const [selectedDayId, setSelectedDayId] = useState('');
   const [formData, setFormData] = useState({
-    alternatePersonUserId: '',
     alternatePersonName: '',
     description: '',
   });
@@ -169,20 +159,6 @@ export default function PickupNoticeWizard({
   }, [dayOptions, selectedActivityId, selectedDayId]);
 
   useEffect(() => {
-    if (!users.length) {
-      setUsePersonField(true);
-      return;
-    }
-
-    if (users.length === 1) {
-      setFormData((current) => ({
-        ...current,
-        alternatePersonUserId: users[0].id,
-      }));
-    }
-  }, [users]);
-
-  useEffect(() => {
     setErrors((current) => {
       const next = { ...current };
       delete next.selectedChildId;
@@ -266,12 +242,8 @@ export default function PickupNoticeWizard({
       nextErrors.selectedDayId = 'Seleccioná un día';
     }
 
-    if (usePersonField) {
-      if (!formData.alternatePersonName.trim()) {
-        nextErrors.alternatePersonName = 'Ingresá un nombre';
-      }
-    } else if (!formData.alternatePersonUserId) {
-      nextErrors.alternatePersonUserId = 'Seleccioná una persona';
+    if (!formData.alternatePersonName.trim()) {
+      nextErrors.alternatePersonName = 'Ingresá un nombre';
     }
 
     if (!formData.description.trim()) {
@@ -308,12 +280,8 @@ export default function PickupNoticeWizard({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             childId: selectedChildId,
-            alternatePersonUserId: usePersonField
-              ? null
-              : formData.alternatePersonUserId || null,
-            alternatePersonName: usePersonField
-              ? formData.alternatePersonName.trim()
-              : null,
+            alternatePersonUserId: null,
+            alternatePersonName: formData.alternatePersonName.trim(),
             description: formData.description.trim(),
           }),
         }
@@ -490,70 +458,28 @@ export default function PickupNoticeWizard({
 
         <div className="space-y-3">
           <p className="text-sm font-medium">Quién retirará *</p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant={!usePersonField ? 'primary' : 'outline'}
-              onClick={() => setUsePersonField(false)}
-            >
-              Elegir contacto
-            </Button>
-            <Button
-              type="button"
-              variant={usePersonField ? 'primary' : 'outline'}
-              onClick={() => setUsePersonField(true)}
-            >
-              Escribir nombre
-            </Button>
+          <div>
+            <label className="mb-2 block text-sm font-medium">Nombre</label>
+            <input
+              value={formData.alternatePersonName}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  alternatePersonName: event.target.value,
+                }))
+              }
+              placeholder="Ej: Tía María, vecino, mamá de un amigo"
+              className={cn(
+                'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                errors.alternatePersonName && 'border-red-500'
+              )}
+            />
+            {errors.alternatePersonName && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.alternatePersonName}
+              </p>
+            )}
           </div>
-
-          {!usePersonField ? (
-            <div>
-              <label className="mb-2 block text-sm font-medium">Contacto</label>
-              <Select
-                value={formData.alternatePersonUserId}
-                onValueChange={(value) =>
-                  setFormData((current) => ({
-                    ...current,
-                    alternatePersonUserId: value,
-                  }))
-                }
-                disabled={users.length === 0}
-              >
-                <option value="">Elegí una persona</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </Select>
-              {errors.alternatePersonUserId && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.alternatePersonUserId}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div>
-              <label className="mb-2 block text-sm font-medium">Nombre</label>
-              <Input
-                value={formData.alternatePersonName}
-                onChange={(event) =>
-                  setFormData((current) => ({
-                    ...current,
-                    alternatePersonName: event.target.value,
-                  }))
-                }
-                placeholder="Ej: Tía María, vecino, mamá de un amigo"
-                className={errors.alternatePersonName ? 'border-red-500' : ''}
-              />
-              {errors.alternatePersonName && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.alternatePersonName}
-                </p>
-              )}
-            </div>
-          )}
 
           <div>
             <label className="mb-2 block text-sm font-medium">
