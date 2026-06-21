@@ -101,7 +101,9 @@ route, update this file in the same change.
     - `src/app/profile/profile-photo-upload.tsx`
 - `/profile/children` -> `src/app/profile/children/page.tsx`
 - `/profile/children/new` -> `src/app/profile/children/new/page.tsx`
+  - Child registration form requires all fields except the medical certificate.
 - `/profile/children/[childId]` -> `src/app/profile/children/[childId]/page.tsx`
+  - Detail view shows the medical certificate image/link when it was uploaded.
 - `/profile/children/[childId]/edit` -> `src/app/profile/children/[childId]/edit/page.tsx`
   - Loads the child record only; it must not serialize the owning `User` row to
     the client form.
@@ -234,6 +236,8 @@ Methods below come from the current `route.ts` exports.
   - Uploads are private Blob writes with image magic-byte validation and rate
     limiting.
 - `GET, POST` `/api/children` -> `src/app/api/children/route.ts`
+  - POST validates the full child registration payload; only
+    `doctorCertificate` is optional.
 - `PUT, DELETE` `/api/children/[id]` -> `src/app/api/children/[id]/route.ts`
 - `GET, POST` `/api/children/[id]/photo` -> `src/app/api/children/[id]/photo/route.ts`
   - Uploads are private Blob writes with image magic-byte validation and rate

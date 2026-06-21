@@ -5,6 +5,33 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 
+const SOUTH_AMERICA_NATIONALITIES = [
+  'Argentina',
+  'Brasil',
+  'Chile',
+  'Bolivia',
+  'Paraguay',
+  'Uruguay',
+  'Perú',
+  'Ecuador',
+  'Colombia',
+  'Venezuela',
+  'Guyana',
+  'Surinam',
+];
+
+const NATIONALITY_SEARCH_OPTIONS = (() => {
+  const displayNames = new Intl.DisplayNames(['es'], { type: 'region' });
+  return Array.from(
+    new Set(
+      (Intl.supportedValuesOf as (key: string) => string[])('region')
+        .filter((code) => /^[A-Z]{2}$/.test(code))
+        .map((code) => displayNames.of(code))
+        .filter((name): name is string => Boolean(name))
+    )
+  ).sort((a, b) => a.localeCompare(b, 'es'));
+})();
+
 export default function AddChildForm({ userAddress }: { userAddress: string }) {
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -30,6 +57,9 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
   const [doctorPhone, setDoctorPhone] = useState('');
   const [doctorCertificate, setDoctorCertificate] = useState('');
   const [observations, setObservations] = useState('');
+  const [nationalityMode, setNationalityMode] = useState<
+    'unset' | 'common' | 'search'
+  >('unset');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
@@ -38,6 +68,9 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
     'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
   const labelClass = 'text-sm font-medium text-foreground';
+  const inputModeClass =
+    'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
+  const nationalityIsCommon = SOUTH_AMERICA_NATIONALITIES.includes(nationality);
 
   const toDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -87,31 +120,32 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
     }
 
     try {
+      const trimmed = (value: string) => value.trim();
       const res = await fetch('/api/children', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
-          lastName,
-          documentType,
-          documentNumber,
+          name: trimmed(name),
+          lastName: trimmed(lastName),
+          documentType: trimmed(documentType),
+          documentNumber: trimmed(documentNumber),
           documentFrontPhoto,
           documentBackPhoto,
-          birthDate,
-          address,
-          gender: gender || undefined,
-          nationality,
-          maritalStatus,
-          allergies,
-          regularMedication,
-          relevantDiseases,
-          previousInjuries,
-          physicalRestrictions,
-          bloodGroup,
-          primaryDoctor,
-          doctorPhone,
-          doctorCertificate,
-          observations,
+          birthDate: trimmed(birthDate),
+          address: trimmed(address),
+          gender,
+          nationality: trimmed(nationality),
+          maritalStatus: trimmed(maritalStatus),
+          allergies: trimmed(allergies),
+          regularMedication: trimmed(regularMedication),
+          relevantDiseases: trimmed(relevantDiseases),
+          previousInjuries: trimmed(previousInjuries),
+          physicalRestrictions: trimmed(physicalRestrictions),
+          bloodGroup: trimmed(bloodGroup),
+          primaryDoctor: trimmed(primaryDoctor),
+          doctorPhone: trimmed(doctorPhone),
+          doctorCertificate: doctorCertificate || undefined,
+          observations: trimmed(observations),
         }),
       });
 
@@ -125,10 +159,13 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
 
   return (
     <Form onSubmit={handleSubmit} className="space-y-4">
+      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Todos los campos son obligatorios, salvo el certificado médico.
+      </p>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label htmlFor="child-name" className={labelClass}>
-            Nombre <span className="text-destructive">*</span>
+            Nombre
           </label>
           <input
             id="child-name"
@@ -151,6 +188,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="family-name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            required
           />
         </div>
       </div>
@@ -166,6 +204,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           autoComplete="off"
           value={documentType}
           onChange={(e) => setDocumentType(e.target.value)}
+          required
         >
           <option value="">Seleccioná una opción</option>
           <option value="DNI">DNI</option>
@@ -185,6 +224,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           autoComplete="off"
           value={documentNumber}
           onChange={(e) => setDocumentNumber(e.target.value)}
+          required
         />
       </div>
 
@@ -198,6 +238,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={inputClass}
             type="file"
             accept="image/*"
+            required
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -214,6 +255,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={inputClass}
             type="file"
             accept="image/*"
+            required
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -235,6 +277,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           type="date"
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
+          required
         />
       </div>
 
@@ -249,6 +292,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           autoComplete="street-address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
+          required
         />
       </div>
 
@@ -273,6 +317,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           autoComplete="sex"
           value={gender}
           onChange={(e) => setGender(e.target.value)}
+          required
         >
           <option value="">Seleccioná una opción</option>
           <option value="FEMALE">Femenino</option>
@@ -287,14 +332,53 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
         <label htmlFor="child-nationality" className={labelClass}>
           Nacionalidad
         </label>
-        <input
+        <select
           id="child-nationality"
           className={inputClass}
-          name="country"
-          autoComplete="country-name"
-          value={nationality}
-          onChange={(e) => setNationality(e.target.value)}
-        />
+          value={
+            nationalityMode === 'search'
+              ? '__search__'
+              : nationalityMode === 'common' && nationalityIsCommon
+                ? nationality
+                : ''
+          }
+          onChange={(e) => {
+            if (e.target.value === '__search__') {
+              setNationalityMode('search');
+              return;
+            }
+
+            setNationalityMode('common');
+            setNationality(e.target.value);
+          }}
+          required
+        >
+          <option value="">Seleccioná una opción</option>
+          {SOUTH_AMERICA_NATIONALITIES.map((country) => (
+            <option key={country} value={country}>
+              {country}
+            </option>
+          ))}
+          <option value="__search__">Otra nacionalidad, buscar...</option>
+        </select>
+        {nationalityMode === 'search' && (
+          <div className="space-y-1">
+            <input
+              id="child-nationality-search"
+              className={inputModeClass}
+              list="child-nationality-options"
+              placeholder="Escribí la nacionalidad"
+              value={nationality}
+              onChange={(e) => setNationality(e.target.value)}
+              required
+            />
+            <datalist id="child-nationality-options">
+              {NATIONALITY_SEARCH_OPTIONS.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1">
@@ -308,6 +392,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
           autoComplete="off"
           value={maritalStatus}
           onChange={(e) => setMaritalStatus(e.target.value)}
+          required
         />
       </div>
 
@@ -337,6 +422,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={allergies}
             onChange={(e) => setAllergies(e.target.value)}
+            required
           />
         </div>
 
@@ -349,6 +435,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={regularMedication}
             onChange={(e) => setRegularMedication(e.target.value)}
+            required
           />
         </div>
 
@@ -361,6 +448,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={relevantDiseases}
             onChange={(e) => setRelevantDiseases(e.target.value)}
+            required
           />
         </div>
 
@@ -373,6 +461,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={previousInjuries}
             onChange={(e) => setPreviousInjuries(e.target.value)}
+            required
           />
         </div>
 
@@ -385,6 +474,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={physicalRestrictions}
             onChange={(e) => setPhysicalRestrictions(e.target.value)}
+            required
           />
         </div>
 
@@ -399,6 +489,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="off"
             value={bloodGroup}
             onChange={(e) => setBloodGroup(e.target.value)}
+            required
           />
         </div>
 
@@ -413,6 +504,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="off"
             value={primaryDoctor}
             onChange={(e) => setPrimaryDoctor(e.target.value)}
+            required
           />
         </div>
 
@@ -428,6 +520,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             autoComplete="tel"
             value={doctorPhone}
             onChange={(e) => setDoctorPhone(e.target.value)}
+            required
           />
         </div>
 
@@ -457,6 +550,7 @@ export default function AddChildForm({ userAddress }: { userAddress: string }) {
             className={`${inputClass} min-h-[72px] resize-y`}
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
+            required
           />
         </div>
       </div>

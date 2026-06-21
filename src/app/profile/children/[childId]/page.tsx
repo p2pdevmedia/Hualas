@@ -238,6 +238,7 @@ export default async function ViewMyChildPage({
         child.bloodGroup,
         child.primaryDoctor,
         child.doctorPhone,
+        child.doctorCertificate,
         child.observations,
       ].some(Boolean) && (
         <ChildInfoSection title="Ficha Médica">
@@ -320,6 +321,31 @@ export default async function ViewMyChildPage({
                 <span className="text-muted-foreground">
                   {child.doctorPhone}
                 </span>
+              </div>
+            )}
+            {child.doctorCertificate && (
+              <div className="col-span-2">
+                <span className="font-medium block text-foreground">
+                  Certificado Médico
+                </span>
+                <div className="mt-2 overflow-hidden rounded-lg border bg-background">
+                  <a
+                    href={child.doctorCertificate}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-primary underline underline-offset-4"
+                  >
+                    Abrir certificado en tamaño completo
+                  </a>
+                  <Image
+                    src={child.doctorCertificate}
+                    alt="Certificado médico"
+                    width={1200}
+                    height={1600}
+                    unoptimized
+                    className="mt-2 h-auto w-full object-contain"
+                  />
+                </div>
               </div>
             )}
             {child.observations && (
