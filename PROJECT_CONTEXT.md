@@ -131,6 +131,8 @@ Database integrity notes:
 - Activity days can be restricted to a single group; attendance confirmation is blocked for participants outside that group.
 - `COUNTER` and active `ADMIN` can access accounting.
 - `ADMIN` and `SUPER_ADMIN` capabilities can manage activities, users, and forms through the active `ADMIN` profile.
+- The admin user list searches by first name, last name, full name, email, and
+  fuzzy similarity, and it can be filtered by activity.
 - `SUPER_ADMIN` capability gates audit log and admin notification pages.
 - Editing, deleting, or resetting a `SUPER_ADMIN` account requires an active
   `SUPER_ADMIN` capability; regular admins cannot mutate those accounts.

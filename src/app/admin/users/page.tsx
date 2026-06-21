@@ -28,6 +28,17 @@ export default async function UsersPage() {
         profilePhoto: true,
         socialFeeActive: true,
         updatedAt: true,
+        activityParticipants: {
+          select: {
+            status: true,
+            activity: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     }),
     prisma.familyGroup.findMany({
@@ -75,7 +86,18 @@ export default async function UsersPage() {
       ...direct,
       ...familyChildren.filter((c) => !seen.has(c.id)),
     ];
-    return { ...u, roles: u.roleAssignments.map((r) => r.role), children };
+    const activities = new Map<string, { id: string; name: string }>();
+    for (const participant of u.activityParticipants) {
+      if (participant.status !== 'ACTIVE') continue;
+      activities.set(participant.activity.id, participant.activity);
+    }
+
+    return {
+      ...u,
+      roles: u.roleAssignments.map((r) => r.role),
+      children,
+      activities: [...activities.values()],
+    };
   });
 
   return (

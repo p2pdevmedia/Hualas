@@ -27,6 +27,12 @@ interface User {
   profilePhoto: string | null;
   updatedAt: Date;
   children: Child[];
+  activities: Activity[];
+}
+
+interface Activity {
+  id: string;
+  name: string;
 }
 
 function calcAge(birthDate: Date | null): number | null {
@@ -37,6 +43,121 @@ function calcAge(birthDate: Date | null): number | null {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9@._ -]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function bigrams(value: string) {
+  if (value.length < 2) return [value];
+
+  const grams: string[] = [];
+  for (let index = 0; index < value.length - 1; index += 1) {
+    grams.push(value.slice(index, index + 2));
+  }
+
+  return grams;
+}
+
+function diceSimilarity(left: string, right: string) {
+  if (left === right) return 1;
+  if (left.length < 2 || right.length < 2) return 0;
+
+  const rightGrams = bigrams(right);
+  const used = new Array(rightGrams.length).fill(false);
+  let matches = 0;
+
+  for (const gram of bigrams(left)) {
+    const matchIndex = rightGrams.findIndex(
+      (candidate, index) => !used[index] && candidate === gram
+    );
+
+    if (matchIndex >= 0) {
+      used[matchIndex] = true;
+      matches += 1;
+    }
+  }
+
+  return (2 * matches) / (left.length + right.length - 2);
+}
+
+function editDistanceWithin(left: string, right: string, maxDistance: number) {
+  if (Math.abs(left.length - right.length) > maxDistance) return false;
+
+  const previous = Array.from(
+    { length: right.length + 1 },
+    (_, index) => index
+  );
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    let rowMin = current[0];
+
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      const next = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + cost
+      );
+
+      current[rightIndex] = next;
+      rowMin = Math.min(rowMin, next);
+    }
+
+    if (rowMin > maxDistance) return false;
+    previous.splice(0, previous.length, ...current);
+  }
+
+  return previous[right.length] <= maxDistance;
+}
+
+function tokenMatches(queryToken: string, targetToken: string) {
+  if (!queryToken || !targetToken) return false;
+  if (targetToken.includes(queryToken) || queryToken.includes(targetToken)) {
+    return true;
+  }
+
+  const maxDistance = queryToken.length >= 8 ? 2 : 1;
+  if (
+    queryToken.length >= 4 &&
+    editDistanceWithin(queryToken, targetToken, maxDistance)
+  ) {
+    return true;
+  }
+
+  return (
+    queryToken.length >= 4 && diceSimilarity(queryToken, targetToken) >= 0.58
+  );
+}
+
+function matchesUserSearch(
+  query: string,
+  values: Array<string | null | undefined>
+) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return true;
+
+  const normalizedValues = values
+    .map((value) => normalizeSearchText(value ?? ''))
+    .filter(Boolean);
+  const haystack = normalizedValues.join(' ');
+  if (haystack.includes(normalizedQuery)) return true;
+
+  const targetTokens = haystack.split(' ').filter(Boolean);
+  return normalizedQuery
+    .split(' ')
+    .filter(Boolean)
+    .every((queryToken) =>
+      targetTokens.some((targetToken) => tokenMatches(queryToken, targetToken))
+    );
 }
 
 export default function UsersList({
@@ -54,20 +175,35 @@ export default function UsersList({
   const router = useRouter();
   const PAGE_SIZE = 20;
   const [query, setQuery] = useState('');
+  const [activityId, setActivityId] = useState('all');
   const [page, setPage] = useState(1);
   const [confirmDeleteId, setConfirmDeleteId] = useState('');
   const [roleEditorUser, setRoleEditorUser] = useState<User | null>(null);
   const filtered = users.filter((u) => {
-    const q = query.toLowerCase();
-    return (
-      u.name?.toLowerCase().includes(q) ||
-      u.lastName?.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.dni?.toLowerCase().includes(q)
-    );
+    const matchesActivity =
+      activityId === 'all' || u.activities.some((a) => a.id === activityId);
+    if (!matchesActivity) return false;
+
+    return matchesUserSearch(query, [
+      u.name,
+      u.lastName,
+      u.dni,
+      u.email,
+      `${u.name ?? ''} ${u.lastName ?? ''}`,
+      `${u.lastName ?? ''} ${u.name ?? ''}`,
+    ]);
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const activityMap = new Map<string, Activity>();
+  for (const user of users) {
+    for (const activity of user.activities) {
+      activityMap.set(activity.id, activity);
+    }
+  }
+  const activityOptions = [...activityMap.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, 'es')
+  );
 
   const linkClass =
     'text-sm text-link hover:text-link/80 hover:underline underline-offset-4';
@@ -93,16 +229,34 @@ export default function UsersList({
 
   return (
     <div className="space-y-4">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setPage(1);
-        }}
-        placeholder="Buscar por nombre, apellido, correo o DNI"
-        className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-      />
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Buscar por nombre, apellido, nombre completo o email"
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <select
+          value={activityId}
+          onChange={(e) => {
+            setActivityId(e.target.value);
+            setPage(1);
+          }}
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label="Filtrar por actividad"
+        >
+          <option value="all">Todas las actividades</option>
+          {activityOptions.map((activity) => (
+            <option key={activity.id} value={activity.id}>
+              {activity.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <ul className="divide-y divide-border">
         {paginated.map((u) => (
           <li key={u.id} className="py-3 space-y-1">
@@ -215,6 +369,18 @@ export default function UsersList({
                     </span>
                   );
                 })}
+              </div>
+            )}
+            {u.activities.length > 0 && (
+              <div className="pl-[52px] flex flex-wrap gap-2">
+                {u.activities.map((activity) => (
+                  <span
+                    key={activity.id}
+                    className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                  >
+                    {activity.name}
+                  </span>
+                ))}
               </div>
             )}
           </li>
