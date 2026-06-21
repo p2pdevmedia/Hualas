@@ -15,10 +15,29 @@ export default function FormList({ forms }: { forms: Form[] }) {
   const router = useRouter();
   const t = useTranslation().actions;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string>('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deletingId, setDeletingId] = useState('');
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/forms/${id}`, { method: 'DELETE' });
-    router.refresh();
+    setDeleteError('');
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/forms/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error ?? 'No se pudo eliminar el formulario');
+      }
+      router.refresh();
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo eliminar el formulario'
+      );
+    } finally {
+      setDeletingId('');
+      setConfirmDeleteId('');
+    }
   };
 
   const linkClass =
@@ -96,6 +115,7 @@ export default function FormList({ forms }: { forms: Form[] }) {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setConfirmDeleteId('')}
+                disabled={deletingId === confirmDeleteId}
                 className="px-4 py-2 rounded-full border border-border hover:bg-muted transition-colors text-sm font-medium"
               >
                 Cancelar
@@ -103,16 +123,19 @@ export default function FormList({ forms }: { forms: Form[] }) {
               <button
                 onClick={() => {
                   const id = confirmDeleteId;
-                  setConfirmDeleteId('');
                   handleDelete(id);
                 }}
+                disabled={deletingId === confirmDeleteId}
                 className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
               >
-                Eliminar
+                {deletingId === confirmDeleteId ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
           </div>
         </div>
+      )}
+      {deleteError && (
+        <p className="mt-4 text-sm text-destructive">{deleteError}</p>
       )}
     </div>
   );

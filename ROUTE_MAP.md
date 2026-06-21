@@ -111,7 +111,7 @@ route, update this file in the same change.
     the client form.
 - `/profile/children/add-tutor` -> `src/app/profile/children/add-tutor/page.tsx`
 - `/profile/payments` -> `src/app/profile/payments/page.tsx`
-  - Member payment history.
+  - Member payment history, surfaced in the parent menu as "Mis Pagos".
 - `/profile/notifications` -> `src/app/profile/notifications/page.tsx`
   - Notification preferences.
 - `/profile/pickup-notices` -> `src/app/profile/pickup-notices/page.tsx`
@@ -198,6 +198,8 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
 - `/admin/users/[id]/children/[childId]/edit` -> `src/app/admin/users/[id]/children/[childId]/edit/page.tsx`
 - `/admin/users/[id]/merge-children` -> `src/app/admin/users/[id]/merge-children/page.tsx`
 - `/admin/forms` -> `src/app/admin/forms/page.tsx`
+  - Deletion is handled by `src/app/api/forms/[id]/route.ts` and removes the
+    form together with its fields and responses.
 - `/admin/forms/new` -> `src/app/admin/forms/new/page.tsx`
 - `/admin/forms/[id]` -> `src/app/admin/forms/[id]/page.tsx`
 - `/admin/forms/[id]/edit` -> `src/app/admin/forms/[id]/edit/page.tsx`

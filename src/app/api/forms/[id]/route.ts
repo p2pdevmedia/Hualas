@@ -61,6 +61,22 @@ export async function DELETE(
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  await prisma.form.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+  try {
+    await prisma.$transaction([
+      prisma.formResponse.deleteMany({ where: { formId: params.id } }),
+      prisma.formField.deleteMany({ where: { formId: params.id } }),
+      prisma.form.delete({ where: { id: params.id } }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      { error: 'No se pudo eliminar el formulario' },
+      { status: 500 }
+    );
+  }
 }

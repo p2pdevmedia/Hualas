@@ -377,39 +377,39 @@ export default function Navbar() {
                   >
                     {t.profile}
                   </Link>
-                  <Link
-                    href="/faq"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                  >
-                    Ayuda
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                  >
-                    {t.contact}
-                  </Link>
                   {canSeeChildrenSection && (
                     <Link
                       href="/profile/children"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                     >
                       {actions.myChildren}
                     </Link>
                   )}
-                  {(isMember || isAdmin) && (
-                    <Link
-                      href="/profile/pickup-notices"
-                      className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
-                    >
-                      Avisos de Retiro
-                    </Link>
-                  )}
                   <Link
                     href="/profile/payments"
-                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                   >
-                    Historial de pagos
+                    {t.myPayments}
+                  </Link>
+                  {(isMember || isAdmin) && (
+                    <>
+                      <div
+                        aria-hidden="true"
+                        className="mx-4 my-1 border-t border-border/60"
+                      />
+                      <Link
+                        href="/profile/pickup-notices"
+                        className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
+                      >
+                        Avisos de Retiro
+                      </Link>
+                    </>
+                  )}
+                  <Link
+                    href="/faq"
+                    className="block w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
+                  >
+                    Ayuda
                   </Link>
                   {isProfessor && (
                     <Link
@@ -422,7 +422,7 @@ export default function Navbar() {
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value as Lang)}
-                    className="w-full border-t px-4 py-2 text-sm bg-card text-black hover:bg-muted hover:text-primary transition-colors cursor-pointer"
+                    className="w-full px-4 py-2 text-sm bg-card text-black hover:bg-muted hover:text-primary transition-colors cursor-pointer"
                   >
                     {availableLanguages.map(({ code, flag, label }) => (
                       <option key={code} value={code}>
@@ -432,7 +432,7 @@ export default function Navbar() {
                   </select>
                   <button
                     onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm border-t text-black"
+                    className="w-full text-left px-4 py-2 hover:bg-muted hover:text-primary transition-colors text-sm text-black"
                   >
                     {t.logout}
                   </button>
@@ -619,7 +619,7 @@ export default function Navbar() {
                 className={navLinkClass('/profile/payments')}
                 onClick={() => setMenuOpen(false)}
               >
-                Historial de pagos
+                {t.myPayments}
               </Link>
               {isAdmin && (
                 <>

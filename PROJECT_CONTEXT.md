@@ -73,6 +73,8 @@ Important models:
 - `ActivityParticipantReport`: per-day participant notes/reports.
 - `PickupNotice`, `PickupNoticeAcknowledgment`: alternate pickup notices and professor acknowledgment.
 - `Form`, `FormField`, `FormResponse`: custom admin forms.
+  - Admin form deletion removes the form together with its fields and
+    responses through the `/api/forms/[id]` delete flow.
 - `Conversation`, `Message`: internal chat.
 - `News`, `NewsMedia`, `NewsReadReceipt`: institutional news, media, and read state.
 - `Notification`, `NotificationPreference`, `PushAlertSubscription`: in-app and web push notifications.
@@ -162,6 +164,8 @@ Database integrity notes:
 - Server upload handlers validate file magic bytes for images/PDFs before
   writing to Blob and apply best-effort in-memory rate limiting to sensitive
   auth, checkout, and upload routes.
+- The parent menu surfaces `/profile/payments` as "Mis Pagos" and keeps the
+  pickup notices link visually separated from the profile/family/payment items.
 - `DbAuditLog` redacts passwords, tokens, medical fields, payment raw data,
   mobile tokens, and message bodies before storing before/after/args JSON.
 
