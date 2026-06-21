@@ -139,6 +139,8 @@ Database integrity notes:
 - `SUPER_ADMIN` capability gates audit log and admin notification pages.
 - Super Admins can open `/admin/audit-log/user/<ID>` from the admin user list
   to inspect a single user's audit trail.
+- The audit log table prefers human-readable summaries for common actions and
+  keeps the raw JSON payload in the expandable detail panel.
 - Editing, deleting, or resetting a `SUPER_ADMIN` account requires an active
   `SUPER_ADMIN` capability; regular admins cannot mutate those accounts.
 - Users can have multiple capabilities; page visibility follows `activeRole` and role switching.

@@ -220,6 +220,8 @@ active `ADMIN`. `SUPER_ADMIN` is a capability boost inside the admin profile.
   - `SUPER_ADMIN` capability only.
 - `/admin/audit-log` -> `src/app/admin/audit-log/page.tsx`
   - `SUPER_ADMIN` capability only.
+  - The table prefers human-readable summaries for common actions and keeps
+    the raw JSON payload behind the expandable detail view.
 - `/admin/audit-log/user/[id]` -> `src/app/admin/audit-log/user/[id]/page.tsx`
   - `SUPER_ADMIN` capability only.
   - Shows the audit trail for a single user using the exact user id filter.

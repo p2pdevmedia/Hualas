@@ -37,6 +37,251 @@ type AuditLogTableProps = {
   };
 };
 
+const IGNORED_CHANGE_FIELDS = new Set([
+  'id',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+  'version',
+  'requestId',
+  'password',
+  'passwordHash',
+  'token',
+  'refreshToken',
+  'accessToken',
+  'sessionToken',
+  'blobToken',
+]);
+
+const CHANGE_GROUPS: Array<{ fields: string[]; label: string }> = [
+  {
+    fields: ['name', 'firstName', 'lastName', 'fullName'],
+    label: 'perfil',
+  },
+  {
+    fields: ['email', 'phone', 'phoneNumber', 'cellphone', 'mobile'],
+    label: 'contacto',
+  },
+  {
+    fields: ['address', 'street', 'city', 'province', 'postalCode', 'zipCode'],
+    label: 'domicilio',
+  },
+  { fields: ['dni'], label: 'documentación' },
+  { fields: ['role', 'roles', 'roleAssignments'], label: 'acceso' },
+  { fields: ['socialFeeActive'], label: 'cuota social' },
+  {
+    fields: ['status', 'approvedAt', 'rejectedAt', 'paidAt'],
+    label: 'estado',
+  },
+  {
+    fields: ['amount', 'price', 'total', 'paidAmount', 'balance'],
+    label: 'monto',
+  },
+  {
+    fields: ['date', 'day', 'startDate', 'endDate', 'schedule', 'time'],
+    label: 'horario',
+  },
+  {
+    fields: ['title', 'description', 'body', 'summary', 'content', 'message'],
+    label: 'contenido',
+  },
+  {
+    fields: ['observations', 'notes', 'comment', 'pickupPersonName'],
+    label: 'observaciones',
+  },
+  {
+    fields: [
+      'childId',
+      'userId',
+      'memberId',
+      'participantId',
+      'responsibleUserId',
+      'activityId',
+      'groupId',
+    ],
+    label: 'vínculos',
+  },
+];
+
+function formatList(items: string[]) {
+  if (items.length <= 1) return items[0] ?? '';
+  if (items.length === 2) return `${items[0]} y ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
+}
+
+function getFieldValue(record: Record<string, unknown> | null, field: string) {
+  if (!record) return undefined;
+  return record[field];
+}
+
+function stringifyComparable(value: unknown) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value);
+  if (value instanceof Date) return value.toISOString();
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function collectChangedFields(log: AuditLog) {
+  const before = asRecord(log.before);
+  const after = asRecord(log.after);
+  const args = asRecord(log.args);
+  const argsData = asRecord(args?.data);
+
+  const keys = new Set<string>();
+  for (const source of [before, after, argsData]) {
+    if (!source) continue;
+    for (const key of Object.keys(source)) {
+      if (!IGNORED_CHANGE_FIELDS.has(key)) {
+        keys.add(key);
+      }
+    }
+  }
+
+  const changed = new Set<string>();
+  for (const key of keys) {
+    const beforeValue = stringifyComparable(getFieldValue(before, key));
+    const afterValue = stringifyComparable(getFieldValue(after, key));
+    const argsValue = stringifyComparable(getFieldValue(argsData, key));
+
+    if (beforeValue !== afterValue || argsValue !== afterValue) {
+      changed.add(key);
+    }
+  }
+
+  return [...changed];
+}
+
+function describeChangeGroups(fields: string[]) {
+  const labels: string[] = [];
+
+  for (const group of CHANGE_GROUPS) {
+    if (group.fields.some((field) => fields.includes(field))) {
+      labels.push(group.label);
+    }
+  }
+
+  return [...new Set(labels)];
+}
+
+function getEntityLabel(log: AuditLog, data: ApiResponse | null) {
+  const after = asRecord(log.after);
+  const args = asRecord(log.args);
+  const argsData = asRecord(args?.data);
+  const usersById = data?.lookups?.usersById ?? {};
+  const activitiesById = data?.lookups?.activitiesById ?? {};
+
+  if (log.model === 'User') {
+    return (
+      (log.recordId && usersById[log.recordId]) ||
+      getStringField(after, ['name', 'fullName', 'email']) ||
+      'usuario'
+    );
+  }
+
+  if (log.model === 'Activity') {
+    return (
+      (log.recordId && activitiesById[log.recordId]) ||
+      getStringField(after, ['name', 'title']) ||
+      'actividad'
+    );
+  }
+
+  if (log.model === 'Child') {
+    const firstName =
+      getStringField(after, ['name']) ?? getStringField(argsData, ['name']);
+    const lastName =
+      getStringField(after, ['lastName']) ??
+      getStringField(argsData, ['lastName']);
+    return [firstName, lastName].filter(Boolean).join(' ') || 'hijo/a';
+  }
+
+  if (log.model === 'News' || log.model === 'Form') {
+    return (
+      getStringField(after, ['title']) ||
+      getStringField(after, ['name']) ||
+      'registro'
+    );
+  }
+
+  if (log.model === 'Message') {
+    return 'mensaje';
+  }
+
+  if (log.model === 'PickupNotice') {
+    return 'aviso de retiro';
+  }
+
+  if (log.model === 'Payment' || log.model === 'SocialFeePayment') {
+    return 'pago';
+  }
+
+  if (log.model === 'ProfessorInvoice') {
+    return 'factura de profesor';
+  }
+
+  return (
+    getStringField(after, ['name', 'title', 'label']) || log.model.toLowerCase()
+  );
+}
+
+function buildUpdateSummary(log: AuditLog, data: ApiResponse | null) {
+  const entity = getEntityLabel(log, data);
+  const changes = describeChangeGroups(collectChangedFields(log));
+  const changeSuffix = changes.length ? ` (${formatList(changes)})` : '';
+
+  if (log.model === 'User') {
+    return `actualizó el perfil de ${entity}${changeSuffix}.`;
+  }
+
+  if (log.model === 'Child') {
+    return `actualizó la ficha de ${entity}${changeSuffix}.`;
+  }
+
+  if (log.model === 'Activity') {
+    return `actualizó la actividad ${entity}${changeSuffix}.`;
+  }
+
+  if (log.model === 'Payment' || log.model === 'SocialFeePayment') {
+    const after = asRecord(log.after);
+    const status = getStringField(after, ['status']);
+    if (status === 'APPROVED') {
+      return `aprobó el pago de ${entity}${changeSuffix}.`;
+    }
+    if (status === 'REJECTED') {
+      return `rechazó el pago de ${entity}${changeSuffix}.`;
+    }
+    return `actualizó el pago de ${entity}${changeSuffix}.`;
+  }
+
+  if (log.model === 'ProfessorInvoice') {
+    const after = asRecord(log.after);
+    const status = getStringField(after, ['status']);
+    if (status === 'APPROVED') {
+      return `aprobó la factura de profesor de ${entity}${changeSuffix}.`;
+    }
+    if (status === 'TRANSFERRED') {
+      return `marcó como transferida la factura de ${entity}${changeSuffix}.`;
+    }
+    return `actualizó la factura de profesor de ${entity}${changeSuffix}.`;
+  }
+
+  if (log.model === 'PickupNotice') {
+    return `actualizó un aviso de retiro${changeSuffix}.`;
+  }
+
+  if (log.model === 'News' || log.model === 'Form') {
+    return `actualizó ${log.model === 'News' ? 'la noticia' : 'el formulario'} ${entity}${changeSuffix}.`;
+  }
+
+  return `actualizó ${entity}${changeSuffix}.`;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -61,7 +306,7 @@ function getStringField(
   return null;
 }
 
-function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
+export function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   const after = asRecord(log.after);
   const args = asRecord(log.args);
   const argsData = asRecord(args?.data);
@@ -82,7 +327,7 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
       hour: '2-digit',
       minute: '2-digit',
     });
-    return `${userLabel} se logeo en la app a las ${time}`;
+    return `${userLabel} inició sesión en la app a las ${time}`;
   }
 
   if (log.model === 'User' && log.action === 'create') {
@@ -95,12 +340,7 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   }
 
   if (log.model === 'User' && log.action === 'update') {
-    const userLabel =
-      (log.recordId && usersById[log.recordId]) ||
-      getStringField(after, ['name', 'fullName']) ||
-      'Usuario';
-
-    return `Usuario actualizado: ${userLabel}. Actualizado por: ${actor}.`;
+    return `${actor} ${buildUpdateSummary(log, data)}`;
   }
 
   if (log.model === 'Message' && log.action === 'create') {
@@ -142,16 +382,11 @@ function buildHumanSummary(log: AuditLog, data: ApiResponse | null) {
   }
 
   if (log.model === 'Activity' && log.action === 'update') {
-    const activityName =
-      (log.recordId && activitiesById[log.recordId]) ||
-      getStringField(after, ['name', 'title']) ||
-      'Actividad';
-
-    return `Actividad actualizada: ${activityName}. Actualizada por: ${actor}.`;
+    return `${actor} ${buildUpdateSummary(log, data)}`;
   }
 
   if (log.action === 'update') {
-    return `${log.model} actualizado por ${actor}.`;
+    return `${actor} ${buildUpdateSummary(log, data)}`;
   }
 
   if (log.action === 'delete') {
@@ -259,7 +494,7 @@ export default function AuditLogTable({ initialUser }: AuditLogTableProps) {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Fecha</th>
-                <th className="px-4 py-2">Resumen</th>
+                <th className="px-4 py-2">Qué pasó</th>
                 <th className="px-4 py-2">Modelo</th>
                 <th className="px-4 py-2">Acción</th>
                 <th className="px-4 py-2">Detalle</th>
@@ -284,8 +519,8 @@ export default function AuditLogTable({ initialUser }: AuditLogTableProps) {
                     <td className="px-4 py-2 font-mono">{log.action}</td>
                     <td className="px-4 py-2 text-xs text-blue-600 underline">
                       {expanded === log.id
-                        ? 'Ocultar info completa'
-                        : 'Ver info completa'}
+                        ? 'Ocultar detalle completo'
+                        : 'Ver detalle completo'}
                     </td>
                   </tr>
                   {expanded === log.id && (
