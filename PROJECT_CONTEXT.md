@@ -108,6 +108,9 @@ Database integrity notes:
   opens and supports page turns from the arrow buttons, keyboard arrows, and
   clicks on the right or left half of the visible page.
 - Logged-in users can access profile, chat, notifications, children/family data, activity checkout, payments, pickup notices, and personal registration flows.
+- Pickup notice creation at `/profile/pickup-notices/new` now uses a
+  4-step wizard: choose the child first, then an enabled activity for that
+  child, then an enabled day/schedule, and finally who will pick up.
 - Child registration at `/profile/children/new` requires the full profile
   payload, but inside `Ficha médica` only the medical certificate upload is
   required. Child detail pages show the full captured profile, including

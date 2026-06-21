@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
-import ActivityDaySelector from './activity-day-selector';
 import { getAccessibleChildOwnerIds } from '@/lib/family-access';
 import { isActiveMember } from '@/lib/roles';
+import { formatFullName } from '@/lib/mobile-format';
+import PickupNoticeWizard from './pickup-notice-wizard';
 
 export default async function CreatePickupNoticePage() {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,7 @@ export default async function CreatePickupNoticePage() {
     select: {
       id: true,
       name: true,
+      lastName: true,
     },
   });
 
@@ -32,31 +34,49 @@ export default async function CreatePickupNoticePage() {
     select: {
       id: true,
       name: true,
+      lastName: true,
     },
   });
 
   const users = rawUsers.map((u) => ({
     id: u.id,
-    name: u.name || '',
+    name: formatFullName(u),
   }));
 
-  // Get future activity days where user's children are enrolled
+  const now = new Date();
   const childIds = children.map((c) => c.id);
-  const activityDays =
+  const activeParticipants =
     childIds.length > 0
+      ? await prisma.activityParticipant.findMany({
+          where: {
+            childId: { in: childIds },
+            status: 'ACTIVE',
+          },
+          select: {
+            childId: true,
+            activityId: true,
+            groupMembership: {
+              select: {
+                activityGroupId: true,
+              },
+            },
+          },
+        })
+      : [];
+
+  const activityIds = Array.from(
+    new Set(activeParticipants.map((participant) => participant.activityId))
+  );
+  const activityDays =
+    activityIds.length > 0
       ? await prisma.activityDay.findMany({
           where: {
             date: {
-              gt: new Date(),
+              gt: now,
             },
-            activity: {
-              participants: {
-                some: {
-                  childId: {
-                    in: childIds,
-                  },
-                },
-              },
+            cancelled: false,
+            activityId: {
+              in: activityIds,
             },
           },
           include: {
@@ -67,6 +87,52 @@ export default async function CreatePickupNoticePage() {
           },
         })
       : [];
+
+  const participantIndex = new Map<string, Map<string, Set<string | null>>>();
+
+  for (const participant of activeParticipants) {
+    const childId = participant.childId;
+    if (!childId) {
+      continue;
+    }
+
+    const childMap =
+      participantIndex.get(childId) ?? new Map<string, Set<string | null>>();
+    const activityGroups =
+      childMap.get(participant.activityId) ?? new Set<string | null>();
+    activityGroups.add(participant.groupMembership?.activityGroupId ?? null);
+    childMap.set(participant.activityId, activityGroups);
+    participantIndex.set(childId, childMap);
+  }
+
+  const eligibleActivityDays = activityDays
+    .map((day) => ({
+      ...day,
+      eligibleChildIds: childIds.filter((childId) => {
+        const childActivities = participantIndex.get(childId);
+        const groupIds = childActivities?.get(day.activityId);
+        if (!childActivities || !groupIds || groupIds.size === 0) {
+          return false;
+        }
+
+        if (!day.activityGroupId) {
+          return true;
+        }
+
+        return groupIds.has(day.activityGroupId);
+      }),
+    }))
+    .filter((day) => day.eligibleChildIds.length > 0)
+    .map((day) => ({
+      id: day.id,
+      date: day.date.toISOString(),
+      schedule: day.schedule,
+      activity: {
+        id: day.activity.id,
+        name: day.activity.name,
+      },
+      eligibleChildIds: day.eligibleChildIds,
+    }));
 
   if (children.length === 0) {
     return (
@@ -87,7 +153,7 @@ export default async function CreatePickupNoticePage() {
     );
   }
 
-  if (activityDays.length === 0) {
+  if (eligibleActivityDays.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
@@ -112,13 +178,17 @@ export default async function CreatePickupNoticePage() {
           Crear aviso de retiro
         </h1>
         <p className="text-sm text-muted-foreground">
-          Selecciona una actividad y un día para crear el aviso
+          Primero elegí para quién es el aviso y después el sistema te muestra
+          solo las actividades, días y horarios habilitados.
         </p>
       </div>
 
-      <ActivityDaySelector
-        activityDays={activityDays}
-        childrenList={children}
+      <PickupNoticeWizard
+        activityDays={eligibleActivityDays}
+        childrenList={children.map((child) => ({
+          id: child.id,
+          name: formatFullName(child),
+        }))}
         users={users}
       />
     </div>

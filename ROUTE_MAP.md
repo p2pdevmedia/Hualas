@@ -2,7 +2,7 @@
 
 This file maps the current Next.js App Router surface.
 
-Last audited: 2026-06-03.
+Last audited: 2026-06-21.
 
 Use this before changing pages or API routes. If you add, move, or delete a
 route, update this file in the same change.
@@ -116,6 +116,9 @@ route, update this file in the same change.
   - Notification preferences.
 - `/profile/pickup-notices` -> `src/app/profile/pickup-notices/page.tsx`
 - `/profile/pickup-notices/new` -> `src/app/profile/pickup-notices/new/page.tsx`
+  - Creation uses a 4-step wizard in this order: child, activity, enabled day/
+    schedule, then who will pick up.
+  - Related component: `src/app/profile/pickup-notices/new/pickup-notice-wizard.tsx`
 - `/profile/pickup-notices/[noticeId]/edit` -> `src/app/profile/pickup-notices/[noticeId]/edit/page.tsx`
 - `/my-activities` -> `src/app/my-activities/page.tsx`
   - Member and professor activity view.
