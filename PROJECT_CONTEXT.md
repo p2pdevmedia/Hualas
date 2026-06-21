@@ -107,7 +107,14 @@ Database integrity notes:
 
 ## Access Rules
 
-- Public users can see the home/contact pages and auth pages.
+- Public users can see the home/contact pages, the public activity catalog at
+  `/public-activities`, and auth pages.
+- The home page's "Agenda del club / Próximas actividades" header links to the
+  public activity catalog so visitors can browse all activities without
+  logging in first.
+- The public catalog routes visitors to `/activities/join` as the no-ID join
+  entrypoint; that page then lets them choose a specific activity to continue
+  with the ID-specific inscription flow.
 - Public users can open `/habitantes-de-la-tierra` from the home page to read
   the local `Pequeños habitantes de la tierra` PDF as a one-page-at-a-time
   book viewer. The viewer loads all PDF pages into its cache when the document

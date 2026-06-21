@@ -20,6 +20,9 @@ route, update this file in the same change.
   - Android APK download page. Static APK: `public/downloads/hualas-mobile.apk`.
 - `/contact` -> `src/app/contact/page.tsx`
   - Related component: `src/app/contact/contact-form.tsx`.
+- `/public-activities` -> `src/app/public-activities/page.tsx`
+  - Public activity catalog with Instagram-style cards, search, and direct
+    links into each activity's public detail/join flow.
 - `/habitantes-de-la-tierra` -> `src/app/habitantes-de-la-tierra/page.tsx`
   - Public visual story page for `Pequeños habitantes de la tierra`.
   - Uses the local PDF asset
@@ -61,6 +64,9 @@ route, update this file in the same change.
     participants outside the professor's assignment.
 - `/activities/[id]/edit` -> `src/app/activities/[id]/edit/page.tsx`
   - Admin edit activity form.
+- `/activities/join` -> `src/app/activities/join/page.tsx`
+  - Public activity selection landing page used as the join entrypoint before
+    opening a specific activity with its ID-specific inscription flow.
 - `/activities/join/[id]` -> `src/app/activities/join/[id]/page.tsx`
   - Public/member join landing page.
 - `/activities/cart` -> `src/app/activities/cart/page.tsx`

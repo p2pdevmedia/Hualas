@@ -516,10 +516,10 @@ export default async function Home() {
                   </Link>
                 ) : (
                   <Link
-                    href="#actividades"
+                    href="/public-activities"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
                   >
-                    Ver actividades disponibles
+                    Explorar actividades
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 )}
@@ -533,19 +533,22 @@ export default async function Home() {
         <section id="actividades" className="px-4 pb-14">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              <Link
+                href="/public-activities"
+                className="group inline-flex max-w-fit flex-col gap-1 rounded-md transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary transition group-hover:text-primary/80">
                   Agenda del club
                 </p>
-                <h2 className="font-heading text-3xl font-semibold">
+                <h2 className="font-heading text-3xl font-semibold transition group-hover:underline">
                   Próximas actividades
                 </h2>
-              </div>
+              </Link>
               <Link
-                href="/news"
+                href="/public-activities"
                 className="text-sm font-semibold text-primary transition hover:text-primary/80"
               >
-                Ver todas las noticias
+                Ver todas las actividades
               </Link>
             </div>
 
