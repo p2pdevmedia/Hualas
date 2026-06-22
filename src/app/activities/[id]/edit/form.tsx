@@ -72,7 +72,7 @@ interface EditActivityFormProps {
     name: string;
     date: string;
     endDate: string;
-    activityType: 'TEMPORARY' | 'ANNUAL';
+    activityType: 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL';
     description?: string | null;
     price: number;
     professorIds: string[];
@@ -104,9 +104,9 @@ export default function EditActivityForm({
   const [name, setName] = useState(activity.name);
   const [date, setDate] = useState(activity.date);
   const [endDate, setEndDate] = useState(activity.endDate);
-  const [activityType, setActivityType] = useState<'TEMPORARY' | 'ANNUAL'>(
-    activity.activityType
-  );
+  const [activityType, setActivityType] = useState<
+    'TEMPORARY' | 'EVENTUAL' | 'ANNUAL'
+  >(activity.activityType);
   const [description, setDescription] = useState(activity.description || '');
   const [price, setPrice] = useState(String(centsToPesos(activity.price)));
   const [professorIds, setProfessorIds] = useState<string[]>(
@@ -289,7 +289,7 @@ export default function EditActivityForm({
   function buildConfirmMessage(): string | null {
     if (existingDayCount === 0) return null;
 
-    if (activityType === 'TEMPORARY') {
+    if (activityType !== 'ANNUAL') {
       return `Esta acción borrará las ${existingDayCount} sesiones existentes de la actividad al cambiarla a Temporal. ¿Confirmás?`;
     }
 
@@ -469,11 +469,14 @@ export default function EditActivityForm({
           <select
             value={activityType}
             onChange={(e) =>
-              setActivityType(e.target.value as 'TEMPORARY' | 'ANNUAL')
+              setActivityType(
+                e.target.value as 'TEMPORARY' | 'EVENTUAL' | 'ANNUAL'
+              )
             }
             className={inputClass}
           >
             <option value="TEMPORARY">Temporal</option>
+            <option value="EVENTUAL">Eventual</option>
             <option value="ANNUAL">Anual</option>
           </select>
         </div>

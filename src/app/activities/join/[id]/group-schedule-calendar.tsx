@@ -19,7 +19,7 @@ type Session = {
 };
 
 type Props = {
-  activityType: 'ANNUAL' | 'TEMPORARY';
+  activityType: 'ANNUAL' | 'TEMPORARY' | 'EVENTUAL';
   groups: Group[];
   sessions: Session[];
   selectedGroupId: string;
@@ -282,7 +282,7 @@ export default function GroupScheduleCalendar({
           Elegí grupo y horarios
         </h2>
         <p className="text-sm text-muted-foreground font-body">
-          {activityType === 'TEMPORARY'
+          {activityType !== 'ANNUAL'
             ? 'Hacé clic en una sesión del calendario para elegir qué encuentro querés pagar. Las opciones se filtran por la edad de la persona seleccionada.'
             : 'Hacé clic en un horario del calendario para elegir el grupo al que querés inscribirte. Las opciones se filtran por la edad de la persona seleccionada.'}
         </p>
@@ -312,7 +312,7 @@ export default function GroupScheduleCalendar({
                   type="button"
                   onClick={() => {
                     onGroupChange(group.id);
-                    if (activityType === 'TEMPORARY') {
+                    if (activityType !== 'ANNUAL') {
                       onSessionChange?.('');
                     }
                   }}
@@ -512,9 +512,7 @@ export default function GroupScheduleCalendar({
               className={`min-h-[56px] rounded-md border p-1.5 ${
                 daySessions.length === 0 ? 'hidden sm:block' : ''
               } ${
-                activityType === 'TEMPORARY' && !isCurrentMonth
-                  ? 'opacity-30'
-                  : ''
+                activityType !== 'ANNUAL' && !isCurrentMonth ? 'opacity-30' : ''
               }`}
             >
               <p className="text-xs font-semibold text-muted-foreground">
@@ -530,7 +528,7 @@ export default function GroupScheduleCalendar({
                       ? groupColorMap.get(group.id)!
                       : GROUP_COLORS[0];
                   const isSelected =
-                    activityType === 'TEMPORARY'
+                    activityType !== 'ANNUAL'
                       ? session.id === selectedSessionId
                       : group?.id === selectedGroupId;
                   return (
@@ -539,7 +537,7 @@ export default function GroupScheduleCalendar({
                       type="button"
                       onClick={() => {
                         onGroupChange(group?.id ?? '');
-                        if (activityType === 'TEMPORARY') {
+                        if (activityType !== 'ANNUAL') {
                           onSessionChange?.(session.id);
                         }
                       }}
@@ -547,7 +545,7 @@ export default function GroupScheduleCalendar({
                         isSelected ? colors.slotSelected : colors.slot
                       }`}
                     >
-                      {activityType === 'TEMPORARY' && session.sportIcon && (
+                      {activityType !== 'ANNUAL' && session.sportIcon && (
                         <div className="mb-0.5">
                           <Image
                             src={`/icons/${session.sportIcon}`}

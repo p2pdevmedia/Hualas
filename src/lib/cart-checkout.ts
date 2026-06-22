@@ -354,7 +354,7 @@ export async function buildCartQuote({
     if (
       activity.groups.length > 0 &&
       !selectedGroup &&
-      activity.activityType !== 'TEMPORARY'
+      activity.activityType === 'ANNUAL'
     ) {
       throw new CartQuoteError(
         400,
@@ -374,7 +374,7 @@ export async function buildCartQuote({
       );
     }
 
-    if (activity.activityType === 'TEMPORARY' && activity.days.length > 0) {
+    if (activity.activityType !== 'ANNUAL' && activity.days.length > 0) {
       if (!selectedActivityDay) {
         throw new CartQuoteError(
           400,
@@ -535,7 +535,7 @@ export async function buildCartQuote({
       const activity = activityById.get(item.activityId);
       return (
         participant &&
-        activity?.activityType === 'TEMPORARY' &&
+        activity?.activityType !== 'ANNUAL' &&
         Boolean(item.activityDayId)
       );
     });
@@ -591,7 +591,7 @@ export async function buildCartQuote({
       });
       const activity = activityById.get(existingParticipant.activityId);
       const isRepeatableTemporary =
-        activity?.activityType === 'TEMPORARY' &&
+        activity?.activityType !== 'ANNUAL' &&
         Boolean(matchingItem?.activityDayId);
       if (
         isRepeatableTemporary &&

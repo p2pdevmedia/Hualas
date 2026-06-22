@@ -106,7 +106,7 @@ export async function PUT(
         }
 
         const shouldDeleteDays =
-          data.activityType === 'TEMPORARY' ||
+          data.activityType !== 'ANNUAL' ||
           (data.activityType === 'ANNUAL' && data.annualSchedules.length > 0);
 
         if (shouldDeleteDays) {

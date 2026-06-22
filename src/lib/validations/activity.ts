@@ -65,7 +65,7 @@ const activityBaseSchema = z.object({
   name: z.string(),
   date: dateInputSchema,
   endDate: dateInputSchema,
-  activityType: z.enum(['TEMPORARY', 'ANNUAL']),
+  activityType: z.enum(['TEMPORARY', 'EVENTUAL', 'ANNUAL']),
   frequency: z
     .enum(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME'])
     .optional()
